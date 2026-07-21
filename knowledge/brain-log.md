@@ -108,3 +108,21 @@ here.
   it scoped narrowly (not recursive over the whole `mcp-server` folder), after a first attempt broke on
   `node_modules`' own bundled README files. Mirrored the entire new structure into this Brain's copy;
   both `.claude`'s original and the Brain copy verified identically.
+- 2026-07-21 — Added 13 new `filters/` fragments per direct request, after reviewing a user-proposed list
+  against the existing library and flagging exact duplicates (`filter-by-phase.cs` and a bounding-box
+  filter already covered by `filter-by-region.cs`) and overlaps (`filter-by-category.cs` already has a
+  level scope; `filter-by-category-and-family.cs` already has category+family) before building anything.
+  `filter-by-linked-model.cs` and `filter-by-mep-domain.cs` were declined — the former needs a different
+  read-only/clash-source contract since actions can't Transaction against a linked document's elements,
+  the latter was judged redundant with `filter-by-multiple-categories.cs`. Built: `filter-by-space.cs`,
+  `filter-by-family.cs` (whole-model, no category), `filter-by-family-type.cs`, `filter-by-view.cs`,
+  `filter-by-element-intersection.cs` and `filter-by-solid-intersection.cs` (real geometric clash via
+  `ElementIntersectsElementFilter`/`ElementIntersectsSolidFilter`, not just bounding-box overlap),
+  `filter-by-host.cs`, `filter-by-assembly.cs`, `filter-by-group.cs`, `filter-by-parameter-exists.cs`
+  (presence/absence, distinct from `filter-by-parameter-text.cs`'s value match), `filter-by-design-option.cs`,
+  `filter-by-material.cs`, `filter-by-level.cs` (whole-model, no category). Marked
+  `filter-by-space.cs`/`filter-by-host.cs`/`filter-by-assembly.cs`/`filter-by-design-option.cs`/
+  `filter-by-solid-intersection.cs` as not yet live-verified — each leans on a less-common API surface
+  (`Space.IsPointInSpace`, `InsulationLiningBase.HostElementId`, `AssemblyInstance`, `DesignOption`,
+  `GeometryCreationUtilities`) with no live Revit connection this session to confirm against. Updated the
+  filters table in `scripts/README.md`. No `.claude` mirror exists in this repo to update.
