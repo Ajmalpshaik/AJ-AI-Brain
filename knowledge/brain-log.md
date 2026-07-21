@@ -126,3 +126,17 @@ here.
   (`Space.IsPointInSpace`, `InsulationLiningBase.HostElementId`, `AssemblyInstance`, `DesignOption`,
   `GeometryCreationUtilities`) with no live Revit connection this session to confirm against. Updated the
   filters table in `scripts/README.md`. No `.claude` mirror exists in this repo to update.
+- 2026-07-21 — Follow-up request for "filter by system type and filter by system name" surfaced a real
+  bug in the existing `filter-by-system-type.cs`: it read `RBS_SYSTEM_NAME_PARAM` first with a `??`
+  fallback to the Type parameter, but the Name parameter exists on nearly every pipe/duct element — so
+  the fallback never actually ran and the fragment was silently matching System NAME while labeled and
+  documented as System TYPE. Fixed in place (per the "update in place, don't fork -v2" rule):
+  `filter-by-system-type.cs` now correctly reads `RBS_PIPING_SYSTEM_TYPE_PARAM`/
+  `RBS_DUCT_SYSTEM_TYPE_PARAM` (ElementId → `AsValueString()`, since these point at the
+  PipingSystemType/MechanicalSystemType element rather than storing a string directly). Added
+  `filter-by-system-name.cs` as a new fragment carrying the old (correct, just mislabeled) behavior —
+  matches one specific System instance's own name instead of its shared Type/classification. Updated the
+  `scripts/README.md` row and re-pointed `skills/ajtools-mep-trace/SKILL.md`'s reference to the new
+  system-name fragment, since that's what `trace-mep-circuits.cs`'s inline filtering step actually
+  matches. Left `trace-mep-circuits.cs` and `action-color-by-group.cs` (both already correctly targeting
+  System Name for their own purposes) unchanged — only the doc pointer was wrong, not their behavior.

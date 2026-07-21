@@ -26,7 +26,8 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-category-and-family.cs`](filters/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
 | [`filter-by-category-and-numeric-param.cs`](filters/filter-by-category-and-numeric-param.cs) | Category narrowed by a numeric parameter vs. an mm value (the "500mm duct" filter) |
 | [`filter-by-room.cs`](filters/filter-by-room.cs) | Category narrowed to instances physically inside one room |
-| [`filter-by-system-type.cs`](filters/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP system name |
+| [`filter-by-system-type.cs`](filters/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP System TYPE/classification (e.g. "CDP", "Supply Air") |
+| [`filter-by-system-name.cs`](filters/filter-by-system-name.cs) | Pipes/ducts/fittings narrowed to one specific System instance's own name (e.g. "DXS 1") |
 | [`filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) | Whatever's currently selected in Revit |
 | [`filter-by-category-name.cs`](filters/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum |
 | [`filter-by-region.cs`](filters/filter-by-region.cs) | Category narrowed to instances whose bounding box intersects a given mm region |
