@@ -120,8 +120,9 @@ for generic Revit questions with no live model involved.
 
 ## 3. Tool Reference
 
-Only **three** things are actual registered MCP tools. Everything else described in this document (the
-182-action library) is C# composed by the agent and executed *through* `run_csharp` — see §3.4.
+Three original tools (`ping`, `run_csharp`, `model_summary`) plus **14 native action tools** (§3.4, added
+2026-07-22) are actual registered MCP tools. Everything else in the 182-action library is C# composed by
+the agent and executed *through* `run_csharp` — see §3.5.
 
 ### 3.1 `ping`
 | | |
@@ -130,7 +131,7 @@ Only **three** things are actual registered MCP tools. Everything else described
 | **Inputs** | None. |
 | **Outputs** | Success/failure. On failure: an explicit message that the bridge isn't connected. |
 | **Constraints** | Single connection only — see §1.4. |
-| **Best practice** | Call first if it's been a while since the last confirmed call in this session. Follow every successful ping with the session-snapshot pattern (§3.4, `context-active-view.cs`) — a bare "pong" with no snapshot is an incomplete report to the user. |
+| **Best practice** | Call first if it's been a while since the last confirmed call in this session. Follow every successful ping with the session-snapshot pattern (§3.5, `context-active-view.cs`) — a bare "pong" with no snapshot is an incomplete report to the user. |
 | **Common mistakes** | Treating a failed ping as "Revit crashed" — it usually just means the toggle is off or Revit is closed. Ask the user to reconnect rather than escalating. |
 | **Performance** | Cheap — safe to call defensively. |
 
@@ -156,14 +157,45 @@ Only **three** things are actual registered MCP tools. Everything else described
 | **Common mistakes** | Reaching for a composed script for a plain count when this tool already covers it. |
 | **Performance** | Fastest read path available — always prefer it when the request fits. |
 
-### 3.4 The action library (not separate tools — composed code)
-The 182 actions catalogued in `knowledge/universal-actions-reference.md`, and the 77 real C# fragments
-in `scripts/` (71 filters/actions/creators/commands/recipes/examples + 6 read-only `context/` fragments)
-are
-**not individually registered MCP tools**. Each is a code template with an `INPUTS` block; the agent picks
-the matching fragment(s), fills in real values, pastes them together, and sends the composed text through
+### 3.4 Native tools (14, added 2026-07-22) — the common daily set
+These ARE real, individually registered, schema-validated MCP tools — not composed code. Each generates
+the same proven C# pattern as the matching `scripts/` fragment internally, and sends it through the exact
+same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the Revit-side listener)
+needed **no changes** — it already accepts any C# generically; the whole upgrade lives in
+`mcp-server/index.js`.
+
+| Tool | Covers |
+|---|---|
+| `list_elements` | Real items (Id + Category + Family/Type) for a category/filter or explicit Ids |
+| `count_elements` | Bare count, any category (not limited to `model_summary`'s fixed list) |
+| `hide_elements` / `unhide_elements` | Temp or permanent hide, reverse a permanent hide |
+| `isolate_elements` / `reset_isolation` | Temporary isolate, clear it |
+| `set_color` | RGB line + solid fill override |
+| `reset_graphic_overrides` | Clear overrides |
+| `set_transparency` | 0–100% surface transparency |
+| `select_elements` | Set the active Revit selection |
+| `set_parameter_value` | Bulk-set one parameter (string or numeric mm) |
+| `report_parameters` | Parameter table, Element ID included |
+| `move_elements` | Translate by an mm offset vector |
+| `delete_elements` | Permanent delete — schema requires `confirm: true` literally, refuses the call otherwise |
+
+All 12 element-targeting tools share one input shape: `elementIds` (exact Ids, takes priority) OR
+`category` + optional `familyName`/`parameterName`/`comparison`/`valueMm` (mirrors
+`filter-by-category-and-numeric-param.cs`). Nine of them also take `targetViewId` (optional, defaults to
+active view — same view-targeting fix as the 11 graphics fragments in §3.5). **Not yet live-tested this session**
+(no Revit connection available) — `node --check` confirms the JS parses; verify each on one element
+before trusting it for a batch, same caveat as any other unverified addition in this Brain.
+
+### 3.5 The rest of the action library — composed code, not separate tools
+The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
+now also have a native tool above), and the 77 real C# fragments in `scripts/` (71
+filters/actions/creators/commands/recipes/examples + 6 read-only `context/` fragments), are **not**
+individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
+matching fragment(s), fills in real values, pastes them together, and sends the composed text through
 `run_csharp`. See `scripts/README.md` for the authoritative fragment index and composition rules.
-`NEEDS_REVIEW` entries in the action reference have no fragment yet — do not claim they're built.
+`NEEDS_REVIEW` entries in the action reference have no fragment yet — do not claim they're built. Prefer
+the native tool (§3.4) over composing the matching fragment when one exists — same result, no
+code-generation step.
 
 **View targeting is a variable, never hardcoded, on every graphics/visibility action.** All 11
 graphics/visibility fragments (`action-hide-elements.cs`, `action-isolate-elements.cs`,
@@ -463,16 +495,19 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
 
 **Reserved for planned work — not yet built. Do not imply these exist.**
 
-- **Native tool registration for the top ~15-20 common actions** — register them as real, individually
-  schema-validated MCP tools in the relay/listener, instead of composed C# through `run_csharp`, for the
-  common daily set. Keeps the flexible composition path for everything complex. Requires changes to the
-  Revit-side listener and the Node relay — real add-in engineering, not a knowledge-file update.
+- ~~Native tool registration for the top common actions~~ — **DONE, 2026-07-22.** See §3.4. Turned out to
+  require zero add-in changes — `McpBridgeService.cs` already accepts any C# generically, so the whole
+  thing was a `mcp-server/index.js` addition. 14 tools built; the remaining ~5-10 candidates from the
+  original "top 15-20" estimate can follow the same pattern on request.
 - **Combined Model Health Report** — one action aggregating warnings + unused elements + family bloat +
   worksharing status, beyond what any single existing action currently reports alone.
 - **Lean/decision-tree variant of this spec** for smaller or local models, if this Brain is ever handed to
   a user running a weaker model than this document assumes.
 - **Purge Unused, Audit Model, Set Shared Coordinates** — real Revit capabilities, deliberately left
   `NEEDS_REVIEW` (see `universal-actions-reference.md`) pending a safer, more explicit design.
+- **Native tools for the remaining common actions not yet ported**: creation tools (`create_room`,
+  `create_levels`, `create_schedule`), `color_by_group`, `report_location`/`report_bounding_box`,
+  `copy_elements`, `rotate_elements`, `rename_element`. Same pattern as §3.4, straightforward to add.
 
 ### Plugin architecture note
 This Brain's own extension mechanism is `skills/brain-self-maintain/SKILL.md` — new

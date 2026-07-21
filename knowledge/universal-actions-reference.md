@@ -7,6 +7,13 @@ always supplied per request, never hardcoded. See
 = real question mark on how cleanly the standard Revit API supports it, or genuinely risky/complex — not
 something to build without checking further first.
 
+**14 of these (2026-07-22) are also available as real, individually schema-validated MCP tools** —
+`list_elements`, `count_elements`, `hide_elements`, `unhide_elements`, `isolate_elements`,
+`reset_isolation`, `set_color`, `reset_graphic_overrides`, `set_transparency`, `select_elements`,
+`set_parameter_value`, `report_parameters`, `move_elements`, `delete_elements` — see
+[`../AGENT-SPEC.md`](../AGENT-SPEC.md) §3.4 for the full spec. Prefer these over composing the matching
+fragment when one exists — faster, protocol-validated, no code generation needed.
+
 **Note on the brief's own numbers** (from the request that produced v2): "minimum 100" in one place,
 "minimum 200" in the output format. This list totals **182** real, distinct, non-duplicate actions —
 clears the 100 minimum, short of 200. Padding to 200 would mean inventing filler, which the same brief

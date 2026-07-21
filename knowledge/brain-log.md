@@ -75,3 +75,18 @@ here.
   naming all 11 fragments. Lesson: a consolidated spec document needs an explicit re-check against recent
   changes, not just against file existence — passing the link/frontmatter checker doesn't mean the
   content is current.
+- 2026-07-22 — **Built the Priority-1 "beat an external tool" item: 14 native, individually schema-validated MCP
+  tools**, added to `mcp-server/index.js` (list/count/hide/unhide/isolate/reset-isolation/set-color/
+  reset-overrides/transparency/select/set-parameter/report-parameters/move/delete). Key discovery: this
+  needed ZERO changes to the Revit-side listener (`McpBridgeService.cs` — that's in this project's
+  `.claude`-scoped `src/`, not the Brain) — it already accepts any C# generically via the same
+  `{token, code, allowDestructive}` protocol `run_csharp` uses. `model_summary` was already proof this
+  pattern works; these 14 extend it. Each tool builds the same proven C# as its matching `scripts/`
+  fragment, sharing one `buildElementsClause()` generator (elementIds-priority, else category + optional
+  family/numeric-param filter — mirrors `filter-by-category-and-numeric-param.cs`). `delete_elements`
+  requires `confirm: true` as a literal in its own schema — refuses the call structurally, not just by
+  convention. Bumped `mcp-server/package.json` and the server's own version string to 1.3.0. `node --check`
+  passed on both copies (`.claude`'s original + Brain's mirror) — **not live-tested, no Revit connection
+  this session**; verify each on one element before trusting a batch. Updated `AGENT-SPEC.md` (§3.4/§3.5
+  split, §11 moved from reserved to done) and `universal-actions-reference.md` (both copies) in the same
+  pass — caught and avoided the exact staleness mistake from the AGENT-SPEC.md episode.
