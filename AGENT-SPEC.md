@@ -161,8 +161,10 @@ the agent and executed *through* `run_csharp` — see §3.5.
 These ARE real, individually registered, schema-validated MCP tools — not composed code. Each generates
 the same proven C# pattern as the matching `scripts/` fragment internally, and sends it through the exact
 same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the Revit-side listener)
-needed **no changes** — it already accepts any C# generically; the whole upgrade lives in
-`mcp-server/index.js`.
+needed **no changes** — it already accepts any C# generically; the whole upgrade lives on the Node side.
+As of the same day, `mcp-server/` is split one-file-per-tool (mirrors the `scripts/` fragment pattern) —
+`mcp-server/index.js` is now just the entry point; see [`mcp-server/tools/README.md`](mcp-server/tools/README.md)
+for the routing index into all 17 tool files.
 
 | Tool | Covers |
 |---|---|
@@ -497,8 +499,9 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
 
 - ~~Native tool registration for the top common actions~~ — **DONE, 2026-07-22.** See §3.4. Turned out to
   require zero add-in changes — `McpBridgeService.cs` already accepts any C# generically, so the whole
-  thing was a `mcp-server/index.js` addition. 14 tools built; the remaining ~5-10 candidates from the
-  original "top 15-20" estimate can follow the same pattern on request.
+  thing was a Node-side addition, now split one-file-per-tool under `mcp-server/tools/`. 14 tools built;
+  the remaining ~5-10 candidates from the original "top 15-20" estimate can follow the same pattern
+  (copy an existing `tools/*.js` file's shape) on request.
 - **Combined Model Health Report** — one action aggregating warnings + unused elements + family bloat +
   worksharing status, beyond what any single existing action currently reports alone.
 - **Lean/decision-tree variant of this spec** for smaller or local models, if this Brain is ever handed to

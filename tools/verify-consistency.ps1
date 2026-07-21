@@ -66,6 +66,10 @@ $startHere = Join-Path $brainRoot "START-HERE.md"
 if (Test-Path $startHere) { $mdFiles += Get-Item $startHere }
 $setupDoc = Join-Path $brainRoot "SETUP.md"
 if (Test-Path $setupDoc) { $mdFiles += Get-Item $setupDoc }
+$agentSpec = Join-Path $brainRoot "AGENT-SPEC.md"
+if (Test-Path $agentSpec) { $mdFiles += Get-Item $agentSpec }
+$toolsReadme = Join-Path $brainRoot "mcp-server\tools\README.md"
+if (Test-Path $toolsReadme) { $mdFiles += Get-Item $toolsReadme }
 
 $linkCount = 0
 foreach ($md in $mdFiles) {

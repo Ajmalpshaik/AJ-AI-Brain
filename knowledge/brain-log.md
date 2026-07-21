@@ -90,3 +90,21 @@ here.
   this session**; verify each on one element before trusting a batch. Updated `AGENT-SPEC.md` (§3.4/§3.5
   split, §11 moved from reserved to done) and `universal-actions-reference.md` (both copies) in the same
   pass — caught and avoided the exact staleness mistake from the AGENT-SPEC.md episode.
+- 2026-07-22 — **Split `mcp-server/index.js` (had grown to 822 lines) into one-file-per-tool**, mirroring
+  the `scripts/` fragment pattern per direct request: `bridge-connection.js` (pipe plumbing),
+  `shared/tool-result.js` + `shared/element-filter.js` (the generator all 14 native tools reuse),
+  `tools/*.js` (17 files, one per tool: 3 original + 14 native), `tools/README.md` (routing index),
+  `index.js` now a ~40-line entry point. Pure reorganization, no behavior change — verified two ways this
+  time, not just `node --check`: (1) syntax-checked all 20 files, (2) a throwaway smoke test that imports
+  every tool module against a fake server and confirms all 17 register with the right names/schemas, then
+  a second test that actually INVOKES every handler with representative args (no live Revit — each
+  cleanly hit the expected "bridge not connected" error, proving the C# generation path itself never
+  throws). **Caught a real bug while doing this**: the `connectionKey()` function's null-character
+  separator got corrupted into a literal raw NUL byte during the file write — `grep` flagged the file as
+  "binary," but `node --check` still passed (a NUL is legal inside a JS template literal), so this would
+  NOT have been caught without the extra scrutiny. Fixed via a byte-level buffer replace, re-verified
+  clean — worth remembering: `node --check` alone is not sufficient proof a refactor preserved exact
+  behavior. Also fixed the consistency checker not scanning `mcp-server/`'s new `tools/README.md` — added
+  it scoped narrowly (not recursive over the whole `mcp-server` folder), after a first attempt broke on
+  `node_modules`' own bundled README files. Mirrored the entire new structure into this Brain's copy;
+  both `.claude`'s original and the Brain copy verified identically.
