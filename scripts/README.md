@@ -36,6 +36,19 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring |
 | [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
+| [`filter-by-space.cs`](filters/filter-by-space.cs) | Category narrowed to instances physically inside one MEP Space (not a Room) — not yet live-verified |
+| [`filter-by-family.cs`](filters/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
+| [`filter-by-family-type.cs`](filters/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
+| [`filter-by-view.cs`](filters/filter-by-view.cs) | Category narrowed to instances actually visible in a given view (any view, not just active) |
+| [`filter-by-element-intersection.cs`](filters/filter-by-element-intersection.cs) | Elements whose real geometry intersects one specific target element (`ElementIntersectsElementFilter`) |
+| [`filter-by-solid-intersection.cs`](filters/filter-by-solid-intersection.cs) | Elements whose real geometry intersects a custom 3D box/clearance solid (`ElementIntersectsSolidFilter`) — not yet live-verified |
+| [`filter-by-host.cs`](filters/filter-by-host.cs) | Elements hosted on a specific parent (`FamilyInstance.Host` or insulation/lining `HostElementId`) — not yet live-verified |
+| [`filter-by-assembly.cs`](filters/filter-by-assembly.cs) | Member elements of a specific Revit Assembly (`AssemblyInstance`) — not yet live-verified |
+| [`filter-by-group.cs`](filters/filter-by-group.cs) | Member elements of a specific Model Group instance |
+| [`filter-by-parameter-exists.cs`](filters/filter-by-parameter-exists.cs) | Elements that have a given parameter attached, whether blank or not — QA sweep, distinct from `filter-by-parameter-text.cs`'s value match |
+| [`filter-by-design-option.cs`](filters/filter-by-design-option.cs) | Elements in a named Design Option, or the Main Model when left unset — not yet live-verified |
+| [`filter-by-material.cs`](filters/filter-by-material.cs) | Elements using a specific Revit Material, category-scoped |
+| [`filter-by-level.cs`](filters/filter-by-level.cs) | Everything on a given Level across the WHOLE model, optional category scope |
 
 ### Actions (consume `elements`)
 | Fragment | Job |
