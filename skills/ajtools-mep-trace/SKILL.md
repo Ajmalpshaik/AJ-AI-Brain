@@ -21,9 +21,10 @@ connectivity. This skill exists to verify the real thing instead of reporting a 
    method and the color-coding pattern before writing new C#.
 4. **Start from [`scripts/recipes/trace-mep-circuits.cs`](../../scripts/recipes/trace-mep-circuits.cs)**
    (its own filtering step follows the same pattern as
-   [`filters/filter-by-system-type.cs`](../../scripts/filters/filter-by-system-type.cs), kept inline
-   here since the clustering logic right after it is specific to this recipe) rather
-   than writing this fresh — update its system-name filter and tolerance in INPUTS before running.
+   [`filters/filter-by-system-name.cs`](../../scripts/filters/filter-by-system-name.cs) — matches one
+   specific System instance's own name, not the System Type/classification; kept inline here since the
+   clustering logic right after it is specific to this recipe) rather than writing this fresh — update
+   its system-name filter and tolerance in INPUTS before running.
 
 ## How to work: plan, split, then execute
 
