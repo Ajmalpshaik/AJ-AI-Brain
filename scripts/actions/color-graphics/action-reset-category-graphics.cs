@@ -1,16 +1,17 @@
 // ============================================================
 // FRAGMENT (action) — action-reset-category-graphics.cs
-// PURPOSE: Clear a category-wide graphic override in a view — the paired "undo" for
-//          action-set-category-color.cs. Different from action-reset-graphic-overrides.cs, which clears
-//          PER-ELEMENT overrides on a filtered `elements` set; this clears the CATEGORY-level override
-//          set via Visibility/Graphics > Model Categories.
+// PURPOSE: Clear a category-wide graphic override in a view for one or more categories at once — the
+//          paired "undo" for action-set-category-color.cs. Different from
+//          action-reset-graphic-overrides.cs, which clears PER-ELEMENT overrides on a filtered
+//          `elements` set; this clears the CATEGORY-level override set via Visibility/Graphics > Model
+//          Categories.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — a category override has no "which elements"
 //          step to compose with, so this fragment is self-contained (declares its own `sb`, ends with
 //          its own `return`) rather than chained after a filter.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-BuiltInCategory targetCategory = BuiltInCategory.OST_DuctCurves;
+BuiltInCategory[] targetCategories = { BuiltInCategory.OST_DuctCurves };
 int? targetViewIdInt = null; // null = active view; set an Element Id to target any view, even one not currently open on screen
 // ---- END INPUTS ----
 
@@ -23,27 +24,33 @@ if (view == null)
 }
 else
 {
-    var category = Category.GetCategory(Document, targetCategory);
-    if (category == null)
+    int okCount = 0;
+    var skipped = new List<string>();
+
+    using (var t = new Transaction(Document, "AJ Tools - Reset Category Graphic Overrides"))
     {
-        sb.AppendLine($"Category {targetCategory} not found in this document.");
-    }
-    else
-    {
-        using (var t = new Transaction(Document, "AJ Tools - Reset Category Graphic Overrides"))
+        t.Start();
+        try
         {
-            t.Start();
-            try
+            foreach (var targetCategory in targetCategories.Distinct())
             {
+                var category = Category.GetCategory(Document, targetCategory);
+                if (category == null)
+                {
+                    skipped.Add($"{targetCategory} (not found in this document)");
+                    continue;
+                }
                 view.SetCategoryOverrides(category.Id, new OverrideGraphicSettings());
-                t.Commit();
-                sb.AppendLine($"Reset category override for '{category.Name}' in view '{view.Name}'.");
+                okCount++;
             }
-            catch (Exception ex)
-            {
-                t.RollBack();
-                sb.AppendLine($"FAILED to reset category override — rolled back, nothing changed. Reason: {ex.Message}");
-            }
+            t.Commit();
+            sb.AppendLine($"Reset category override on {okCount} categor(y/ies) in view '{view.Name}'.");
+            if (skipped.Count > 0) sb.AppendLine("Skipped: " + string.Join("; ", skipped));
+        }
+        catch (Exception ex)
+        {
+            t.RollBack();
+            sb.AppendLine($"FAILED to reset category override — rolled back, nothing changed. Reason: {ex.Message}");
         }
     }
 }

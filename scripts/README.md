@@ -73,8 +73,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-reset-graphic-overrides.cs`](actions/color-graphics/action-reset-graphic-overrides.cs) | Clear PER-ELEMENT color/fill overrides |
 | [`action-report-graphic-overrides.cs`](actions/color-graphics/action-report-graphic-overrides.cs) | Read back current view-specific graphic overrides per element — line color, fill color, transparency, halftone; read-only |
 | [`action-set-transparency.cs`](actions/color-graphics/action-set-transparency.cs) | Set surface transparency (0-100%) |
-| [`action-set-category-color.cs`](actions/color-graphics/action-set-category-color.cs) | Override an ENTIRE category's line/fill color in a view (Visibility/Graphics > Model Categories) — does NOT consume `elements`, category is a direct input |
-| [`action-reset-category-graphics.cs`](actions/color-graphics/action-reset-category-graphics.cs) | Clear a CATEGORY-level graphic override — the paired undo for `action-set-category-color.cs` — does NOT consume `elements` |
+| [`action-set-category-color.cs`](actions/color-graphics/action-set-category-color.cs) | Override one or more ENTIRE categories' line/fill color in a view (Visibility/Graphics > Model Categories) — does NOT consume `elements`, categories are a direct array input |
+| [`action-reset-category-graphics.cs`](actions/color-graphics/action-reset-category-graphics.cs) | Clear one or more CATEGORY-level graphic overrides — the paired undo for `action-set-category-color.cs` — does NOT consume `elements` |
 
 **Visibility** — [`actions/visibility/`](actions/visibility/)
 | Fragment | Job |
