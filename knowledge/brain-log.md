@@ -565,3 +565,52 @@ here.
   building, not assuming. Left as a code comment on `getConnection()` for now.
   `npm test` (now 3 tests) and `node tools/verify-consistency.mjs` both still pass clean after all of the
   above. Same "Next" list as before applies, un-renumbered above — Part 2 was item 1 on it, now done.
+- 2026-07-23 — **Part 3** of the same multi-session pass: widened the static-pitfall sweep (this list's
+  item 1), still no Revit connection. Started from `scripts/README.md`'s per-fragment notes: found 14
+  fragments explicitly flagged there as "graceful path only" / "BLOCKED" / "not yet live-verified"
+  (the 6 not-yet-tested `filters/` — host, assembly, design-option, electrical-system, insulation-status,
+  insulation-type — plus `action-set-view-workset-visibility.cs`, `action-set-design-option.cs`,
+  `action-reload-links.cs`, `recipes/ray-trace-to-ceiling.cs`, `action-export-sheets-to-pdf.cs`,
+  `action-flip-elements.cs`, `action-assign-scope-box-to-view.cs`, `action-purge-unused.cs`). Read every
+  one closely against Revit 2020 API knowledge and this repo's own documented gotchas. **13 came back
+  clean** — no static defect found, existing caution flags are honest and well-placed (real fixtures for
+  a positive-match test genuinely don't exist in this model yet; that's a test-data gap, not a code smell).
+  **1 real, precise, unresolved concern**: `action-reload-links.cs` compares
+  `result.LoadResult == LinkLoadResultType.LinkNotNeeded` — moderate suspicion (not confirmed) that
+  `LinkNotNeeded` may not be a real `LinkLoadResultType` enum member, which would mean this fragment fails
+  to even COMPILE on first run (not a logic bug, a wrong identifier). Tried to verify against Autodesk's
+  own API docs (revitapidocs.com) and a Revit-API blog — both blocked automated fetches (403) from this
+  session; confirmed via the proxy status endpoint this was the sites' own blocking, not a local network
+  issue. Left unresolved rather than guessing — flagged precisely in the file's own header so whoever next
+  has live Revit + a compiler can resolve it in seconds instead of debugging blind.
+  **Bigger, unplanned finding along the way**: while grepping more broadly (file headers, not just
+  README's notes), found 18 more fragments whose OWN header comment still said "NOT YET LIVE-VERIFIED" —
+  even though `scripts/README.md`'s row for every one of them already said "live-verified ... zero bugs."
+  Same *class* of drift as Part 1's `actions/` checker gap, one level deeper: the file-level comment was
+  simply never updated after live-verification happened, so reading the file in isolation gave an actively
+  wrong impression while README (the real index) was already correct. Cross-checked each of the 18
+  against its actual README row by hand (spot-checked 4, automated-compared all 18) before touching
+  anything — confirmed real, not a false positive. Fixed properly, not just re-synced: replaced each stale
+  banner with a short pointer ("verification status: see this fragment's row in scripts/README.md") instead
+  of copying today's status inline — copying it would only drift again next time README gets updated
+  without a matching per-file edit, which is exactly how this happened the first time. This follows
+  `brain-self-maintain`'s own "never duplicate a fact across two files" rule applied to a case that rule
+  didn't originally have in mind. One case (`action-rename-element.cs`) had a genuinely still-useful GOTCHA
+  (names must be unique within scope) folded into the same comment block — kept that part, only replaced
+  the stale status clause. Fixed files: `action-align-elements.cs`, `action-array-elements.cs`,
+  `action-offset-elements.cs`, `action-add-parameter-prefix-suffix.cs`, `action-find-replace-element-name.cs`,
+  `action-rename-element.cs`, `action-rename-family.cs`, `action-report-clashes.cs`,
+  `action-add-schedule-field.cs`, `action-remove-schedule-field.cs`, `action-set-schedule-field-format.cs`,
+  `action-set-schedule-filters.cs`, `action-set-schedule-sort-group.cs`, `action-set-sheet-title-block.cs`,
+  `action-set-view-properties.cs`, `action-tag-elements.cs`, `create-schedule.cs`,
+  `filter-by-selection-filter.cs`.
+  **Not yet reviewed** (genuinely still open per README, no drift, just not read closely this pass —
+  candidates for a future static-pitfall pass): `action-add-project-parameter.cs`, `action-set-workset.cs`,
+  `action-export-schedule-to-csv.cs`, `action-duplicate-type.cs`, `action-split-elements.cs`,
+  `create-dimension.cs`, `create-filled-region.cs`, `recipes/connect-terminal-branch.cs`,
+  `recipes/create-parametric-box-family-with-duct-connector.cs`, `recipes/draw-main-duct-with-cap.cs`,
+  `recipes/place-fcu.cs`.
+  `node tools/verify-consistency.mjs` and `npm test` both still pass clean.
+  **Next** (updated): 1. Finish the static sweep on the "not yet reviewed" list just above. 2. Editorial
+  pass on `AGENT-SPEC.md` against the routed files it summarizes. 3. Look at trimming session-start
+  reading for token cost.

@@ -10,7 +10,7 @@
 // GOTCHA: value is always given as a string here and converted — numeric filter types
 //         (GreaterThan/LessThan/etc.) parse it as a double, text filter types (Contains/BeginsWith/Equal/
 //         etc.) use it as-is; HasValue/HasNoValue ignore value entirely.
-// NOT YET LIVE-VERIFIED — test on one schedule first before trusting it on a batch.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
