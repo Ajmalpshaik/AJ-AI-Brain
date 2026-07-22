@@ -195,3 +195,26 @@ here.
   (`scripts/actions/file.cs` needs `../../knowledge/`, not `../knowledge/`) — corrected to the true
   3-level path (`../../../knowledge/`) now that they're one level deeper, fixing a pre-existing
   inaccuracy, not just preserving it.
+- 2026-07-22 — Direct follow-up on the color-graphics group found a real gap and a real bug. **Gap**:
+  every existing color action (`action-set-color-uniform.cs`, `action-color-by-group.cs`, etc.) overrides
+  PER-ELEMENT graphics only — there was no way to override an entire CATEGORY's line/fill color in one go
+  (Revit's own Visibility/Graphics > Model Categories tab, `View.SetCategoryOverrides`/
+  `GetCategoryOverrides` — a genuinely different API from the per-element `SetElementOverrides` every
+  other action here uses). Built `action-set-category-color.cs` and `action-reset-category-graphics.cs` —
+  both deliberately do NOT consume `elements` (a category override has no "which elements" step), so
+  they're self-contained fragments, not chained after a filter. **Bug**: `action-color-by-group.cs`'s
+  "random" mode picked each group's R/G/B independently, which can land two different groups on
+  near-identical colors purely by chance — exactly what the user flagged ("its not be identical visually
+  also i need different colors and randomize"). Fixed by hue-stepping evenly around the color wheel
+  (360°/groupCount apart) instead of independent RGB randomization — GUARANTEES every group is visually
+  distinct no matter how many groups there are, while a random starting hue re-rolled each run still
+  gives real variety between runs. Added a plain HSV→RGB conversion function (no `System.Drawing`
+  dependency assumed) and two new modes reusing the same guaranteed-distinct hue-stepping at different
+  saturation/brightness bands: `"pastel"` and `"neon"`. Also built
+  `knowledge/live-model/color-vocabulary.md` — a plain-language color-style reference (pastel/neon/muted/
+  bold/jewel-tone → HSV saturation-brightness bands, plus ready-to-use RGB swatches) so a request like "I
+  need pastel colors" resolves to real numbers instead of a guess; explains when to pick one swatch
+  (`action-set-color-uniform.cs`/`action-set-category-color.cs`) vs. when to use `action-color-by-group.cs`'s
+  new pastel/neon modes (multi-group requests — hue-stepping beats hand-picking N swatches). Added the new
+  file to the `knowledge/live-model/README.md` index and updated the `scripts/README.md` color-graphics
+  section (verified every link still resolves).
