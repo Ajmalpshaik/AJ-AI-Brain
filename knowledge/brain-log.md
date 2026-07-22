@@ -317,3 +317,8 @@ here.
   `action-report-graphic-overrides.cs` verbatim, extended with the new weight/pattern properties).
   `color-graphics/` is now 18 fragments — this group considered fully complete, no further gaps
   identified.
+- 2026-07-22 — Final completeness pass caught one asymmetry: `action-set-transparency.cs` (per-element)
+  never got a category-level sibling, unlike color/halftone/line-style which were just paired at both
+  levels in the same session. Added `action-set-category-transparency.cs` to close it. `color-graphics/`
+  is now 19 fragments — genuinely complete, every per-element Set action now has its category-level
+  counterpart.
