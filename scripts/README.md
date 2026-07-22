@@ -203,6 +203,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-extract-dates-from-textnotes.cs`](actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs) | Scan every TextNote on each sheet for date-like text, report distinct dates + source sheet(s), read-only |
 | [`action-assign-revisions-by-sheet-date.cs`](actions/sheet-dates-revisions/action-assign-revisions-by-sheet-date.cs) | Attach each sheet's matching project Revision(s) via `SetAdditionalRevisionIds`, matched by date found in that sheet's TextNotes — writes the model, see gotcha note in `../knowledge/live-model/revisions.md` |
 | [`action-remove-revision-from-sheet.cs`](actions/sheet-dates-revisions/action-remove-revision-from-sheet.cs) | Detach named Revision(s) from each sheet, matched by Description — the reverse of `action-assign-revisions-by-sheet-date.cs` |
+| [`action-report-revisions.cs`](actions/sheet-dates-revisions/action-report-revisions.cs) | List every project Revision in order — Seq/Date/Description/Issued By/To/Issued/Visibility — does NOT consume `elements` |
+| [`action-edit-revision.cs`](actions/sheet-dates-revisions/action-edit-revision.cs) | Update an existing Revision's fields (description/date/issued by/to/issued flag/visibility), matched by SequenceNumber — does NOT consume `elements` |
+| [`action-delete-revision.cs`](actions/sheet-dates-revisions/action-delete-revision.cs) | Permanently delete Revision(s) by SequenceNumber — completes the Create/Edit/Delete lifecycle alongside `creators/create-revision.cs`; renumbers later revisions — does NOT consume `elements` |
 
 ### Creators (produce `elements` by creating new ones)
 | Fragment | Job |
