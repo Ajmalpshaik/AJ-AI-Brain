@@ -384,3 +384,13 @@ here.
   than needing its own spatial pass. Carries filter-by-space.cs's existing not-yet-live-verified caveat on
   `Space.IsPointInSpace` for the space/zone modes; the room mode reuses the already-verified
   `Room.IsPointInRoom` path. `reporting/` is now 9 fragments.
+- 2026-07-22 — Direct follow-up: full Phase management, a real gap — nothing created, renamed, or
+  assigned elements to a Phase anywhere in this library. Added 3 fragments to `parameters-naming/`
+  (closest thematic fit — Phase Created/Demolished are genuinely parameters):
+  `action-create-phase.cs` (`Document.Phases.Insert()` after the current last phase, skips existing
+  names), `action-rename-phase.cs` (old-name -> new-name pairs, batch-capable) — both self-contained, not
+  yet live-verified. `action-set-element-phase.cs` — the one that actually needed a NEW mechanism, not
+  just a phase-specific wrapper: `action-set-parameter-value.cs` can't set Phase Created/Demolished at
+  all, since those are ElementId-storage parameters and that action only ever handles String/Double.
+  Pairs with the already-existing reverse lookup, `filter-by-phase.cs` (finds elements BY their assigned
+  phase). `parameters-naming/` is now 8 fragments.
