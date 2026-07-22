@@ -25,6 +25,8 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-category.cs`](filters/filter-by-category.cs) | Every instance of one category, optional level scope |
 | [`filter-by-category-and-family.cs`](filters/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
 | [`filter-by-category-and-numeric-param.cs`](filters/filter-by-category-and-numeric-param.cs) | Category narrowed by a numeric parameter vs. an mm value (the "500mm duct" filter) |
+| [`filter-by-length.cs`](filters/filter-by-length.cs) | Category narrowed by Length (mm) vs. an mm value — bound to `CURVE_ELEM_LENGTH` directly |
+| [`filter-by-size.cs`](filters/filter-by-size.cs) | Category narrowed by size — round (Diameter) and rectangular (Width x Height) handled together, or a plain "Size" text match |
 | [`filter-by-room.cs`](filters/filter-by-room.cs) | Category narrowed to instances physically inside one room |
 | [`filter-by-system-type.cs`](filters/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP System TYPE/classification (e.g. "CDP", "Supply Air") |
 | [`filter-by-system-name.cs`](filters/filter-by-system-name.cs) | Pipes/ducts/fittings narrowed to one specific System instance's own name (e.g. "DXS 1") |
