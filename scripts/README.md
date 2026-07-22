@@ -110,15 +110,19 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | Fragment | Job |
 |---|---|
 | [`action-set-parameter-value.cs`](actions/parameters-naming/action-set-parameter-value.cs) | Bulk-set one parameter across the set — falls back to the Type if it's not an instance parameter |
+| [`action-add-parameter-prefix-suffix.cs`](actions/parameters-naming/action-add-parameter-prefix-suffix.cs) | Add a prefix/suffix, or find/replace a substring, INSIDE a parameter's existing text (any String parameter, any category) — falls back to Type, deduped so a shared type isn't stacked; not yet live-verified |
 | [`action-copy-parameter-value.cs`](actions/parameters-naming/action-copy-parameter-value.cs) | Copy one parameter's value into a different parameter, storage-type-aware — source and target each independently fall back to Type |
 | [`action-remove-parameter-value.cs`](actions/parameters-naming/action-remove-parameter-value.cs) | Clear one parameter's value — genuinely empty for String/ElementId, zeroed (not truly unset) for Double/Integer — falls back to Type |
 | [`action-renumber-sequential.cs`](actions/parameters-naming/action-renumber-sequential.cs) | Assign a sequential value (prefix/number/padding/suffix) to a String parameter, sorted by position or existing value |
 | [`action-rename-element.cs`](actions/parameters-naming/action-rename-element.cs) | Rename each element via `Element.Name` (views, sheets, levels, types — not most instance geometry); not yet live-verified |
+| [`action-rename-family.cs`](actions/parameters-naming/action-rename-family.cs) | Bulk-rename the FAMILY behind a set of instances (resolves instance → Symbol → Family, dedupes so each family is renamed once) — prefix, suffix, find/replace, or flat replace modes, e.g. add `AJ_` in front of every Duct Accessory family name; not yet live-verified |
 | [`action-create-phase.cs`](actions/parameters-naming/action-create-phase.cs) | Create one or more new project Phases, appended after the current last one — does NOT consume `elements` — not yet live-verified |
 | [`action-rename-phase.cs`](actions/parameters-naming/action-rename-phase.cs) | Rename one or more existing project Phases — does NOT consume `elements` — not yet live-verified |
 | [`action-set-element-phase.cs`](actions/parameters-naming/action-set-element-phase.cs) | Assign the filtered set's Phase Created and/or Phase Demolished to a named Phase — `action-set-parameter-value.cs` can't do this (no ElementId support) |
 | [`action-report-phases.cs`](actions/parameters-naming/action-report-phases.cs) | List every project Phase in order — does NOT consume `elements` |
 | [`action-delete-phase.cs`](actions/parameters-naming/action-delete-phase.cs) | Permanently delete one or more Phases by name — completes the phase lifecycle — does NOT consume `elements` — not yet live-verified |
+| [`action-set-workset.cs`](actions/parameters-naming/action-set-workset.cs) | Assign elements to a named user workset (write counterpart to `filter-by-workset.cs`) — not yet live-verified |
+| [`action-set-design-option.cs`](actions/parameters-naming/action-set-design-option.cs) | Add elements to a named Design Option via the copy-while-active-option workaround (write counterpart to `filter-by-design-option.cs`, no direct public setter exists) — higher-uncertainty, not yet live-verified |
 
 **Reporting** — [`actions/reporting/`](actions/reporting/)
 | Fragment | Job |
@@ -132,12 +136,15 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-report-bounding-box.cs`](actions/reporting/action-report-bounding-box.cs) | Report each element's bounding box + the combined extents of the set; read-only |
 | [`action-material-takeoff.cs`](actions/reporting/action-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
 | [`action-length-by-size.cs`](actions/reporting/action-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
+| [`action-report-room-space-data.cs`](actions/reporting/action-report-room-space-data.cs) | Area/Volume/Level/Occupancy table for Rooms or Spaces; read-only |
 
 **QA Checks** — [`actions/qa-checks/`](actions/qa-checks/)
 | Fragment | Job |
 |---|---|
 | [`action-find-duplicates.cs`](actions/qa-checks/action-find-duplicates.cs) | QA check — flag elements whose insertion points sit within a tolerance of each other (duplicate LOCATION); read-only, optional select |
 | [`action-find-duplicate-values.cs`](actions/qa-checks/action-find-duplicate-values.cs) | QA check — flag elements sharing the same value in a named parameter, e.g. duplicate Mark (duplicate DATA, not location); read-only, optional select |
+| [`action-find-blank-parameter.cs`](actions/qa-checks/action-find-blank-parameter.cs) | QA check — flag elements where a named parameter is blank/unset (falls back to Type); read-only, optional select |
+| [`action-report-clashes.cs`](actions/qa-checks/action-report-clashes.cs) | Basic clash report — real geometry intersection between `elements` (set A) and a second category (set B); read-only, not yet live-verified |
 
 **Move / Copy / Rotate** — [`actions/move-copy-rotate/`](actions/move-copy-rotate/)
 | Fragment | Job |
@@ -146,6 +153,11 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-copy-elements.cs`](actions/move-copy-rotate/action-copy-elements.cs) | Duplicate every element, offset by one mm vector; produces `newElementIds` for chaining |
 | [`action-rotate-elements.cs`](actions/move-copy-rotate/action-rotate-elements.cs) | Rotate every element around a vertical axis by one angle, about its own location or a given pivot |
 | [`action-mirror-elements.cs`](actions/move-copy-rotate/action-mirror-elements.cs) | Mirror every element across a vertical plane through two plan points — copy or in-place |
+| [`action-offset-elements.cs`](actions/move-copy-rotate/action-offset-elements.cs) | Offset each linear element sideways by a perpendicular distance (mm) — copy or in-place; not yet live-verified |
+| [`action-trim-extend-elements.cs`](actions/move-copy-rotate/action-trim-extend-elements.cs) | Trim or extend exactly 2 linear elements to meet at their computed corner — not yet live-verified |
+| [`action-fillet-elements.cs`](actions/move-copy-rotate/action-fillet-elements.cs) | Round the corner between exactly 2 elements — real elbow fitting for MEP curves, or a geometric tangent arc for Model/Detail lines; not yet live-verified |
+| [`action-array-elements.cs`](actions/move-copy-rotate/action-array-elements.cs) | Multiple evenly-spaced copies — linear (fixed mm spacing) or radial (swept around a center); not yet live-verified |
+| [`action-align-elements.cs`](actions/move-copy-rotate/action-align-elements.cs) | Snap every element to match one reference element's X/Y/Z position — Revit's "Align" tool; not yet live-verified |
 
 **Structural Changes** — [`actions/structural-changes/`](actions/structural-changes/)
 | Fragment | Job |
@@ -155,6 +167,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-group-elements.cs`](actions/structural-changes/action-group-elements.cs) | Bundle the filtered set into a new Model Group |
 | [`action-ungroup-elements.cs`](actions/structural-changes/action-ungroup-elements.cs) | Dissolve Group instances in the set back into their members — paired undo for `action-group-elements.cs` |
 | [`action-join-geometry.cs`](actions/structural-changes/action-join-geometry.cs) | Join (or unjoin) every element in the set with one target element — many-to-one |
+| [`action-split-elements.cs`](actions/structural-changes/action-split-elements.cs) | Split each Duct/Pipe at a point along its own length (fraction or mm from start), auto-reconnects the joint — generalized from `recipes/split-duct-near-equipment.cs`; not yet live-verified |
+| [`action-purge-unused.cs`](actions/structural-changes/action-purge-unused.cs) | Delete unused View Templates, Filters, or Materials — the subset of native Purge Unused provably correct from the public API; does NOT consume `elements`, dry-run by default |
+| [`action-duplicate-type.cs`](actions/structural-changes/action-duplicate-type.cs) | Duplicate the distinct TYPE(s) behind a set of instances under a new name (prefix/suffix/fixed) — Type-level counterpart to `action-rename-family.cs`; not yet live-verified |
 
 **Sheets & Views** — [`actions/sheets-views/`](actions/sheets-views/)
 | Fragment | Job |
@@ -168,6 +183,11 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-remove-view-template.cs`](actions/sheets-views/action-remove-view-template.cs) | Detach a View Template from one or more views, optionally delete it from the document entirely — the paired undo for `action-apply-view-template.cs` — does NOT consume `elements` |
 | [`action-duplicate-view-template.cs`](actions/sheets-views/action-duplicate-view-template.cs) | Duplicate an existing View Template (by name) into a new, separately-named template — does NOT consume `elements` |
 | [`action-report-view-template-status.cs`](actions/sheets-views/action-report-view-template-status.cs) | Report whether one or more views have a View Template applied — which one, and which parameters are excluded from its control; read-only — does NOT consume `elements` |
+| [`action-export-sheets-to-pdf.cs`](actions/sheets-views/action-export-sheets-to-pdf.cs) | Batch-export ViewSheets to PDF, combined or one file per sheet; not yet live-verified |
+| [`action-set-view-properties.cs`](actions/sheets-views/action-set-view-properties.cs) | Batch-set Scale, Detail Level, and/or Visual Style across views — the lightweight direct version of applying a View Template; not yet live-verified |
+| [`action-tag-elements.cs`](actions/sheets-views/action-tag-elements.cs) | Simple tag placement (fixed offset, optional leader) in one view — reuses the proven `IndependentTag.Create` pattern from `recipes/tag-elements-in-active-view.cs` without its clash-scoring; not yet live-verified |
+| [`action-remove-tags.cs`](actions/sheets-views/action-remove-tags.cs) | Delete IndependentTag elements in the set — paired undo for `action-tag-elements.cs` |
+| [`action-export-schedule-to-csv.cs`](actions/sheets-views/action-export-schedule-to-csv.cs) | Export ViewSchedules to CSV via Revit's native `ViewSchedule.Export` — one file per schedule; not yet live-verified |
 
 **Sheet Dates & Revisions** — [`actions/sheet-dates-revisions/`](actions/sheet-dates-revisions/)
 | Fragment | Job |
@@ -183,8 +203,11 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-material.cs`](creators/create-material.cs) | Create one or more Materials with a set colour and transparency |
 | [`create-point-based-element.cs`](creators/create-point-based-element.cs) | Place a family instance at one or more points on a level |
 | [`create-room.cs`](creators/create-room.cs) | Place a Room at one or more points on a level |
+| [`create-space.cs`](creators/create-space.cs) | Place an MEP Space at one or more points on a level — Space-category equivalent of create-room.cs |
 | [`create-sheet.cs`](creators/create-sheet.cs) | Create one or more new sheets with a chosen title block |
 | [`create-schedule.cs`](creators/create-schedule.cs) | Create a bare schedule for a category with chosen fields — chain into `action-place-schedule-on-sheet.cs`; not yet live-verified |
+| [`create-text-note.cs`](creators/create-text-note.cs) | Place one or more Text Notes at given points in a view |
+| [`create-dimension.cs`](creators/create-dimension.cs) | Create a dimension string across 2+ Grids/Levels — deliberately scoped to Grid/Level references only, not arbitrary element geometry; higher-uncertainty, not yet live-verified |
 
 ### Recipes (bespoke multi-stage builds, not filter+action shaped)
 | Recipe | Job | Source |
