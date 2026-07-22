@@ -160,3 +160,12 @@ here.
   not yet live-verified — no electrical work in this model yet, and the insulation ones share
   `filter-by-host.cs`'s existing `InsulationLiningBase` uncertainty. Updated the filters table in
   `scripts/README.md`.
+- 2026-07-22 — Follow-up request for "filter by length, filter by size": flagged that
+  `filter-by-category-and-numeric-param.cs` already technically covers both (set `parameterName =
+  "Length"` or `"Diameter"`), so built genuinely differentiated versions rather than near-duplicates.
+  `filter-by-length.cs` binds directly to `BuiltInParameter.CURVE_ELEM_LENGTH` (guaranteed-correct, not a
+  display-name guess) and gets its own discoverable name. `filter-by-size.cs`'s real value: handles round
+  (Diameter) and rectangular (Width x Height) sizing TOGETHER in one pass — "the ø150 OR 300x200 ones"
+  without knowing ahead of time which candidates are round vs. rectangular, which the single-parameter
+  generic fragment can't do — plus an optional plain-text match against Revit's own calculated "Size"
+  parameter. Updated `scripts/README.md`.
