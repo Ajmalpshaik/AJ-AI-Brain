@@ -63,6 +63,14 @@ folder in the Filters dialog. When renaming these to match a new standard, split
 keep the prefix (folder) untouched, and only replace the suffix (the actual old type name) — same
 abbreviation-matching technique as above.
 
+**Reusable fragments now exist for the create/apply/remove lifecycle** — don't hand-write this pattern
+fresh: [`action-create-view-filter.cs`](../../scripts/actions/color-graphics/action-create-view-filter.cs)
+(builds the `ParameterFilterElement` + one `FilterRule` via `ParameterFilterRuleFactory`, not yet
+live-verified), [`action-apply-view-filter.cs`](../../scripts/actions/color-graphics/action-apply-view-filter.cs)
+(add to a view + set its override + visibility — mirrors the already-proven pattern below), and
+[`action-remove-view-filter.cs`](../../scripts/actions/color-graphics/action-remove-view-filter.cs)
+(detach from a view, optionally delete the definition entirely).
+
 **Per-view filter graphic overrides need BOTH projection AND cut set explicitly — Revit does not
 default one from the other.** Found live (2026-07-16): 26 filters already applied to a floor plan view
 had a fully correct Projection Line Color + Surface Pattern (Foreground) Color, but `CutLineColor` and
