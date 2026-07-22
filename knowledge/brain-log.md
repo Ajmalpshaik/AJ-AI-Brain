@@ -218,3 +218,11 @@ here.
   new pastel/neon modes (multi-group requests — hue-stepping beats hand-picking N swatches). Added the new
   file to the `knowledge/live-model/README.md` index and updated the `scripts/README.md` color-graphics
   section (verified every link still resolves).
+- 2026-07-22 — Closed out the color-graphics review per direct follow-up. Extended
+  `action-set-category-color.cs` and `action-reset-category-graphics.cs` from a single
+  `targetCategory` to a `targetCategories` array, so a whole system group (e.g. "Duct System" — Ducts +
+  Fittings + Accessories + Flex Ducts + Insulation + Lining) gets the category-wide treatment in one run
+  instead of one call per category; reports per-category skips (category not present in this document)
+  rather than failing the whole batch. Confirmed with the user that `action-highlight-vs-rest.cs` already
+  covers "color X red, gray out everything else in the view" — no new fragment needed there, already
+  live-verified. `color-graphics/` is now 8 fragments, considered complete for this pass.

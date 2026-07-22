@@ -1,17 +1,19 @@
 // ============================================================
 // FRAGMENT (action) — action-set-category-color.cs
-// PURPOSE: Override an ENTIRE category's line/fill color in a view — Revit's own Visibility/Graphics >
-//          Model Categories per-category override, not a per-element one. Different from
+// PURPOSE: Override one or more ENTIRE categories' line/fill color in a view — Revit's own Visibility/
+//          Graphics > Model Categories per-category override, not a per-element one. Different from
 //          action-set-color-uniform.cs: that colors only the specific elements in `elements`; this
-//          colors every instance of the category in the view — present now or added later — with ONE
-//          category-level setting instead of per-element overrides.
+//          colors every instance of each target category in the view — present now or added later —
+//          with ONE category-level setting instead of per-element overrides. Accepts several categories
+//          at once (e.g. the whole "Duct System" group: Ducts + Fittings + Accessories + Flex Ducts +
+//          Insulation + Lining) so a system-wide category color doesn't need one run per category.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — a category override has no "which elements"
 //          step to compose with, so this fragment is self-contained (declares its own `sb`, ends with
 //          its own `return`) rather than chained after a filter.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-BuiltInCategory targetCategory = BuiltInCategory.OST_DuctCurves;
+BuiltInCategory[] targetCategories = { BuiltInCategory.OST_DuctCurves };
 byte colorR = 255, colorG = 0, colorB = 0;
 bool includeFill = true;
 int? targetViewIdInt = null; // null = active view; set an Element Id to target any view, even one not currently open on screen
@@ -26,24 +28,29 @@ if (view == null)
 }
 else
 {
-    var category = Category.GetCategory(Document, targetCategory);
-    if (category == null)
-    {
-        sb.AppendLine($"Category {targetCategory} not found in this document.");
-    }
-    else
-    {
-        var solidFillPattern = new FilteredElementCollector(Document)
-            .OfClass(typeof(FillPatternElement))
-            .Cast<FillPatternElement>()
-            .FirstOrDefault(f => f.GetFillPattern().IsSolidFill);
+    var solidFillPattern = new FilteredElementCollector(Document)
+        .OfClass(typeof(FillPatternElement))
+        .Cast<FillPatternElement>()
+        .FirstOrDefault(f => f.GetFillPattern().IsSolidFill);
 
-        using (var t = new Transaction(Document, "AJ Tools - Set Category Color Override"))
+    var color = new Autodesk.Revit.DB.Color(colorR, colorG, colorB);
+    int okCount = 0;
+    var skipped = new List<string>();
+
+    using (var t = new Transaction(Document, "AJ Tools - Set Category Color Override"))
+    {
+        t.Start();
+        try
         {
-            t.Start();
-            try
+            foreach (var targetCategory in targetCategories.Distinct())
             {
-                var color = new Autodesk.Revit.DB.Color(colorR, colorG, colorB);
+                var category = Category.GetCategory(Document, targetCategory);
+                if (category == null)
+                {
+                    skipped.Add($"{targetCategory} (not found in this document)");
+                    continue;
+                }
+
                 var ogs = view.GetCategoryOverrides(category.Id);
                 ogs.SetProjectionLineColor(color);
                 ogs.SetCutLineColor(color);
@@ -57,14 +64,16 @@ else
                     ogs.SetCutForegroundPatternVisible(true);
                 }
                 view.SetCategoryOverrides(category.Id, ogs);
-                t.Commit();
-                sb.AppendLine($"Set category override for '{category.Name}' to RGB({colorR},{colorG},{colorB}) in view '{view.Name}' — affects every instance of this category, present or future, not just today's selection.");
+                okCount++;
             }
-            catch (Exception ex)
-            {
-                t.RollBack();
-                sb.AppendLine($"FAILED to set category color — rolled back, nothing changed. Reason: {ex.Message}");
-            }
+            t.Commit();
+            sb.AppendLine($"Set category override on {okCount} categor(y/ies) to RGB({colorR},{colorG},{colorB}) in view '{view.Name}' — affects every instance of each category, present or future, not just today's selection.");
+            if (skipped.Count > 0) sb.AppendLine("Skipped: " + string.Join("; ", skipped));
+        }
+        catch (Exception ex)
+        {
+            t.RollBack();
+            sb.AppendLine($"FAILED to set category color — rolled back, nothing changed. Reason: {ex.Message}");
         }
     }
 }
