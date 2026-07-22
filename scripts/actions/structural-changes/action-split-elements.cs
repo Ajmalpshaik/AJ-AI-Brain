@@ -5,14 +5,18 @@
 //          equipment-referenced version. Automatically reconnects the two resulting pieces at the joint
 //          afterward (MechanicalUtils/PlumbingUtils.BreakCurve does NOT do this on its own).
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
-// PRODUCES: newElementIds (List<ElementId>) — the freshly created far-side pieces, one per successful split,
-//           for chaining into another action.
+// PRODUCES: newElementIds (List<ElementId>) — the OTHER piece of each split, one per successful split, for
+//           chaining into another action. WHICH physical side keeps the original Id is NOT guaranteed —
+//           BreakCurve can hand the new Id to either side (confirmed live 2026-07-23 in
+//           recipes/split-duct-near-equipment.cs). The reconnect below is side-agnostic, so the split
+//           itself is safe — but if a downstream action needs a specific SIDE, re-locate each piece
+//           geometrically; never assume newElementIds is the far/start side.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: only Duct and Pipe are supported — Revit's public API only exposes BreakCurve for these two
 //         (Mechanical/Plumbing Utils); Cable Tray, Conduit, and Wall have no equivalent public split call.
 // GOTCHA: only a straight (Line) run can be split this way — an element on a curved/Arc LocationCurve is
 //         skipped.
-// NOT YET LIVE-VERIFIED — test on ONE element first before trusting it on a batch.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
