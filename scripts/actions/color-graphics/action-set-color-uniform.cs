@@ -2,7 +2,7 @@
 // FRAGMENT (action) — action-set-color-uniform.cs
 // PURPOSE: Apply ONE color to every element in `elements` — both line color AND a solid surface fill
 //          (the user explicitly wants both, not just line color, so it reads as that color in shaded/
-//          realistic views too — see ../knowledge/live-model/mep-trace.md color-coding note).
+//          realistic views too — see ../../../knowledge/live-model/mep-trace.md color-coding note).
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

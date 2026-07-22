@@ -62,43 +62,82 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-insulation-type.cs`](filters/filter-by-insulation-type.cs) | The insulation/lining elements themselves, by kind/type/material/thickness — not yet live-verified |
 
 ### Actions (consume `elements`)
+Grouped into subfolders under `actions/` by job — same grouping used whenever these are listed out loud.
+
+**Color & Graphics** — [`actions/color-graphics/`](actions/color-graphics/)
 | Fragment | Job |
 |---|---|
-| [`action-set-color-uniform.cs`](actions/action-set-color-uniform.cs) | One color (line + solid fill) on every element |
-| [`action-color-by-group.cs`](actions/action-color-by-group.cs) | Distinct color per group, grouped by any parameter's actual value; palette/gradient/random modes |
-| [`action-highlight-vs-rest.cs`](actions/action-highlight-vs-rest.cs) | Highlight `elements` in one color, gray out every OTHER element in the active view |
-| [`action-reset-graphic-overrides.cs`](actions/action-reset-graphic-overrides.cs) | Clear color/fill overrides |
-| [`action-isolate-elements.cs`](actions/action-isolate-elements.cs) | Temporary isolate, reset-then-apply |
-| [`action-hide-elements.cs`](actions/action-hide-elements.cs) | Hide (temporary by default, or permanent) |
-| [`action-unhide-elements.cs`](actions/action-unhide-elements.cs) | Reverse a permanent hide |
-| [`action-select-elements.cs`](actions/action-select-elements.cs) | Set as the active Revit selection |
-| [`action-count-and-report.cs`](actions/action-count-and-report.cs) | Bare count or size-breakdown table |
-| [`action-set-parameter-value.cs`](actions/action-set-parameter-value.cs) | Bulk-set one parameter across the set |
-| [`action-set-transparency.cs`](actions/action-set-transparency.cs) | Set surface transparency (0-100%) |
-| [`action-section-box-and-zoom.cs`](actions/action-section-box-and-zoom.cs) | Section-box a 3D view around `elements` and zoom to them |
-| [`action-material-takeoff.cs`](actions/action-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
-| [`action-length-by-size.cs`](actions/action-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
-| [`action-set-pin-state.cs`](actions/action-set-pin-state.cs) | Pin or unpin the filtered element set |
-| [`action-report-parameters.cs`](actions/action-report-parameters.cs) | Parameter table for the filtered element set |
-| [`action-show-elements.cs`](actions/action-show-elements.cs) | Zoom/show the filtered elements, optionally selecting them |
-| [`action-extract-dates-from-textnotes.cs`](actions/action-extract-dates-from-textnotes.cs) | Scan every TextNote on each sheet for date-like text, report distinct dates + source sheet(s), read-only |
-| [`action-assign-revisions-by-sheet-date.cs`](actions/action-assign-revisions-by-sheet-date.cs) | Attach each sheet's matching project Revision(s) via `SetAdditionalRevisionIds`, matched by date found in that sheet's TextNotes — writes the model, see gotcha note in `../knowledge/live-model/revisions.md` |
-| [`action-copy-parameter-value.cs`](actions/action-copy-parameter-value.cs) | Copy one parameter's value into a different parameter, storage-type-aware |
-| [`action-renumber-sequential.cs`](actions/action-renumber-sequential.cs) | Assign a sequential value (prefix/number/padding/suffix) to a String parameter, sorted by position or existing value |
-| [`action-find-duplicates.cs`](actions/action-find-duplicates.cs) | QA check — flag elements whose insertion points sit within a tolerance of each other; read-only, optional select |
-| [`action-move-elements.cs`](actions/action-move-elements.cs) | Translate every element by one mm offset vector |
-| [`action-copy-elements.cs`](actions/action-copy-elements.cs) | Duplicate every element, offset by one mm vector; produces `newElementIds` for chaining |
-| [`action-rotate-elements.cs`](actions/action-rotate-elements.cs) | Rotate every element around a vertical axis by one angle, about its own location or a given pivot |
-| [`action-report-graphic-overrides.cs`](actions/action-report-graphic-overrides.cs) | Read back current view-specific graphic overrides per element — line color, fill color, transparency, halftone; read-only |
-| [`action-place-viewport-on-sheet.cs`](actions/action-place-viewport-on-sheet.cs) | Place each view in the set onto one sheet as a Viewport (views can only sit on one sheet at a time) |
-| [`action-place-schedule-on-sheet.cs`](actions/action-place-schedule-on-sheet.cs) | Place each schedule onto one sheet — same schedule can be placed on multiple sheets, no duplication needed |
-| [`action-duplicate-views.cs`](actions/action-duplicate-views.cs) | Duplicate/duplicate-with-detailing/dependent-view each view in the set; produces `newViewIds` |
-| [`action-set-view-crop.cs`](actions/action-set-view-crop.cs) | Crop the active view to fit the filtered element set + margin |
-| [`action-report-location.cs`](actions/action-report-location.cs) | Report each element's position (point, line endpoints, or bounding-box-center fallback); read-only |
-| [`action-report-bounding-box.cs`](actions/action-report-bounding-box.cs) | Report each element's bounding box + the combined extents of the set; read-only |
-| [`action-change-element-type.cs`](actions/action-change-element-type.cs) | Bulk-swap every element's type to a different named type within the same family |
-| [`action-delete-elements.cs`](actions/action-delete-elements.cs) | Permanently delete every element in the set — highest-risk fragment, explorer-first is mandatory, needs `allowDestructive: true` on the bridge call too |
-| [`action-rename-element.cs`](actions/action-rename-element.cs) | Rename each element via `Element.Name` (views, sheets, levels, types — not most instance geometry); not yet live-verified |
+| [`action-set-color-uniform.cs`](actions/color-graphics/action-set-color-uniform.cs) | One color (line + solid fill) on every element |
+| [`action-color-by-group.cs`](actions/color-graphics/action-color-by-group.cs) | Distinct color per group, grouped by any parameter's actual value; palette/gradient/random modes |
+| [`action-highlight-vs-rest.cs`](actions/color-graphics/action-highlight-vs-rest.cs) | Highlight `elements` in one color, gray out every OTHER element in the active view |
+| [`action-reset-graphic-overrides.cs`](actions/color-graphics/action-reset-graphic-overrides.cs) | Clear color/fill overrides |
+| [`action-report-graphic-overrides.cs`](actions/color-graphics/action-report-graphic-overrides.cs) | Read back current view-specific graphic overrides per element — line color, fill color, transparency, halftone; read-only |
+| [`action-set-transparency.cs`](actions/color-graphics/action-set-transparency.cs) | Set surface transparency (0-100%) |
+
+**Visibility** — [`actions/visibility/`](actions/visibility/)
+| Fragment | Job |
+|---|---|
+| [`action-isolate-elements.cs`](actions/visibility/action-isolate-elements.cs) | Temporary isolate, reset-then-apply |
+| [`action-hide-elements.cs`](actions/visibility/action-hide-elements.cs) | Hide (temporary by default, or permanent) |
+| [`action-unhide-elements.cs`](actions/visibility/action-unhide-elements.cs) | Reverse a permanent hide |
+| [`action-show-elements.cs`](actions/visibility/action-show-elements.cs) | Zoom/show the filtered elements, optionally selecting them |
+| [`action-set-view-crop.cs`](actions/visibility/action-set-view-crop.cs) | Crop the active view to fit the filtered element set + margin |
+| [`action-section-box-and-zoom.cs`](actions/visibility/action-section-box-and-zoom.cs) | Section-box a 3D view around `elements` and zoom to them |
+| [`action-set-pin-state.cs`](actions/visibility/action-set-pin-state.cs) | Pin or unpin the filtered element set (same "reversible display/protection toggle" class as the rest of this group) |
+
+**Selection** — [`actions/selection/`](actions/selection/)
+| Fragment | Job |
+|---|---|
+| [`action-select-elements.cs`](actions/selection/action-select-elements.cs) | Set as the active Revit selection |
+
+**Parameters & Naming** — [`actions/parameters-naming/`](actions/parameters-naming/)
+| Fragment | Job |
+|---|---|
+| [`action-set-parameter-value.cs`](actions/parameters-naming/action-set-parameter-value.cs) | Bulk-set one parameter across the set |
+| [`action-copy-parameter-value.cs`](actions/parameters-naming/action-copy-parameter-value.cs) | Copy one parameter's value into a different parameter, storage-type-aware |
+| [`action-renumber-sequential.cs`](actions/parameters-naming/action-renumber-sequential.cs) | Assign a sequential value (prefix/number/padding/suffix) to a String parameter, sorted by position or existing value |
+| [`action-rename-element.cs`](actions/parameters-naming/action-rename-element.cs) | Rename each element via `Element.Name` (views, sheets, levels, types — not most instance geometry); not yet live-verified |
+
+**Reporting** — [`actions/reporting/`](actions/reporting/)
+| Fragment | Job |
+|---|---|
+| [`action-count-and-report.cs`](actions/reporting/action-count-and-report.cs) | Bare count or size-breakdown table |
+| [`action-report-parameters.cs`](actions/reporting/action-report-parameters.cs) | Parameter table for the filtered element set |
+| [`action-report-location.cs`](actions/reporting/action-report-location.cs) | Report each element's position (point, line endpoints, or bounding-box-center fallback); read-only |
+| [`action-report-bounding-box.cs`](actions/reporting/action-report-bounding-box.cs) | Report each element's bounding box + the combined extents of the set; read-only |
+| [`action-material-takeoff.cs`](actions/reporting/action-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
+| [`action-length-by-size.cs`](actions/reporting/action-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
+
+**QA Checks** — [`actions/qa-checks/`](actions/qa-checks/)
+| Fragment | Job |
+|---|---|
+| [`action-find-duplicates.cs`](actions/qa-checks/action-find-duplicates.cs) | QA check — flag elements whose insertion points sit within a tolerance of each other; read-only, optional select |
+
+**Move / Copy / Rotate** — [`actions/move-copy-rotate/`](actions/move-copy-rotate/)
+| Fragment | Job |
+|---|---|
+| [`action-move-elements.cs`](actions/move-copy-rotate/action-move-elements.cs) | Translate every element by one mm offset vector |
+| [`action-copy-elements.cs`](actions/move-copy-rotate/action-copy-elements.cs) | Duplicate every element, offset by one mm vector; produces `newElementIds` for chaining |
+| [`action-rotate-elements.cs`](actions/move-copy-rotate/action-rotate-elements.cs) | Rotate every element around a vertical axis by one angle, about its own location or a given pivot |
+
+**Structural Changes** — [`actions/structural-changes/`](actions/structural-changes/)
+| Fragment | Job |
+|---|---|
+| [`action-change-element-type.cs`](actions/structural-changes/action-change-element-type.cs) | Bulk-swap every element's type to a different named type within the same family |
+| [`action-delete-elements.cs`](actions/structural-changes/action-delete-elements.cs) | Permanently delete every element in the set — highest-risk fragment, explorer-first is mandatory, needs `allowDestructive: true` on the bridge call too |
+
+**Sheets & Views** — [`actions/sheets-views/`](actions/sheets-views/)
+| Fragment | Job |
+|---|---|
+| [`action-place-viewport-on-sheet.cs`](actions/sheets-views/action-place-viewport-on-sheet.cs) | Place each view in the set onto one sheet as a Viewport (views can only sit on one sheet at a time) |
+| [`action-place-schedule-on-sheet.cs`](actions/sheets-views/action-place-schedule-on-sheet.cs) | Place each schedule onto one sheet — same schedule can be placed on multiple sheets, no duplication needed |
+| [`action-duplicate-views.cs`](actions/sheets-views/action-duplicate-views.cs) | Duplicate/duplicate-with-detailing/dependent-view each view in the set; produces `newViewIds` |
+
+**Sheet Dates & Revisions** — [`actions/sheet-dates-revisions/`](actions/sheet-dates-revisions/)
+| Fragment | Job |
+|---|---|
+| [`action-extract-dates-from-textnotes.cs`](actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs) | Scan every TextNote on each sheet for date-like text, report distinct dates + source sheet(s), read-only |
+| [`action-assign-revisions-by-sheet-date.cs`](actions/sheet-dates-revisions/action-assign-revisions-by-sheet-date.cs) | Attach each sheet's matching project Revision(s) via `SetAdditionalRevisionIds`, matched by date found in that sheet's TextNotes — writes the model, see gotcha note in `../knowledge/live-model/revisions.md` |
 
 ### Creators (produce `elements` by creating new ones)
 | Fragment | Job |

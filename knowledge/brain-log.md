@@ -177,3 +177,21 @@ here.
   semantics per non-empty field, so a repeated number across levels can be disambiguated by adding the
   name). Backward-compatible — existing Id-only usage unchanged. Updated the `scripts/README.md`
   descriptions for both.
+- 2026-07-22 — Reorganized `scripts/actions/` (35 files, flat, hard to scan) into 10 job-grouped
+  subfolders per direct request, mirroring the grouping already used whenever these are listed out loud:
+  `color-graphics/` (6), `visibility/` (7, including `action-set-pin-state.cs` — same "reversible
+  display/protection toggle" class as isolate/hide/crop), `selection/` (1), `parameters-naming/` (4),
+  `reporting/` (6), `qa-checks/` (1), `move-copy-rotate/` (3), `structural-changes/` (2), `sheets-views/`
+  (3), `sheet-dates-revisions/` (2) — all moved with `git mv` to preserve history. Then fixed every
+  reference across the repo so nothing broke: rewrote `scripts/README.md`'s Actions section into matching
+  grouped subsections (verified programmatically — every `.cs` link in the file resolves to a real path),
+  updated the composition examples and routing table in `scripts/architecture.md` and `AGENT-SPEC.md`,
+  fixed the real markdown links in `knowledge/live-model/core.md` and `knowledge/reply-style.md`, and the
+  path-prefixed comments in `scripts/creators/create-schedule.cs` and
+  `scripts/examples/color-isolate-select-by-size.cs`. Bare filename mentions with no folder prefix
+  (`knowledge/live-model/views.md`, `skills/ajtools-live-model/SKILL.md`, `scripts/filters/*.cs`) needed
+  no change — they don't encode a path. Bonus fix caught along the way: 6 moved action files had
+  `../knowledge/...` SOURCE comments that were already one level short even at the OLD flat depth
+  (`scripts/actions/file.cs` needs `../../knowledge/`, not `../knowledge/`) — corrected to the true
+  3-level path (`../../../knowledge/`) now that they're one level deeper, fixing a pre-existing
+  inaccuracy, not just preserving it.

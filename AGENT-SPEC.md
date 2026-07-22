@@ -255,10 +255,10 @@ Is this a bespoke, multi-stage, order-dependent build (drawing/connecting/tracin
 ### 4.4 Worked example
 Request: *"Change the color of the 500mm-height ducts, then isolate and select them."*
 ```
-filters/filter-by-category-and-numeric-param.cs   (Ducts, Height, = 500mm)  → produces `elements`
-    + actions/action-set-color-uniform.cs                                   → colors `elements`
-    + actions/action-isolate-elements.cs                                    → isolates `elements`
-    + actions/action-select-elements.cs                                     → selects `elements`
+filters/filter-by-category-and-numeric-param.cs                 (Ducts, Height, = 500mm)  → produces `elements`
+    + actions/color-graphics/action-set-color-uniform.cs                                   → colors `elements`
+    + actions/visibility/action-isolate-elements.cs                                         → isolates `elements`
+    + actions/selection/action-select-elements.cs                                           → selects `elements`
 ```
 Fully assembled reference: `scripts/examples/color-isolate-select-by-size.cs`.
 
