@@ -169,3 +169,11 @@ here.
   without knowing ahead of time which candidates are round vs. rectangular, which the single-parameter
   generic fragment can't do — plus an optional plain-text match against Revit's own calculated "Size"
   parameter. Updated `scripts/README.md`.
+- 2026-07-22 — Full filter-list balance review found one real inconsistency: `filter-by-assembly.cs` and
+  `filter-by-group.cs` both accept an Id OR a name string, but `filter-by-room.cs`/`filter-by-space.cs`
+  required the Id already known — no way to say "elements in room 'Office 101'" directly. Fixed both in
+  place (same "update in place" rule) to accept roomId/roomName/roomNumber (spaceId/spaceName/
+  spaceNumber for the Space version), Id checked first, falling back to a Name+Number match (AND
+  semantics per non-empty field, so a repeated number across levels can be disambiguated by adding the
+  name). Backward-compatible — existing Id-only usage unchanged. Updated the `scripts/README.md`
+  descriptions for both.
