@@ -334,3 +334,18 @@ here.
   category's elements don't appear in a view-scoped collector at all (different from
   `action-report-category-overrides.cs`, where view-scoping is correct). `visibility/` is now 9
   fragments.
+- 2026-07-22 — `parameters-naming/` review: user asked for Set/Get/Copy/Remove — Set and Copy already
+  existed, Get was already covered by `action-report-parameters.cs`, so the one real gap was Remove.
+  Added `action-remove-parameter-value.cs`, honest about a real Revit API limit: String/ElementId can be
+  genuinely cleared (empty string / `InvalidElementId`), but Double/Integer have no public "unset" —
+  only reset to 0 — and the report line says so explicitly rather than calling both cases "cleared".
+  Bigger ask, a real and valuable gap: "what parameters does this element even have" — distinct from
+  `action-report-parameters.cs`, which only reports VALUES for names already known. Built
+  `action-report-parameter-inventory.cs` (`reporting/`): walks `Element.Parameters` (+ the Type's, if
+  `includeTypeParameters`), classifies each as Built-in / Shared / "Project or Family (not shared)" — the
+  third bucket is an honest limit, not a guess: Revit's public API genuinely cannot tell a Family Editor
+  parameter from a Project Parameter once both are loaded onto a project element, no provenance flag
+  exists — plus parameter group, storage type, Instance vs Type, read-only, and current value.
+  `sampleOnly` (default true) inventories just the first element for speed; set false to union across a
+  mixed set that might vary by family/type. This is the discovery step `core.md` already calls for
+  ("don't guess a parameter name from a plausible name") but never had a dedicated fragment until now.
