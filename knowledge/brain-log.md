@@ -394,3 +394,30 @@ here.
   all, since those are ElementId-storage parameters and that action only ever handles String/Double.
   Pairs with the already-existing reverse lookup, `filter-by-phase.cs` (finds elements BY their assigned
   phase). `parameters-naming/` is now 8 fragments.
+- 2026-07-22 — "Best and best" full sweep per direct request: closed out the phase lifecycle (discovery +
+  delete were still missing after the previous pass) and reviewed every action group that hadn't had its
+  own gap-check yet this session (`selection/`, `qa-checks/`, `move-copy-rotate/`, `structural-changes/`,
+  `sheet-dates-revisions/`). Found real gaps in all of them — three (mirror, group/ungroup, join geometry)
+  had already been explicitly identified as real in a PAST session's "universal actions" audit and
+  deliberately deferred as "not urgent enough to build unprompted"; this pass was exactly the moment to
+  build them.
+  - `parameters-naming/`: `action-report-phases.cs` (list, in order — the missing discovery step for
+    rename/delete/set-element-phase, all of which need an exact existing name) and `action-delete-phase.cs`
+    (destructive, gated the same way as `action-delete-elements.cs`) — completes Create/Rename/Delete.
+  - `selection/`: `action-select-elements.cs` only ever REPLACED the whole selection — added a `mode`
+    input (`replace`/`add`/`remove`) so "add these to what I've got" and "deselect these" both work now.
+  - `qa-checks/`: `action-find-duplicate-values.cs` — flags elements sharing the same VALUE in a named
+    parameter (duplicate Mark, duplicate Equipment Tag), a genuinely different check from
+    `action-find-duplicates.cs`'s duplicate LOCATION.
+  - `move-copy-rotate/`: `action-mirror-elements.cs` — `ElementTransformUtils.MirrorElements` across a
+    vertical plane through two plan points, copy or in-place.
+  - `structural-changes/`: `action-group-elements.cs`/`action-ungroup-elements.cs`
+    (`Document.Create.NewGroup`/`Group.UngroupMembers`) — Model Groups are their own category
+    (`OST_IOSModelGroups`), so `filter-by-category.cs` already finds them for `action-ungroup-elements.cs`,
+    no new filter needed. `action-join-geometry.cs` (`JoinGeometryUtils`) — many-to-one (join a batch to
+    ONE target element), the common real case; join/unjoin both driven by a `mode` input.
+  - `sheet-dates-revisions/`: `action-remove-revision-from-sheet.cs` — the reverse of
+    `action-assign-revisions-by-sheet-date.cs`, matched by Revision Description rather than date, carries
+    the same auto-purge gotcha noted in `revisions.md`.
+  9 new fragments plus the 1 modified (`action-select-elements.cs`) across 6 groups. Every group in
+  `scripts/actions/` has now had a dedicated gap-check pass this session.
