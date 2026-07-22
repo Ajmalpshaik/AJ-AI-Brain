@@ -90,13 +90,20 @@ $scriptsDir = Join-Path $claudeDir "scripts"
 $readmePath = Join-Path $scriptsDir "README.md"
 if (Test-Path $readmePath) {
     $readmeContent = Get-Content -Path $readmePath -Raw
-    $subfolders = @("filters", "actions", "recipes", "creators", "commands", "examples")
+    # Recursive, and paths are always the FULL path relative to scripts/ (subfolders included, forward
+    # slashes) — the old non-recursive listing went silently blind to every file one level deeper the
+    # moment scripts/actions/ was reorganized into job-grouped subfolders (see brain-log.md 2026-07-23).
+    # Kept in sync by hand with verify-consistency.mjs — if you change what one checks, change both.
+    $subfolders = @("filters", "actions", "recipes", "creators", "commands", "examples", "context")
 
     $onDisk = @()
     foreach ($folder in $subfolders) {
         $folderPath = Join-Path $scriptsDir $folder
         if (Test-Path $folderPath) {
-            $onDisk += Get-ChildItem -Path $folderPath -Filter "*.cs" | ForEach-Object { "$folder/$($_.Name)" }
+            $onDisk += Get-ChildItem -Path $folderPath -Filter "*.cs" -Recurse | ForEach-Object {
+                $relative = $_.FullName.Substring($scriptsDir.Length).TrimStart('\', '/')
+                $relative -replace '\\', '/'
+            }
         }
     }
 
@@ -106,7 +113,7 @@ if (Test-Path $readmePath) {
         }
     }
 
-    $readmeScriptRefs = [regex]::Matches($readmeContent, '\(((?:filters|actions|recipes|creators|commands|examples)/[^)]+\.cs)\)') |
+    $readmeScriptRefs = [regex]::Matches($readmeContent, '\(((?:filters|actions|recipes|creators|commands|examples|context)/[^)]+\.cs)\)') |
         ForEach-Object { $_.Groups[1].Value }
     foreach ($ref in $readmeScriptRefs) {
         $refPath = Join-Path $scriptsDir $ref

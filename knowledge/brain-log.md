@@ -614,3 +614,40 @@ here.
   **Next** (updated): 1. Finish the static sweep on the "not yet reviewed" list just above. 2. Editorial
   pass on `AGENT-SPEC.md` against the routed files it summarizes. 3. Look at trimming session-start
   reading for token cost.
+- 2026-07-23 — **Part 4** of the multi-session pass, in two halves per direct request: (A) self-audit of
+  Parts 1–3 for gaps, (B) the deferred `AGENT-SPEC.md` staleness pass. **(A) found 2 real gaps in my own
+  earlier work.** First: Part 1 fixed the recursion blind spot only in the NEW `verify-consistency.mjs`
+  and never back-ported it to `verify-consistency.ps1` — worse, the mjs's own header claimed the two were
+  "kept in sync by hand," which was false the moment it was written. On the machine where this Brain
+  actually runs (Windows, PowerShell), the ps1 was still silently checking 0 of the 112 `actions/` files.
+  Fixed: ps1 now recurses, compares full relative paths (forward-slashed), and covers `scripts/context/`
+  — the same three changes the mjs got. NOT executed here (no PowerShell in this container — mechanical
+  mirror of the proven mjs logic; run it once on Windows to confirm). Second: `brain-self-maintain`
+  SKILL.md step 4.7 instructed ONLY the PowerShell checker, which fails in web sessions — added the
+  `node tools/verify-consistency.mjs` alternative. Parts 2–3 re-checked clean (validation edges, comment
+  integrity of the 18 fixed files, checker/test both green).
+  **(B) `AGENT-SPEC.md` had gone stale in 5 places** — exactly the pattern its own history warned about
+  (it was written 2026-07-22, hours BEFORE the big live-verification pass, and never re-checked):
+  §3.5 claimed "77 fragments (71 + 6 context)" — reality is 206 (48 filters, 112 actions, 16 creators,
+  6 commands, 13 recipes, 2 examples, 9 context); §3.4 claimed "all 12 element-targeting tools" (really
+  13) and "nine take targetViewId" (really 6, plus view-only `reset_isolation`), and still said the only
+  assurance was `node --check` — replaced with the real situation (npm-test structural suite passes; live
+  Revit verification still pending); §6 Lessons Learned contained NONE of the 2026-07-23 live-pass
+  findings — added the confirmed ones at summary level (BreakCurve Id reassignment, connector
+  `CoordinateSystem.BasisZ` before drawing, `UnionWith()` losing quick-filters, and the Revit-2020 hard
+  gaps: no Scope Box/Phase creation, no Design Option activation, no `PDFExportOptions`, no
+  `SpatialElement.Volume` property, `TableCellCombinedParameterData` not `CombinedParameterRule`,
+  Room/Space `Element.Name` auto-combining, `LocationCurve.Curve` in-place reassignment silently no-op);
+  §11 still listed Purge Unused as unbuilt/NEEDS_REVIEW though `action-purge-unused.cs` shipped
+  2026-07-22. Header now carries a "last full staleness re-check" date so the next reader knows how
+  current it is. **Same-class drift found in `universal-actions-reference.md` along the way**: item 171
+  (Purge Unused) still said NEEDS_REVIEW → now BUILT-partial with honest scope; items 101/102 carried
+  stale "(not yet live-verified)" parentheticals contradicting `scripts/README.md`'s live-verified rows —
+  dropped, per Part 3's rule that verification status lives in README only.
+  Also bumped `mcp-server` to 1.3.1 (package.json + server version string + lockfile) — Part 2's
+  validation/hardening changed behavior and the version should say so.
+  `node tools/verify-consistency.mjs` clean, `npm test` 3/3, `npm audit` 0.
+  **Next**: 1. Finish the static sweep on Part 3's "not yet reviewed" list (11 fragments). 2. Trim
+  session-start reading for token cost. 3. On the next live-Revit session: run the ps1 checker once on
+  Windows, live-verify the 14 native tools + resolve the `LinkNotNeeded` flag in
+  `action-reload-links.cs`.
