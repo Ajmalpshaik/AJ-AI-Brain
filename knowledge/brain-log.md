@@ -288,3 +288,15 @@ here.
   the rare custom/shared-parameter case. Optional `checkAllViews` to report every real view in the
   project at once instead of just the active view. `sheets-views/` is now 9 fragments — View Template
   group considered complete: apply, create-from-view, controlled-params, remove, duplicate, status.
+- 2026-07-22 — Fixed the architectural gap flagged in the last review: `filter-by-views.cs` deliberately
+  excludes `IsTemplate` views, and nothing filled that hole, so every View Template fragment needed its
+  own bespoke by-name lookup instead of composing through the normal filter+action system. Built
+  `filter-by-view-templates.cs` — name-contains + a `usage` mode (`all`/`used`/`unused`, "used" meaning
+  applied to at least one real view via `View.ViewTemplateId`) — covering "get all templates", "get used
+  templates", and "get unused templates" as one fragment rather than three, since they're the same query
+  with the mode flipped. For "purge unused templates": didn't write a new delete action since
+  `actions/structural-changes/action-delete-elements.cs` already covers deletion generically — instead
+  added `scripts/examples/purge-unused-view-templates.cs`, a fully-assembled
+  filter-by-view-templates.cs(usage="unused") + action-delete-elements.cs composition with the same
+  MANDATORY explorer-first safety note the delete action itself carries. Cross-linked from
+  `filter-by-views.cs`'s own comment. Updated the `scripts/README.md` filters and examples tables.
