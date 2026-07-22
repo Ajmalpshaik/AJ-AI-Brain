@@ -256,3 +256,14 @@ here.
   real, distinct mechanisms but their exact rank isn't independently confirmable from memory alone —
   marked moderate-confidence and kept as given rather than silently reordered, per this project's
   "verify, don't trust" rule. Cross-referenced from `knowledge/live-model/README.md`.
+- 2026-07-22 — Built View Templates, a real gap already flagged (unbuilt) in
+  `universal-actions-reference.md` items 100-102 since that audit — direct follow-up confirmed it. Added
+  to `actions/sheets-views/` (view-management already lives there via `action-duplicate-views.cs`):
+  `action-apply-view-template.cs` (apply an existing template to one or many views in one call),
+  `action-create-view-template-from-view.cs` (capture a configured view's current settings as a new named
+  template, explicitly re-applying it to the source view rather than assuming `View.CreateViewTemplate()`
+  does that automatically — not yet live-verified), `action-set-view-template-controlled-params.cs`
+  (Include/Exclude which parameters a template controls on a given view, via
+  `GetNonControlledTemplateParameterIds`/`SetNonControlledTemplateParameterIds` — not yet live-verified).
+  All three self-contained (operate on views, not `elements`) like the category/view-filter actions.
+  Marked items 100-102 BUILT in `universal-actions-reference.md` with links to the new fragments.

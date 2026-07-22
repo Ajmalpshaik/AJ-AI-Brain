@@ -144,9 +144,9 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 ## Views & View Templates
 98. Create View (Plan/Section/3D/Elevation/Ceiling)
 99. Duplicate View
-100. Apply View Template
-101. Create View Template from View
-102. Set View Template Parameter Include/Exclude
+100. Apply View Template — BUILT: `actions/sheets-views/action-apply-view-template.cs`
+101. Create View Template from View — BUILT: `actions/sheets-views/action-create-view-template-from-view.cs` (not yet live-verified)
+102. Set View Template Parameter Include/Exclude — BUILT: `actions/sheets-views/action-set-view-template-controlled-params.cs` (not yet live-verified)
 103. Set View Scale
 104. Set View Detail Level
 105. Set View Discipline
