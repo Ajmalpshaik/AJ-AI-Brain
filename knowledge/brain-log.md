@@ -493,3 +493,45 @@ here.
   - `action-flip-elements.cs`: checked 13 loaded families across Mechanical Equipment and Duct Terminal —
     none support flip in this project. Graceful skip-path confirmed correct; the positive flip path remains
     genuinely blocked on a flip-capable family (door/window or similar) being loaded.
+- 2026-07-23 — Ran a from-scratch health/consistency pass from a Claude Code on the web (Linux, no
+  Revit/pwsh available) session, per a direct "make the Brain better/stronger/faster" request. **Found**:
+  `tools/verify-consistency.ps1`'s script-sync check (part 3) had gone silently blind to all 112
+  `actions/` fragments since that folder was reorganized into job-grouped subfolders (2026-07-22) — its
+  non-recursive `Get-ChildItem` never sees anything nested one level deeper. Genuine drift-*detection*
+  bug, not content drift: a full recount confirmed all 112 really are documented correctly in
+  `scripts/README.md`, so no actual mismatch existed, only a blind spot in the checker itself. Wrote
+  `tools/verify-consistency.mjs` — the same three checks in portable Node (no pwsh dependency), fixed to
+  recurse and to compare full relative paths (`actions/color-graphics/x.cs`, not just `actions/x.cs`) so
+  this can't regress the same way again; also folds in `scripts/context/` (9 files), previously outside
+  either checker's scope despite being fully indexed in `scripts/README.md` already. Ran clean: 8 skills,
+  393 links, 206 script files, zero issues. **Static re-audit** (grep, no live Revit) of every pitfall the
+  2026-07-23 live-verification pass found and fixed (UnionWith-loses-quick-filter, `SpatialElement.Volume`,
+  `PDFExportOptions`, `SpecTypeId`/`GroupTypeId` on 2020, `Document.Phases` read-only,
+  `CombinedParameterRule`) confirmed each fix is still exactly and only in the one file it was already
+  applied to — no reintroduction, no missed sibling case anywhere else in the 208-fragment library.
+  **mcp-server**: added a permanent structural regression test, `mcp-server/test/smoke.test.js` (Node's
+  built-in test runner, no new dependency) — imports all 17 tool modules, registers each against a fake
+  server, invokes every handler with representative args, and asserts the C#-generation code in each one
+  runs to completion and fails gracefully with no bridge connected. Turns the ad-hoc "throwaway smoke
+  test" from the 2026-07-22 tools/ refactor into something that runs on demand via `npm test`, permanently
+  — same motivation as that session's own lesson ("`node --check` alone is not sufficient proof"). Wired
+  `npm test` into `package.json` (had no `scripts` key before). Ran `npm audit`: one moderate transitive
+  vulnerability (`@hono/node-server` <2.0.5, Windows path-traversal via encoded backslash, pulled in by
+  `@modelcontextprotocol/sdk`'s optional HTTP transport — this server only ever wires up
+  `StdioServerTransport` in `index.js`, so the vulnerable code path isn't reachable here regardless).
+  Pinned it via an `overrides` entry to `^2.0.5` anyway rather than leaving it or waiting on the SDK;
+  reinstalled clean, `npm audit` now reports zero vulnerabilities, `npm test` still passes. No Revit
+  connection this session (cloud/Linux container, by design) — nothing done here needed one; live-model
+  correctness work stays for a session with the bridge connected.
+  **Next** (not started yet, roughly in priority order, so a fresh session can pick this up cold):
+  1. Deeper `mcp-server` review beyond the structural smoke test — edge cases in
+     `bridge-connection.js`'s reconnect/timeout/queueing logic specifically.
+  2. Widen the static-pitfall sweep done here across the fragments still marked not-yet-live-verified in
+     `scripts/README.md`'s per-fragment notes — can't live-verify without Revit connected, but more of the
+     same kind of grep-for-known-bug-shapes is possible without it.
+  3. Editorial pass on `AGENT-SPEC.md` against the routed files it summarizes, checking for the same kind
+     of staleness caught and fixed on 2026-07-22 (a spec re-check needs to happen deliberately — passing
+     the link checker doesn't mean the content is current).
+  4. Look at whether session-start reading (`START-HERE.md` + `AGENT-SPEC.md` + `knowledge/INDEX.md`) can
+     be trimmed/restructured to cut token overhead per session — the "faster" lever that compounds every
+     time the Brain gets used, as opposed to a one-time fix.
