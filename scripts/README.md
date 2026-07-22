@@ -38,6 +38,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-workset.cs`](filters/filter-by-workset.cs) | Elements on one user workset, optional category scope |
 | [`filter-by-links.cs`](filters/filter-by-links.cs) | Every RVT link and/or CAD link instance, optional name substring — feeds `action-set-workset.cs` ("move the links onto a workset") |
 | [`filter-by-scope-box.cs`](filters/filter-by-scope-box.cs) | Every Scope Box, optional name substring — feeds `action-assign-scope-box-to-view.cs`; delete via `action-delete-elements.cs`, no dedicated fragment needed |
+| [`filter-by-linked-model-elements.cs`](filters/filter-by-linked-model-elements.cs) | Elements of a category INSIDE a specific linked RVT model, not the link instance itself — read-only composition only, see the file's own GOTCHA |
 | [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring |
 | [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
@@ -122,6 +123,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 |---|---|
 | [`action-set-parameter-value.cs`](actions/parameters-naming/action-set-parameter-value.cs) | Bulk-set one parameter across the set — falls back to the Type if it's not an instance parameter |
 | [`action-add-parameter-prefix-suffix.cs`](actions/parameters-naming/action-add-parameter-prefix-suffix.cs) | Add a prefix/suffix, or find/replace a substring, INSIDE a parameter's existing text (any String parameter, any category) — falls back to Type, deduped so a shared type isn't stacked; not yet live-verified |
+| [`action-add-project-parameter.cs`](actions/parameters-naming/action-add-project-parameter.cs) | Create a NEW shared-parameter-backed project parameter and bind it to categories — different job from every other fragment here, which only edit values of parameters that already exist; second-least-certain fragment in the library (ForgeTypeId API may differ by Revit version), does NOT consume `elements` |
 | [`action-find-replace-element-name.cs`](actions/parameters-naming/action-find-replace-element-name.cs) | Find/replace, prefix, or suffix `Element.Name` itself — works on ANY nameable element (Room, Sheet, View, Level, Grid, Group, Material, Type...), just pair with the matching filter; not yet live-verified |
 | [`action-copy-parameter-value.cs`](actions/parameters-naming/action-copy-parameter-value.cs) | Copy one parameter's value into a different parameter, storage-type-aware — source and target each independently fall back to Type |
 | [`action-remove-parameter-value.cs`](actions/parameters-naming/action-remove-parameter-value.cs) | Clear one parameter's value — genuinely empty for String/ElementId, zeroed (not truly unset) for Double/Integer — falls back to Type |
@@ -165,6 +167,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-copy-elements.cs`](actions/move-copy-rotate/action-copy-elements.cs) | Duplicate every element, offset by one mm vector; produces `newElementIds` for chaining |
 | [`action-rotate-elements.cs`](actions/move-copy-rotate/action-rotate-elements.cs) | Rotate every element around a vertical axis by one angle, about its own location or a given pivot |
 | [`action-mirror-elements.cs`](actions/move-copy-rotate/action-mirror-elements.cs) | Mirror every element across a vertical plane through two plan points — copy or in-place |
+| [`action-flip-elements.cs`](actions/move-copy-rotate/action-flip-elements.cs) | Flip hand and/or facing orientation of FamilyInstances — Revit's own Flip arrows; not yet live-verified |
 | [`action-offset-elements.cs`](actions/move-copy-rotate/action-offset-elements.cs) | Offset each linear element sideways by a perpendicular distance (mm) — copy or in-place; not yet live-verified |
 | [`action-trim-extend-elements.cs`](actions/move-copy-rotate/action-trim-extend-elements.cs) | Trim or extend exactly 2 linear elements to meet at their computed corner — not yet live-verified |
 | [`action-fillet-elements.cs`](actions/move-copy-rotate/action-fillet-elements.cs) | Round the corner between exactly 2 elements — real elbow fitting for MEP curves, or a geometric tangent arc for Model/Detail lines; not yet live-verified |
@@ -181,6 +184,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-join-geometry.cs`](actions/structural-changes/action-join-geometry.cs) | Join (or unjoin) every element in the set with one target element — many-to-one |
 | [`action-split-elements.cs`](actions/structural-changes/action-split-elements.cs) | Split each Duct/Pipe at a point along its own length (fraction or mm from start), auto-reconnects the joint — generalized from `recipes/split-duct-near-equipment.cs`; not yet live-verified |
 | [`action-purge-unused.cs`](actions/structural-changes/action-purge-unused.cs) | Delete unused View Templates, Filters, or Materials — the subset of native Purge Unused provably correct from the public API; does NOT consume `elements`, dry-run by default |
+| [`action-reload-links.cs`](actions/structural-changes/action-reload-links.cs) | Reload the distinct RVT link type(s) behind a set of link instances — Manage Links' Reload, scripted; not yet live-verified |
 | [`action-duplicate-type.cs`](actions/structural-changes/action-duplicate-type.cs) | Duplicate the distinct TYPE(s) behind a set of instances under a new name (prefix/suffix/fixed) — Type-level counterpart to `action-rename-family.cs`; not yet live-verified |
 | [`action-update-scope-box.cs`](actions/structural-changes/action-update-scope-box.cs) | Resize an existing Scope Box by name — delete+recreate workaround (no direct resize API), re-attaches to any views that referenced it; does NOT consume `elements`, not yet live-verified |
 
@@ -234,6 +238,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-schedule.cs`](creators/create-schedule.cs) | Create a bare schedule for a category with chosen fields — chain into `action-place-schedule-on-sheet.cs`; not yet live-verified |
 | [`create-text-note.cs`](creators/create-text-note.cs) | Place one or more Text Notes at given points in a view |
 | [`create-dimension.cs`](creators/create-dimension.cs) | Create a dimension string across 2+ Grids/Levels — deliberately scoped to Grid/Level references only, not arbitrary element geometry; higher-uncertainty, not yet live-verified |
+| [`create-line.cs`](creators/create-line.cs) | Create one or more plain Model Lines or Detail Lines between mm point pairs |
+| [`create-filled-region.cs`](creators/create-filled-region.cs) | Create a filled/hatched polygon annotation from a closed loop of mm points; not yet live-verified |
 | [`create-grid.cs`](creators/create-grid.cs) | Create one or more straight Grids from mm endpoint pairs |
 | [`create-view.cs`](creators/create-view.cs) | Create a Floor Plan, 3D, or Section view — the three simple/reliable ViewFamily cases, not Callout/Elevation/Drafting |
 | [`create-revision.cs`](creators/create-revision.cs) | Create one or more Revisions directly (date/description/issued-to/by already known) — plain version of `recipes/create-revisions-from-sheet-dates.cs` |
@@ -278,6 +284,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`context/context-used-families.cs`](context/context-used-families.cs) | Every loadable family in the model, excluding system and in-place families |
 | [`context/context-design-options.cs`](context/context-design-options.cs) | Every Design Option — name, Id, Primary flag — orientation step before `filter-by-design-option.cs`/`action-set-design-option.cs` |
 | [`context/context-levels-and-grids.cs`](context/context-levels-and-grids.cs) | Every Level (name + elevation) and Grid (name) — feeds `create-dimension.cs`, `filter-by-grid.cs`, `filter-by-levels.cs` |
+| [`context/context-linked-models.cs`](context/context-linked-models.cs) | Every RVT link — loaded/unloaded status, pinned, workset — orientation step before `filter-by-links.cs`/`filter-by-linked-model-elements.cs`/`action-reload-links.cs` |
 
 "Current selection" is already covered by [`filters/filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) — not duplicated here.
 
