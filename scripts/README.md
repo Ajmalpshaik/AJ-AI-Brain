@@ -50,6 +50,14 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-design-option.cs`](filters/filter-by-design-option.cs) | Elements in a named Design Option, or the Main Model when left unset — not yet live-verified |
 | [`filter-by-material.cs`](filters/filter-by-material.cs) | Elements using a specific Revit Material, category-scoped |
 | [`filter-by-level.cs`](filters/filter-by-level.cs) | Everything on a given Level across the WHOLE model, optional category scope |
+| [`filter-by-tag-status.cs`](filters/filter-by-tag-status.cs) | Category elements that ARE or ARE NOT tagged in a given view |
+| [`filter-by-connection-status.cs`](filters/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected |
+| [`filter-by-pin-status.cs`](filters/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
+| [`filter-by-views.cs`](filters/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter |
+| [`filter-by-warnings.cs`](filters/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set |
+| [`filter-by-electrical-system.cs`](filters/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — not yet live-verified |
+| [`filter-by-insulation-status.cs`](filters/filter-by-insulation-status.cs) | Pipe/duct elements that HAVE insulation/lining applied, or don't — not yet live-verified |
+| [`filter-by-insulation-type.cs`](filters/filter-by-insulation-type.cs) | The insulation/lining elements themselves, by kind/type/material/thickness — not yet live-verified |
 
 ### Actions (consume `elements`)
 | Fragment | Job |
