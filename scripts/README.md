@@ -61,6 +61,12 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-electrical-system.cs`](filters/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — not yet live-verified |
 | [`filter-by-insulation-status.cs`](filters/filter-by-insulation-status.cs) | Pipe/duct elements that HAVE insulation/lining applied, or don't — not yet live-verified |
 | [`filter-by-insulation-type.cs`](filters/filter-by-insulation-type.cs) | The insulation/lining elements themselves, by kind/type/material/thickness — not yet live-verified |
+| [`filter-by-grid.cs`](filters/filter-by-grid.cs) | Every Grid, optional name substring — feeds `creators/create-dimension.cs` |
+| [`filter-by-levels.cs`](filters/filter-by-levels.cs) | Every Level ELEMENT itself (not elements sitting on one — that's `filter-by-level.cs`), ordered by elevation |
+| [`filter-by-schedules.cs`](filters/filter-by-schedules.cs) | Every ViewSchedule, optional name substring — feeds `action-export-schedule-to-csv.cs`/`action-place-schedule-on-sheet.cs` |
+| [`filter-by-selection-filter.cs`](filters/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — not yet live-verified |
+| [`filter-by-unenclosed-spatial-elements.cs`](filters/filter-by-unenclosed-spatial-elements.cs) | QA sweep — every Room/Space in the model with zero Area ("Not Enclosed") |
+| [`filter-by-types.cs`](filters/filter-by-types.cs) | The TYPE elements themselves (FamilySymbol or system-family type), matched by family/type name — reaches a type with zero placed instances, unlike the instance-derived type actions |
 
 ### Actions (consume `elements`)
 Grouped into subfolders under `actions/` by job — same grouping used whenever these are listed out loud.
