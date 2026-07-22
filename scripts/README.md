@@ -56,6 +56,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-connection-status.cs`](filters/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected |
 | [`filter-by-pin-status.cs`](filters/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
 | [`filter-by-views.cs`](filters/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter |
+| [`filter-by-view-templates.cs`](filters/filter-by-view-templates.cs) | View Templates themselves, optional name filter + usage mode (all/used/unused) — makes templates composable with any action (rename, report, delete, ...) instead of needing a bespoke fragment |
 | [`filter-by-warnings.cs`](filters/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set |
 | [`filter-by-electrical-system.cs`](filters/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — not yet live-verified |
 | [`filter-by-insulation-status.cs`](filters/filter-by-insulation-status.cs) | Pipe/duct elements that HAVE insulation/lining applied, or don't — not yet live-verified |
@@ -200,6 +201,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | Example | Demonstrates |
 |---|---|
 | [`examples/color-isolate-select-by-size.cs`](examples/color-isolate-select-by-size.cs) | filter-by-category-and-numeric-param + 3 chained actions, the user's own worked scenario |
+| [`examples/purge-unused-view-templates.cs`](examples/purge-unused-view-templates.cs) | filter-by-view-templates.cs (usage="unused") + action-delete-elements.cs — a destructive composition, run the filter alone first per the file's own MANDATORY note |
 
 
 ## The rules that apply to every script

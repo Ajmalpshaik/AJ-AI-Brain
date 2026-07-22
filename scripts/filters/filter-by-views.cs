@@ -10,7 +10,8 @@
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
 // ============================================================
 // Excludes view templates (IsTemplate) and Schedule/Sheet view types by default — those aren't "a view
-// you'd duplicate or place on a sheet" in the normal sense.
+// you'd duplicate or place on a sheet" in the normal sense. For View Templates themselves, use
+// filter-by-view-templates.cs instead.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 ViewType? viewTypeFilter = null; // null = every view type; else e.g. ViewType.FloorPlan, ViewType.ThreeD, ViewType.Section
