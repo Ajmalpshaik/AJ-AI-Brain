@@ -37,6 +37,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-parameter-text.cs`](filters/filter-by-parameter-text.cs) | Category or whole-model scan narrowed by text in family/type/parameter values |
 | [`filter-by-workset.cs`](filters/filter-by-workset.cs) | Elements on one user workset, optional category scope |
 | [`filter-by-links.cs`](filters/filter-by-links.cs) | Every RVT link and/or CAD link instance, optional name substring — feeds `action-set-workset.cs` ("move the links onto a workset") |
+| [`filter-by-scope-box.cs`](filters/filter-by-scope-box.cs) | Every Scope Box, optional name substring — feeds `action-assign-scope-box-to-view.cs`; delete via `action-delete-elements.cs`, no dedicated fragment needed |
 | [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring |
 | [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
@@ -108,6 +109,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-set-category-visibility.cs`](actions/visibility/action-set-category-visibility.cs) | Turn one or more ENTIRE categories on/off in a view (Visibility/Graphics > Model Categories checkbox) — does NOT consume `elements` |
 | [`action-report-category-visibility.cs`](actions/visibility/action-report-category-visibility.cs) | Which categories are currently OFF in a view — the reverse lookup for `action-set-category-visibility.cs` — does NOT consume `elements` |
 | [`action-set-view-workset-visibility.cs`](actions/visibility/action-set-view-workset-visibility.cs) | Make one view show ONLY named workset(s) — the "Workset 3D View" pattern, every other user workset turned off in that view; does NOT consume `elements`, not yet live-verified |
+| [`action-assign-scope-box-to-view.cs`](actions/visibility/action-assign-scope-box-to-view.cs) | Assign (or clear) a named Scope Box as a view's own Scope Box property; not yet live-verified |
+| [`action-set-crop-box-settings.cs`](actions/visibility/action-set-crop-box-settings.cs) | Turn Crop Region on/off, its boundary visibility on/off, and/or Annotation Crop on/off across views — independent flags, pairs with `action-set-view-crop.cs` for resizing |
 
 **Selection** — [`actions/selection/`](actions/selection/)
 | Fragment | Job |
@@ -178,6 +181,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-split-elements.cs`](actions/structural-changes/action-split-elements.cs) | Split each Duct/Pipe at a point along its own length (fraction or mm from start), auto-reconnects the joint — generalized from `recipes/split-duct-near-equipment.cs`; not yet live-verified |
 | [`action-purge-unused.cs`](actions/structural-changes/action-purge-unused.cs) | Delete unused View Templates, Filters, or Materials — the subset of native Purge Unused provably correct from the public API; does NOT consume `elements`, dry-run by default |
 | [`action-duplicate-type.cs`](actions/structural-changes/action-duplicate-type.cs) | Duplicate the distinct TYPE(s) behind a set of instances under a new name (prefix/suffix/fixed) — Type-level counterpart to `action-rename-family.cs`; not yet live-verified |
+| [`action-update-scope-box.cs`](actions/structural-changes/action-update-scope-box.cs) | Resize an existing Scope Box by name — delete+recreate workaround (no direct resize API), re-attaches to any views that referenced it; does NOT consume `elements`, not yet live-verified |
 
 **Sheets & Views** — [`actions/sheets-views/`](actions/sheets-views/)
 | Fragment | Job |
@@ -225,6 +229,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-view.cs`](creators/create-view.cs) | Create a Floor Plan, 3D, or Section view — the three simple/reliable ViewFamily cases, not Callout/Elevation/Drafting |
 | [`create-revision.cs`](creators/create-revision.cs) | Create one or more Revisions directly (date/description/issued-to/by already known) — plain version of `recipes/create-revisions-from-sheet-dates.cs` |
 | [`create-workset.cs`](creators/create-workset.cs) | Create one or more new user Worksets — feeds `action-set-workset.cs`; produces no `elements` (Workset isn't an Element) |
+| [`create-scope-box.cs`](creators/create-scope-box.cs) | Create one or more Scope Boxes from mm box corners — feeds `action-assign-scope-box-to-view.cs`; not yet live-verified |
 
 ### Recipes (bespoke multi-stage builds, not filter+action shaped)
 | Recipe | Job | Source |
