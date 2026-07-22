@@ -13,12 +13,18 @@
 // it can be researched and added properly, following this same file's naming pattern.
 // CONDITIONAL FORMATTING is NOT covered by any fragment in this library yet, for the same reason — real
 // API uncertainty, not an oversight. Flag if this is genuinely needed and it can be looked into properly.
-// NOT YET LIVE-VERIFIED — test on one schedule first before trusting it on a batch.
+// LIVE-VERIFIED 2026-07-22 — FOUND AND FIXED A REAL BUG: `ScheduleDefinition.ShowGrandTotal` is a plain
+// `bool` on this Revit version (confirmed via reflection: property type is `System.Boolean`) — the
+// `GrandTotal` enum (with NoGrandTotal/Totals/TotalsAndCount values) the original code tried to parse
+// against doesn't exist here at all, so `Enum.TryParse<GrandTotal>` was a compile error. Fixed to a plain
+// bool input. This also means the Totals-vs-TotalsAndCount distinction genuinely isn't available via this
+// property on Revit 2020 — it's on/off only here. Re-verified: IsItemized and ShowGrandTotal both set and
+// read back correctly.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 bool? isItemized = null;       // true = "Itemize every instance", false = group identical rows; null = don't change
-string grandTotal = null;      // "NoGrandTotal" | "Totals" | "TotalsAndCount"; null = don't change
+bool? showGrandTotal = null;   // true = show Grand Total row, false = hide it; null = don't change (Revit 2020: on/off only, no Totals-vs-TotalsAndCount distinction via this API)
 // ---- END INPUTS ----
 
 int itemizedSet = 0, grandTotalSet = 0, skipped = 0;
@@ -40,9 +46,9 @@ using (var t = new Transaction(Document, "AJ Tools - Set Schedule Appearance"))
                 try { def.IsItemized = isItemized.Value; itemizedSet++; }
                 catch (Exception ex) { failures.Add($"'{schedule.Name}' IsItemized: {ex.Message}"); }
             }
-            if (!string.IsNullOrEmpty(grandTotal) && Enum.TryParse<GrandTotal>(grandTotal, true, out var gt))
+            if (showGrandTotal.HasValue)
             {
-                try { def.ShowGrandTotal = gt; grandTotalSet++; }
+                try { def.ShowGrandTotal = showGrandTotal.Value; grandTotalSet++; }
                 catch (Exception ex) { failures.Add($"'{schedule.Name}' ShowGrandTotal: {ex.Message}"); }
             }
         }

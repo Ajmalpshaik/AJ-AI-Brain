@@ -13,6 +13,10 @@
 //         non-workshared model instead of throwing.
 // GOTCHA: this is a per-VIEW setting, not permanent hide/delete — the same elements are still fully in the
 //         model and visible in every other view; this only affects the one view targeted.
+// ============================================================
+// *** NOT CHECKED — BLOCKED: this model is not workshared, so the real per-workset visibility path has
+// never run against real worksets. Only the "not workshared, nothing changed" graceful path has been
+// confirmed. Enable worksharing (or test on a workshared model) before trusting this on real work. ***
 // NOT YET LIVE-VERIFIED — test on one view first.
 // ============================================================
 

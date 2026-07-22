@@ -5,10 +5,14 @@
 //          "Create Template from Current View". The new template is also explicitly applied back to the
 //          source view here, rather than assuming that happens automatically.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — operates on a VIEW, not model elements.
-// STATUS: not yet live-verified — confirm View.CreateViewTemplate()'s exact behavior (does it already
-//         apply the new template to the source view, or only create it?) against the real installed API.
-//         The explicit `sourceView.ViewTemplateId = newTemplateId` line below makes the outcome correct
-//         either way, so this doesn't block trusting the RESULT — just the exact mechanism.
+// LIVE-VERIFIED 2026-07-22 — FOUND AND FIXED A REAL BUG: the original code read
+// `ElementId newTemplateId = sourceView.CreateViewTemplate();` — this does not compile.
+// `View.CreateViewTemplate()` returns a `View` directly, not an `ElementId` (confirmed via reflection:
+// return type is `Autodesk.Revit.DB.View`). Fixed to use the returned View object directly instead of
+// wrapping it in a nonexistent ElementId conversion. Re-verified against a real view: template created,
+// named, and applied back to the source view correctly (confirmed via fresh re-fetch of ViewTemplateId).
+// It does NOT auto-apply the new template to the source view on its own — the explicit
+// `sourceView.ViewTemplateId = newTemplate.Id` line is required, exactly as the file already assumed.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -34,15 +38,14 @@ else
         t.Start();
         try
         {
-            ElementId newTemplateId = sourceView.CreateViewTemplate();
-            var newTemplate = Document.GetElement(newTemplateId) as View;
+            View newTemplate = sourceView.CreateViewTemplate();
             if (newTemplate != null && !string.IsNullOrEmpty(newTemplateName))
             {
                 newTemplate.Name = newTemplateName;
             }
-            sourceView.ViewTemplateId = newTemplateId; // explicit — don't rely on undocumented auto-apply behavior
+            sourceView.ViewTemplateId = newTemplate.Id; // explicit — don't rely on undocumented auto-apply behavior
             t.Commit();
-            sb.AppendLine($"Created View Template '{newTemplate?.Name ?? newTemplateName}' (Id {newTemplateId.IntegerValue}) from '{sourceView.Name}', and applied it back to that view.");
+            sb.AppendLine($"Created View Template '{newTemplate?.Name ?? newTemplateName}' (Id {newTemplate.Id.IntegerValue}) from '{sourceView.Name}', and applied it back to that view.");
         }
         catch (Exception ex)
         {

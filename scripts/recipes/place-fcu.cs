@@ -1,4 +1,9 @@
 // ============================================================
+// *** NOT CHECKED — this script has NOT been run against the live model. Only a targeted reflection check
+// confirmed the less-common API members it calls actually exist on this Revit version (Connector.
+// DuctSystemType, MEPSystemClassification.SupplyAir, Curve.Project, FamilyInstance.get_ToRoom/get_FromRoom,
+// etc.) — that catches "this method doesn't exist" bugs, NOT wrong logic, wrong math, or wrong parameters.
+// Needs a real Room + FCU layout to actually execute and verify. ***
 // SCRIPT: place-fcu.cs
 // PURPOSE: Place an FCU (Mechanical Equipment) in a room at the given ceiling-void height, optionally
 //          shift it toward the room's door (perpendicular-to-wall axis only), and rotate its real

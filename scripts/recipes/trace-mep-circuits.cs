@@ -6,6 +6,14 @@
 //          nearest real equipment.
 // SOURCE:  ../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity (when tags/naming can't be trusted)
 // STATUS:  living document — refine in place, don't fork a v2 file.
+// LIVE-VERIFIED 2026-07-23 — FOUND AND FIXED A REAL BUG: the category-union collector below applied
+// `.WhereElementIsNotElementType()` to EACH category before `.UnionWith(...)` — confirmed via isolated
+// testing that `FilteredElementCollector.UnionWith()` does not preserve a quick-filter applied to either
+// side before the union; the merged result silently included every TYPE element too (52 elements instead
+// of the real 4 instances, in a live A/B/C test). Fixed by moving `.WhereElementIsNotElementType()` to run
+// ONCE, after all four UnionWith calls, on the combined collector — this ordering is confirmed correct.
+// Same root cause as filter-by-system-type.cs and filter-by-system-name.cs, fixed there too — see those
+// files' headers for the full investigation.
 // ============================================================
 // The system-name filter is ALWAYS an input — never hardcode it. Check glossary.md for the mapping
 // from the user's word to the real Revit system-type name(s) (e.g. "refrigerant" -> anything containing "DXS").
@@ -20,11 +28,11 @@ var sb = new System.Text.StringBuilder();
 
 // Step 1 — collect every pipe + fitting whose system name/type matches the filter.
 var candidates = new FilteredElementCollector(Document)
-    .WhereElementIsNotElementType()
     .OfCategory(BuiltInCategory.OST_PipeCurves)
-    .UnionWith(new FilteredElementCollector(Document).WhereElementIsNotElementType().OfCategory(BuiltInCategory.OST_PipeFitting))
-    .UnionWith(new FilteredElementCollector(Document).WhereElementIsNotElementType().OfCategory(BuiltInCategory.OST_DuctCurves))
-    .UnionWith(new FilteredElementCollector(Document).WhereElementIsNotElementType().OfCategory(BuiltInCategory.OST_DuctFitting))
+    .UnionWith(new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_PipeFitting))
+    .UnionWith(new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctCurves))
+    .UnionWith(new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctFitting))
+    .WhereElementIsNotElementType()
     .Where(e =>
     {
         var sysParam = e.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM) ?? e.get_Parameter(BuiltInParameter.RBS_DUCT_SYSTEM_TYPE_PARAM);

@@ -1,4 +1,10 @@
 // ============================================================
+// *** NOT CHECKED — this script has NOT been run against the live model. Only a targeted reflection check
+// confirmed the less-common API members it calls actually exist on this Revit version (Document.Create.
+// NewTakeoffFitting, DuctType.RoutingPreferenceManager, RoutingPreferenceRule.MEPPartId, etc.) — that
+// catches "this method doesn't exist" bugs, NOT wrong logic, wrong math, or wrong parameters. This is the
+// most failure-prone recipe in the set per its own STATUS note below — needs a real FCU + room layout to
+// actually execute and verify, and extra caution even then. ***
 // SCRIPT: draw-main-duct-with-cap.cs
 // PURPOSE: Draw a single main duct piece from the FCU's supply connector along the room's long axis,
 //          sized to the FCU connector, connected at the FCU end, and cap the open far end with the

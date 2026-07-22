@@ -1,4 +1,9 @@
 // ============================================================
+// *** NOT CHECKED — this script has NOT been run against the live model. Only a targeted reflection check
+// confirmed the less-common API members it calls actually exist on this Revit version (Connector.AllRefs
+// walk, Document.Create.NewTakeoffFitting, MEPSystemClassification, etc.) — that catches "this method
+// doesn't exist" bugs, NOT wrong logic, wrong math, or wrong parameters. Needs a real terminal + main duct
+// layout to actually execute and verify. ***
 // SCRIPT: connect-terminal-branch.cs
 // PURPOSE: Connect one air terminal to the main duct — vertical riser up to the main duct's height,
 //          a real elbow fitting at the turn, then a horizontal run tapped into the main duct via a

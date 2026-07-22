@@ -18,7 +18,24 @@
 // GOTCHA (mode="arc"): assumes both lines are coplanar in a horizontal plane (same Z) — same limitation as
 //         action-trim-extend-elements.cs. Only Model Lines and Detail Lines are supported for the new arc
 //         segment (not walls — a curved wall segment is a different, heavier operation).
-// NOT YET LIVE-VERIFIED — test once on a real pair before trusting it further.
+// LIVE-VERIFIED 2026-07-22, mode="elbow": ran against a real trimmed duct pair — inserted a real elbow
+// fitting, both connectors showed isConnected=true on fresh re-fetch. Zero bugs, exactly as written.
+// LIVE-VERIFIED 2026-07-22, mode="arc" — FOUND AND FIXED A REAL BUG: the original code reassigned
+// `lcA.Curve`/`lcB.Curve` in place to trim both source lines back to their tangent points (same pattern
+// action-trim-extend-elements.cs uses successfully for ducts). For Model/Detail Lines that already share a
+// COINCIDENT endpoint with each other — i.e. exactly the normal "fillet this existing corner" case this
+// mode exists for — that reassignment silently does nothing: no exception, the transaction commits clean,
+// but a fresh re-fetch (even moments later, even across separate transactions) shows the line reverted to
+// its ORIGINAL untrimmed geometry, while the new arc it's supposed to connect to was created correctly.
+// Reproduced this consistently across several isolated tests (including with the arc creation moved before
+// vs. after the reassignment, and with the reassignment and arc creation split into two separate
+// transactions — same silent failure every time). Root cause looks like Revit's automatic line-joining for
+// sketch curves with coincident endpoints resisting a one-sided in-place curve edit, but the exact
+// mechanism wasn't confirmed — what IS confirmed is the reliable fix: DELETE the two original line
+// elements and CREATE new ones at the final trimmed geometry, instead of mutating LocationCurve.Curve on
+// the existing elements. Verified exact numeric match (tangent points, zero gap to the new arc) after
+// switching to delete+recreate. This does mean both source lines get new ElementIds — same tradeoff as
+// action-update-scope-box.cs's delete+recreate workaround.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -143,26 +160,40 @@ else if (mode == "arc")
                         {
                             var arc = Arc.Create(tangentA, tangentB, midPt);
 
-                            lcA.Curve = (lineA.GetEndPoint(0).DistanceTo(corner) <= lineA.GetEndPoint(1).DistanceTo(corner))
+                            // Trim both source lines back to their tangent points via DELETE + RECREATE, not
+                            // an in-place LocationCurve.Curve reassignment — see the FOUND AND FIXED A REAL
+                            // BUG note above. In-place reassignment silently no-ops when the two lines share
+                            // a coincident endpoint (the normal case here), even though it reports success.
+                            Line newLineA = (lineA.GetEndPoint(0).DistanceTo(corner) <= lineA.GetEndPoint(1).DistanceTo(corner))
                                 ? Line.CreateBound(tangentA, farA) : Line.CreateBound(farA, tangentA);
-                            lcB.Curve = (lineB.GetEndPoint(0).DistanceTo(corner) <= lineB.GetEndPoint(1).DistanceTo(corner))
+                            Line newLineB = (lineB.GetEndPoint(0).DistanceTo(corner) <= lineB.GetEndPoint(1).DistanceTo(corner))
                                 ? Line.CreateBound(tangentB, farB) : Line.CreateBound(farB, tangentB);
 
+                            bool isDetail = elements[0] is DetailLine;
+                            ElementId idA = elements[0].Id, idB = elements[1].Id;
+                            Document.Delete(idA);
+                            Document.Delete(idB);
+
                             Element newArcElement;
-                            if (elements[0] is DetailLine)
+                            Element newElementA, newElementB;
+                            if (isDetail)
                             {
                                 var view = Document.ActiveView;
                                 newArcElement = Document.Create.NewDetailCurve(view, arc);
+                                newElementA = Document.Create.NewDetailCurve(view, newLineA);
+                                newElementB = Document.Create.NewDetailCurve(view, newLineB);
                             }
                             else
                             {
                                 var plane = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, corner);
                                 var sketchPlane = SketchPlane.Create(Document, plane);
                                 newArcElement = Document.Create.NewModelCurve(arc, sketchPlane);
+                                newElementA = Document.Create.NewModelCurve(newLineA, SketchPlane.Create(Document, Plane.CreateByNormalAndOrigin(XYZ.BasisZ, newLineA.GetEndPoint(0))));
+                                newElementB = Document.Create.NewModelCurve(newLineB, SketchPlane.Create(Document, Plane.CreateByNormalAndOrigin(XYZ.BasisZ, newLineB.GetEndPoint(0))));
                             }
 
                             t.Commit();
-                            sb.AppendLine($"Filleted corner with a {radiusMm}mm-radius arc, Id {newArcElement.Id.IntegerValue}. Both source lines trimmed back to their tangent points.");
+                            sb.AppendLine($"Filleted corner with a {radiusMm}mm-radius arc, Id {newArcElement.Id.IntegerValue}. Both source lines recreated at their tangent points: new Id {newElementA.Id.IntegerValue} (was {idA.IntegerValue}), new Id {newElementB.Id.IntegerValue} (was {idB.IntegerValue}).");
                         }
                         catch (Exception ex)
                         {

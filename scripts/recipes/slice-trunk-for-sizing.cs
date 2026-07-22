@@ -15,6 +15,20 @@
 // verify-duct-connectivity.cs (full BFS trace, not just IsConnected) before rolling out further, and check
 // with the user after the first one. Live-verified 2026-07-17: 3 cuts on a 4-row/8-terminal trunk, all 8
 // terminals still traced to the FCU afterward.
+//
+// CAUTION (2026-07-23, code-review only - not re-tested this pass, no matching multi-branch trunk fixture
+// available): `trunkDir` is derived from `trunkPieceId`'s OWN stored point-0/point-1 order (whichever end
+// Revit happens to call "0"), not from any independent FCU/cap reference. `skipLastTakeoff` removes the
+// group with the LARGEST signed distance along that direction - correct ONLY if trunkDir happens to point
+// FCU-side -> cap-side. If the piece you pass in was drawn in the opposite direction, "skip the last
+// takeoff" would silently skip the cut nearest the FCU instead of the one nearest the cap, and cut right
+// before the actual end cap instead - no exception, no warning, just the wrong segment left whole. Sibling
+// script split-duct-near-equipment.cs had a related BreakCurve Id-swap bug that looked fine until checked
+// geometrically (fixed 2026-07-23, see that file's header) - this script already defends against THAT
+// specific gotcha correctly (re-locates each piece by geometric containment every cut, never trusts an Id
+// across cuts), but the trunkDir sign issue above is a separate, still-open risk. Before trusting
+// skipLastTakeoff on a new trunk: confirm which end is actually the cap (e.g. compare the reported cut
+// distances against the known FCU location) rather than assuming.
 
 // ---- INPUTS (edit every time - never treat these as fixed defaults) ----
 ElementId trunkPieceId = ElementId.InvalidElementId; // any one Duct element that is part of the trunk
