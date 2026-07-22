@@ -239,3 +239,20 @@ here.
   like any other delete). Cross-referenced all three from `mep-color-standard.md` so the existing
   know-how there points at reusable fragments instead of describing the pattern to hand-write again.
   `color-graphics/` is now 11 fragments.
+- 2026-07-22 — Direct follow-up: expanded `action-create-view-filter.cs` from 6 rule kinds to all 16
+  `ParameterFilterRuleFactory` offers (added notequals/notbeginswith/notendswith, strict gt/lt, noteq, and
+  value-presence hasvalue/hasnovalue — the two that need no comparison value at all). Added
+  `action-create-selection-filter.cs` for Revit's OTHER real filter mechanism — `SelectionFilterElement`,
+  an explicit element list instead of a rule ("adding elements to filter list" per the user's own words) —
+  usable in the Filters tab exactly like a rule-based View Filter. Refactored
+  `action-apply-view-filter.cs`/`action-remove-view-filter.cs` to look up by the shared `FilterElement`
+  base class instead of `ParameterFilterElement` specifically, so both filter kinds work with the same
+  apply/remove fragments without duplicating them. `color-graphics/` is now 13 fragments.
+  Also built `knowledge/live-model/graphic-override-precedence.md` from a 9-level override-priority list
+  the user supplied (Linework > per-element > Halftone/Underlay > View Filters > Phase overrides > View
+  Depth/Beyond > Category overrides > MEP System overrides > Object Styles). Verified rather than
+  transcribed blindly: the core skeleton (rows 1/2/4/7/9) matches well-established Revit behavior with
+  high confidence; the three inserted rows (Halftone/Underlay, Phase overrides, View Depth/Beyond) are
+  real, distinct mechanisms but their exact rank isn't independently confirmable from memory alone —
+  marked moderate-confidence and kept as given rather than silently reordered, per this project's
+  "verify, don't trust" rule. Cross-referenced from `knowledge/live-model/README.md`.

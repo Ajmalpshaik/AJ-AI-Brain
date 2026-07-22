@@ -1,11 +1,13 @@
 // ============================================================
 // FRAGMENT (action) — action-remove-view-filter.cs
-// PURPOSE: Take a View Filter OFF a view (view.RemoveFilter) — the filter definition itself still exists
-//          in the document and can be re-applied to this or another view later. Set
-//          deleteFilterElement = true to also permanently delete the filter definition from the whole
-//          document (removes it from EVERY view that uses it, not just this one) — treat that like any
-//          other delete: confirm with the user first, and it needs allowDestructive: true on the bridge
-//          call too.
+// PURPOSE: Take a filter OFF a view (view.RemoveFilter) — the filter definition itself still exists in
+//          the document and can be re-applied to this or another view later. Works with EITHER kind
+//          (rule-based View Filter from action-create-view-filter.cs, or explicit-list Selection Filter
+//          from action-create-selection-filter.cs) — looks up by the shared FilterElement base class.
+//          Set deleteFilterElement = true to also permanently delete the filter definition from the
+//          whole document (removes it from EVERY view that uses it, not just this one) — treat that like
+//          any other delete: confirm with the user first, and it needs allowDestructive: true on the
+//          bridge call too.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — self-contained (declares its own `sb`, ends
 //          with its own `return`).
 // ============================================================
@@ -25,13 +27,13 @@ if (view == null)
 }
 else
 {
-    var filter = new FilteredElementCollector(Document).OfClass(typeof(ParameterFilterElement))
-        .Cast<ParameterFilterElement>()
+    var filter = new FilteredElementCollector(Document).OfClass(typeof(FilterElement))
+        .Cast<FilterElement>()
         .FirstOrDefault(f => f.Name.Equals(filterName, StringComparison.OrdinalIgnoreCase));
 
     if (filter == null)
     {
-        sb.AppendLine($"View Filter '{filterName}' not found — nothing to remove.");
+        sb.AppendLine($"Filter '{filterName}' not found — nothing to remove.");
     }
     else
     {
