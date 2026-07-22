@@ -75,6 +75,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-set-transparency.cs`](actions/color-graphics/action-set-transparency.cs) | Set surface transparency (0-100%) |
 | [`action-set-category-color.cs`](actions/color-graphics/action-set-category-color.cs) | Override one or more ENTIRE categories' line/fill color in a view (Visibility/Graphics > Model Categories) — does NOT consume `elements`, categories are a direct array input |
 | [`action-reset-category-graphics.cs`](actions/color-graphics/action-reset-category-graphics.cs) | Clear one or more CATEGORY-level graphic overrides — the paired undo for `action-set-category-color.cs` — does NOT consume `elements` |
+| [`action-create-view-filter.cs`](actions/color-graphics/action-create-view-filter.cs) | Create a Revit VIEW FILTER (`ParameterFilterElement`, the Visibility/Graphics > Filters tab rule mechanism — NOT this repo's `filters/` folder) — persists, auto-applies to future elements too — does NOT consume `elements` — not yet live-verified |
+| [`action-apply-view-filter.cs`](actions/color-graphics/action-apply-view-filter.cs) | Add an existing View Filter to a view with a color/visibility (or update it if already applied) — does NOT consume `elements` |
+| [`action-remove-view-filter.cs`](actions/color-graphics/action-remove-view-filter.cs) | Take a View Filter off a view, optionally delete it from the document entirely — does NOT consume `elements` |
 
 **Visibility** — [`actions/visibility/`](actions/visibility/)
 | Fragment | Job |

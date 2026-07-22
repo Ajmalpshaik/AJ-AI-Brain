@@ -226,3 +226,16 @@ here.
   rather than failing the whole batch. Confirmed with the user that `action-highlight-vs-rest.cs` already
   covers "color X red, gray out everything else in the view" — no new fragment needed there, already
   live-verified. `color-graphics/` is now 8 fragments, considered complete for this pass.
+- 2026-07-22 — User asked about Revit's own View Filters (Visibility/Graphics > Filters tab,
+  `ParameterFilterElement`) — a real, different mechanism from this repo's `filters/` folder (persists in
+  the document, auto-applies to future elements too, no script re-run needed) — clarified the naming
+  collision before building. Added the full create/apply/remove lifecycle to `color-graphics/`:
+  `action-create-view-filter.cs` (builds a `ParameterFilterElement` + one `FilterRule` via
+  `ParameterFilterRuleFactory` — text or numeric comparison, not yet live-verified — the rule-building
+  surface has more moving parts than anything else in this group), `action-apply-view-filter.cs` (add to
+  a view + set color/visibility, or update if already applied — mirrors the already-proven pattern
+  recorded in `mep-color-standard.md` from real project work, so no caution flag needed here),
+  `action-remove-view-filter.cs` (detach from a view, optional full delete from the document — gated
+  like any other delete). Cross-referenced all three from `mep-color-standard.md` so the existing
+  know-how there points at reusable fragments instead of describing the pattern to hand-write again.
+  `color-graphics/` is now 11 fragments.
