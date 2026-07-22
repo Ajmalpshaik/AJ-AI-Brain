@@ -27,7 +27,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-category-and-numeric-param.cs`](filters/filter-by-category-and-numeric-param.cs) | Category narrowed by a numeric parameter vs. an mm value (the "500mm duct" filter) |
 | [`filter-by-length.cs`](filters/filter-by-length.cs) | Category narrowed by Length (mm) vs. an mm value — bound to `CURVE_ELEM_LENGTH` directly |
 | [`filter-by-size.cs`](filters/filter-by-size.cs) | Category narrowed by size — round (Diameter) and rectangular (Width x Height) handled together, or a plain "Size" text match |
-| [`filter-by-room.cs`](filters/filter-by-room.cs) | Category narrowed to instances physically inside one room |
+| [`filter-by-room.cs`](filters/filter-by-room.cs) | Category narrowed to instances physically inside one room, matched by Id, Name, and/or Number |
 | [`filter-by-system-type.cs`](filters/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP System TYPE/classification (e.g. "CDP", "Supply Air") |
 | [`filter-by-system-name.cs`](filters/filter-by-system-name.cs) | Pipes/ducts/fittings narrowed to one specific System instance's own name (e.g. "DXS 1") |
 | [`filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) | Whatever's currently selected in Revit |
@@ -39,7 +39,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring |
 | [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
-| [`filter-by-space.cs`](filters/filter-by-space.cs) | Category narrowed to instances physically inside one MEP Space (not a Room) — not yet live-verified |
+| [`filter-by-space.cs`](filters/filter-by-space.cs) | Category narrowed to instances physically inside one MEP Space (not a Room), matched by Id, Name, and/or Number — not yet live-verified |
 | [`filter-by-family.cs`](filters/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
 | [`filter-by-family-type.cs`](filters/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
 | [`filter-by-view.cs`](filters/filter-by-view.cs) | Category narrowed to instances actually visible in a given view (any view, not just active) |
