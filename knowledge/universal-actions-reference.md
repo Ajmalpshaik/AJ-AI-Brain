@@ -145,8 +145,8 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 98. Create View (Plan/Section/3D/Elevation/Ceiling)
 99. Duplicate View
 100. Apply View Template — BUILT: `actions/sheets-views/action-apply-view-template.cs`
-101. Create View Template from View — BUILT: `actions/sheets-views/action-create-view-template-from-view.cs` (not yet live-verified)
-102. Set View Template Parameter Include/Exclude — BUILT: `actions/sheets-views/action-set-view-template-controlled-params.cs` (not yet live-verified)
+101. Create View Template from View — BUILT: `actions/sheets-views/action-create-view-template-from-view.cs`
+102. Set View Template Parameter Include/Exclude — BUILT: `actions/sheets-views/action-set-view-template-controlled-params.cs`
 103. Set View Scale
 104. Set View Detail Level
 105. Set View Discipline
@@ -233,7 +233,7 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 ## Model Health & Cleanup
 169. Report All Warnings
 170. Report Unused Elements
-171. Purge Unused – NEEDS_REVIEW (no single clean documented API equivalent to the UI command)
+171. Purge Unused – BUILT (partially): `actions/structural-changes/action-purge-unused.cs` — the subset provably correct from the public API (unused View Templates, Filters, Materials), dry-run by default; there is still no single clean API equivalent to the full UI command, so the rest stays unbuilt
 
 ## Project / Document Level
 172. Report Project Information

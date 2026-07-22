@@ -30,7 +30,7 @@ import { register as registerReportParameters } from "./tools/report-parameters.
 import { register as registerMoveElements } from "./tools/move-elements.js";
 import { register as registerDeleteElements } from "./tools/delete-elements.js";
 
-const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.3.0" });
+const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.3.1" });
 
 registerRunCsharp(server);
 registerPing(server);
