@@ -39,10 +39,10 @@ with a different filter. So instead:
 *"Change the color of the 500mm-height ducts, then isolate and select them."*
 
 ```
-filters/filter-by-category-and-numeric-param.cs   (Ducts, Height, = 500mm)  → produces `elements`
-    + actions/action-set-color-uniform.cs                                   → colors `elements`
-    + actions/action-isolate-elements.cs                                    → isolates `elements`
-    + actions/action-select-elements.cs                                     → selects `elements`
+filters/filter-by-category-and-numeric-param.cs                 (Ducts, Height, = 500mm)  → produces `elements`
+    + actions/color-graphics/action-set-color-uniform.cs                                   → colors `elements`
+    + actions/visibility/action-isolate-elements.cs                                         → isolates `elements`
+    + actions/selection/action-select-elements.cs                                           → selects `elements`
 ```
 
 The fully assembled result is [`examples/color-isolate-select-by-size.cs`](examples/color-isolate-select-by-size.cs)
@@ -115,8 +115,8 @@ return "Total pipes: " + pipes.Count;
 Saved/reused version:
 
 ```text
-filters/filter-by-category.cs      (targetCategory = OST_PipeCurves) -> produces elements
-    + actions/action-count-and-report.cs                            -> reports Count
+filters/filter-by-category.cs                (targetCategory = OST_PipeCurves) -> produces elements
+    + actions/reporting/action-count-and-report.cs                            -> reports Count
 ```
 
 So "count pipes", "count ducts", "select pipes", "color pipes", and "isolate pipes" do not become five
@@ -129,22 +129,22 @@ Revit category they will be used on today. Route the request by shape first:
 
 | Request shape | Compose |
 |---|---|
-| "How many X?" | `filters/filter-by-category.cs` + `actions/action-count-and-report.cs` |
-| "How many X, what height/diameter/size?" | `filters/filter-by-category.cs` + `actions/action-count-and-report.cs` with `wantBreakdownTable = true`, `preferredParamName` set |
-| "How many X, with size AND total length per size?" | `filters/filter-by-category.cs` + `actions/action-length-by-size.cs` |
-| "Show me/list the 300x300 X" (a specific value, not a full breakdown) | matching filter (e.g. `filter-by-category-and-numeric-param.cs`) + `actions/action-report-parameters.cs` — lists the actual items with Element ID, not just a count |
+| "How many X?" | `filters/filter-by-category.cs` + `actions/reporting/action-count-and-report.cs` |
+| "How many X, what height/diameter/size?" | `filters/filter-by-category.cs` + `actions/reporting/action-count-and-report.cs` with `wantBreakdownTable = true`, `preferredParamName` set |
+| "How many X, with size AND total length per size?" | `filters/filter-by-category.cs` + `actions/reporting/action-length-by-size.cs` |
+| "Show me/list the 300x300 X" (a specific value, not a full breakdown) | matching filter (e.g. `filter-by-category-and-numeric-param.cs`) + `actions/reporting/action-report-parameters.cs` — lists the actual items with Element ID, not just a count |
 | "Select/color/isolate/hide X" | `filters/filter-by-category.cs` + the matching action |
 | "X inside this room" | `filters/filter-by-room.cs` + the matching action |
 | "X with this family/name/parameter" | `filter-by-category-and-family.cs` or `filter-by-category-and-numeric-param.cs` + the matching action |
 | "All duct system / pipe system / cable tray system" | `filters/filter-by-multiple-categories.cs` + the matching action |
 | "X where parameter/family/type contains Y" | `filters/filter-by-parameter-text.cs` + the matching action |
 | "X on workset Y" | `filters/filter-by-workset.cs` + the matching action |
-| "Pin/unpin X" | any filter + `actions/action-set-pin-state.cs` |
-| "Show/zoom to X" | any filter + `actions/action-show-elements.cs` |
-| "Report these parameters for X" | any filter + `actions/action-report-parameters.cs` |
+| "Pin/unpin X" | any filter + `actions/visibility/action-set-pin-state.cs` |
+| "Show/zoom to X" | any filter + `actions/visibility/action-show-elements.cs` |
+| "Report these parameters for X" | any filter + `actions/reporting/action-report-parameters.cs` |
 | "Unhide all in this view" | `commands/unhide-all-active-view.cs` |
-| "What dates are written on the sheets / title blocks?" | `filters/filter-by-sheets.cs` + `actions/action-extract-dates-from-textnotes.cs` |
-| "Attach/set the matching revision onto each sheet" | `filters/filter-by-sheets.cs` + `actions/action-assign-revisions-by-sheet-date.cs` |
+| "What dates are written on the sheets / title blocks?" | `filters/filter-by-sheets.cs` + `actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs` |
+| "Attach/set the matching revision onto each sheet" | `filters/filter-by-sheets.cs` + `actions/sheet-dates-revisions/action-assign-revisions-by-sheet-date.cs` |
 
 Typical live request:
 
@@ -157,7 +157,7 @@ Do this as workflow + modules, not as a new saved script:
 2. report Revit version + open model, per ../knowledge/live-model/core.md
 3. filters/filter-by-category.cs
    targetCategory = BuiltInCategory.OST_DuctCurves
-4. actions/action-count-and-report.cs
+4. actions/reporting/action-count-and-report.cs
    wantBreakdownTable = true
    preferredParamName = "Height"
 5. return sb.ToString()

@@ -8,7 +8,7 @@
 // PRODUCES: sb (StringBuilder) — appends the report; add `return sb.ToString();` after this fragment.
 // WRITES the model — wrap in a Transaction with RollBack on failure per the standard convention.
 // ------------------------------------------------------------
-// GOTCHA (see ../knowledge/live-model/revisions.md "Revision sequence auto-purges unused revisions"): calling
+// GOTCHA (see ../../../knowledge/live-model/revisions.md "Revision sequence auto-purges unused revisions"): calling
 // SetAdditionalRevisionIds can trigger Revit to silently purge any OTHER project revision that isn't
 // attached to any sheet and has no cloud — project-wide, not scoped to the sheet being edited. Confirm
 // with the user before running this if the project has revisions you're not sure are attached anywhere.

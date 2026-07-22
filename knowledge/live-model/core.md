@@ -60,7 +60,7 @@ rather than just act on existing ones and don't fit the filter+action shape.
   retry the same call; it recovers on its own. Don't treat one blocked response as a reason to change
   approach or report a failure.
 - **Discover a category's real parameter names/IDs before bulk reading or writing on it, don't guess from
-  a plausible name.** Run [`action-report-parameters.cs`](../../scripts/actions/action-report-parameters.cs)
+  a plausible name.** Run [`action-report-parameters.cs`](../../scripts/actions/reporting/action-report-parameters.cs)
   (or a one-off parameter dump) against one representative element of a category the first time it comes
   up in a session — parameter names vary by family/template, and a guessed name that happens to work on
   one project can silently miss or fail on another.

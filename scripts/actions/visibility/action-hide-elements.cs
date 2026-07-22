@@ -2,11 +2,11 @@
 // FRAGMENT (action) — action-hide-elements.cs
 // PURPOSE: Hide exactly `elements` in the active view (the opposite of isolate — everything else stays
 //          visible, these disappear). Temporary by default (matches house convention — permanent
-//          visibility changes need an explicit ask, see ../knowledge/live-model/views.md); set `permanent = true`
+//          visibility changes need an explicit ask, see ../../../knowledge/live-model/views.md); set `permanent = true`
 //          only when the user has actually asked for a lasting change, not a look-at-this-for-now hide.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// SOURCE: ../knowledge/live-model/views.md § View visibility patterns
+// SOURCE: ../../../knowledge/live-model/views.md § View visibility patterns
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -6,7 +6,7 @@
 //          a gradient across ordered groups, or random distinct colors.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// SOURCE: ../knowledge/live-model/mep-trace.md § Color-coding a traced run; parameter-value stringification and the
+// SOURCE: ../../../knowledge/live-model/mep-trace.md § Color-coding a traced run; parameter-value stringification and the
 //         three color modes adapted from an external repository's
 //         ColorSplashEventHandler (a different architecture — fixed MCP tools, not raw scripting — so
 //         only the technique was taken, not any code, and re-verified against this project's own

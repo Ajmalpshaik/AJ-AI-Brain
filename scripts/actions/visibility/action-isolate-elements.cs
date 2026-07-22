@@ -4,7 +4,7 @@
 //          first so it's never additive to a stale state.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// SOURCE: ../knowledge/live-model/views.md § View visibility patterns. The view-capability check uses Revit's own
+// SOURCE: ../../../knowledge/live-model/views.md § View visibility patterns. The view-capability check uses Revit's own
 //         View.CanUseTemporaryVisibilityModes() (adopted after seeing it in
 //         an external repository) instead of a hand-maintained list of
 //         ViewType enum values — more correct, since it asks Revit directly rather than guessing which

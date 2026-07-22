@@ -16,7 +16,7 @@ How to answer, separate from what to build or fix.
   — the Element IDs are what make that next step possible without re-filtering from scratch. Compose
   [`filters/filter-by-category-and-numeric-param.cs`](../scripts/filters/filter-by-category-and-numeric-param.cs)
   (or whichever filter matches) with
-  [`actions/action-report-parameters.cs`](../scripts/actions/action-report-parameters.cs) for this —
+  [`actions/reporting/action-report-parameters.cs`](../scripts/actions/reporting/action-report-parameters.cs) for this —
   `action-count-and-report.cs` is for a bare count/aggregate breakdown, not this case.
 
 - **Substantive work** (a build/fix/check, or anything touching the live model — not a quick count/size
