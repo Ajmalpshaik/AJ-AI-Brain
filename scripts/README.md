@@ -119,7 +119,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | Fragment | Job |
 |---|---|
 | [`action-count-and-report.cs`](actions/reporting/action-count-and-report.cs) | Bare count or size-breakdown table |
-| [`action-count-by-group.cs`](actions/reporting/action-count-by-group.cs) | Count broken down by ANY parameter's value (Level, System Type, Family, Comments, ...) — the general case beyond size |
+| [`action-count-by-group.cs`](actions/reporting/action-count-by-group.cs) | Count broken down by ANY parameter's value (Level, System Type, Family, Comments, Phase Created, ...) — the general case beyond size |
+| [`action-count-by-spatial-container.cs`](actions/reporting/action-count-by-spatial-container.cs) | Count broken down by which Room/Space/Zone physically contains each element — spatial test, not a parameter lookup (Room/Space have no such parameter on most MEP elements) |
 | [`action-report-parameters.cs`](actions/reporting/action-report-parameters.cs) | Parameter table (values) for parameter names you already know |
 | [`action-report-parameter-inventory.cs`](actions/reporting/action-report-parameter-inventory.cs) | Discover what parameters an element actually HAS — name, kind (Built-in/Shared/Project-Family), group, storage type, Instance vs Type, read-only, value — before you know the names to ask for |
 | [`action-report-location.cs`](actions/reporting/action-report-location.cs) | Report each element's position (point, line endpoints, or bounding-box-center fallback); read-only |
