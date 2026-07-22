@@ -279,3 +279,12 @@ here.
   a filter (same shape as the other View Template fragments), duplicates via the same
   `View.Duplicate(ViewDuplicateOption.Duplicate)` mechanism `action-duplicate-views.cs` already uses for
   regular views, then renames the copy. `sheets-views/` is now 8 fragments.
+- 2026-07-22 — Direct follow-up caught the last real gap in the View Template group: nothing could check
+  whether a view already has a template applied before acting on it. Added
+  `action-report-view-template-status.cs` — read-only, reports per view: no template / which template (by
+  name) / which parameters are excluded from its control. Resolves excluded-parameter names via
+  `LabelUtils.GetLabelFor((BuiltInParameter)id)` first (most of the Include/Exclude list are built-in
+  parameters, negative Ids, not real `ParameterElement`s), falling back to `ParameterElement.Name` for
+  the rare custom/shared-parameter case. Optional `checkAllViews` to report every real view in the
+  project at once instead of just the active view. `sheets-views/` is now 9 fragments — View Template
+  group considered complete: apply, create-from-view, controlled-params, remove, duplicate, status.
