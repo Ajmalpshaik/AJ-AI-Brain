@@ -140,3 +140,23 @@ here.
   system-name fragment, since that's what `trace-mep-circuits.cs`'s inline filtering step actually
   matches. Left `trace-mep-circuits.cs` and `action-color-by-group.cs` (both already correctly targeting
   System Name for their own purposes) unchanged — only the doc pointer was wrong, not their behavior.
+- 2026-07-22 — Added 8 more `filters/` fragments per direct follow-up ("add this whatever also filter by
+  insulation..."), covering the 6 real gaps flagged in the prior filter-list review plus insulation:
+  `filter-by-tag-status.cs` (tagged/untagged in a view — confirmed 2020-era
+  `IndependentTag.TaggedLocalElementId`, not the 2022+ `GetTaggedLocalElementIds()`, per
+  `knowledge/live-model/tagging.md`), `filter-by-connection-status.cs` (open connector ends, reusing the
+  `ConnectorManager` access pattern already verified live in `recipes/verify-duct-connectivity.cs`),
+  `filter-by-pin-status.cs`, `filter-by-views.cs` (general Views, not just Sheets — feeds
+  `action-duplicate-views.cs`/`action-place-viewport-on-sheet.cs`), `filter-by-warnings.cs` (promotes
+  `context-all-warnings.cs`'s read-only report into an actionable `elements` set),
+  `filter-by-electrical-system.cs` (Electrical Systems use an enum Circuit Type, not a document element
+  like Piping/Duct SystemType, so this is deliberately its own fragment, not an extension of
+  `filter-by-system-type.cs`). Insulation, per the user's explicit "not only insulation lining also" —
+  covers DuctInsulation + DuctLining + PipeInsulation, not lining alone: `filter-by-insulation-status.cs`
+  (is a pipe/duct insulated or bare, via `InsulationLiningBase.HostElementId` reverse lookup) and
+  `filter-by-insulation-type.cs` (the insulation/lining elements themselves, by kind/type/material/
+  thickness, with an optional `resolveToHost` to act on the underlying pipe/duct instead). Marked
+  `filter-by-electrical-system.cs`, `filter-by-insulation-status.cs`, `filter-by-insulation-type.cs` as
+  not yet live-verified — no electrical work in this model yet, and the insulation ones share
+  `filter-by-host.cs`'s existing `InsulationLiningBase` uncertainty. Updated the filters table in
+  `scripts/README.md`.
