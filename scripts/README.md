@@ -36,6 +36,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-multiple-categories.cs`](filters/filter-by-multiple-categories.cs) | Several categories collected as one group, e.g. duct system / pipe system / cable tray system |
 | [`filter-by-parameter-text.cs`](filters/filter-by-parameter-text.cs) | Category or whole-model scan narrowed by text in family/type/parameter values |
 | [`filter-by-workset.cs`](filters/filter-by-workset.cs) | Elements on one user workset, optional category scope |
+| [`filter-by-links.cs`](filters/filter-by-links.cs) | Every RVT link and/or CAD link instance, optional name substring — feeds `action-set-workset.cs` ("move the links onto a workset") |
 | [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring |
 | [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
