@@ -121,3 +121,18 @@ test("every handler runs its C# generation to completion and fails gracefully wi
     );
   }
 });
+
+test("set_parameter_value rejects both or neither of stringValue/numericValueMm before touching the bridge", async () => {
+  const server = createFakeServer();
+  registerSetParameterValue(server);
+  const { handler } = server.registrations[0];
+
+  for (const badArgs of [
+    { category: "Ducts", parameterNameToSet: "Comments" }, // neither
+    { category: "Ducts", parameterNameToSet: "Comments", stringValue: "x", numericValueMm: 1 }, // both
+  ]) {
+    const result = await handler(badArgs);
+    assert.equal(result.isError, true, `expected a validation error for ${JSON.stringify(badArgs)}`);
+    assert.match(result.content[0].text, /exactly one of/i);
+  }
+});

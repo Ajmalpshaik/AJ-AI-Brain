@@ -524,14 +524,44 @@ here.
   connection this session (cloud/Linux container, by design) — nothing done here needed one; live-model
   correctness work stays for a session with the bridge connected.
   **Next** (not started yet, roughly in priority order, so a fresh session can pick this up cold):
-  1. Deeper `mcp-server` review beyond the structural smoke test — edge cases in
-     `bridge-connection.js`'s reconnect/timeout/queueing logic specifically.
-  2. Widen the static-pitfall sweep done here across the fragments still marked not-yet-live-verified in
+  1. Widen the static-pitfall sweep done here across the fragments still marked not-yet-live-verified in
      `scripts/README.md`'s per-fragment notes — can't live-verify without Revit connected, but more of the
      same kind of grep-for-known-bug-shapes is possible without it.
-  3. Editorial pass on `AGENT-SPEC.md` against the routed files it summarizes, checking for the same kind
+  2. Editorial pass on `AGENT-SPEC.md` against the routed files it summarizes, checking for the same kind
      of staleness caught and fixed on 2026-07-22 (a spec re-check needs to happen deliberately — passing
      the link checker doesn't mean the content is current).
-  4. Look at whether session-start reading (`START-HERE.md` + `AGENT-SPEC.md` + `knowledge/INDEX.md`) can
+  3. Look at whether session-start reading (`START-HERE.md` + `AGENT-SPEC.md` + `knowledge/INDEX.md`) can
      be trimmed/restructured to cut token overhead per session — the "faster" lever that compounds every
      time the Brain gets used, as opposed to a one-time fix.
+- 2026-07-23 — **Part 2** of the same multi-session health pass: the deeper `mcp-server` review Part 1
+  deferred (item 1 on its "Next" list), still no Revit connection needed or used. Read every one of the 17
+  tool handlers again plus all of `bridge-connection.js` looking specifically for consistency gaps and
+  connection-lifecycle edge cases (concurrency/timeout races were traced through by hand — the queueing in
+  `callBridge`, the timer-vs-response ordering in `createConnection`'s data handler — both confirmed
+  already correct, no bug there). Found and fixed 3 real, narrow issues:
+  1. `tools/model-summary.js`'s catch block returned `{ Success, Error }` (capitalized) while every other
+     tool's catch — including the shared `runGenerated()` helper — returns lowercase `{ success, error }`.
+     `asToolResult()` already checks both cases so this was never a functional bug, just a real
+     inconsistency worth normalizing to one convention. Fixed to lowercase.
+  2. `tools/set-parameter-value.js` documents "provide exactly one of stringValue or numericValueMm" but
+     never actually checked that — supplying both silently ignored `stringValue` (numeric branch always
+     won), and supplying neither would silently skip every element (both `p.StorageType` branches miss).
+     Added an explicit check at the top of the handler that returns a clear error before generating any
+     C#, and a regression test for both bad-input shapes (both given / neither given) in
+     `mcp-server/test/smoke.test.js`.
+  3. `bridge-connection.js`'s `readDiscoveryInfo()` had two ways to leak a raw, unfriendly Node error
+     instead of this file's own established friendly-message style: (a) a real TOCTOU gap — `existsSync`
+     then a separate `statSync`/`readFileSync`, so a disconnect landing in that exact window (e.g. Revit
+     closed mid-call) threw a bare `ENOENT` past every one of this function's other guards; (b) no
+     handling at all for a corrupt/truncated discovery file — `JSON.parse` throwing a raw `SyntaxError`.
+     Collapsed the existence check into the same try/catch as the stat call, and wrapped the read+parse in
+     its own try/catch with a message matching the existing style. Zero change to the golden path.
+  **Documented, deliberately not fixed** (a design tradeoff, not a bug — flagging for a decision rather
+  than silently building it): connection reuse in `getConnection()` only checks LOCAL socket health.  If
+  Revit's own listener dies without the OS surfacing it at the socket level, a reused connection can look
+  healthy, accept a write, and simply never answer — the caller then pays the full 90s
+  `RESPONSE_TIMEOUT_MS` instead of a fast failure. A fix would mean a cheap ping-before-reuse or a
+  background heartbeat, which adds latency/complexity to the common path — worth asking about before
+  building, not assuming. Left as a code comment on `getConnection()` for now.
+  `npm test` (now 3 tests) and `node tools/verify-consistency.mjs` both still pass clean after all of the
+  above. Same "Next" list as before applies, un-renumbered above — Part 2 was item 1 on it, now done.
