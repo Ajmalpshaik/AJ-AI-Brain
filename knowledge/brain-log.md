@@ -421,3 +421,75 @@ here.
     the same auto-purge gotcha noted in `revisions.md`.
   9 new fragments plus the 1 modified (`action-select-elements.cs`) across 6 groups. Every group in
   `scripts/actions/` has now had a dedicated gap-check pass this session.
+- 2026-07-23 — Full live-verification pass against the connected Revit 2020 bridge: ran every fragment for
+  real (composed with its filter, fresh read-back after, throwaway test fixtures cleaned up after). Found
+  and fixed several real bugs, and confirmed three genuine Revit-2020 API gaps worth remembering so nobody
+  re-discovers them the hard way:
+  - **No API to activate a Design Option** — only a read-only `DesignOption.GetActiveDesignOptionId`
+    exists anywhere in the assembly. `action-set-design-option.cs` now requires the option be activated
+    manually first.
+  - **No API to create a Scope Box** — confirmed via exhaustive reflection, nothing anywhere. UI-only
+    (View tab > Scope Box). `create-scope-box.cs` and the resize half of `action-update-scope-box.cs` now
+    report this instead of attempting it (the old resize workaround would have permanently destroyed a box
+    with no way to recreate it).
+  - **`Document.Phases` is read-only** — Insert/Append both throw "Collection is read-only" at runtime, and
+    no other Phase-creation API exists. UI-only (Manage > Phases). `action-create-phase.cs` now reports
+    this instead of throwing a compile error.
+  - Also version-specific, not impossible, just wrong-API-for-this-version: `SpecTypeId`/`GroupTypeId`
+    (2022+) don't exist on 2020 — use legacy `ParameterType`/`BuiltInParameterGroup`
+    (`action-add-project-parameter.cs`). `PDFExportOptions` doesn't exist on 2020 at all — real PDF export
+    here goes through `Document.PrintManager` routed through a virtual printer driver
+    (`action-export-sheets-to-pdf.cs`, rewritten, not yet fired for real — this system has a physical
+    printer in its device list too). The assumed `CombinedParameterRule` class for schedule Combined
+    Parameter fields never existed at all, in any version — real class is `TableCellCombinedParameterData`
+    (`action-add-schedule-calculated-field.cs`, fixed and verified).
+  - Real logic bug, not a version issue: `action-fillet-elements.cs` mode="arc" trimmed its two source
+    lines by reassigning `LocationCurve.Curve` in place — silently a no-op (no exception, clean commit, but
+    the geometry never actually changes) whenever the two lines already share a coincident endpoint, which
+    is the normal case for filleting an existing corner. Fixed via delete+recreate instead.
+    `action-trim-extend-elements.cs` shares the same technique and likely the same exposure for Model/
+    Detail Lines specifically (Ducts confirmed unaffected) — flagged in its header, not yet forced.
+  - `filter-by-space.cs` matched on `Element.Name`, which Revit auto-combines as "{name} {number}" for
+    Space (Room too, near-certainly) the moment any Number exists — which is always, one gets auto-assigned
+    at creation even if never touched. Fixed to read `BuiltInParameter.ROOM_NAME` instead, which holds the
+    plain name. Noted in `create-space.cs` too.
+  - Everything else checked (~150 fragments: all of `filters/`, `context/`, `commands/`, most of
+    `creators/`, `actions/move-copy-rotate/`, and the Tier 1/2 fragments) came back zero-bug on first real
+    run. Full per-file results in `scripts/README.md`'s per-fragment notes.
+  - Continuing the same pass, through `recipes/` and the remaining pre-existing fragments — found more:
+  - **`FilteredElementCollector.UnionWith()` does not preserve either side's own quick-filters** —
+    `.WhereElementIsNotElementType()` applied before `.OfCategory(...).UnionWith(...)` on each piece
+    silently loses that filter in the merged result (confirmed empirically: 52 elements returned instead of
+    the real 4, every extra one a TYPE element). Fix: apply `.WhereElementIsNotElementType()` ONCE, after
+    all `UnionWith` calls, on the combined collector. Hit `filter-by-system-type.cs`,
+    `filter-by-system-name.cs`, and `recipes/trace-mep-circuits.cs` — the only 3 fragments in the library
+    using `UnionWith`. This retroactively invalidated an earlier "VERIFIED" claim for the first two — their
+    original test only exercised a simplified single-category reproduction that never hit the broken
+    multi-category code path. Lesson: a simplified re-test can pass while the real file still has a bug, if
+    the simplification drops the exact broken shape.
+  - `MechanicalUtils.BreakCurve` reassigns which element Id keeps which physical segment after a split —
+    don't trust an Id across a cut. `recipes/split-duct-near-equipment.cs` assumed the original `duct.Id`
+    was always the equipment-side piece; confirmed live it can come back as the far piece instead, backwards
+    from what the script reported. Fixed by determining near/far geometrically.
+    `recipes/slice-trunk-for-sizing.cs` already defended against this correctly (re-locates each cut target
+    geometrically every time); flagged a separate, still-open, unconfirmed risk in its header instead —
+    `trunkDir`'s sign depends on which end of an arbitrary input piece Revit calls "0", so `skipLastTakeoff`
+    could silently protect the wrong end if that piece was drawn backwards.
+  - Chased a false alarm through several fixture rebuilds: thought BreakCurve was also silently dropping the
+    equipment-side *connection* itself (not just the label), based on a test duct that kept behaving
+    unreliably. Root cause, caught by the user: the test fixture drew the duct along an assumed axis
+    (`XYZ.BasisX`) instead of the equipment connector's own real outward direction
+    (`Connector.CoordinateSystem.BasisZ`) — once the fixture read the connector's real direction first, the
+    connection survived the split fine, every time. Lesson worth keeping: always read a connector's own
+    `CoordinateSystem.BasisZ` before drawing toward or from it — never assume an axis, in a test fixture or
+    anywhere else.
+  - `SpatialElement.Volume` does not exist as a property on Revit 2020 (only `Area` does) — a genuine
+    compile error, not a version-string issue. `action-report-room-space-data.cs` fixed to read
+    `get_Parameter(BuiltInParameter.ROOM_VOLUME)` instead.
+  - A folder-count cross-check (actual Glob/`find` results vs. this pass's own summary claims) caught 2
+    fragments that had been counted as "done" without ever actually being tested:
+    `action-flip-elements.cs` and `action-report-room-space-data.cs` (the Volume fix above). Worth doing
+    this kind of recount on any large verification pass — a summary tally is not itself verification.
+  - `action-flip-elements.cs`: checked 13 loaded families across Mechanical Equipment and Duct Terminal —
+    none support flip in this project. Graceful skip-path confirmed correct; the positive flip path remains
+    genuinely blocked on a flip-capable family (door/window or similar) being loaded.

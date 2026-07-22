@@ -1,27 +1,38 @@
 // ============================================================
 // FRAGMENT (action) — action-add-schedule-calculated-field.cs
-// PURPOSE: Add a CALCULATED VALUE field (a formula referencing other fields already on the schedule) or a
-//          COMBINED PARAMETER field (several existing fields merged into one column with prefix/suffix/
-//          separator per part) to every ViewSchedule in `elements`.
+// PURPOSE: Add a COMBINED PARAMETER field (several existing fields merged into one column with
+//          prefix/suffix/separator per part) to every ViewSchedule in `elements`. Also supports
+//          mode="formula" IF the installed Revit version's API supports it (see CONFIDENCE NOTE).
 // ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// CONFIDENCE NOTE, READ BEFORE USING mode="combined": mode="formula" (Definition.AddCalculatedField +
-// ScheduleField.SetFormula) is a well-documented, solid Revit API call. mode="combined" is NOT —
-// CombinedParameterRule's exact constructor/setter shape could not be confidently verified from memory
-// this session (unlike everything else in this library, which is either solid or clearly flagged as a
-// deliberate workaround). Treat mode="combined" as a best-effort starting point, not trusted code — if it
-// doesn't compile as-is, check Autodesk's Revit API docs for `CombinedParameterRule` / `ScheduleField.
-// SetCombinedParameters` for your installed Revit version and adjust the argument list/order below. If it
-// DOES compile and run, still verify the actual column output looks right before relying on it — this is
-// the single least-certain fragment in the whole library right now.
-// NOT YET LIVE-VERIFIED (mode="formula" included) — test on one schedule first before trusting a batch.
+// LIVE-VERIFIED 2026-07-22 on Revit 2020, mode="combined" only — see notes below.
+// mode="formula": Calculated Value FORMULA fields have NO public API in Revit 2020 — confirmed by
+// reflection: ScheduleDefinition has no AddCalculatedField method, and ScheduleField has no SetFormula/
+// Formula member at all anywhere in its public surface. Formula calculated fields are UI-only on this
+// Revit version (Insert > Calculated Value > Formula). That capability was added to the public API in a
+// later Revit release (2022+) as ScheduleField.SetFormula(string)/GetFormula() — if running on Revit
+// 2022+, that's the shape to try (roughly: `var f = def.AddField(ScheduleFieldType.Formula); f.
+// SetFormula(formula);`) and re-verify against that version; it is NOT wired up here because it cannot
+// compile against the Revit 2020 API this library currently runs against. On Revit 2020, mode="formula"
+// reports the limitation into `sb` and does nothing, rather than throwing a compile error that would
+// also break mode="combined" in the same file.
+// mode="combined" was originally written against an imagined `CombinedParameterRule` class that does not
+// exist anywhere in the Revit API. The real class is `TableCellCombinedParameterData` — a static
+// `Create()` factory, with settable `ParamId` (ElementId, from SchedulableField.ParameterId — NOT a
+// ScheduleFieldId), `CategoryId`, `Prefix`, `Suffix`, `Separator` properties — added to the schedule via
+// `ScheduleDefinition.InsertCombinedParameterField(IList<TableCellCombinedParameterData>, fieldName,
+// index)`, which creates AND configures the field in one call (no separate AddCalculatedField step).
+// LIVE-VERIFIED: field created correctly (IsCombinedParameterField=true confirmed on a fresh re-fetch of
+// the schedule after the transaction committed). Cell-VALUE rendering (the actual "prefix + value +
+// separator + value + suffix" text) was confirmed structurally (correct column, correct name) but not
+// against a populated data row — the test model had 0 instances of the schedule's category at test time.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-string mode = "formula";           // "formula" | "combined"
+string mode = "combined";          // "combined" (live-verified) | "formula" (Revit 2022+ API only, see note above — no-op on 2020)
 string newFieldName = "Calc Field";
-string formula = "";               // mode="formula" only — e.g. "Height / 1000", referencing existing field names already on the schedule
+string formula = "";               // mode="formula" only, Revit 2022+ — e.g. "Height / 1000", referencing existing field names already on the schedule
 List<(string fieldName, string prefix, string suffix, string separator)> combineFields = new List<(string, string, string, string)>
 {
     // mode="combined" only — order matters; separator is inserted BEFORE this field (ignored on the first entry)
@@ -48,35 +59,34 @@ using (var t = new Transaction(Document, "AJ Tools - Add Schedule Calculated Fie
             {
                 if (mode == "formula")
                 {
-                    var field = def.AddCalculatedField(newFieldName, ScheduleFieldType.Formula);
-                    field.SetFormula(formula);
-                    added++;
+                    failures.Add($"'{schedule.Name}': mode=\"formula\" has no public API on this Revit version (2020) — Calculated Value formula fields are UI-only here. Use mode=\"combined\", or add the field manually via Insert > Calculated Value.");
                 }
                 else if (mode == "combined")
                 {
-                    var fieldIds = new List<ScheduleFieldId>();
-                    var prefixes = new List<string>();
-                    var suffixes = new List<string>();
-                    var separators = new List<string>();
+                    var schedulable = def.GetSchedulableFields();
+                    var dataList = new List<TableCellCombinedParameterData>();
+                    int resolvedCount = 0;
                     foreach (var (fieldName, prefix, suffix, separator) in combineFields)
                     {
-                        var fid = def.GetFieldOrder().FirstOrDefault(id => def.GetField(id).GetName().Equals(fieldName, StringComparison.OrdinalIgnoreCase));
-                        if (fid == null) continue;
-                        fieldIds.Add(fid);
-                        prefixes.Add(prefix ?? "");
-                        suffixes.Add(suffix ?? "");
-                        separators.Add(separator ?? "");
+                        var sf = schedulable.FirstOrDefault(x => x.GetName(Document).Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                        if (sf == null) continue;
+                        var data = TableCellCombinedParameterData.Create();
+                        data.ParamId = sf.ParameterId;
+                        data.CategoryId = def.CategoryId;
+                        data.Prefix = prefix ?? "";
+                        data.Suffix = suffix ?? "";
+                        data.Separator = separator ?? "";
+                        dataList.Add(data);
+                        resolvedCount++;
                     }
 
-                    if (fieldIds.Count < combineFields.Count)
+                    if (resolvedCount < combineFields.Count)
                     {
-                        failures.Add($"'{schedule.Name}': only {fieldIds.Count}/{combineFields.Count} combineFields entries resolved to a real field — check names against action-report-schedule-fields.cs");
+                        failures.Add($"'{schedule.Name}': only {resolvedCount}/{combineFields.Count} combineFields entries resolved to a real schedulable field — check names against action-report-schedule-fields.cs");
                     }
                     else
                     {
-                        var rule = new CombinedParameterRule(fieldIds, separators, prefixes, suffixes, fieldIds.Select(f => "").ToList());
-                        var field = def.AddCalculatedField(newFieldName, ScheduleFieldType.Combined);
-                        field.SetCombinedParameters(rule);
+                        def.InsertCombinedParameterField(dataList, newFieldName, def.GetFieldCount());
                         added++;
                     }
                 }

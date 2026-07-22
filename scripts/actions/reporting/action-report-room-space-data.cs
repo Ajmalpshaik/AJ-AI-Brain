@@ -10,6 +10,11 @@
 //         Area and Volume Computations) — otherwise every Room reports Volume = 0, that's expected, not a
 //         bug. Spaces compute Volume by default, no such switch.
 // ============================================================
+// LIVE-VERIFIED 2026-07-23 — FIXED A REAL BUG: `SpatialElement.Volume` does not exist as a property on
+// this Revit version (confirmed via reflection — `Area` is the only Area/Volume-named property on
+// SpatialElement here) — a compile error, not a version-string typo. Fixed to read
+// `get_Parameter(BuiltInParameter.ROOM_VOLUME)` instead, confirmed via reflection AND a live test (real
+// non-zero Volume returned for both a Room and a Space). Re-verified end-to-end on a real Room+Space pair.
 
 bool anyVolumeZero = false;
 var rows = new List<(int id, string name, string number, string level, double areaSqm, double volumeCum, string occupancy)>();
@@ -21,8 +26,9 @@ foreach (var e in elements)
     if (sp == null) { skipped++; continue; }
 
     double areaSqm = UnitUtils.ConvertFromInternalUnits(sp.Area, DisplayUnitType.DUT_SQUARE_METERS);
-    double volumeCum = UnitUtils.ConvertFromInternalUnits(sp.Volume, DisplayUnitType.DUT_CUBIC_METERS);
-    if (sp.Volume <= 0) anyVolumeZero = true;
+    double volumeInternal = sp.get_Parameter(BuiltInParameter.ROOM_VOLUME)?.AsDouble() ?? 0;
+    double volumeCum = UnitUtils.ConvertFromInternalUnits(volumeInternal, DisplayUnitType.DUT_CUBIC_METERS);
+    if (volumeInternal <= 0) anyVolumeZero = true;
 
     string occupancy = sp.LookupParameter("Occupancy")?.AsString() ?? "";
     string levelName = sp.Level?.Name ?? "";

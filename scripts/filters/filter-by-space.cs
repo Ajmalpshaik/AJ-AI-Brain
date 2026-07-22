@@ -11,8 +11,19 @@
 // SOURCE: mirrors filter-by-room.cs's Z-mismatch handling (../../knowledge/live-model/core.md §
 //         Room.IsPointInRoom...) — Space.IsPointInSpace is the Space-class equivalent of
 //         Room.IsPointInRoom.
-// STATUS: not yet live-verified — confirm Space.IsPointInSpace resolves in this Revit version before
-//         trusting bulk results.
+// LIVE-VERIFIED 2026-07-22 — FOUND AND FIXED A REAL BUG in the name-matching logic (IsPointInSpace itself
+// was already correct). The original code matched on `s.Name`, Element.Name's C# property — but for
+// Space (and, near-certainly, Room, same underlying mechanism), Element.Name is NOT the plain name you
+// set. Revit auto-assigns a default Number to every new Space at creation, and ALWAYS derives Element.Name
+// as "{name} {number}" whenever a Number is present (confirmed: creating a space with only Name="AJ TEST
+// Space" set, never touching Number at all, still produced Element.Name == "AJ TEST Space T03" because
+// Revit had already auto-assigned Number "T03" on creation — there is no way to get a plain, un-suffixed
+// Element.Name on a Space with any Number set, and Number is essentially never truly absent). This broke
+// exact-name lookups like this fragment's spaceName match. The PURE name (what you actually typed into
+// Name) lives in a separate parameter — confirmed via BuiltInParameter.ROOM_NAME (yes, ROOM_NAME — Space
+// reuses the Room parameter set), which reads back "AJ TEST Space" correctly regardless of Number. Fixed
+// spaceName matching to read that parameter instead of Element.Name. spaceNumber matching (Space.Number)
+// was already correct and unaffected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -37,7 +48,7 @@ if (space == null && (!string.IsNullOrEmpty(spaceName) || !string.IsNullOrEmpty(
         .WhereElementIsNotElementType()
         .Cast<Autodesk.Revit.DB.Mechanical.Space>()
         .FirstOrDefault(s =>
-            (string.IsNullOrEmpty(spaceName) || (s.Name ?? "").Equals(spaceName, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(spaceName) || (s.get_Parameter(BuiltInParameter.ROOM_NAME)?.AsString() ?? "").Equals(spaceName, StringComparison.OrdinalIgnoreCase)) &&
             (string.IsNullOrEmpty(spaceNumber) || (s.Number ?? "").Equals(spaceNumber, StringComparison.OrdinalIgnoreCase)));
 }
 

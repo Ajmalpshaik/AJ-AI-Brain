@@ -14,6 +14,28 @@
 //
 // `MechanicalUtils.BreakCurve` does NOT auto-connect the two resulting segments - always explicitly
 // reconnect the joint after breaking (this script does that as its own step).
+//
+// LIVE-VERIFIED 2026-07-23 - FOUND AND FIXED A REAL BUG: BreakCurve reassigns which element Id keeps
+// which physical segment (same gotcha slice-trunk-for-sizing.cs's header already calls out) - this script
+// originally assumed `duct.Id` was always the equipment-side piece and `newDuctId` always the rest-of-run
+// piece. Confirmed live: `duct.Id` came back as the FAR piece and `newDuctId` came back as the
+// equipment-side stub - exactly backwards from the old report line. Fixed by determining near/far
+// geometrically (distance from each piece's own endpoints to the equipment connector) instead of trusting
+// which variable held which Id. Re-verified: reported Ids now match actual geometry.
+//
+// RETRACTED FALSE ALARM (same test session): initially also concluded BreakCurve silently drops the
+// equipment-side connection itself (not just the label) - traced to a mistake in the TEST FIXTURE, not this
+// script. The fixture built its test duct along an assumed axis (XYZ.BasisX) instead of the equipment
+// connector's own real outward direction (`Connector.CoordinateSystem.BasisZ`), so the duct never lined up
+// with the connector properly to begin with; that's what produced the unreliable connect/disconnect
+// behavior, not BreakCurve. Rebuilt the fixture reading the connector's real direction (confirmed
+// (0,-1,0) here, not the assumed +X) and reconnected/split it correctly: the equipment connection survived
+// the split fine, both before and immediately after, on a fresh independent re-fetch. LESSON: when
+// connecting TO or drawing a duct FROM an equipment connector - in a test fixture or anywhere else - always
+// read that connector's own `CoordinateSystem.BasisZ` first and build/extend along it; don't assume an
+// axis. No code change needed for this part - the script's existing single reconnect (the new internal
+// joint only) is correct as long as the duct was properly connected to begin with, which the script assumes
+// as a precondition, not something it establishes itself.
 
 // ---- INPUTS (edit every time - never treat these as fixed defaults) ----
 ElementId equipmentId = ElementId.InvalidElementId; // the Mechanical Equipment (or any element) whose connector is the reference point
@@ -70,15 +92,27 @@ using (var t = new Transaction(Document, "AJ Tools - Split Duct Near Equipment")
     try
     {
         newDuctId = Autodesk.Revit.DB.Mechanical.MechanicalUtils.BreakCurve(Document, duct.Id, breakPt);
-        var nearFresh = Document.GetElement(duct.Id) as Autodesk.Revit.DB.Mechanical.Duct;
-        var newFresh = Document.GetElement(newDuctId) as Autodesk.Revit.DB.Mechanical.Duct;
+        var pieceA = Document.GetElement(duct.Id) as Autodesk.Revit.DB.Mechanical.Duct;
+        var pieceB = Document.GetElement(newDuctId) as Autodesk.Revit.DB.Mechanical.Duct;
+
+        // BreakCurve reassigns which element Id keeps which physical segment - do NOT assume duct.Id
+        // is the equipment-side piece (confirmed live: it can come back as the far/rest-of-run piece
+        // instead). Work out near/far geometrically, same defense slice-trunk-for-sizing.cs already uses.
+        Func<Autodesk.Revit.DB.Mechanical.Duct, double> distToEquip = d =>
+        {
+            var lc = (d.Location as LocationCurve).Curve as Line;
+            return Math.Min(lc.GetEndPoint(0).DistanceTo(equipConn.Origin), lc.GetEndPoint(1).DistanceTo(equipConn.Origin));
+        };
+        var nearFresh = distToEquip(pieceA) <= distToEquip(pieceB) ? pieceA : pieceB;
+        var newFresh = nearFresh.Id == pieceA.Id ? pieceB : pieceA;
+
         var nearConn = nearFresh.ConnectorManager.Connectors.Cast<Connector>()
             .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
         var newConn = newFresh.ConnectorManager.Connectors.Cast<Connector>()
             .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
         nearConn.ConnectTo(newConn);
         t.Commit();
-        sb.AppendLine($"Split: original piece {duct.Id} (equipment side, {gapMm}mm long) / new piece {newDuctId} (rest of the run).");
+        sb.AppendLine($"Split: equipment-side piece Id={nearFresh.Id} ({gapMm}mm long) / rest-of-run piece Id={newFresh.Id}.");
         sb.AppendLine($"Joint reconnected - IsConnected: near-side={nearConn.IsConnected}, new-side={newConn.IsConnected}.");
     }
     catch (Exception ex)

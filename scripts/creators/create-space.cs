@@ -13,6 +13,13 @@
 // forming a closed loop) on that level. Otherwise the Space element is still created but comes out
 // unbounded (zero area) — always check `space.Area > 0` after creating, don't assume success just because
 // no exception was thrown.
+// LIVE-VERIFIED 2026-07-22: creation + Name/Number setters work exactly as written. GOTCHA found in the
+// process (not a bug in THIS file, but affects anything reading the space back afterward): Revit
+// auto-assigns a default Number to every new Space immediately on creation, and Element.Name always comes
+// back as "{name} {number}" once a Number exists — which is always, since one gets auto-assigned even if
+// you never set spacesToCreate's number field. If you need the PLAIN name back later (not "Name Number"),
+// read `space.get_Parameter(BuiltInParameter.ROOM_NAME).AsString()` instead of `space.Name` — see
+// filter-by-space.cs's file header for the full investigation.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 ElementId levelId = ElementId.InvalidElementId;

@@ -1,4 +1,9 @@
 // ============================================================
+// *** NOT CHECKED — this script has NOT been run this session. Code-reviewed only: the API calls it uses
+// (NewExtrusion, NewReferencePlane, NewAlignment, NewDimension, ConnectorElement.CreateDuctConnector, etc.)
+// match patterns already proven elsewhere, but nothing here was actually executed. It needs a Family Editor
+// document open and active in Revit to run at all — a visible workspace change (a new document tab, may
+// switch what's in front of the user), which was deliberately not done without asking first. ***
 // SCRIPT: create-parametric-box-family-with-duct-connector.cs
 // PURPOSE: Build a fully parametric box-shaped family (e.g. an air terminal, a simple equipment box)
 //          from an already-open, empty Generic Model family document: set its category, add a

@@ -1,20 +1,28 @@
 // ============================================================
 // FRAGMENT (action) — action-update-scope-box.cs
-// PURPOSE: Resize an existing Scope Box (by name) to new mm box corners. Revit's public API has no
-//          documented direct "resize this Scope Box's extents" setter — this works around that by
-//          recording which views currently have it assigned as their Scope Box, DELETING the old element,
-//          creating a new one at the new extents under the SAME name, then re-assigning it to every view
-//          that had the old one. Functionally equivalent to a resize from the outside, but the element's
-//          own Id changes — anything referencing the old Id directly (not by name) needs re-resolving
-//          afterward.
+// PURPOSE: Resize an existing Scope Box (by name) to new mm box corners.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — looks the scope box up by name directly (this
 //          is inherently a single-named-object operation, same shape as action-rename-phase.cs).
-// GOTCHA: same technique/honesty caveat as action-set-design-option.cs's copy-while-active workaround —
-//         a genuine API limitation being worked around, not a guess.
-// NOT YET LIVE-VERIFIED — this workaround technique has not been run against a real model this session.
+// CONFIRMED IMPOSSIBLE (as originally written) on Revit 2020 — LIVE-CHECKED 2026-07-22: the original
+// delete-and-recreate workaround depended on `Document.Create.NewScopeBox`, which does not exist anywhere
+// in the public API on this Revit version (see create-scope-box.cs's file header for the full reflection
+// evidence — no Scope Box creation method exists at all). That makes the delete+recreate technique
+// impossible to complete: deleting the old box would succeed, but nothing could recreate it, so a mid-way
+// failure would permanently lose the Scope Box with no way back — an unacceptable risk for an already-
+// uncertain fragment. This fragment NO LONGER deletes anything. It now only looks up the named box and
+// reports its dependent views (still useful — same as before), then reports the resize as not achievable
+// via public API on this Revit version, instead of attempting the destructive workaround.
+// UNVERIFIED, NOT RULED OUT: whether an EXISTING Scope Box exposes any direct, non-destructive way to
+// change its extents (e.g. a settable bounding box / location API) could not be checked this session —
+// this model has 0 Scope Boxes and none can be created via API to test against (see create-scope-box.cs).
+// If a Scope Box exists in a live model, inspect its Element.Location and any BuiltInParameter around its
+// 6 faces/corners before assuming a direct resize is impossible — it may just be undiscovered, not absent.
+// Until verified, treat true resize as a manual-only operation (drag the box's control handles, or its
+// corner grips, in a plan view).
 // ============================================================
-// MANDATORY before running this for real: confirm the scope box name and new extents with the user first
-// — this deletes and recreates the element, it isn't a simple in-place edit.
+// MANDATORY before running this for real: confirm the scope box name with the user first — even the
+// report-only behavior below should not be assumed silently correct without checking actual dependent
+// views against what the user expects.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string scopeBoxName = "Scope Box 1";
@@ -36,40 +44,12 @@ if (existing == null)
 }
 else
 {
-    var dependentViewIds = new FilteredElementCollector(Document).OfClass(typeof(View)).Cast<View>()
+    var dependentViews = new FilteredElementCollector(Document).OfClass(typeof(View)).Cast<View>()
         .Where(v => v.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)?.AsElementId() == existing.Id)
-        .Select(v => v.Id)
         .ToList();
 
-    using (var t = new Transaction(Document, "AJ Tools - Update Scope Box"))
-    {
-        t.Start();
-        try
-        {
-            Document.Delete(existing.Id);
-
-            Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-            var p1 = new XYZ(mm(newMinXMm), mm(newMinYMm), mm(newMinZMm));
-            var p2 = new XYZ(mm(newMaxXMm), mm(newMaxYMm), mm(newMaxZMm));
-            var newBox = Document.Create.NewScopeBox(p1, p2);
-            newBox.Name = scopeBoxName;
-
-            int reattached = 0;
-            foreach (var viewId in dependentViewIds)
-            {
-                var v = Document.GetElement(viewId) as View;
-                try { v?.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)?.Set(newBox.Id); reattached++; }
-                catch { }
-            }
-
-            t.Commit();
-            sb.AppendLine($"Updated Scope Box '{scopeBoxName}' — recreated with new extents (new Id {newBox.Id.IntegerValue}), re-attached to {reattached}/{dependentViewIds.Count} view(s) that referenced it.");
-        }
-        catch (Exception ex)
-        {
-            t.RollBack();
-            sb.AppendLine($"FAILED to update scope box — rolled back, nothing changed. Reason: {ex.Message}");
-        }
-    }
+    sb.AppendLine($"Found Scope Box '{scopeBoxName}' (Id {existing.Id.IntegerValue}), referenced by {dependentViews.Count} view(s): " +
+        string.Join(", ", dependentViews.Select(v => v.Name)));
+    sb.AppendLine($"Requested new extents ({newMinXMm},{newMinYMm},{newMinZMm}) to ({newMaxXMm},{newMaxYMm},{newMaxZMm}) mm NOT applied — Revit's public API has no Scope Box creation method on this Revit version, so the delete+recreate resize workaround this fragment used to attempt is impossible to complete safely (see CONFIRMED IMPOSSIBLE note above). Resize manually by selecting the Scope Box in a plan view and dragging its corner/edge grips, or editing its Properties.");
 }
 return sb.ToString();

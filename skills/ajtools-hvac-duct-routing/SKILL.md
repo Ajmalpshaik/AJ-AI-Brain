@@ -27,13 +27,16 @@ asked for a 200mm split there (for a future flex-duct connection) but later remo
 need to slice that 200mm from the FCU") once the takeoff-based slicing work below turned out unreliable —
 don't reintroduce the FCU-side split unless the user asks for it again specifically. When they do, start
 from [`recipes/split-duct-near-equipment.cs`](../../scripts/recipes/split-duct-near-equipment.cs)
-(live-verified 2026-07-17) rather than writing it fresh — it's a fixed-offset cut from one equipment
-connector, same `BreakCurve` + explicit-reconnect pattern as the trunk-slicing recipe below, just simpler
-(no grouping, one cut). For a split that ISN'T equipment-referenced (a plain "cut this duct at 40%/at
-2500mm from its start" request outside this FCU chain), use the generalized
+(live-verified 2026-07-23 — re-tested and fixed a real bug: BreakCurve reassigns which element Id keeps
+which physical segment, so the reported "equipment side"/"rest of the run" piece Ids used to come out
+backwards; fixed to determine near/far geometrically instead) rather than writing it fresh — it's a
+fixed-offset cut from one equipment connector, same `BreakCurve` + explicit-reconnect pattern as the
+trunk-slicing recipe below, just simpler (no grouping, one cut). For a split that ISN'T
+equipment-referenced (a plain "cut this duct at 40%/at 2500mm from its start" request outside this FCU
+chain), use the generalized
 [`actions/structural-changes/action-split-elements.cs`](../../scripts/actions/structural-changes/action-split-elements.cs)
-instead — same `BreakCurve` + auto-reconnect technique, fraction- or mm-based position, not yet
-live-verified. For inserting a real elbow between two duct/pipe segments outside the branch-connect flow
+instead — same `BreakCurve` + auto-reconnect technique, fraction- or mm-based position, live-verified
+2026-07-22. For inserting a real elbow between two duct/pipe segments outside the branch-connect flow
 below, [`actions/move-copy-rotate/action-fillet-elements.cs`](../../scripts/actions/move-copy-rotate/action-fillet-elements.cs)
 (mode="elbow") wraps the same `NewElbowFitting` call this skill already uses for branch/cap connections.
 
@@ -100,7 +103,11 @@ weren't coming out right and asked to hold off. Live-verified working end-to-end
 terminals still traced to the FCU afterward) — start from
 [`recipes/slice-trunk-for-sizing.cs`](../../scripts/recipes/slice-trunk-for-sizing.cs) rather than writing
 fresh; it also handles the checkerboard case (two takeoffs at ~the same position from opposite sides need
-grouping into one cut, not two). Still high risk: read the knowledge section fully, test on one room, verify
+grouping into one cut, not two). CAUTION added to the file's own header 2026-07-23 (code-review only, not
+re-tested — no matching trunk fixture available that pass): `trunkDir`'s sign comes from whichever end of
+the input piece Revit happens to store as point-0, not an independent FCU/cap reference, so
+`skipLastTakeoff` could silently skip the wrong end if the input piece was drawn the "wrong" way — read
+that header note before trusting it on a new trunk. Still high risk: read the knowledge section fully, test on one room, verify
 by tracing each terminal's full connector chain with
 [`recipes/verify-duct-connectivity.cs`](../../scripts/recipes/verify-duct-connectivity.cs) (not just
 `IsConnected` on the terminal itself, which only checks the local link) before rolling out further, and

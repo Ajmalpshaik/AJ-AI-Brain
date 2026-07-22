@@ -18,7 +18,21 @@
 // GOTCHA: breaks any existing end-to-end MEP connections at the moved endpoint(s) — reconnect manually
 //         afterward (same caveat as action-move-elements.cs), or follow with action-fillet-elements.cs
 //         (mode="elbow") to insert a real fitting at the new corner instead of a sharp joint.
-// NOT YET LIVE-VERIFIED — test on one pair first before trusting it on a batch of pairs.
+// LIVE-VERIFIED 2026-07-22 on Ducts: created 2 disconnected test ducts with a 2ft gap at 90 degrees,
+// ran unmodified, both extended to meet exactly at the computed corner (exact numeric match), fresh
+// re-fetch confirmed. Also LIVE-VERIFIED on Model Lines in the same "gap, needs extending" shape — exact
+// match, persisted correctly.
+// CAUTION (found while fixing the closely-related action-fillet-elements.cs mode="arc", which shares this
+// exact in-place `lcA.Curve = ...` technique): for two Model/Detail Lines that ALREADY share a coincident
+// endpoint before this runs, reassigning LocationCurve.Curve in place was found to silently no-op — no
+// exception, transaction commits clean, but a fresh re-fetch shows the original untrimmed geometry. This
+// was reproduced consistently for that scenario (see action-fillet-elements.cs's file header for the full
+// investigation) and fixed there via delete+recreate instead of in-place reassignment. This fragment's own
+// tests only covered the "gap, needs extending" shape (which works correctly) — the coincident-endpoint
+// case specifically was NOT re-tested here. If this fragment appears to report success on a Model/Detail
+// Line pair that already touched before running but the line geometry doesn't actually change, apply the
+// same delete+recreate fix action-fillet-elements.cs now uses. Ducts were not affected by this issue in
+// either shape tested.
 // ============================================================
 
 if (elements.Count != 2)

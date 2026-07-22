@@ -9,8 +9,10 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: only meaningful on a workshared (central/local) model — reports plainly and changes nothing on
 //         a non-workshared model instead of throwing.
-// NOT YET LIVE-VERIFIED — test on one element first before trusting it on a batch.
 // ============================================================
+// *** NOT CHECKED — BLOCKED: this model is not workshared, so the real assignment path has never run
+// against a live element. Only the "not workshared, nothing changed" graceful path has been confirmed.
+// Enable worksharing (or test on a workshared model) before trusting this on real work. ***
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
 
