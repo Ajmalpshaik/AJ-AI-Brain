@@ -3,10 +3,15 @@
 // PURPOSE: Copy one parameter's value into a different parameter, across every element in `elements` —
 //          e.g. stamp Type Mark into Comments, or mirror one shared parameter into another. Storage-type
 //          aware: only copies between matching storage types (String<-String, Double<-Double, etc.);
-//          skips anything that doesn't match rather than guessing a conversion.
+//          skips anything that doesn't match rather than guessing a conversion. Falls back to the
+//          element's TYPE (independently for source AND target — either one, or both, may live at the
+//          Type level) — matches action-report-parameters.cs/action-report-parameter-inventory.cs.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================
+// Writing to a TYPE-level target changes the TYPE, so it applies to every instance sharing that type —
+// reported separately below so the count isn't misread as "this many instances each individually
+// changed."
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
 
@@ -14,9 +19,22 @@
 string sourceParameterName = "Type Mark";
 string targetParameterName = "Comments";
 bool overwriteExisting = true; // false = skip elements where target already has a non-empty value
+bool includeTypeParameters = true;
 // ---- END INPUTS ----
 
-int updated = 0, skipped = 0;
+Func<Element, string, Parameter> resolveAny = (e, name) =>
+{
+    var instP = e.LookupParameter(name);
+    if (instP != null) return instP;
+    if (includeTypeParameters)
+    {
+        var type = Document.GetElement(e.GetTypeId()) as ElementType;
+        return type?.LookupParameter(name);
+    }
+    return null;
+};
+
+int updatedInstance = 0, updatedType = 0, skipped = 0;
 
 using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
 {
@@ -25,8 +43,8 @@ using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
     {
         foreach (var e in elements)
         {
-            var src = e.LookupParameter(sourceParameterName);
-            var dst = e.LookupParameter(targetParameterName);
+            var src = resolveAny(e, sourceParameterName);
+            var dst = resolveAny(e, targetParameterName);
             if (src == null || dst == null || !src.HasValue || dst.IsReadOnly) { skipped++; continue; }
             if (src.StorageType != dst.StorageType) { skipped++; continue; }
 
@@ -38,17 +56,22 @@ using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
                 if (targetHasValue) { skipped++; continue; }
             }
 
+            bool dstIsType = dst.Element is ElementType;
+
             switch (src.StorageType)
             {
-                case StorageType.String: dst.Set(src.AsString()); updated++; break;
-                case StorageType.Double: dst.Set(src.AsDouble()); updated++; break;
-                case StorageType.Integer: dst.Set(src.AsInteger()); updated++; break;
-                case StorageType.ElementId: dst.Set(src.AsElementId()); updated++; break;
-                default: skipped++; break;
+                case StorageType.String: dst.Set(src.AsString()); break;
+                case StorageType.Double: dst.Set(src.AsDouble()); break;
+                case StorageType.Integer: dst.Set(src.AsInteger()); break;
+                case StorageType.ElementId: dst.Set(src.AsElementId()); break;
+                default: skipped++; continue;
             }
+            if (dstIsType) updatedType++; else updatedInstance++;
         }
         t.Commit();
-        sb.AppendLine($"Copied '{sourceParameterName}' -> '{targetParameterName}' on {updated} element(s), skipped {skipped} (missing, read-only, type mismatch, or already had a value).");
+        sb.AppendLine($"Copied '{sourceParameterName}' -> '{targetParameterName}' on {updatedInstance} element(s) at Instance level" +
+            (updatedType > 0 ? $", {updatedType} at Type level (applies to every instance sharing that type)" : "") +
+            $", skipped {skipped} (missing, read-only, type mismatch, or already had a value).");
     }
     catch (Exception ex)
     {
