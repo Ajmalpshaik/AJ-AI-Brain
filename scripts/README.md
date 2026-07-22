@@ -138,6 +138,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-place-viewport-on-sheet.cs`](actions/sheets-views/action-place-viewport-on-sheet.cs) | Place each view in the set onto one sheet as a Viewport (views can only sit on one sheet at a time) |
 | [`action-place-schedule-on-sheet.cs`](actions/sheets-views/action-place-schedule-on-sheet.cs) | Place each schedule onto one sheet — same schedule can be placed on multiple sheets, no duplication needed |
 | [`action-duplicate-views.cs`](actions/sheets-views/action-duplicate-views.cs) | Duplicate/duplicate-with-detailing/dependent-view each view in the set; produces `newViewIds` |
+| [`action-apply-view-template.cs`](actions/sheets-views/action-apply-view-template.cs) | Apply an existing View Template to one or more views — does NOT consume `elements` |
+| [`action-create-view-template-from-view.cs`](actions/sheets-views/action-create-view-template-from-view.cs) | Save a configured view's current settings as a new named View Template — does NOT consume `elements` — not yet live-verified |
+| [`action-set-view-template-controlled-params.cs`](actions/sheets-views/action-set-view-template-controlled-params.cs) | Include/Exclude which parameters a View Template controls on one view — does NOT consume `elements` — not yet live-verified |
 
 **Sheet Dates & Revisions** — [`actions/sheet-dates-revisions/`](actions/sheet-dates-revisions/)
 | Fragment | Job |
