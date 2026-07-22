@@ -29,7 +29,13 @@ don't reintroduce the FCU-side split unless the user asks for it again specifica
 from [`recipes/split-duct-near-equipment.cs`](../../scripts/recipes/split-duct-near-equipment.cs)
 (live-verified 2026-07-17) rather than writing it fresh — it's a fixed-offset cut from one equipment
 connector, same `BreakCurve` + explicit-reconnect pattern as the trunk-slicing recipe below, just simpler
-(no grouping, one cut).
+(no grouping, one cut). For a split that ISN'T equipment-referenced (a plain "cut this duct at 40%/at
+2500mm from its start" request outside this FCU chain), use the generalized
+[`actions/structural-changes/action-split-elements.cs`](../../scripts/actions/structural-changes/action-split-elements.cs)
+instead — same `BreakCurve` + auto-reconnect technique, fraction- or mm-based position, not yet
+live-verified. For inserting a real elbow between two duct/pipe segments outside the branch-connect flow
+below, [`actions/move-copy-rotate/action-fillet-elements.cs`](../../scripts/actions/move-copy-rotate/action-fillet-elements.cs)
+(mode="elbow") wraps the same `NewElbowFitting` call this skill already uses for branch/cap connections.
 
 ## How to work: plan, split, then execute
 
