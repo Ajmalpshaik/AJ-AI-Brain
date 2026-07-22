@@ -14,7 +14,7 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: run action-report-sheet-title-blocks.cs first to see current state/family before a cross-family
 //         swap on a batch of sheets, per the explorer-first discipline.
-// NOT YET LIVE-VERIFIED — test on one sheet first before trusting it on a batch.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
