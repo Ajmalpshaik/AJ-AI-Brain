@@ -104,7 +104,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 **Selection** — [`actions/selection/`](actions/selection/)
 | Fragment | Job |
 |---|---|
-| [`action-select-elements.cs`](actions/selection/action-select-elements.cs) | Set as the active Revit selection |
+| [`action-select-elements.cs`](actions/selection/action-select-elements.cs) | Set, add to, or remove from the active Revit selection (`mode`) |
 
 **Parameters & Naming** — [`actions/parameters-naming/`](actions/parameters-naming/)
 | Fragment | Job |
@@ -117,6 +117,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-create-phase.cs`](actions/parameters-naming/action-create-phase.cs) | Create one or more new project Phases, appended after the current last one — does NOT consume `elements` — not yet live-verified |
 | [`action-rename-phase.cs`](actions/parameters-naming/action-rename-phase.cs) | Rename one or more existing project Phases — does NOT consume `elements` — not yet live-verified |
 | [`action-set-element-phase.cs`](actions/parameters-naming/action-set-element-phase.cs) | Assign the filtered set's Phase Created and/or Phase Demolished to a named Phase — `action-set-parameter-value.cs` can't do this (no ElementId support) |
+| [`action-report-phases.cs`](actions/parameters-naming/action-report-phases.cs) | List every project Phase in order — does NOT consume `elements` |
+| [`action-delete-phase.cs`](actions/parameters-naming/action-delete-phase.cs) | Permanently delete one or more Phases by name — completes the phase lifecycle — does NOT consume `elements` — not yet live-verified |
 
 **Reporting** — [`actions/reporting/`](actions/reporting/)
 | Fragment | Job |
@@ -134,7 +136,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 **QA Checks** — [`actions/qa-checks/`](actions/qa-checks/)
 | Fragment | Job |
 |---|---|
-| [`action-find-duplicates.cs`](actions/qa-checks/action-find-duplicates.cs) | QA check — flag elements whose insertion points sit within a tolerance of each other; read-only, optional select |
+| [`action-find-duplicates.cs`](actions/qa-checks/action-find-duplicates.cs) | QA check — flag elements whose insertion points sit within a tolerance of each other (duplicate LOCATION); read-only, optional select |
+| [`action-find-duplicate-values.cs`](actions/qa-checks/action-find-duplicate-values.cs) | QA check — flag elements sharing the same value in a named parameter, e.g. duplicate Mark (duplicate DATA, not location); read-only, optional select |
 
 **Move / Copy / Rotate** — [`actions/move-copy-rotate/`](actions/move-copy-rotate/)
 | Fragment | Job |
@@ -142,12 +145,16 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-move-elements.cs`](actions/move-copy-rotate/action-move-elements.cs) | Translate every element by one mm offset vector |
 | [`action-copy-elements.cs`](actions/move-copy-rotate/action-copy-elements.cs) | Duplicate every element, offset by one mm vector; produces `newElementIds` for chaining |
 | [`action-rotate-elements.cs`](actions/move-copy-rotate/action-rotate-elements.cs) | Rotate every element around a vertical axis by one angle, about its own location or a given pivot |
+| [`action-mirror-elements.cs`](actions/move-copy-rotate/action-mirror-elements.cs) | Mirror every element across a vertical plane through two plan points — copy or in-place |
 
 **Structural Changes** — [`actions/structural-changes/`](actions/structural-changes/)
 | Fragment | Job |
 |---|---|
 | [`action-change-element-type.cs`](actions/structural-changes/action-change-element-type.cs) | Bulk-swap every element's type to a different named type within the same family |
 | [`action-delete-elements.cs`](actions/structural-changes/action-delete-elements.cs) | Permanently delete every element in the set — highest-risk fragment, explorer-first is mandatory, needs `allowDestructive: true` on the bridge call too |
+| [`action-group-elements.cs`](actions/structural-changes/action-group-elements.cs) | Bundle the filtered set into a new Model Group |
+| [`action-ungroup-elements.cs`](actions/structural-changes/action-ungroup-elements.cs) | Dissolve Group instances in the set back into their members — paired undo for `action-group-elements.cs` |
+| [`action-join-geometry.cs`](actions/structural-changes/action-join-geometry.cs) | Join (or unjoin) every element in the set with one target element — many-to-one |
 
 **Sheets & Views** — [`actions/sheets-views/`](actions/sheets-views/)
 | Fragment | Job |
@@ -167,6 +174,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 |---|---|
 | [`action-extract-dates-from-textnotes.cs`](actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs) | Scan every TextNote on each sheet for date-like text, report distinct dates + source sheet(s), read-only |
 | [`action-assign-revisions-by-sheet-date.cs`](actions/sheet-dates-revisions/action-assign-revisions-by-sheet-date.cs) | Attach each sheet's matching project Revision(s) via `SetAdditionalRevisionIds`, matched by date found in that sheet's TextNotes — writes the model, see gotcha note in `../knowledge/live-model/revisions.md` |
+| [`action-remove-revision-from-sheet.cs`](actions/sheet-dates-revisions/action-remove-revision-from-sheet.cs) | Detach named Revision(s) from each sheet, matched by Description — the reverse of `action-assign-revisions-by-sheet-date.cs` |
 
 ### Creators (produce `elements` by creating new ones)
 | Fragment | Job |
