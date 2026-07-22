@@ -267,3 +267,9 @@ here.
   `GetNonControlledTemplateParameterIds`/`SetNonControlledTemplateParameterIds` — not yet live-verified).
   All three self-contained (operate on views, not `elements`) like the category/view-filter actions.
   Marked items 100-102 BUILT in `universal-actions-reference.md` with links to the new fragments.
+- 2026-07-22 — Direct follow-up caught the missing paired undo: added `action-remove-view-template.cs`
+  (detach a template from one or more views via `View.ViewTemplateId = ElementId.InvalidElementId`,
+  optional `deleteTemplateElement` to remove the template definition from the document entirely — gated
+  like any other delete). Same multi-view-array shape as `action-apply-view-template.cs`.
+  `sheets-views/` is now 7 fragments, View Template lifecycle complete: apply, create-from-view,
+  controlled-params, remove.
