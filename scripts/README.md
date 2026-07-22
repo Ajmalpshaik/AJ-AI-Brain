@@ -114,6 +114,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-remove-parameter-value.cs`](actions/parameters-naming/action-remove-parameter-value.cs) | Clear one parameter's value — genuinely empty for String/ElementId, zeroed (not truly unset) for Double/Integer — falls back to Type |
 | [`action-renumber-sequential.cs`](actions/parameters-naming/action-renumber-sequential.cs) | Assign a sequential value (prefix/number/padding/suffix) to a String parameter, sorted by position or existing value |
 | [`action-rename-element.cs`](actions/parameters-naming/action-rename-element.cs) | Rename each element via `Element.Name` (views, sheets, levels, types — not most instance geometry); not yet live-verified |
+| [`action-create-phase.cs`](actions/parameters-naming/action-create-phase.cs) | Create one or more new project Phases, appended after the current last one — does NOT consume `elements` — not yet live-verified |
+| [`action-rename-phase.cs`](actions/parameters-naming/action-rename-phase.cs) | Rename one or more existing project Phases — does NOT consume `elements` — not yet live-verified |
+| [`action-set-element-phase.cs`](actions/parameters-naming/action-set-element-phase.cs) | Assign the filtered set's Phase Created and/or Phase Demolished to a named Phase — `action-set-parameter-value.cs` can't do this (no ElementId support) |
 
 **Reporting** — [`actions/reporting/`](actions/reporting/)
 | Fragment | Job |
