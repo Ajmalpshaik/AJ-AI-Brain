@@ -194,6 +194,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-tag-elements.cs`](actions/sheets-views/action-tag-elements.cs) | Simple tag placement (fixed offset, optional leader) in one view — reuses the proven `IndependentTag.Create` pattern from `recipes/tag-elements-in-active-view.cs` without its clash-scoring; not yet live-verified |
 | [`action-remove-tags.cs`](actions/sheets-views/action-remove-tags.cs) | Delete IndependentTag elements in the set — paired undo for `action-tag-elements.cs` |
 | [`action-export-schedule-to-csv.cs`](actions/sheets-views/action-export-schedule-to-csv.cs) | Export ViewSchedules to CSV via Revit's native `ViewSchedule.Export` — one file per schedule; not yet live-verified |
+| [`action-report-sheet-title-blocks.cs`](actions/sheets-views/action-report-sheet-title-blocks.cs) | Report which title block (Family + Type) is on each sheet — read-only |
+| [`action-set-sheet-title-block.cs`](actions/sheets-views/action-set-sheet-title-block.cs) | Change each sheet's title block to a named Type — in-place `ChangeTypeId` if same family, delete+replace at origin if a different family; not yet live-verified |
 
 **Sheet Dates & Revisions** — [`actions/sheet-dates-revisions/`](actions/sheet-dates-revisions/)
 | Fragment | Job |
