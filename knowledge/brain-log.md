@@ -364,3 +364,11 @@ here.
   element processed would stick, silently corrupting the intended 101/102/103 sequence. Added a comment
   explaining why it's deliberately instance-only, so this doesn't get flagged as a gap again later.
   `action-rename-element.cs` uses `Element.Name` directly, not `LookupParameter`, so it was never affected.
+- 2026-07-22 — `reporting/` gap check found one real item: `action-count-and-report.cs`'s breakdown table
+  is hardcoded to size-related parameters (Width/Height/Diameter/Size/Nominal Diameter) — no way to count
+  by an arbitrary parameter ("how many per level", "how many per system type", "how many per family").
+  Added `action-count-by-group.cs`, reusing the proven storage-type-aware `groupKey` logic from
+  `action-color-by-group.cs` verbatim (Double via `AsValueString`, ElementId resolved to the referenced
+  element's name, Integer with Yes/No detection, String, "None" fallback), plus the Family/Family-and-Type/
+  Category special cases already used in `action-report-parameters.cs`, plus the Type-parameter fallback
+  from the same session's earlier fix. `reporting/` is now 8 fragments.
