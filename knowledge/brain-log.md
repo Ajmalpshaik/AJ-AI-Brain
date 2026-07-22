@@ -273,3 +273,9 @@ here.
   like any other delete). Same multi-view-array shape as `action-apply-view-template.cs`.
   `sheets-views/` is now 7 fragments, View Template lifecycle complete: apply, create-from-view,
   controlled-params, remove.
+- 2026-07-22 — Direct follow-up: added `action-duplicate-view-template.cs`. Real gap —
+  `action-duplicate-views.cs` consumes `elements` from `filter-by-views.cs`, which deliberately excludes
+  `IsTemplate` views, so templates had no duplicate path at all. Self-contained by-name lookup instead of
+  a filter (same shape as the other View Template fragments), duplicates via the same
+  `View.Duplicate(ViewDuplicateOption.Duplicate)` mechanism `action-duplicate-views.cs` already uses for
+  regular views, then renames the copy. `sheets-views/` is now 8 fragments.
