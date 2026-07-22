@@ -1,9 +1,12 @@
 // ============================================================
 // FRAGMENT (action) — action-apply-view-filter.cs
-// PURPOSE: Add an existing View Filter (by name) to a view, set its color/fill override, and set its
+// PURPOSE: Add an existing filter (by name) to a view, set its color/fill override, and set its
 //          visibility — the "put it on a view and make it do something" step after
-//          action-create-view-filter.cs. Safe to re-run: if the filter's already on the view, this just
-//          updates its override/visibility instead of erroring.
+//          action-create-view-filter.cs OR action-create-selection-filter.cs. Works with EITHER kind —
+//          looks up by the shared FilterElement base class, so a rule-based View Filter and a
+//          Selection Filter both apply identically; the view doesn't care which one it is. Safe to
+//          re-run: if the filter's already on the view, this just updates its override/visibility
+//          instead of erroring.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — self-contained (declares its own `sb`, ends
 //          with its own `return`).
 // SOURCE: ../../../knowledge/live-model/mep-color-standard.md § Per-view filter graphic overrides need
@@ -28,13 +31,13 @@ if (view == null)
 }
 else
 {
-    var filter = new FilteredElementCollector(Document).OfClass(typeof(ParameterFilterElement))
-        .Cast<ParameterFilterElement>()
+    var filter = new FilteredElementCollector(Document).OfClass(typeof(FilterElement))
+        .Cast<FilterElement>()
         .FirstOrDefault(f => f.Name.Equals(filterName, StringComparison.OrdinalIgnoreCase));
 
     if (filter == null)
     {
-        sb.AppendLine($"View Filter '{filterName}' not found — create it first with action-create-view-filter.cs.");
+        sb.AppendLine($"Filter '{filterName}' not found — create it first with action-create-view-filter.cs (rule-based) or action-create-selection-filter.cs (explicit element list).");
     }
     else
     {

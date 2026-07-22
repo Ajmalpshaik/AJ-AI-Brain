@@ -17,7 +17,11 @@
 string filterName = "MEP_System Type/CDP"; // View Filters can be folder-organized with "/" in the name
 BuiltInCategory[] categoryScope = { BuiltInCategory.OST_PipeCurves, BuiltInCategory.OST_PipeFitting };
 string parameterName = "System Type"; // the parameter the rule tests — read off a sample element of categoryScope[0]
-string matchMode = "contains"; // "contains" | "equals" | "beginswith" | "endswith" | "notcontains" (text) — or "eq" | "gte" | "lte" (numeric)
+// Every ParameterFilterRuleFactory rule kind Revit actually offers in the Filters dialog's "matches"
+// dropdown — text: "contains" | "notcontains" | "beginswith" | "notbeginswith" | "endswith" |
+// "notendswith" | "equals" | "notequals" — numeric: "eq" | "noteq" | "gt" | "gte" | "lt" | "lte" —
+// value presence (ignores matchTextValue/matchNumericValue entirely): "hasvalue" | "hasnovalue"
+string matchMode = "contains";
 string matchTextValue = "CDP"; // used for text matchModes
 double matchNumericValue = 0; // used for numeric matchModes
 bool caseSensitive = false;
@@ -47,14 +51,28 @@ else
 
         try
         {
-            if (matchMode == "eq") rule = ParameterFilterRuleFactory.CreateEqualsRule(paramId, matchNumericValue, 1e-6);
-            else if (matchMode == "gte") rule = ParameterFilterRuleFactory.CreateGreaterOrEqualRule(paramId, matchNumericValue, 1e-6);
-            else if (matchMode == "lte") rule = ParameterFilterRuleFactory.CreateLessOrEqualRule(paramId, matchNumericValue, 1e-6);
-            else if (matchMode == "equals") rule = ParameterFilterRuleFactory.CreateEqualsRule(paramId, matchTextValue, caseSensitive);
-            else if (matchMode == "beginswith") rule = ParameterFilterRuleFactory.CreateBeginsWithRule(paramId, matchTextValue, caseSensitive);
-            else if (matchMode == "endswith") rule = ParameterFilterRuleFactory.CreateEndsWithRule(paramId, matchTextValue, caseSensitive);
-            else if (matchMode == "notcontains") rule = ParameterFilterRuleFactory.CreateNotContainsRule(paramId, matchTextValue, caseSensitive);
-            else rule = ParameterFilterRuleFactory.CreateContainsRule(paramId, matchTextValue, caseSensitive); // "contains" default
+            switch (matchMode)
+            {
+                // value presence — no comparison value needed at all
+                case "hasvalue": rule = ParameterFilterRuleFactory.CreateHasValueParameterRule(paramId); break;
+                case "hasnovalue": rule = ParameterFilterRuleFactory.CreateHasNoValueParameterRule(paramId); break;
+                // numeric
+                case "eq": rule = ParameterFilterRuleFactory.CreateEqualsRule(paramId, matchNumericValue, 1e-6); break;
+                case "noteq": rule = ParameterFilterRuleFactory.CreateNotEqualsRule(paramId, matchNumericValue, 1e-6); break;
+                case "gt": rule = ParameterFilterRuleFactory.CreateGreaterRule(paramId, matchNumericValue, 1e-6); break;
+                case "gte": rule = ParameterFilterRuleFactory.CreateGreaterOrEqualRule(paramId, matchNumericValue, 1e-6); break;
+                case "lt": rule = ParameterFilterRuleFactory.CreateLessRule(paramId, matchNumericValue, 1e-6); break;
+                case "lte": rule = ParameterFilterRuleFactory.CreateLessOrEqualRule(paramId, matchNumericValue, 1e-6); break;
+                // text
+                case "equals": rule = ParameterFilterRuleFactory.CreateEqualsRule(paramId, matchTextValue, caseSensitive); break;
+                case "notequals": rule = ParameterFilterRuleFactory.CreateNotEqualsRule(paramId, matchTextValue, caseSensitive); break;
+                case "beginswith": rule = ParameterFilterRuleFactory.CreateBeginsWithRule(paramId, matchTextValue, caseSensitive); break;
+                case "notbeginswith": rule = ParameterFilterRuleFactory.CreateNotBeginsWithRule(paramId, matchTextValue, caseSensitive); break;
+                case "endswith": rule = ParameterFilterRuleFactory.CreateEndsWithRule(paramId, matchTextValue, caseSensitive); break;
+                case "notendswith": rule = ParameterFilterRuleFactory.CreateNotEndsWithRule(paramId, matchTextValue, caseSensitive); break;
+                case "notcontains": rule = ParameterFilterRuleFactory.CreateNotContainsRule(paramId, matchTextValue, caseSensitive); break;
+                default: rule = ParameterFilterRuleFactory.CreateContainsRule(paramId, matchTextValue, caseSensitive); break; // "contains"
+            }
         }
         catch (Exception ex)
         {
@@ -74,8 +92,11 @@ else
                         .Cast<ParameterFilterElement>()
                         .FirstOrDefault(f => f.Name.Equals(filterName, StringComparison.OrdinalIgnoreCase));
 
-                    string ruleLabel = (matchMode == "eq" || matchMode == "gte" || matchMode == "lte")
-                        ? matchNumericValue.ToString() : matchTextValue;
+                    var numericModes = new HashSet<string> { "eq", "noteq", "gt", "gte", "lt", "lte" };
+                    var noValueModes = new HashSet<string> { "hasvalue", "hasnovalue" };
+                    string ruleLabel = noValueModes.Contains(matchMode) ? "(no value needed)"
+                        : numericModes.Contains(matchMode) ? matchNumericValue.ToString()
+                        : matchTextValue;
 
                     if (existing != null)
                     {

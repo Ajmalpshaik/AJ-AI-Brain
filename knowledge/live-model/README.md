@@ -18,6 +18,7 @@ feet↔mm conversion every script needs.
 | Placing an FCU; drawing duct between points; branch duct (riser + elbow + takeoff); facing equipment toward a target; slicing a trunk for duct sizing | [`hvac-ducts.md`](hvac-ducts.md) |
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |
 | Turning a color STYLE word ("pastel", "neon", "muted") into real RGB; guaranteeing distinct colors across several groups | [`color-vocabulary.md`](color-vocabulary.md) |
+| A color/override change isn't showing — which graphic mechanism beats which (Linework, per-element, Filters, Category, Object Styles, ...) | [`graphic-override-precedence.md`](graphic-override-precedence.md) |
 | Placing tags by script; finding the right tag family; leader elbows/side; tag overlap; view scale and clearances | [`tagging.md`](tagging.md) |
 | Revisions and revision sequences | [`revisions.md`](revisions.md) |
 | Building a parametric family in the Family Editor (geometry, parameters, resize test) | [`families.md`](families.md) |
