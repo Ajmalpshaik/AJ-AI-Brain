@@ -8,6 +8,11 @@
 // GOTCHA: position-based sorting only works for physically located elements (rooms, equipment, family
 //         instances). Sheets/views have no Location — use sortMode = "existing_value" for those, or the
 //         elements will keep whatever order the filter collected them in.
+// DELIBERATELY instance-only, unlike action-set-parameter-value.cs/action-copy-parameter-value.cs/
+// action-remove-parameter-value.cs: a Type-level fallback here would be a real bug, not a fix — every
+// element sharing that type would overwrite the SAME shared value with a different sequential number,
+// so only the last one processed would stick, silently corrupting the intended distinct 101/102/103
+// sequence. Renumbering only makes sense per-instance.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

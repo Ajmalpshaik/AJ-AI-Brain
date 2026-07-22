@@ -349,3 +349,18 @@ here.
   `sampleOnly` (default true) inventories just the first element for speed; set false to union across a
   mixed set that might vary by family/type. This is the discovery step `core.md` already calls for
   ("don't guess a parameter name from a plausible name") but never had a dedicated fragment until now.
+- 2026-07-22 — Double-checked the parameters-naming work per direct request and caught a real, meaningful
+  gap: `action-set-parameter-value.cs`, `action-copy-parameter-value.cs`, and the just-added
+  `action-remove-parameter-value.cs` all used `e.LookupParameter(name)` — INSTANCE parameters only. A
+  Type-level name (Manufacturer, Model, Type Comments, and plenty of others genuinely live there) silently
+  skipped every element with no indication why, even though `action-report-parameters.cs`/
+  `action-report-parameter-inventory.cs` already fall back to Type. Fixed all three to fall back the same
+  way (source AND target independently, for the copy action), reporting Instance-level vs Type-level
+  counts separately since a Type edit applies to every instance sharing that type, not just the ones in
+  `elements` — a count that didn't distinguish the two would be misleading either way. **Deliberately did
+  NOT apply the same fix to `action-renumber-sequential.cs`** — checked it specifically and a Type
+  fallback there would be an actual bug: renumbering needs each element to get a DIFFERENT value, but a
+  shared Type parameter would just get overwritten repeatedly as the loop progresses, so only the last
+  element processed would stick, silently corrupting the intended 101/102/103 sequence. Added a comment
+  explaining why it's deliberately instance-only, so this doesn't get flagged as a gap again later.
+  `action-rename-element.cs` uses `Element.Name` directly, not `LookupParameter`, so it was never affected.

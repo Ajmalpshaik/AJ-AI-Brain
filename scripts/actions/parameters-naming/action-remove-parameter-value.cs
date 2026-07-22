@@ -2,7 +2,8 @@
 // FRAGMENT (action) — action-remove-parameter-value.cs
 // PURPOSE: Clear one named parameter's value across every element in `elements` — completes the
 //          Set/Copy pair already here (action-set-parameter-value.cs, action-copy-parameter-value.cs)
-//          with an explicit Remove.
+//          with an explicit Remove. Falls back to the element's TYPE if the parameter isn't an instance
+//          parameter — matches the other two.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================
@@ -10,14 +11,30 @@
 // only be reset to 0, not returned to a true "no value" state. String resets to "" (genuinely empty) and
 // ElementId resets to ElementId.InvalidElementId (genuinely clears the reference) — those two ARE real
 // removals. Reported separately below so "cleared" never overstates what actually happened to a number.
+// A TYPE-level clear changes the TYPE, so it applies to every instance sharing that type — reported
+// separately too.
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string parameterName = "Comments";
+bool includeTypeParameters = true;
 // ---- END INPUTS ----
 
-int cleared = 0, zeroedNumeric = 0, skipped = 0;
+Func<Element, Parameter> resolveWritable = e =>
+{
+    var instP = e.LookupParameter(parameterName);
+    if (instP != null && !instP.IsReadOnly) return instP;
+    if (includeTypeParameters)
+    {
+        var type = Document.GetElement(e.GetTypeId()) as ElementType;
+        var typeP = type?.LookupParameter(parameterName);
+        if (typeP != null && !typeP.IsReadOnly) return typeP;
+    }
+    return null;
+};
+
+int clearedInstance = 0, clearedType = 0, zeroedNumeric = 0, skipped = 0;
 
 using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
 {
@@ -26,20 +43,23 @@ using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
     {
         foreach (var e in elements)
         {
-            var p = e.LookupParameter(parameterName);
-            if (p == null || p.IsReadOnly) { skipped++; continue; }
+            var p = resolveWritable(e);
+            if (p == null) { skipped++; continue; }
+            bool isType = p.Element is ElementType;
 
             switch (p.StorageType)
             {
-                case StorageType.String: p.Set(""); cleared++; break;
-                case StorageType.ElementId: p.Set(ElementId.InvalidElementId); cleared++; break;
+                case StorageType.String: p.Set(""); if (isType) clearedType++; else clearedInstance++; break;
+                case StorageType.ElementId: p.Set(ElementId.InvalidElementId); if (isType) clearedType++; else clearedInstance++; break;
                 case StorageType.Double: p.Set(0.0); zeroedNumeric++; break;
                 case StorageType.Integer: p.Set(0); zeroedNumeric++; break;
                 default: skipped++; break;
             }
         }
         t.Commit();
-        sb.AppendLine($"'{parameterName}': genuinely cleared on {cleared} element(s), zeroed (not truly unset — Double/Integer has no API 'no value' state) on {zeroedNumeric}, skipped {skipped} (missing or read-only).");
+        sb.AppendLine($"'{parameterName}': genuinely cleared on {clearedInstance} element(s) at Instance level" +
+            (clearedType > 0 ? $", {clearedType} at Type level (applies to every instance sharing that type)" : "") +
+            $", zeroed (not truly unset — Double/Integer has no API 'no value' state) on {zeroedNumeric}, skipped {skipped} (missing or read-only).");
     }
     catch (Exception ex)
     {
