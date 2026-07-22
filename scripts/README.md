@@ -68,11 +68,13 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | Fragment | Job |
 |---|---|
 | [`action-set-color-uniform.cs`](actions/color-graphics/action-set-color-uniform.cs) | One color (line + solid fill) on every element |
-| [`action-color-by-group.cs`](actions/color-graphics/action-color-by-group.cs) | Distinct color per group, grouped by any parameter's actual value; palette/gradient/random modes |
+| [`action-color-by-group.cs`](actions/color-graphics/action-color-by-group.cs) | Distinct color per group, grouped by any parameter's actual value; palette/gradient/random/pastel/neon modes — random/pastel/neon hue-step evenly around the color wheel so groups are GUARANTEED visually distinct, not independently randomized |
 | [`action-highlight-vs-rest.cs`](actions/color-graphics/action-highlight-vs-rest.cs) | Highlight `elements` in one color, gray out every OTHER element in the active view |
-| [`action-reset-graphic-overrides.cs`](actions/color-graphics/action-reset-graphic-overrides.cs) | Clear color/fill overrides |
+| [`action-reset-graphic-overrides.cs`](actions/color-graphics/action-reset-graphic-overrides.cs) | Clear PER-ELEMENT color/fill overrides |
 | [`action-report-graphic-overrides.cs`](actions/color-graphics/action-report-graphic-overrides.cs) | Read back current view-specific graphic overrides per element — line color, fill color, transparency, halftone; read-only |
 | [`action-set-transparency.cs`](actions/color-graphics/action-set-transparency.cs) | Set surface transparency (0-100%) |
+| [`action-set-category-color.cs`](actions/color-graphics/action-set-category-color.cs) | Override an ENTIRE category's line/fill color in a view (Visibility/Graphics > Model Categories) — does NOT consume `elements`, category is a direct input |
+| [`action-reset-category-graphics.cs`](actions/color-graphics/action-reset-category-graphics.cs) | Clear a CATEGORY-level graphic override — the paired undo for `action-set-category-color.cs` — does NOT consume `elements` |
 
 **Visibility** — [`actions/visibility/`](actions/visibility/)
 | Fragment | Job |
