@@ -372,3 +372,15 @@ here.
   element's name, Integer with Yes/No detection, String, "None" fallback), plus the Family/Family-and-Type/
   Category special cases already used in `action-report-parameters.cs`, plus the Type-parameter fallback
   from the same session's earlier fix. `reporting/` is now 8 fragments.
+- 2026-07-22 — Direct follow-up: "how many per room, zone, phase, space" split into two different answers.
+  Phase already works with `action-count-by-group.cs` (`groupByParameterName = "Phase Created"`) —
+  Phase Created/Demolished really is a normal ElementId-storage parameter, so the existing generic
+  fragment resolves it fine via its existing ElementId-to-name branch. Room/Space/Zone are structurally
+  different — most MEP elements carry no "Room"/"Space" parameter at all, so `action-count-by-group.cs`'s
+  plain `LookupParameter` can't find anything to group by; needs the same spatial `IsPointInRoom`/
+  `IsPointInSpace` test `filter-by-room.cs`/`filter-by-space.cs` already use. Built
+  `action-count-by-spatial-container.cs` covering all three via a `containerType` mode ("room"/"space"/
+  "zone") — Zone is one hop past Space (`Space.Zone`), so it reuses the same Space-containment test rather
+  than needing its own spatial pass. Carries filter-by-space.cs's existing not-yet-live-verified caveat on
+  `Space.IsPointInSpace` for the space/zone modes; the room mode reuses the already-verified
+  `Room.IsPointInRoom` path. `reporting/` is now 9 fragments.
