@@ -21,7 +21,10 @@ per-request. Restate what you're using before calculating.
 1. **Room areas** — collect `OST_Rooms` on the level in question, read `Area` in m².
 2. **Matching Space per room** — if an MEP Space doesn't already exist at a room's location, create one
    (`Document.Create.NewSpace`), carrying over Name/Number so it stays identifiable. If one already exists
-   there, use it as-is — don't create a duplicate.
+   there, use it as-is — don't create a duplicate. The standalone
+   [`creators/create-space.cs`](../../scripts/creators/create-space.cs) fragment wraps this same call
+   (with the same unbounded/zero-area check) for a plain "add a Space here" request that isn't part of this
+   airflow-cascade flow.
 3. **Airflow calc onto the Space's real parameters — always, existing or newly created, no exceptions.**
    Turn the user's current thumb-rule into supply and return `Specified Supply/Return Airflow` values on
    **every** Space in scope. Never skip an existing Space assuming its airflow is already correct — the

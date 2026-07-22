@@ -214,6 +214,10 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-schedule.cs`](creators/create-schedule.cs) | Create a bare schedule for a category with chosen fields — chain into `action-place-schedule-on-sheet.cs`; not yet live-verified |
 | [`create-text-note.cs`](creators/create-text-note.cs) | Place one or more Text Notes at given points in a view |
 | [`create-dimension.cs`](creators/create-dimension.cs) | Create a dimension string across 2+ Grids/Levels — deliberately scoped to Grid/Level references only, not arbitrary element geometry; higher-uncertainty, not yet live-verified |
+| [`create-grid.cs`](creators/create-grid.cs) | Create one or more straight Grids from mm endpoint pairs |
+| [`create-view.cs`](creators/create-view.cs) | Create a Floor Plan, 3D, or Section view — the three simple/reliable ViewFamily cases, not Callout/Elevation/Drafting |
+| [`create-revision.cs`](creators/create-revision.cs) | Create one or more Revisions directly (date/description/issued-to/by already known) — plain version of `recipes/create-revisions-from-sheet-dates.cs` |
+| [`create-workset.cs`](creators/create-workset.cs) | Create one or more new user Worksets — feeds `action-set-workset.cs`; produces no `elements` (Workset isn't an Element) |
 
 ### Recipes (bespoke multi-stage builds, not filter+action shaped)
 | Recipe | Job | Source |
@@ -237,6 +241,10 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 |---|---|
 | [`commands/native-undo.cs`](commands/native-undo.cs) | Revert the last transaction via Revit's own Undo |
 | [`commands/unhide-all-active-view.cs`](commands/unhide-all-active-view.cs) | Restore permanently hidden elements and clear Temporary Hide/Isolate in the active view |
+| [`commands/command-regenerate.cs`](commands/command-regenerate.cs) | Force `Document.Regenerate()` — for a composed script where a later step depends on geometry/properties an earlier step just changed |
+| [`commands/command-clear-selection.cs`](commands/command-clear-selection.cs) | Clear the active Revit selection |
+| [`commands/command-activate-view.cs`](commands/command-activate-view.cs) | Switch the active view to a given View/ViewSheet |
+| [`commands/command-zoom-to-fit.cs`](commands/command-zoom-to-fit.cs) | Zoom the active view's open UI window to fit its current content |
 
 ### Context (whole-document, read-only orientation — no element set, model never changes)
 | Fragment | Job |
@@ -247,6 +255,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`context/context-workset-info.cs`](context/context-workset-info.cs) | Worksharing on/off, and every user workset with open/closed state and owner |
 | [`context/context-model-categories.cs`](context/context-model-categories.cs) | Model categories, keyword-filterable (avoid an unfiltered full-model dump) |
 | [`context/context-used-families.cs`](context/context-used-families.cs) | Every loadable family in the model, excluding system and in-place families |
+| [`context/context-design-options.cs`](context/context-design-options.cs) | Every Design Option — name, Id, Primary flag — orientation step before `filter-by-design-option.cs`/`action-set-design-option.cs` |
+| [`context/context-levels-and-grids.cs`](context/context-levels-and-grids.cs) | Every Level (name + elevation) and Grid (name) — feeds `create-dimension.cs`, `filter-by-grid.cs`, `filter-by-levels.cs` |
 
 "Current selection" is already covered by [`filters/filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) — not duplicated here.
 
