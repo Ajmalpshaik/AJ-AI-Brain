@@ -80,6 +80,12 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-create-selection-filter.cs`](actions/color-graphics/action-create-selection-filter.cs) | Save `elements` as a named Revit SELECTION FILTER (`SelectionFilterElement`) — an explicit element list instead of a rule, for when the set doesn't share one clean parameter condition — not yet live-verified |
 | [`action-apply-view-filter.cs`](actions/color-graphics/action-apply-view-filter.cs) | Add an existing filter (View Filter OR Selection Filter — looked up by the shared `FilterElement` base) to a view with a color/visibility, or update it if already applied — does NOT consume `elements` |
 | [`action-remove-view-filter.cs`](actions/color-graphics/action-remove-view-filter.cs) | Take a filter (either kind) off a view, optionally delete it from the document entirely — does NOT consume `elements` |
+| [`action-set-halftone.cs`](actions/color-graphics/action-set-halftone.cs) | Turn halftone on/off per element — read-modify-write, preserves any existing color override |
+| [`action-set-category-halftone.cs`](actions/color-graphics/action-set-category-halftone.cs) | Turn halftone on/off for one or more ENTIRE categories — does NOT consume `elements` |
+| [`action-set-line-style.cs`](actions/color-graphics/action-set-line-style.cs) | Override line weight and/or line pattern (dashed, dotted, ...) per element — every other action here only ever touches color |
+| [`action-set-category-line-style.cs`](actions/color-graphics/action-set-category-line-style.cs) | Override line weight/pattern for one or more ENTIRE categories — does NOT consume `elements` |
+| [`action-report-view-filters.cs`](actions/color-graphics/action-report-view-filters.cs) | List every View/Selection Filter in the document and which views use each — does NOT consume `elements` |
+| [`action-report-category-overrides.cs`](actions/color-graphics/action-report-category-overrides.cs) | Reverse lookup for `action-set-category-color.cs`/halftone/line-style — which categories have a category-level override set in a view — does NOT consume `elements` |
 
 **Visibility** — [`actions/visibility/`](actions/visibility/)
 | Fragment | Job |

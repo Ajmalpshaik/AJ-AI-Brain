@@ -300,3 +300,20 @@ here.
   filter-by-view-templates.cs(usage="unused") + action-delete-elements.cs composition with the same
   MANDATORY explorer-first safety note the delete action itself carries. Cross-linked from
   `filter-by-views.cs`'s own comment. Updated the `scripts/README.md` filters and examples tables.
+- 2026-07-22 — Closed the remaining 4 color-graphics gaps from the last balance review, all in one pass:
+  `action-set-halftone.cs` + `action-set-category-halftone.cs` (per-element and category-level, paired
+  the same way `action-set-color-uniform.cs`/`action-set-category-color.cs` already are — both
+  read-modify-write via `view.GetElementOverrides`/`GetCategoryOverrides` first so an existing color
+  override isn't wiped out just by toggling halftone). `action-set-line-style.cs` +
+  `action-set-category-line-style.cs` (line WEIGHT 1-16 and line PATTERN by name, incl. a `"solid"`
+  shortcut via `LinePatternElement.GetSolidPatternId()` — every prior action in this group only ever
+  touched color, never weight/pattern; combined both properties into one fragment per level rather than
+  four separate ones, since they're both "line style" and genuinely small). `action-report-view-filters.cs`
+  (lists every `FilterElement` — View Filter or Selection Filter, distinguished by type — and which real
+  views currently have each applied via `IsFilterApplied`). `action-report-category-overrides.cs` (the
+  reverse lookup for category-level Set actions — scoped by default to categories actually present in the
+  view, not every category in the document, to avoid an unbounded scan; reused the
+  `hasAnyOverride`/`IsSurfaceForegroundPatternVisible`-defaults-true detection technique from
+  `action-report-graphic-overrides.cs` verbatim, extended with the new weight/pattern properties).
+  `color-graphics/` is now 18 fragments — this group considered fully complete, no further gaps
+  identified.
