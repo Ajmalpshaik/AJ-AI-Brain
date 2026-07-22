@@ -322,3 +322,15 @@ here.
   levels in the same session. Added `action-set-category-transparency.cs` to close it. `color-graphics/`
   is now 19 fragments — genuinely complete, every per-element Set action now has its category-level
   counterpart.
+- 2026-07-22 — Started the `visibility/` group review, caught a gap already flagged earlier in the
+  session but deferred: category-level visibility on/off (`View.SetCategoryHidden`, the checkbox column
+  in Visibility/Graphics > Model Categories) is a completely different mechanism from
+  `action-hide-elements.cs` (per-element) and had nothing built, even after the identical element/category
+  split was just done for every color-graphics action. Added `action-set-category-visibility.cs`
+  (checks `Category.get_AllowsVisibilityControl(view)` first — some categories can't be toggled in some
+  view types) and its reverse lookup `action-report-category-visibility.cs`. The report fragment scopes
+  to categories with an element ANYWHERE in the model by default, not just in the view — scoping to
+  "what's visible in the view" would be self-defeating for a hidden-category check, since a hidden
+  category's elements don't appear in a view-scoped collector at all (different from
+  `action-report-category-overrides.cs`, where view-scoping is correct). `visibility/` is now 9
+  fragments.
