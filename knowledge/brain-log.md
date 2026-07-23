@@ -13,9 +13,8 @@ original full text.)
 
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
-**Doable in any session:**
-1. Trim/restructure session-start reading (`START-HERE.md` + `AGENT-SPEC.md` + `knowledge/INDEX.md`) to
-   cut token overhead per session.
+**Doable in any session:** none right now — the multi-session health pass (Parts 1–6, 2026-07-23) is
+complete. New items land here as they surface.
 
 **Needs a live Revit session (bridge connected, on the Windows machine):**
 1. Run `tools/verify-consistency.ps1` once to confirm the 2026-07-23 recursion fix works on real
@@ -113,3 +112,12 @@ original full text.)
   sides — reconnect is side-agnostic, the label wasn't). Flagged connect-terminal-branch's by-design
   vertical-riser assumption. 4 recipes + set-workset/duplicate-type/export-csv otherwise clean.
   Compressed this log from ~600 lines of essays to this form (user-authorized; full text in git).
+- 2026-07-23 — **Part 6** (final part): measured the whole reading path — `START-HERE.md` + `INDEX.md`
+  are already lean (~1,000 words, left alone); the real weight was `scripts/README.md` (6,270 words, read
+  nearly every scripting session). Compressed ~45 verbose verification narratives in its rows to compact
+  status markers (✓/BLOCKED/IMPOSSIBLE + date + active blocker), stories staying in fragment headers —
+  −538 words. Fixed 4 stale references found on the way: two `CLAUDE.md` mentions (that file doesn't
+  exist in this Brain — rules live in `START-HERE.md`) and two `ajtools-conventions.md` mentions
+  (doesn't exist here either — fragment changes log to THIS file; the recipes-table source now points at
+  `live-model/revisions.md`). Added the missing verification story to `action-delete-phase.cs`'s header
+  so its README pointer resolves. Checker + tests clean.
