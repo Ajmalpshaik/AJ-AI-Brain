@@ -12,7 +12,7 @@
 //         (Mechanical/Plumbing Utils); Cable Tray, Conduit, and Wall have no equivalent public split call.
 // GOTCHA: only a straight (Line) run can be split this way — an element on a curved/Arc LocationCurve is
 //         skipped.
-// NOT YET LIVE-VERIFIED — test on ONE element first before trusting it on a batch.
+// Live-verified 2026-07-22 — real split+reconnect confirmed.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

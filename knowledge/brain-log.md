@@ -493,3 +493,44 @@ here.
   - `action-flip-elements.cs`: checked 13 loaded families across Mechanical Equipment and Duct Terminal —
     none support flip in this project. Graceful skip-path confirmed correct; the positive flip path remains
     genuinely blocked on a flip-capable family (door/window or similar) being loaded.
+- 2026-07-23 — Consistency + safety pass across the Brain (no live Revit connection this session — code-
+  reviewed and pattern-matched against already-proven sibling code, not live-executed; treat the same as
+  any other NOT-live-verified addition):
+  - `tools/verify-consistency.ps1` check #3 was scanning `scripts/actions/` non-recursively — since the
+    2026-07-22 subfolder reorg (color-graphics/, move-copy-rotate/, etc.), it was silently checking 0 of
+    112 nested fragments instead of all of them. Added `-Recurse` and fixed the relative-path build.
+  - `mcp-server/tools/set-parameter-value.js` accepted a call with both `stringValue` and `numericValueMm`
+    set, or neither — silently preferred numeric. Added an explicit exactly-one-of check in the handler.
+  - `AGENT-SPEC.md` §3.4/§3.5 had drifted: "12 tools share the filter shape / 9 take targetViewId" is
+    really 13/7 (`reset_isolation` is the one tool with no element filter); "77 C# fragments (71 + 6
+    context/)" is really 206 (197 + 9 context/) — counted directly off disk, not off an old summary.
+  - `scripts/README.md` had two dead links to an `ajtools-conventions.md` that doesn't exist (an old name
+    for this file) — repointed both to `brain-log.md`.
+  - `universal-actions-reference.md`: flagged items 142 (Create Phase) and 176 (Set Active Design Option)
+    as CONFIRMED IMPOSSIBLE via API, matching what this log already established above (Document.Phases is
+    read-only; no DesignOption activation API exists) — they were listed as normal buildable actions with
+    no warning. Corrected items 64/65/101/102, stale in the *safe* direction (marked NEEDS_REVIEW / not
+    yet live-verified when `scripts/README.md` already shows them live-verified 2026-07-22). Added an
+    implementation-index appendix listing the 34 real `scripts/filters/` fragments and the 3
+    `action-set-halftone.cs`/`action-set-line-style.cs`/`action-set-category-line-style.cs` fragments that
+    had no entry anywhere in this catalog.
+  - Did NOT touch the `SpatialElement.Volume` "does not exist on Revit 2020" claim above (this same log,
+    2026-07-23 entry) — it's specifically sourced from a live compile against the real bridge, which is
+    stronger evidence than a training-data recollection with no way to re-verify it here. Flagging it as
+    worth a second look next time someone's live against the bridge, not correcting it blind.
+  - 25 script fragments had a stale in-file "NOT YET LIVE-VERIFIED" header contradicted by
+    `scripts/README.md` already showing them live-verified 2026-07-22 (mostly the sheets-views/ and
+    parameters-naming/ groups, plus a handful of others) — updated each header to match, carrying over the
+    specific verification detail from the README rather than a generic stamp. Left the 3 files where the
+    header and README already agreed (`action-set-view-workset-visibility.cs`, `action-reload-links.cs`,
+    `ray-trace-to-ceiling.cs` — each blocked on a real environment gap, not a documentation gap).
+  - Added try/catch/RollBack to every bare `using (var t = new Transaction(...))` that had none: the 8
+    sequential transactions in `create-parametric-box-family-with-duct-connector.cs`, the 3 in
+    `place-fcu.cs`, and `place-terminals-checkerboard.cs`/`set-space-airflow.cs` (2 and 1 respectively).
+    Same failure mode in all of them: a mid-script exception left the `using` block's implicit Dispose as
+    the only safety net, which the Revit API does not guarantee cleanly rolls back — now each stage reports
+    plainly which named stage failed and rolls back cleanly instead.
+  - Added the missing null checks after an `as`-cast in `draw-main-duct-with-cap.cs` (`fcu`/`room`, used
+    immediately with no check, unlike every sibling recipe) and `split-duct-near-equipment.cs`
+    (`equipment.MEPModel` — the file's own INPUTS comment documents `equipmentId` as "or any element",
+    which includes non-MEP FamilyInstances that would NRE on the old code).

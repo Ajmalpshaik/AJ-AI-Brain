@@ -14,7 +14,7 @@
 //         not a "left"/"right" label) — if the result lands on the wrong side, flip the sign.
 // GOTCHA: for MEP curves (duct/pipe/cable tray/conduit) that were connected to fittings, offsetting breaks
 //         the original connections — reconnect manually afterward, same caveat as action-move-elements.cs.
-// NOT YET LIVE-VERIFIED — test on ONE element first before trusting it on a batch.
+// Live-verified 2026-07-22, both modes, exact numeric match.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

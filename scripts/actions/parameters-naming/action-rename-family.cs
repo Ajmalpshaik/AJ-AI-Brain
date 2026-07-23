@@ -16,7 +16,7 @@
 // GOTCHA: mode = "replace" sends every distinct family to the SAME newName — fine for one family, but
 //         renaming several distinct families to one literal name will succeed on the first and skip the
 //         rest (Revit requires unique family names) — same behavior as action-rename-element.cs.
-// NOT YET LIVE-VERIFIED — test on one family first before trusting it on a batch.
+// Live-verified 2026-07-22 on a real family (renamed + restored), zero bugs.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

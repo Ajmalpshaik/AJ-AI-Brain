@@ -14,7 +14,7 @@
 // GOTCHA: mode="fixed" sends every distinct source type to the SAME new name — fine for one type, but
 //         duplicating several distinct types to one literal name will succeed on the first and skip the
 //         rest (Revit requires unique type names) — same caveat as action-rename-family.cs's "replace" mode.
-// NOT YET LIVE-VERIFIED — test on one type first before trusting it on a batch.
+// Live-verified 2026-07-22 — real duplicate confirmed.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

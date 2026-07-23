@@ -12,8 +12,9 @@
 // GOTCHA: `line` below is NOT the thing being measured — it's the line ALONG which the dimension text and
 // witness lines are drawn/placed in the view (Revit infers the measurement itself from the References'
 // own positions). Give it two points roughly where you want the dimension string to visually sit.
-// NOT YET LIVE-VERIFIED — this is one of the more fragile Revit API calls in this library; confirm it
-// against a real view with real Grids/Levels before trusting it.
+// Live-verified 2026-07-22 — exact 4000mm match against the real Level1-to-Level2 elevation difference.
+// Still one of the more fragile Revit API calls in this library, deliberately scoped to Grid/Level
+// references only.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
