@@ -38,7 +38,9 @@ if (fcuId == ElementId.InvalidElementId || roomId == ElementId.InvalidElementId)
 }
 
 var fcu = Document.GetElement(fcuId) as FamilyInstance;
+if (fcu == null) return "fcuId does not point to a valid FamilyInstance.";
 var room = Document.GetElement(roomId) as Autodesk.Revit.DB.Architecture.Room;
+if (room == null) return "roomId does not point to a valid Room.";
 var supplyConn = fcu.MEPModel?.ConnectorManager?.Connectors?.Cast<Connector>()
     .FirstOrDefault(c => c.Domain == Domain.DomainHvac && c.DuctSystemType == DuctSystemType.SupplyAir && string.IsNullOrEmpty(c.Description));
 

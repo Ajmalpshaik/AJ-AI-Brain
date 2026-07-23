@@ -91,33 +91,41 @@ var placedInstances = new List<FamilyInstance>();
 using (var t = new Transaction(Document, "AJ Tools - Place Air Terminals"))
 {
     t.Start();
-    if (!supplySymbol.IsActive) supplySymbol.Activate();
-    if (!returnSymbol.IsActive) returnSymbol.Activate();
-
-    int placed = 0, cellGlobalIndex = 0;
-    for (int row = 0; row < rows; row++)
+    try
     {
-        int colsThisRow = baseCols + (row < remainder ? 1 : 0);
-        for (int col = 0; col < colsThisRow; col++)
+        if (!supplySymbol.IsActive) supplySymbol.Activate();
+        if (!returnSymbol.IsActive) returnSymbol.Activate();
+
+        int placed = 0, cellGlobalIndex = 0;
+        for (int row = 0; row < rows; row++)
         {
-            double tFrac = colsThisRow <= 1 ? 0.5 : (double)col / (colsThisRow - 1);
-            double rFrac = rows <= 1 ? 0.5 : (double)row / (rows - 1);
+            int colsThisRow = baseCols + (row < remainder ? 1 : 0);
+            for (int col = 0; col < colsThisRow; col++)
+            {
+                double tFrac = colsThisRow <= 1 ? 0.5 : (double)col / (colsThisRow - 1);
+                double rFrac = rows <= 1 ? 0.5 : (double)row / (rows - 1);
 
-            double longPos = (xIsLong ? xMin : yMin) + tFrac * longExtent;
-            double shortPos = (xIsLong ? yMin : xMin) + rFrac * shortExtent;
-            XYZ pt = xIsLong ? new XYZ(longPos, shortPos, z) : new XYZ(shortPos, longPos, z);
+                double longPos = (xIsLong ? xMin : yMin) + tFrac * longExtent;
+                double shortPos = (xIsLong ? yMin : xMin) + rFrac * shortExtent;
+                XYZ pt = xIsLong ? new XYZ(longPos, shortPos, z) : new XYZ(shortPos, longPos, z);
 
-            bool isSupply = (row + col) % 2 == 0; // true checkerboard — NOT continuous-index
-            var symbol = isSupply ? supplySymbol : returnSymbol;
+                bool isSupply = (row + col) % 2 == 0; // true checkerboard — NOT continuous-index
+                var symbol = isSupply ? supplySymbol : returnSymbol;
 
-            var level = Document.GetElement(room.LevelId) as Level;
-            var fi = Document.Create.NewFamilyInstance(pt, symbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-            placedInstances.Add(fi);
-            placed++;
-            cellGlobalIndex++;
+                var level = Document.GetElement(room.LevelId) as Level;
+                var fi = Document.Create.NewFamilyInstance(pt, symbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                placedInstances.Add(fi);
+                placed++;
+                cellGlobalIndex++;
+            }
         }
+        t.Commit();
     }
-    t.Commit();
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return "FAILED placing terminals: " + ex.Message;
+    }
 
     // Set each newly placed terminal's own Flow parameter (individual share), per system type.
     var supplyTerms = placedInstances.Where(fi => fi.Symbol.Id == supplySymbol.Id).ToList();
@@ -126,14 +134,22 @@ using (var t = new Transaction(Document, "AJ Tools - Place Air Terminals"))
     using (var t2 = new Transaction(Document, "AJ Tools - Set Terminal Flow"))
     {
         t2.Start();
-        double supplyEach = UnitUtils.ConvertToInternalUnits(supplyLs / Math.Max(1, supplyTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
-        double returnEach = UnitUtils.ConvertToInternalUnits(returnLs / Math.Max(1, returnTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
-        foreach (var fi in supplyTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(supplyEach);
-        foreach (var fi in returnTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(returnEach);
-        t2.Commit();
+        try
+        {
+            double supplyEach = UnitUtils.ConvertToInternalUnits(supplyLs / Math.Max(1, supplyTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
+            double returnEach = UnitUtils.ConvertToInternalUnits(returnLs / Math.Max(1, returnTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
+            foreach (var fi in supplyTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(supplyEach);
+            foreach (var fi in returnTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(returnEach);
+            t2.Commit();
+        }
+        catch (Exception ex)
+        {
+            t2.RollBack();
+            return sb.AppendLine("Placed " + placedInstances.Count + " terminal(s) but FAILED to set Flow: " + ex.Message).ToString();
+        }
     }
 
-    sb.AppendLine($"Placed {placed} terminal(s). Verify actual (row,col) type pattern after placing — don't trust a distance-based check.");
+    sb.AppendLine($"Placed {placedInstances.Count} terminal(s). Verify actual (row,col) type pattern after placing — don't trust a distance-based check.");
 }
 
 return sb.ToString();
