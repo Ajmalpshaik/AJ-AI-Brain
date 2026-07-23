@@ -99,7 +99,7 @@ export function register(server) {
         );
         return asToolResult(result);
       } catch (err) {
-        return asToolResult({ Success: false, Error: err.message });
+        return asToolResult({ success: false, error: err.message });
       }
     }
   );

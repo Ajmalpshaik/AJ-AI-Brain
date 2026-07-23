@@ -11,6 +11,11 @@
 //          the main duct's line (near-zero offset would throw a minimum-length error).
 // SOURCE:  ../knowledge/live-model/hvac-ducts.md § Branch duct from a terminal to a main duct
 // STATUS:  living document — refine in place, don't fork a v2 file.
+// GOTCHA (flagged 2026-07-23 static review): the riser is drawn VERTICALLY by design — correct for a
+//         ceiling diffuser whose duct connector points up, but a side-inlet terminal (connector pointing
+//         horizontally) would get a riser misaligned with its connector. Before running on an unfamiliar
+//         terminal family, check termConn.CoordinateSystem.BasisZ is roughly vertical (same
+//         read-the-real-direction lesson as AGENT-SPEC.md §6.1).
 // ============================================================
 // Because supply/return terminals are checkerboard-alternated, "nearest terminal" is frequently the
 // WRONG system type — this script is meant to be called once per terminal already filtered by system.
