@@ -58,9 +58,17 @@ FamilyInstance fcu;
 using (var t = new Transaction(Document, "AJ Tools - Place FCU"))
 {
     t.Start();
-    if (!fcuSymbol.IsActive) fcuSymbol.Activate();
-    fcu = Document.Create.NewFamilyInstance(placePt, fcuSymbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-    t.Commit();
+    try
+    {
+        if (!fcuSymbol.IsActive) fcuSymbol.Activate();
+        fcu = Document.Create.NewFamilyInstance(placePt, fcuSymbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+        t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return "FAILED placing FCU: " + ex.Message;
+    }
 }
 sb.AppendLine($"Placed FCU at room center, {heightAboveCeilingMm}mm above {ceilingHeightMm}mm ceiling.");
 
@@ -94,8 +102,16 @@ if (doorInsetMm > 0)
         using (var t = new Transaction(Document, "AJ Tools - Reposition FCU to Door"))
         {
             t.Start();
-            ElementTransformUtils.MoveElement(Document, fcu.Id, newPt - placePt);
-            t.Commit();
+            try
+            {
+                ElementTransformUtils.MoveElement(Document, fcu.Id, newPt - placePt);
+                t.Commit();
+            }
+            catch (Exception ex)
+            {
+                t.RollBack();
+                return sb.AppendLine("FAILED repositioning FCU toward door: " + ex.Message).ToString();
+            }
         }
         placePt = newPt;
         sb.AppendLine($"Shifted {doorInsetMm}mm toward the door wall (tangential position unchanged).");
@@ -147,9 +163,17 @@ if (rotateToFaceTerminals)
             using (var t = new Transaction(Document, "AJ Tools - Rotate FCU to Terminals"))
             {
                 t.Start();
-                var axis = Line.CreateBound(placePt, placePt + XYZ.BasisZ);
-                ElementTransformUtils.RotateElement(Document, fcu.Id, axis, rotation);
-                t.Commit();
+                try
+                {
+                    var axis = Line.CreateBound(placePt, placePt + XYZ.BasisZ);
+                    ElementTransformUtils.RotateElement(Document, fcu.Id, axis, rotation);
+                    t.Commit();
+                }
+                catch (Exception ex)
+                {
+                    t.RollBack();
+                    return sb.AppendLine("FAILED rotating FCU to face terminals: " + ex.Message).ToString();
+                }
             }
             sb.AppendLine($"Rotated FCU {Math.Round(rotation * 180 / Math.PI)} deg to face the terminal centroid.");
         }
