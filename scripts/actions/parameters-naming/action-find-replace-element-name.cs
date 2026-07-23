@@ -17,7 +17,7 @@
 // GOTCHA: Revit requires names to be unique within their own scope (two Levels can't share a name, etc.)
 //         — a collision on one element is skipped (reported), not silently overwritten, same as
 //         action-rename-element.cs.
-// Live-verified 2026-07-22, zero bugs.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

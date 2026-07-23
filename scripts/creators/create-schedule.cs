@@ -7,7 +7,7 @@
 // PRODUCES: elements (List<Element>) — the newly created ViewSchedule, sb (StringBuilder)
 // NOT STANDALONE — see scripts/README.md for how to compose (chain into
 //          actions/sheets-views/action-place-schedule-on-sheet.cs to put it on a sheet).
-// Live-verified 2026-07-22 — real schedule+fields created.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -5,6 +5,10 @@
 //          assigned to, or the project's only phase — those come back as a skip, not a crash.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — self-contained (declares its own `sb`, ends
 //          with its own `return`).
+// LIVE-VERIFIED 2026-07-22 via a guaranteed-rollback probe: the real Document.Delete mechanism was fired
+//          against a real phase inside a transaction that was then rolled back, plus the not-found
+//          graceful path — a full create-then-delete round trip is impossible because Phase creation has
+//          no API on Revit 2020 (see action-create-phase.cs).
 // ============================================================
 // MANDATORY before running this for real: confirm the phase names and get an explicit go-ahead from the
 // user first — deleting a Phase is not undoable from this bridge beyond Revit's own native Undo. The

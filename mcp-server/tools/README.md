@@ -39,4 +39,14 @@ generator in [`../shared/element-filter.js`](../shared/element-filter.js).
 3. Export a `register(server)` function that calls `server.tool(...)`.
 4. Wire it into `../index.js` (import + call).
 5. Add a row to this table.
-6. `node --check` the new file, then the whole folder, before considering it done.
+6. Add it to the two lists in `../test/smoke.test.js` (the `register` import + a `SAMPLE_ARGS` entry),
+   then `npm test` — `node --check` alone has already been proven NOT to catch everything (a corrupted
+   NUL byte once passed `node --check` clean; see `knowledge/brain-log.md`, 2026-07-22).
+
+## Testing
+`npm test` (from this `mcp-server/` folder) runs `test/smoke.test.js` — imports every tool module,
+registers it against a fake server, and invokes every handler with representative args. No live Revit
+connection is needed or used: every call is expected to reach the "AJ AI Bridge is not connected" error,
+proving each handler's own C#-generation code runs to completion first. It does NOT replace live
+verification against a real Revit session for actual Revit-API behavior — it only proves the JS side
+never throws before reaching the bridge.

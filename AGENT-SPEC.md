@@ -3,7 +3,7 @@
 **Document type:** Operating manual / software specification, for LLM consumption.
 **Audience:** An AI coding agent (e.g. Claude) operating this Brain against a live Revit session.
 **Status:** Production. Some items are marked `NEEDS_REVIEW` or `UNVERIFIED` — treat those as exactly
-that, not as confirmed capability.
+that, not as confirmed capability. Last full staleness re-check against the routed files: 2026-07-23.
 **Relationship to the rest of this Brain:** This is a complete, self-contained reference — read once,
 act without hopping files. It intentionally duplicates summary-level facts that also live in
 `START-HERE.md` and `knowledge/*`; where this document gives a summary, the linked topic file is the
@@ -181,20 +181,22 @@ for the routing index into all 17 tool files.
 | `move_elements` | Translate by an mm offset vector |
 | `delete_elements` | Permanent delete — schema requires `confirm: true` literally, refuses the call otherwise |
 
-13 of the 14 element-targeting tools share one input shape: `elementIds` (exact Ids, takes priority) OR
+All 13 element-targeting tools share one input shape: `elementIds` (exact Ids, takes priority) OR
 `category` + optional `familyName`/`parameterName`/`comparison`/`valueMm` (mirrors
-`filter-by-category-and-numeric-param.cs`) — `reset_isolation` is the one exception, since it clears a
-view's temporary hide/isolate state without targeting specific elements. Seven of them also take
-`targetViewId` (optional, defaults to active view — same view-targeting fix as the 11 graphics fragments
-in §3.5). **Not yet live-tested this session**
-(no Revit connection available) — `node --check` confirms the JS parses; verify each on one element
-before trusting it for a batch, same caveat as any other unverified addition in this Brain.
+`filter-by-category-and-numeric-param.cs`). Six of those (the view-scoped graphics/visibility ones —
+hide/unhide/isolate/set_color/reset_graphic_overrides/set_transparency) also take `targetViewId`
+(optional, defaults to active view — same view-targeting fix as the 11 graphics fragments in §3.5), and
+`reset_isolation` takes only `targetViewId` (it has no element filter). A structural regression test
+(`npm test` from `mcp-server/`, added 2026-07-23) proves all 17 tools register with correct
+names/schemas and that every handler's C#-generation runs to completion and fails gracefully with no
+bridge connected. **Still not live-verified against a running Revit** — the test can't reach a real
+document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 206 real C# fragments in `scripts/` (197
-filters/actions/creators/commands/recipes/examples + 9 read-only `context/` fragments), are **not**
-individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
+now also have a native tool above), and the 206 real C# fragments in `scripts/` (48 filters, 112
+actions, 16 creators, 6 commands, 13 recipes, 2 examples, 9 read-only `context/` fragments — count
+re-verified 2026-07-23), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
 matching fragment(s), fills in real values, pastes them together, and sends the composed text through
 `run_csharp`. See `scripts/README.md` for the authoritative fragment index and composition rules.
 `NEEDS_REVIEW` entries in the action reference have no fragment yet — do not claim they're built. Prefer
@@ -315,6 +317,16 @@ way" summary.
   a small tolerance. Full detail: `knowledge/live-model/mep-trace.md`.
 - Naming/tag conventions can be actively misleading about real physical wiring, not just incomplete —
   verify by tracing, never assume a pairing from matching codes/names.
+- `MechanicalUtils.BreakCurve` can reassign which ElementId keeps which physical segment after a split —
+  never trust the original Id to be the near/equipment-side piece; re-locate each piece geometrically
+  after every cut (confirmed live 2026-07-23; bit `split-duct-near-equipment.cs` for real).
+- Always read a connector's own real outward direction (`Connector.CoordinateSystem.BasisZ`) before
+  drawing toward or from it — never assume an axis (`XYZ.BasisX` etc.), in a test fixture or anywhere
+  else; an assumed axis produced a hard-to-diagnose false alarm during live verification.
+- `FilteredElementCollector.UnionWith()` does NOT preserve either side's own quick-filters — a
+  `.WhereElementIsNotElementType()` applied per-piece before the union is silently lost in the merged
+  result (TYPE elements leak in). Apply such filters ONCE, after all `UnionWith` calls, on the combined
+  collector (confirmed empirically 2026-07-23; bit 3 fragments).
 
 ### 6.2 View & graphics
 - View state (isolation, color overrides) can be cleared between messages by the user, by Undo, or by
@@ -333,6 +345,22 @@ way" summary.
   to compile even though it would resolve in a normal add-in project.
 - `new ElementId(someLong)` fails to compile in this API surface (no `(long)` constructor overload) — cast
   explicitly to `(int)`.
+- **Revit 2020 hard API gaps, confirmed live via exhaustive reflection (2026-07-23)** — these are
+  UI-only, not scriptable at all on this version; the matching fragments now report the limitation
+  instead of attempting it: **no Scope Box creation** (`create-scope-box.cs`), **no Phase creation**
+  (`Document.Phases` is read-only — `action-create-phase.cs`), **no Design Option activation** (only a
+  read-only getter exists — `action-set-design-option.cs` requires manual activation first).
+- More 2020 version traps confirmed live: `PDFExportOptions` doesn't exist (PDF goes through
+  `Document.PrintManager` + a virtual printer driver — `action-export-sheets-to-pdf.cs`);
+  `SpatialElement.Volume` doesn't exist as a property (read
+  `get_Parameter(BuiltInParameter.ROOM_VOLUME)` instead); schedule Combined Parameter fields use
+  `TableCellCombinedParameterData` (a `CombinedParameterRule` class never existed in any version).
+- Room/Space `Element.Name` auto-combines to "{name} {number}" the moment any Number exists (which is
+  always — one is auto-assigned at creation). Read `BuiltInParameter.ROOM_NAME` for the plain name;
+  matching on `Element.Name` silently misses (bit `filter-by-space.cs` for real).
+- Reassigning `LocationCurve.Curve` in place to trim/extend a line is silently a no-op (no exception,
+  clean commit, geometry unchanged) when the two curves share a coincident endpoint — the normal case
+  when filleting an existing corner. Delete+recreate instead (bit `action-fillet-elements.cs`).
 
 ### 6.4 Family & geometry
 - A newly created `ConnectorElement`'s Width/Height default to a generic placeholder, not the hosting
@@ -508,8 +536,10 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
   worksharing status, beyond what any single existing action currently reports alone.
 - **Lean/decision-tree variant of this spec** for smaller or local models, if this Brain is ever handed to
   a user running a weaker model than this document assumes.
-- **Purge Unused, Audit Model, Set Shared Coordinates** — real Revit capabilities, deliberately left
-  `NEEDS_REVIEW` (see `universal-actions-reference.md`) pending a safer, more explicit design.
+- **Audit Model, Set Shared Coordinates** — real Revit capabilities, deliberately left
+  `NEEDS_REVIEW` (see `universal-actions-reference.md`) pending a safer, more explicit design. (Purge
+  Unused left this list 2026-07-22: `action-purge-unused.cs` now covers the provably-correct subset —
+  unused View Templates/Filters/Materials, dry-run by default.)
 - **Native tools for the remaining common actions not yet ported**: creation tools (`create_room`,
   `create_levels`, `create_schedule`), `color_by_group`, `report_location`/`report_bounding_box`,
   `copy_elements`, `rotate_elements`, `rename_element`. Same pattern as §3.4, straightforward to add.

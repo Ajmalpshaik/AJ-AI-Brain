@@ -7,7 +7,7 @@
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: exportFolder must already exist on disk — this does NOT create it.
-// Live-verified 2026-07-22 — real CSV content confirmed (not just file-exists).
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
