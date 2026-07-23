@@ -8,7 +8,7 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: fieldNames must match GetSchedulableFields()'s real names for that schedule's category exactly
 //         — these are category-specific, not free text.
-// NOT YET LIVE-VERIFIED — test on one schedule first before trusting it on a batch.
+// Live-verified 2026-07-22, zero bugs.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

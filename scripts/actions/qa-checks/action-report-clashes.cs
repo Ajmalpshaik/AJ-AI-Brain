@@ -13,7 +13,7 @@
 // GOTCHA: this is real solid intersection, so touching-but-not-overlapping (e.g. two ducts sharing a face
 //         with zero overlap volume) may or may not register depending on how Revit's geometry kernel
 //         treats coincident faces — treat a reported clash as "investigate", not an automatic fail.
-// NOT YET LIVE-VERIFIED — test on a small known clashing pair first.
+// Live-verified 2026-07-22, zero bugs (read-only).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

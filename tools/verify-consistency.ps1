@@ -96,7 +96,10 @@ if (Test-Path $readmePath) {
     foreach ($folder in $subfolders) {
         $folderPath = Join-Path $scriptsDir $folder
         if (Test-Path $folderPath) {
-            $onDisk += Get-ChildItem -Path $folderPath -Filter "*.cs" | ForEach-Object { "$folder/$($_.Name)" }
+            $onDisk += Get-ChildItem -Path $folderPath -Filter "*.cs" -Recurse | ForEach-Object {
+                $relative = $_.FullName.Substring($folderPath.Length + 1) -replace '\\', '/'
+                "$folder/$relative"
+            }
         }
     }
 

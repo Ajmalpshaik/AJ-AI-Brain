@@ -7,8 +7,7 @@
 // PRODUCES: elements (List<Element>) — the newly created ViewSchedule, sb (StringBuilder)
 // NOT STANDALONE — see scripts/README.md for how to compose (chain into
 //          actions/sheets-views/action-place-schedule-on-sheet.cs to put it on a sheet).
-// NOT YET LIVE-VERIFIED in this session (bridge wasn't connected when this was written) — run once and
-// check the result in the Project Browser before relying on it for a bulk/repeated task.
+// Live-verified 2026-07-22 — real schedule+fields created.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

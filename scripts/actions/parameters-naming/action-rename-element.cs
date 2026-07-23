@@ -5,8 +5,7 @@
 //          don't have an independent Name, like most instance-placed geometry).
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// NOT YET LIVE-VERIFIED in this session (bridge wasn't connected when this was written) — test on ONE
-// element first before trusting it on a batch. Revit requires names to be unique within their own scope
+// Live-verified 2026-07-22, zero bugs. Revit requires names to be unique within their own scope
 // (e.g. two Levels can't share a name) — renaming more than one element to the exact same `newName` will
 // succeed for the first and fail (skipped, not silently overwritten) for the rest; that's expected, not a
 // bug, unless the request was actually a sequential rename (use action-renumber-sequential.cs for that).

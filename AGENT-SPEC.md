@@ -181,17 +181,19 @@ for the routing index into all 17 tool files.
 | `move_elements` | Translate by an mm offset vector |
 | `delete_elements` | Permanent delete — schema requires `confirm: true` literally, refuses the call otherwise |
 
-All 12 element-targeting tools share one input shape: `elementIds` (exact Ids, takes priority) OR
+13 of the 14 element-targeting tools share one input shape: `elementIds` (exact Ids, takes priority) OR
 `category` + optional `familyName`/`parameterName`/`comparison`/`valueMm` (mirrors
-`filter-by-category-and-numeric-param.cs`). Nine of them also take `targetViewId` (optional, defaults to
-active view — same view-targeting fix as the 11 graphics fragments in §3.5). **Not yet live-tested this session**
+`filter-by-category-and-numeric-param.cs`) — `reset_isolation` is the one exception, since it clears a
+view's temporary hide/isolate state without targeting specific elements. Seven of them also take
+`targetViewId` (optional, defaults to active view — same view-targeting fix as the 11 graphics fragments
+in §3.5). **Not yet live-tested this session**
 (no Revit connection available) — `node --check` confirms the JS parses; verify each on one element
 before trusting it for a batch, same caveat as any other unverified addition in this Brain.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 77 real C# fragments in `scripts/` (71
-filters/actions/creators/commands/recipes/examples + 6 read-only `context/` fragments), are **not**
+now also have a native tool above), and the 206 real C# fragments in `scripts/` (197
+filters/actions/creators/commands/recipes/examples + 9 read-only `context/` fragments), are **not**
 individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
 matching fragment(s), fills in real values, pastes them together, and sends the composed text through
 `run_csharp`. See `scripts/README.md` for the authoritative fragment index and composition rules.

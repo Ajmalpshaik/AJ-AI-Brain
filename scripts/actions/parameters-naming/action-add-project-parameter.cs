@@ -15,7 +15,8 @@
 // Revit versions, not a guess about behavior.
 // GOTCHA: needs Application.SharedParametersFilename already pointing at a real, writable shared parameter
 //         .txt file — if none is set, this creates one at sharedParamFileFallbackPath instead of failing.
-// NOT YET LIVE-VERIFIED.
+// Live-verified 2026-07-22 — fixed for Revit 2020 (SpecTypeId/GroupTypeId don't exist on this version;
+// uses legacy ParameterType/BuiltInParameterGroup now).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

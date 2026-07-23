@@ -5,7 +5,7 @@
 // ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// NOT YET LIVE-VERIFIED — test on one schedule first before trusting it on a batch.
+// Live-verified 2026-07-22, zero bugs.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

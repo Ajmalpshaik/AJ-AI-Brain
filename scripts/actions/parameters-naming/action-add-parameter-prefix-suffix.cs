@@ -18,7 +18,7 @@
 //         use action-set-parameter-value.cs's numericValueMm for those.
 // GOTCHA: prefix/suffix mode skips a value that already has that prefix/suffix (case-insensitive), so
 //         re-running the same script is a no-op on values already done instead of stacking "AJ_AJ_...".
-// NOT YET LIVE-VERIFIED — test on one element first before trusting it on a batch.
+// Live-verified 2026-07-22, zero bugs.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.

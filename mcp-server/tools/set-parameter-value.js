@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated, cs } from "../shared/element-filter.js";
+import { asToolResult } from "../shared/tool-result.js";
 
 export function register(server) {
   server.tool(
@@ -8,6 +9,14 @@ export function register(server) {
       "stringValue or numericValueMm.",
     { ...filterFields, parameterNameToSet: z.string().describe("The parameter to write."), stringValue: z.string().optional(), numericValueMm: z.number().optional() },
     async ({ parameterNameToSet, stringValue, numericValueMm, ...filter }) => {
+      const hasString = stringValue !== undefined && stringValue !== null;
+      const hasNumeric = numericValueMm !== undefined && numericValueMm !== null;
+      if (hasString === hasNumeric) {
+        return asToolResult({
+          success: false,
+          error: "Provide exactly one of stringValue or numericValueMm (not both, not neither).",
+        });
+      }
       const script = [
         buildElementsClause(filter),
         `int __updated = 0, __skipped = 0;`,

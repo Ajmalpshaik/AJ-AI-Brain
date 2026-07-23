@@ -12,7 +12,7 @@
 // GOTCHA: not every view type supports every property (a schedule has no Scale/DisplayStyle, a 3D view's
 //         Scale behaves differently than a plan) — each is set independently in its own try/catch so one
 //         unsupported property on a view doesn't block the others from being set on it.
-// NOT YET LIVE-VERIFIED — test on one view first before trusting it on a batch.
+// Live-verified 2026-07-22, zero bugs.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

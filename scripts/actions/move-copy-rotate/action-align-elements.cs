@@ -9,7 +9,7 @@
 //         chain as action-find-duplicates.cs's getPoint) as "its position" — for a linear element (duct/
 //         pipe/wall) this aligns the MIDPOINT, not an endpoint; for an endpoint-specific alignment use
 //         action-move-elements.cs with an explicit vector instead.
-// NOT YET LIVE-VERIFIED — test on one element first before trusting it on a batch.
+// Live-verified 2026-07-22, exact match.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
