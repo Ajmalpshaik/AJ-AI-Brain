@@ -54,6 +54,11 @@ var equipment = Document.GetElement(equipmentId) as FamilyInstance;
 var duct = Document.GetElement(ductId) as Autodesk.Revit.DB.Mechanical.Duct;
 if (equipment == null || duct == null) return "equipmentId or ductId does not point to the expected element type.";
 
+// equipmentId is documented as "(or any element)" above, i.e. not guaranteed to be MEP-capable — a
+// FamilyInstance with no MEPModel (e.g. a non-MEP Generic Model) would otherwise NRE here uncaught.
+if (equipment.MEPModel?.ConnectorManager == null)
+    return "equipmentId does not have MEP connector data (not an MEP-capable family instance).";
+
 // Find the equipment connector that is actually connected to this duct (walk AllRefs, don't assume which one).
 Connector equipConn = null;
 foreach (Connector c in equipment.MEPModel.ConnectorManager.Connectors)

@@ -66,6 +66,8 @@ sb.AppendLine($"{rooms.Count} room(s) on this level.");
 using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
 {
     t.Start();
+    try
+    {
 
     foreach (var room in rooms)
     {
@@ -146,6 +148,12 @@ using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
     }
 
     t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED: " + ex.Message).ToString();
+    }
 }
 
 return sb.ToString();

@@ -55,8 +55,16 @@ ReferencePlane GetPlane(string name) => new FilteredElementCollector(Document).O
 using (var t = new Transaction(Document, "Set family category"))
 {
     t.Start();
-    Document.OwnerFamily.FamilyCategory = Document.Settings.Categories.get_Item(targetCategory);
-    t.Commit();
+    try
+    {
+        Document.OwnerFamily.FamilyCategory = Document.Settings.Categories.get_Item(targetCategory);
+        t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED at 'Set family category': " + ex.Message).ToString();
+    }
 }
 sb.AppendLine("Category: " + Document.OwnerFamily.FamilyCategory.Name);
 
@@ -65,15 +73,23 @@ FamilyParameter lengthParam, widthParam, heightParam;
 using (var t = new Transaction(Document, "Add body parameters"))
 {
     t.Start();
-    lengthParam = fm.AddParameter("Length", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
-    widthParam  = fm.AddParameter("Width",  BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
-    heightParam = fm.AddParameter("Height", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
-    var ft = fm.NewType(defaultTypeName);
-    fm.CurrentType = ft;
-    fm.Set(lengthParam, LFt(bodyLengthMm));
-    fm.Set(widthParam,  LFt(bodyWidthMm));
-    fm.Set(heightParam, LFt(bodyHeightMm));
-    t.Commit();
+    try
+    {
+        lengthParam = fm.AddParameter("Length", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
+        widthParam  = fm.AddParameter("Width",  BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
+        heightParam = fm.AddParameter("Height", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
+        var ft = fm.NewType(defaultTypeName);
+        fm.CurrentType = ft;
+        fm.Set(lengthParam, LFt(bodyLengthMm));
+        fm.Set(widthParam,  LFt(bodyWidthMm));
+        fm.Set(heightParam, LFt(bodyHeightMm));
+        t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED at 'Add body parameters': " + ex.Message).ToString();
+    }
 }
 
 // ---- Body reference planes (Left/Right/Front/Back around the template's own Center planes) ----
@@ -82,11 +98,19 @@ ReferencePlane pLeft, pRight, pFront, pBack;
 using (var t = new Transaction(Document, "Add body reference planes"))
 {
     t.Start();
-    pLeft  = Document.FamilyCreate.NewReferencePlane(new XYZ(-halfL, -3, 0), new XYZ(-halfL, 3, 0), XYZ.BasisZ, view); pLeft.Name = "Left";
-    pRight = Document.FamilyCreate.NewReferencePlane(new XYZ( halfL, -3, 0), new XYZ( halfL, 3, 0), XYZ.BasisZ, view); pRight.Name = "Right";
-    pFront = Document.FamilyCreate.NewReferencePlane(new XYZ(-3, -halfW, 0), new XYZ(3, -halfW, 0), XYZ.BasisZ, view); pFront.Name = "Front";
-    pBack  = Document.FamilyCreate.NewReferencePlane(new XYZ(-3,  halfW, 0), new XYZ(3,  halfW, 0), XYZ.BasisZ, view); pBack.Name = "Back";
-    t.Commit();
+    try
+    {
+        pLeft  = Document.FamilyCreate.NewReferencePlane(new XYZ(-halfL, -3, 0), new XYZ(-halfL, 3, 0), XYZ.BasisZ, view); pLeft.Name = "Left";
+        pRight = Document.FamilyCreate.NewReferencePlane(new XYZ( halfL, -3, 0), new XYZ( halfL, 3, 0), XYZ.BasisZ, view); pRight.Name = "Right";
+        pFront = Document.FamilyCreate.NewReferencePlane(new XYZ(-3, -halfW, 0), new XYZ(3, -halfW, 0), XYZ.BasisZ, view); pFront.Name = "Front";
+        pBack  = Document.FamilyCreate.NewReferencePlane(new XYZ(-3,  halfW, 0), new XYZ(3,  halfW, 0), XYZ.BasisZ, view); pBack.Name = "Back";
+        t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED at 'Add body reference planes': " + ex.Message).ToString();
+    }
 }
 
 // ---- Body extrusion ----
@@ -95,16 +119,24 @@ Extrusion body;
 using (var t = new Transaction(Document, "Create body extrusion"))
 {
     t.Start();
-    var sp = SketchPlane.Create(Document, horizPlaneElem.GetPlane());
-    var arr = new CurveArrArray();
-    var ca = new CurveArray();
-    var p1 = new XYZ(-halfL, -halfW, 0); var p2 = new XYZ(halfL, -halfW, 0);
-    var p3 = new XYZ(halfL, halfW, 0);   var p4 = new XYZ(-halfL, halfW, 0);
-    ca.Append(Line.CreateBound(p1, p2)); ca.Append(Line.CreateBound(p2, p3));
-    ca.Append(Line.CreateBound(p3, p4)); ca.Append(Line.CreateBound(p4, p1));
-    arr.Append(ca);
-    body = Document.FamilyCreate.NewExtrusion(true, arr, sp, LFt(bodyHeightMm));
-    t.Commit();
+    try
+    {
+        var sp = SketchPlane.Create(Document, horizPlaneElem.GetPlane());
+        var arr = new CurveArrArray();
+        var ca = new CurveArray();
+        var p1 = new XYZ(-halfL, -halfW, 0); var p2 = new XYZ(halfL, -halfW, 0);
+        var p3 = new XYZ(halfL, halfW, 0);   var p4 = new XYZ(-halfL, halfW, 0);
+        ca.Append(Line.CreateBound(p1, p2)); ca.Append(Line.CreateBound(p2, p3));
+        ca.Append(Line.CreateBound(p3, p4)); ca.Append(Line.CreateBound(p4, p1));
+        arr.Append(ca);
+        body = Document.FamilyCreate.NewExtrusion(true, arr, sp, LFt(bodyHeightMm));
+        t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED at 'Create body extrusion': " + ex.Message).ToString();
+    }
 }
 sb.AppendLine("Body extrusion: " + bodyLengthMm + "x" + bodyWidthMm + "x" + bodyHeightMm + "mm");
 
@@ -129,6 +161,8 @@ double dimOffset1 = LFt(150), dimOffset2 = LFt(300);
 using (var t = new Transaction(Document, "Align + dimension body"))
 {
     t.Start();
+    try
+    {
     Document.FamilyCreate.NewAlignment(view, pLeft.GetReference(), bL);
     Document.FamilyCreate.NewAlignment(view, pRight.GetReference(), bR);
     Document.FamilyCreate.NewAlignment(view, pFront.GetReference(), bF);
@@ -152,6 +186,12 @@ using (var t = new Transaction(Document, "Align + dimension body"))
 
     fm.AssociateElementParameterToFamilyParameter(body.get_Parameter(BuiltInParameter.EXTRUSION_END_PARAM), heightParam);
     t.Commit();
+    }
+    catch (Exception ex)
+    {
+        t.RollBack();
+        return sb.AppendLine("FAILED at 'Align + dimension body': " + ex.Message).ToString();
+    }
 }
 sb.AppendLine("Body locked to Length/Width/Height parameters (EQ-centered on origin).");
 
@@ -162,15 +202,23 @@ if (addNeck)
     using (var t = new Transaction(Document, "Add neck parameters"))
     {
         t.Start();
-        neckWParam = fm.AddParameter("Neck Width",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-        neckHParam = fm.AddParameter("Neck Height", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-        neckDParam = fm.AddParameter("Neck Depth",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-        fm.Set(neckWParam, LFt(neckWidthMm));
-        fm.Set(neckHParam, LFt(neckHeightMm));
-        fm.Set(neckDParam, LFt(neckDepthMm));
-        neckTopParam = fm.AddParameter("Neck Top", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-        fm.SetFormula(neckTopParam, "Height + Neck Depth"); // NO quotes around spaced names — quoting breaks the formula
-        t.Commit();
+        try
+        {
+            neckWParam = fm.AddParameter("Neck Width",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            neckHParam = fm.AddParameter("Neck Height", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            neckDParam = fm.AddParameter("Neck Depth",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            fm.Set(neckWParam, LFt(neckWidthMm));
+            fm.Set(neckHParam, LFt(neckHeightMm));
+            fm.Set(neckDParam, LFt(neckDepthMm));
+            neckTopParam = fm.AddParameter("Neck Top", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            fm.SetFormula(neckTopParam, "Height + Neck Depth"); // NO quotes around spaced names — quoting breaks the formula
+            t.Commit();
+        }
+        catch (Exception ex)
+        {
+            t.RollBack();
+            return sb.AppendLine("FAILED at 'Add neck parameters': " + ex.Message).ToString();
+        }
     }
 
     double halfNW = LFt(neckWidthMm)/2.0, halfNH = LFt(neckHeightMm)/2.0;
@@ -179,22 +227,30 @@ if (addNeck)
     using (var t = new Transaction(Document, "Build neck geometry"))
     {
         t.Start();
-        nLeft  = Document.FamilyCreate.NewReferencePlane(new XYZ(-halfNW, -3, 0), new XYZ(-halfNW, 3, 0), XYZ.BasisZ, view); nLeft.Name = "Neck Left";
-        nRight = Document.FamilyCreate.NewReferencePlane(new XYZ( halfNW, -3, 0), new XYZ( halfNW, 3, 0), XYZ.BasisZ, view); nRight.Name = "Neck Right";
-        nFront = Document.FamilyCreate.NewReferencePlane(new XYZ(-3, -halfNH, 0), new XYZ(3, -halfNH, 0), XYZ.BasisZ, view); nFront.Name = "Neck Front";
-        nBack  = Document.FamilyCreate.NewReferencePlane(new XYZ(-3,  halfNH, 0), new XYZ(3,  halfNH, 0), XYZ.BasisZ, view); nBack.Name = "Neck Back";
+        try
+        {
+            nLeft  = Document.FamilyCreate.NewReferencePlane(new XYZ(-halfNW, -3, 0), new XYZ(-halfNW, 3, 0), XYZ.BasisZ, view); nLeft.Name = "Neck Left";
+            nRight = Document.FamilyCreate.NewReferencePlane(new XYZ( halfNW, -3, 0), new XYZ( halfNW, 3, 0), XYZ.BasisZ, view); nRight.Name = "Neck Right";
+            nFront = Document.FamilyCreate.NewReferencePlane(new XYZ(-3, -halfNH, 0), new XYZ(3, -halfNH, 0), XYZ.BasisZ, view); nFront.Name = "Neck Front";
+            nBack  = Document.FamilyCreate.NewReferencePlane(new XYZ(-3,  halfNH, 0), new XYZ(3,  halfNH, 0), XYZ.BasisZ, view); nBack.Name = "Neck Back";
 
-        var sp = SketchPlane.Create(Document, horizPlaneElem.GetPlane());
-        var arr = new CurveArrArray();
-        var ca = new CurveArray();
-        var p1 = new XYZ(-halfNW, -halfNH, 0); var p2 = new XYZ(halfNW, -halfNH, 0);
-        var p3 = new XYZ(halfNW, halfNH, 0);   var p4 = new XYZ(-halfNW, halfNH, 0);
-        ca.Append(Line.CreateBound(p1, p2)); ca.Append(Line.CreateBound(p2, p3));
-        ca.Append(Line.CreateBound(p3, p4)); ca.Append(Line.CreateBound(p4, p1));
-        arr.Append(ca);
-        double neckTopFt = fm.CurrentType.AsDouble(neckTopParam) ?? (LFt(bodyHeightMm) + LFt(neckDepthMm));
-        neck = Document.FamilyCreate.NewExtrusion(true, arr, sp, neckTopFt);
-        t.Commit();
+            var sp = SketchPlane.Create(Document, horizPlaneElem.GetPlane());
+            var arr = new CurveArrArray();
+            var ca = new CurveArray();
+            var p1 = new XYZ(-halfNW, -halfNH, 0); var p2 = new XYZ(halfNW, -halfNH, 0);
+            var p3 = new XYZ(halfNW, halfNH, 0);   var p4 = new XYZ(-halfNW, halfNH, 0);
+            ca.Append(Line.CreateBound(p1, p2)); ca.Append(Line.CreateBound(p2, p3));
+            ca.Append(Line.CreateBound(p3, p4)); ca.Append(Line.CreateBound(p4, p1));
+            arr.Append(ca);
+            double neckTopFt = fm.CurrentType.AsDouble(neckTopParam) ?? (LFt(bodyHeightMm) + LFt(neckDepthMm));
+            neck = Document.FamilyCreate.NewExtrusion(true, arr, sp, neckTopFt);
+            t.Commit();
+        }
+        catch (Exception ex)
+        {
+            t.RollBack();
+            return sb.AppendLine("FAILED at 'Build neck geometry': " + ex.Message).ToString();
+        }
     }
 
     Reference nL=null, nR=null, nF=null, nB=null, nTop=null;
@@ -215,6 +271,8 @@ if (addNeck)
     using (var t = new Transaction(Document, "Align + dimension neck, add connector"))
     {
         t.Start();
+        try
+        {
         Document.FamilyCreate.NewAlignment(view, nLeft.GetReference(), nL);
         Document.FamilyCreate.NewAlignment(view, nRight.GetReference(), nR);
         Document.FamilyCreate.NewAlignment(view, nFront.GetReference(), nF);
@@ -243,6 +301,12 @@ if (addNeck)
         fm.AssociateElementParameterToFamilyParameter(conn.get_Parameter(BuiltInParameter.CONNECTOR_HEIGHT), neckHParam);
 
         t.Commit();
+        }
+        catch (Exception ex)
+        {
+            t.RollBack();
+            return sb.AppendLine("FAILED at 'Align + dimension neck, add connector': " + ex.Message).ToString();
+        }
     }
     sb.AppendLine("Neck: " + neckWidthMm + "x" + neckHeightMm + "mm, " + neckDepthMm + "mm above body top. Connector: " + connectorSystemType + " rectangular, size-linked to neck.");
 }

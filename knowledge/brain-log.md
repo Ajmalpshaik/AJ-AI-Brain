@@ -30,6 +30,9 @@ complete. New items land here as they surface.
 5. The fixture-blocked positive paths (worksharing, Assembly, Design Option, insulation, electrical,
    links, Ceilings, a flip-capable family, the PDF print go-ahead) — each listed with its exact blocker
    in `scripts/README.md`'s per-fragment notes.
+6. The 2026-07-23 transaction/null-check safety fixes to `create-parametric-box-family-with-duct-
+   connector.cs`, `place-fcu.cs`, `place-terminals-checkerboard.cs`, `set-space-airflow.cs`,
+   `draw-main-duct-with-cap.cs`, `split-duct-near-equipment.cs` — code-reviewed only, none live-executed.
 
 ## Log
 
@@ -130,3 +133,13 @@ complete. New items land here as they surface.
   found and fixed: it wrote UTF-8 WITH a BOM (StreamWriter + `Encoding.UTF8` default), which the proven
   Node client never sends; now no-BOM, byte-for-byte matching. Added a ping-test line to the live
   checklist since the fallback caller itself has never been exercised live.
+- 2026-07-23 — Parallel consistency pass (independent of Parts 1–6 above, same day): found and fixed
+  the same ps1 recursion bug, the same set_parameter_value validation gap, the same AGENT-SPEC.md
+  staleness, and most of the same stale headers — reconciled to Parts 1–6's versions on merge (the
+  same fix or a better one in each case). Net-new: flagged Create Phase / Set Active Design Option as
+  CONFIRMED IMPOSSIBLE in `universal-actions-reference.md` (matches the Phase/Design Option findings
+  above, wasn't reflected in that catalog yet); added the 37 real filter/graphic-override fragments
+  missing from that same catalog; added try/catch/RollBack to the 8+3+2+1 bare transactions in
+  `create-parametric-box-family-with-duct-connector.cs`/`place-fcu.cs`/`place-terminals-checkerboard.cs`/
+  `set-space-airflow.cs` (none of which this pass touched), and the missing null checks in
+  `draw-main-duct-with-cap.cs`/`split-duct-near-equipment.cs`. Full text in git history (PR #3).

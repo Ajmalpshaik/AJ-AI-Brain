@@ -15,7 +15,8 @@
 //         be slow on a large model, same caution as any unbounded scan in this repo.
 // MANDATORY per README's explorer-first rule: run with dryRun = true first, read the actual list of what
 // would be deleted, confirm with the user, THEN set dryRun = false.
-// NOT YET LIVE-VERIFIED.
+// Dry-run live-verified 2026-07-22 for all 3 modes. Real non-dry-run delete not yet exercised (no
+// pre-existing unused content in this model that was safe to actually remove).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

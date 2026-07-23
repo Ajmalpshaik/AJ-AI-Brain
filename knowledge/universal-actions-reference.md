@@ -98,8 +98,8 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 61. Report Group Members
 62. Join Geometry
 63. Unjoin Geometry
-64. Array – NEEDS_REVIEW
-65. Align Elements – NEEDS_REVIEW
+64. Array – BUILT: `actions/move-copy-rotate/action-array-elements.cs`
+65. Align Elements – BUILT: `actions/move-copy-rotate/action-align-elements.cs`
 66. Edit Group Contents – NEEDS_REVIEW
 
 ## Creation
@@ -196,7 +196,7 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 141. Create Revision Schedule – the titleblock-style schedule listing every revision, [placement]
 
 ## Phases
-142. Create Phase – [phase name], [insert position]
+142. Create Phase – [phase name], [insert position] – **CONFIRMED IMPOSSIBLE via API** (live-verified 2026-07-23): `Document.Phases` is read-only, `Insert`/`Append` both throw "Collection is read-only" at runtime, and no other Phase-creation API exists anywhere in the assembly. UI-only (Manage > Phases). `action-create-phase.cs` reports this instead of throwing a compile error. See [`brain-log.md`](brain-log.md) 2026-07-23.
 143. Set Element Phase Created/Demolished – [element/elements], [phase]
 144. Reorder Phases – [phase], [new position]
 145. Report Elements by Phase – [phase], [category]
@@ -240,7 +240,7 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 173. Set Project Information Parameter
 174. Report Project Location/Coordinates
 175. Report Design Options
-176. Set Active Design Option
+176. Set Active Design Option – **CONFIRMED IMPOSSIBLE via API** (live-verified 2026-07-23): only a read-only `DesignOption.GetActiveDesignOptionId` exists anywhere in the assembly — no method to set/activate one. UI-only. `action-set-design-option.cs` requires the option be activated manually first. See [`brain-log.md`](brain-log.md) 2026-07-23.
 177. Set Shared Coordinates – NEEDS_REVIEW (multi-step, order-sensitive, genuinely risky to automate blind)
 
 ## Model Info & Orientation (read-only)
@@ -249,6 +249,56 @@ something touches sheet-revision association, and its Sequence Number isn't stab
 180. Workset Info
 181. Model Categories
 182. Used Families
+
+---
+
+## Implementation index — granular fragments not folded into the count above
+Some `scripts/` fragments are real, working, narrower variants of a conceptual action already listed
+above — cataloguing each one as its own numbered item would inflate the "182 distinct actions" count with
+near-duplicates rather than genuinely new capabilities. Listed here so they're not invisible to anyone
+reading this file top-to-bottom. See [`../scripts/README.md`](../scripts/README.md) for the authoritative
+descriptions and live-verification notes.
+
+**Filters** (`scripts/filters/`, 48 real fragments total — items 35-48 above cover 14 of them):
+- `filter-by-level.cs` — everything on a given Level across the whole model, optional category scope
+- `filter-by-levels.cs` — every Level ELEMENT itself (not elements sitting on one), ordered by elevation
+- `filter-by-electrical-system.cs` — elements in a specific Electrical System (circuit), by Circuit Type and/or name
+- `filter-by-system-name.cs` — pipes/ducts/fittings narrowed to one specific System instance's own name
+- `filter-by-tag-status.cs` — category elements that ARE or ARE NOT tagged in a given view
+- `filter-by-views.cs` — every View (not ViewSheet), optional ViewType + name filter
+- `filter-by-view.cs` — category narrowed to instances actually visible in a given view
+- `filter-by-view-templates.cs` — View Templates themselves, optional name filter + usage mode
+- `filter-by-element-intersection.cs` — elements whose real geometry intersects one specific target element
+- `filter-by-solid-intersection.cs` — elements whose real geometry intersects a custom 3D box/clearance solid
+- `filter-by-connection-status.cs` — category elements with at least one open connector end, or fully connected
+- `filter-by-scope-box.cs` — every Scope Box, optional name substring
+- `filter-by-length.cs` — category narrowed by Length (mm) vs. an mm value
+- `filter-by-size.cs` — category narrowed by round (Diameter) or rectangular (Width x Height) size, or plain "Size" text
+- `filter-by-pin-status.cs` — category elements that ARE or ARE NOT pinned
+- `filter-by-material.cs` — elements using a specific Revit Material, category-scoped
+- `filter-by-schedules.cs` — every ViewSchedule, optional name substring
+- `filter-by-group.cs` — member elements of a specific Model Group instance
+- `filter-by-unenclosed-spatial-elements.cs` — every Room/Space in the model with zero Area ("Not Enclosed")
+- `filter-by-parameter-exists.cs` — elements that have a given parameter attached, whether blank or not
+- `filter-by-space.cs` — category narrowed to instances physically inside one MEP Space (not a Room)
+- `filter-by-selection-filter.cs` — read back elements behind a named Selection Filter, or re-evaluate a View Filter's rule
+- `filter-by-types.cs` — the TYPE elements themselves, matched by family/type name
+- `filter-by-family-type.cs` — a specific Type inside a Family, matched by name
+- `filter-by-host.cs` — elements hosted on a specific parent (`FamilyInstance.Host` or insulation/lining `HostElementId`)
+- `filter-by-assembly.cs` — member elements of a specific Revit Assembly
+- `filter-by-family.cs` — family name matched across the whole model, no category picked first
+- `filter-by-insulation-type.cs` — the insulation/lining elements themselves, by kind/type/material/thickness
+- `filter-by-insulation-status.cs` — pipe/duct elements that HAVE insulation/lining applied, or don't
+- `filter-by-design-option.cs` — elements in a named Design Option, or the Main Model when left unset
+- `filter-by-links.cs` — every RVT link and/or CAD link instance, optional name substring
+- `filter-by-grid.cs` — every Grid, optional name substring
+- `filter-by-linked-model-elements.cs` — elements of a category inside a specific linked RVT model
+- `filter-by-warnings.cs` — elements flagged by a current model warning, as an actionable set
+
+**Graphic overrides** (`scripts/actions/color-graphics/`, beyond item 16's category halftone):
+- `action-set-halftone.cs` — turn halftone on/off per element (read-modify-write, preserves color override)
+- `action-set-line-style.cs` — override line weight and/or line pattern per element
+- `action-set-category-line-style.cs` — override line weight/pattern for one or more entire categories
 
 ---
 
