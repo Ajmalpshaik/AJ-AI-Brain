@@ -19,14 +19,18 @@ let cachedDiscovery;
 let activeConnection;
 
 function readDiscoveryInfo() {
-  if (!fs.existsSync(DISCOVERY_FILE)) {
+  let stat;
+  try {
+    stat = fs.statSync(DISCOVERY_FILE);
+  } catch {
+    // Covers "file doesn't exist" (the common case) and any other stat failure (e.g. permissions) —
+    // both mean the same thing to a caller: there's nothing usable to connect through right now.
     cachedDiscovery = undefined;
     throw new Error(
       "AJ AI Bridge is not connected. In Revit, open the AJ AI pane and click \"Connect AJ AI Bridge\", then try again."
     );
   }
 
-  const stat = fs.statSync(DISCOVERY_FILE);
   if (
     cachedDiscovery &&
     cachedDiscovery.mtimeMs === stat.mtimeMs &&
@@ -35,8 +39,20 @@ function readDiscoveryInfo() {
     return cachedDiscovery.info;
   }
 
-  const raw = fs.readFileSync(DISCOVERY_FILE, "utf8");
-  const info = JSON.parse(raw);
+  let info;
+  try {
+    const raw = fs.readFileSync(DISCOVERY_FILE, "utf8");
+    info = JSON.parse(raw);
+  } catch (err) {
+    // Covers a genuine race (the file was deleted/replaced between the statSync above and this read —
+    // e.g. Revit was closed at exactly this moment) as well as a truncated/corrupt write caught mid-flight.
+    // Without this, either case would throw a raw ENOENT/SyntaxError straight out of this function instead
+    // of the same friendly, actionable message every other failure mode here already gives.
+    throw new Error(
+      "Could not read the AJ AI bridge connection file (" + err.message + "). Reconnect from the AJ AI pane in Revit."
+    );
+  }
+
   if (!info.pipeName || !info.token) {
     throw new Error("AJ AI bridge connection file is malformed. Reconnect from the AJ AI pane in Revit.");
   }
@@ -157,6 +173,12 @@ function createConnection(info) {
   });
 }
 
+// KNOWN LIMITATION, not fixed here (would need a design decision, not a bug fix): reuse below only
+// checks LOCAL socket health (not closed/destroyed/writable). If Revit's listener dies without the OS
+// noticing at the socket level — rare, but named pipes can do this — a reused connection can look
+// healthy, accept the write, then simply never answer, so the caller pays the full 90s RESPONSE_TIMEOUT_MS
+// instead of a fast failure. Fixing this would mean a cheap "ping" before reuse or a periodic heartbeat —
+// worth a deliberate decision (adds latency/complexity to the common path) rather than a silent addition.
 async function getConnection(info) {
   const key = connectionKey(info);
   if (

@@ -13,6 +13,11 @@
 // GOTCHA: no Transaction wraps this — Reload is a document-management I/O operation, not a regular model
 //         edit (same reasoning as action-export-schedule-to-csv.cs not needing one).
 // NOT YET LIVE-VERIFIED — test on one link first before trusting it on a batch.
+// FLAGGED 2026-07-23 (static review, no Revit connection available to confirm either way): unsure
+// whether `LinkLoadResultType.LinkNotNeeded` below is a real enum member on this Revit version — tried to
+// check Autodesk's API docs but the reference sites blocked automated fetches from this session. If this
+// fragment fails to even COMPILE the first time it's run, this is the first thing to check — not a logic
+// bug, a possible wrong enum member name.
 // ============================================================
 
 var linkTypeIds = elements

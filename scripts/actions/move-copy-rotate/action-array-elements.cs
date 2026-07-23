@@ -10,7 +10,7 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA (mode="radial"): axis is fixed to a vertical line through centerXMm/centerYMm (any Z) — a plan-
 //         view rotation, matching action-rotate-elements.cs's own default axis.
-// NOT YET LIVE-VERIFIED — test with a small count (2-3) first before trusting it on a large array.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
