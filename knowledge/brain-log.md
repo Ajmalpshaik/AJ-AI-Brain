@@ -18,7 +18,10 @@ complete. New items land here as they surface.
 
 **Needs a live Revit session (bridge connected, on the Windows machine):**
 1. Run `tools/verify-consistency.ps1` once to confirm the 2026-07-23 recursion fix works on real
-   PowerShell (the fix mirrors the proven `.mjs` logic but has never executed).
+   PowerShell (the fix mirrors the proven `.mjs` logic but has never executed). Also run
+   `tools/invoke-bridge.ps1 -Ping` once — same session found it sent a UTF-8 BOM the Node client never
+   sends (fixed to no-BOM 2026-07-23, matching the proven client byte-for-byte, but the fallback caller
+   itself has never been ping-tested live).
 2. Live-verify the 14 native MCP tools (structurally tested via `npm test` only).
 3. `action-reload-links.cs`: confirm `LinkLoadResultType.LinkNotNeeded` is a real enum member (see the
    file's header flag — suspected wrong identifier, would be a compile error).
@@ -121,3 +124,9 @@ complete. New items land here as they surface.
   (doesn't exist here either — fragment changes log to THIS file; the recipes-table source now points at
   `live-model/revisions.md`). Added the missing verification story to `action-delete-phase.cs`'s header
   so its README pointer resolves. Checker + tests clean.
+- 2026-07-23 — Coverage question follow-up: reviewed `tools/invoke-bridge.ps1`, the one pipeline file the
+  Parts 1–6 pass never opened. Protocol matches the Node client exactly (same discovery file, same
+  `{token, code, allowDestructive}` newline-delimited shape, same ping payload) — one real difference
+  found and fixed: it wrote UTF-8 WITH a BOM (StreamWriter + `Encoding.UTF8` default), which the proven
+  Node client never sends; now no-BOM, byte-for-byte matching. Added a ping-test line to the live
+  checklist since the fallback caller itself has never been exercised live.
