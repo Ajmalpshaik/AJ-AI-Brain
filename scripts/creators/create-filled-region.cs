@@ -7,7 +7,7 @@
 //          — it produces `elements` — so action-set-parameter-value.cs (e.g. Comments) can chain onto it.
 // GOTCHA: the point list must already form a closed loop's corners IN ORDER (not closed back to the
 //         first point — CurveLoop.Create closes it automatically between the last and first point).
-// Live-verified 2026-07-22 — real region+boundary loop created.
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -65,7 +65,11 @@ try {
 
     $pipe.Connect($ConnectTimeoutMs)
 
-    $writer = [System.IO.StreamWriter]::new($pipe, [System.Text.Encoding]::UTF8)
+    # No-BOM UTF8 on purpose: [System.Text.Encoding]::UTF8 makes StreamWriter emit a 3-byte BOM at the
+    # start of the stream, which the proven Node client (mcp-server/bridge-connection.js) never sends —
+    # if the Revit-side listener parses raw bytes rather than BOM-stripping, that BOM lands in front of
+    # the first JSON request. Matching the Node client byte-for-byte removes the difference.
+    $writer = [System.IO.StreamWriter]::new($pipe, [System.Text.UTF8Encoding]::new($false))
     $writer.AutoFlush = $true
     $reader = [System.IO.StreamReader]::new($pipe, [System.Text.Encoding]::UTF8)
 

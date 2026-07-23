@@ -13,8 +13,7 @@
 // GOTCHA: offsetXmm/offsetYmm is a flat vector in MODEL space, not view space (unlike the recipe, which
 //         projects along the view's own Right/Up directions) — fine for a plan view, will offset in an
 //         unexpected direction on a rotated or non-plan view.
-// Live-verified 2026-07-22, zero bugs (this exact simplified fragment, not just the underlying API
-// pattern from the recipe).
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -14,9 +14,10 @@ export function register(server) {
       if (hasString === hasNumeric) {
         return asToolResult({
           success: false,
-          error: "Provide exactly one of stringValue or numericValueMm (not both, not neither).",
+          error: "Provide exactly one of stringValue or numericValueMm (got " + (hasString && hasNumeric ? "both" : "neither") + ").",
         });
       }
+
       const script = [
         buildElementsClause(filter),
         `int __updated = 0, __skipped = 0;`,

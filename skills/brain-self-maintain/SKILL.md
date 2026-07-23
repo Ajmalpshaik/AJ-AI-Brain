@@ -66,7 +66,9 @@ the same step.
 5. **Write the index to route by request shape** — "if the request is about X → open this file" — never
    by filename or today's noun.
 6. **Retarget pointers to the topic file, not the folder.**
-7. **Run the checker**: `powershell -ExecutionPolicy Bypass -File tools\verify-consistency.ps1`.
+7. **Run the checker**: `powershell -ExecutionPolicy Bypass -File tools\verify-consistency.ps1` — or,
+   in a session without PowerShell (e.g. Claude Code on the web), `node tools/verify-consistency.mjs`
+   (same three checks, portable Node).
 
 ## The size rule
 

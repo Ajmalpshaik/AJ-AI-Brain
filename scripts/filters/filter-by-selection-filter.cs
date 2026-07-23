@@ -13,7 +13,7 @@
 //         true saved selection. A ParameterFilterElement (View Filter) stores a RULE, not a set of Ids —
 //         reading "its elements" means re-running that rule against one specific view's own collector, so
 //         viewIdInt is REQUIRED for that case and ignored for a true Selection Filter.
-// Live-verified 2026-07-22, both branches (named Selection Filter and View Filter re-evaluation).
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -6,17 +6,13 @@
 //          parameter that already exists. This one creates the parameter itself.
 // DOES NOT consume `elements` — operates on the document's shared parameter file and category bindings,
 //          not a model element set.
-// CONFIDENCE NOTE, READ BEFORE USING: written against the modern (~2022+) ForgeTypeId-based API
-// (SpecTypeId, GroupTypeId). Older Revit versions use the legacy ParameterType enum and
-// BuiltInParameterGroup instead — if this doesn't compile, that's almost certainly why; swap
-// SpecTypeId.String.Text for ParameterType.Text and GroupTypeId.Data for BuiltInParameterGroup.PG_DATA
-// (or the appropriate group) for your version. This is the second-least-certain fragment in this library
-// after action-add-schedule-calculated-field.cs's mode="combined" — real API-surface uncertainty across
-// Revit versions, not a guess about behavior.
+// VERSION NOTE: uses the legacy (2020-era) API — ParameterType enum + BuiltInParameterGroup — because
+// the modern ForgeTypeId API (SpecTypeId/GroupTypeId) does not exist on Revit 2020 at all (confirmed
+// live; see AGENT-SPEC.md §6.3). On 2022+ swap ParameterType.Text for SpecTypeId.String.Text and
+// BuiltInParameterGroup.PG_DATA for GroupTypeId.Data.
 // GOTCHA: needs Application.SharedParametersFilename already pointing at a real, writable shared parameter
 //         .txt file — if none is set, this creates one at sharedParamFileFallbackPath instead of failing.
-// Live-verified 2026-07-22 — fixed for Revit 2020 (SpecTypeId/GroupTypeId don't exist on this version;
-// uses legacy ParameterType/BuiltInParameterGroup now).
+// Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -57,7 +53,7 @@ else
             ExternalDefinition definition = existingDef as ExternalDefinition;
             if (definition == null)
             {
-                var options = new ExternalDefinitionCreationOptions(parameterName, SpecTypeId.String.Text);
+                var options = new ExternalDefinitionCreationOptions(parameterName, ParameterType.Text);
                 definition = group.Definitions.Create(options) as ExternalDefinition;
             }
 
@@ -80,8 +76,8 @@ else
                     ? (ElementBinding)app.Create.NewInstanceBinding(catSet)
                     : app.Create.NewTypeBinding(catSet);
 
-                bool inserted = Document.ParameterBindings.Insert(definition, binding, GroupTypeId.Data);
-                if (!inserted) inserted = Document.ParameterBindings.ReInsert(definition, binding, GroupTypeId.Data);
+                bool inserted = Document.ParameterBindings.Insert(definition, binding, BuiltInParameterGroup.PG_DATA);
+                if (!inserted) inserted = Document.ParameterBindings.ReInsert(definition, binding, BuiltInParameterGroup.PG_DATA);
 
                 t.Commit();
                 sb.AppendLine($"{(inserted ? "Bound" : "FAILED to bind")} parameter '{parameterName}' ({(isInstanceParameter ? "Instance" : "Type")}) to categories: {string.Join(", ", addedCategories)}.");
