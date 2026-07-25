@@ -65,7 +65,11 @@ using (var t = new Transaction(Document, "AJ Tools - Split Elements"))
                     .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
                 var newConn = newFresh.ConnectorManager.Connectors.Cast<Connector>()
                     .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
-                nearConn.ConnectTo(newConn);
+                // Real Union fitting, NOT a bare ConnectTo - a fitting-less direct joint between two
+                // colinear same-size pieces can be silently re-merged by Revit later, losing the split
+                // (live-proven on ducts 2026-07-26; same call works for pipes).
+                var union = Document.Create.NewUnionFitting(nearConn, newConn);
+                if (union == null) throw new InvalidOperationException("NewUnionFitting returned null - no union family available for this type.");
 
                 newElementIds.Add(newId);
                 done++;

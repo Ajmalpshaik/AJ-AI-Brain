@@ -115,10 +115,13 @@ using (var t = new Transaction(Document, "AJ Tools - Split Duct Near Equipment")
             .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
         var newConn = newFresh.ConnectorManager.Connectors.Cast<Connector>()
             .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
-        nearConn.ConnectTo(newConn);
+        // Real Union fitting, NOT a bare ConnectTo - a fitting-less direct duct-duct joint can be
+        // silently re-merged by Revit later, losing the split entirely (live-proven 2026-07-26).
+        var union = Document.Create.NewUnionFitting(nearConn, newConn);
+        if (union == null) throw new InvalidOperationException("NewUnionFitting returned null - no union family available for this duct type.");
         t.Commit();
         sb.AppendLine($"Split: equipment-side piece Id={nearFresh.Id} ({gapMm}mm long) / rest-of-run piece Id={newFresh.Id}.");
-        sb.AppendLine($"Joint reconnected - IsConnected: near-side={nearConn.IsConnected}, new-side={newConn.IsConnected}.");
+        sb.AppendLine($"Joint held by union {union.Id} - IsConnected: near-side={nearConn.IsConnected}, new-side={newConn.IsConnected}.");
     }
     catch (Exception ex)
     {
