@@ -133,6 +133,15 @@ complete. New items land here as they surface.
   found and fixed: it wrote UTF-8 WITH a BOM (StreamWriter + `Encoding.UTF8` default), which the proven
   Node client never sends; now no-BOM, byte-for-byte matching. Added a ping-test line to the live
   checklist since the fallback caller itself has never been exercised live.
+- 2026-07-26 — Union-joint consistency audit (user-requested after the live 4-FCU build proved the
+  correct workflow): the day's discovery — bare `ConnectTo` joints after `BreakCurve` can be silently
+  re-merged by Revit, losing the split; real Union fittings (`NewUnionFitting`) are what preserve it —
+  clashed with 3 scripts and 1 knowledge line, all fixed: `slice-trunk-for-sizing.cs`,
+  `split-duct-near-equipment.cs`, `action-split-elements.cs` (all now NewUnionFitting + header notes,
+  README rows updated, union fix live-proven only via the inline build so scripts marked "union fix not
+  yet live-run"), hvac-ducts.md § slicing reconnect line, plus the new gotcha added to AGENT-SPEC.md.
+  Cap/equipment/terminal `ConnectTo` uses checked and left alone — correct there (fitting-to-duct, no
+  merge risk). Skills checked: no clashes.
 - 2026-07-26 — New recipe `connect-equipment-to-air-terminals.cs` (the user's connection method
   end-to-end, live-proven same day) + new hvac-ducts.md section (connection method, connector-overload
   size/system inheritance, end-cap-by-script technique) + first live-model log.md entries. New standing

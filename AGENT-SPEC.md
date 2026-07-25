@@ -320,6 +320,10 @@ way" summary.
 - `MechanicalUtils.BreakCurve` can reassign which ElementId keeps which physical segment after a split —
   never trust the original Id to be the near/equipment-side piece; re-locate each piece geometrically
   after every cut (confirmed live 2026-07-23; bit `split-duct-near-equipment.cs` for real).
+- After any `BreakCurve` split, join the pieces with a real Union fitting (`doc.Create.NewUnionFitting`),
+  never a bare `ConnectTo` — a fitting-less direct joint between colinear same-size pieces can be
+  silently re-merged by Revit, losing the split entirely (confirmed live 2026-07-26 during a 4-trunk
+  sizing-prep build; the union is what physically preserves the split until sizing).
 - Always read a connector's own real outward direction (`Connector.CoordinateSystem.BasisZ`) before
   drawing toward or from it — never assume an axis (`XYZ.BasisX` etc.), in a test fixture or anywhere
   else; an assumed axis produced a hard-to-diagnose false alarm during live verification.
