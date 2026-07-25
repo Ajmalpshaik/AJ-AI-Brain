@@ -158,9 +158,12 @@ foreach (var groupDist in groups)
                 .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
             var newConn = newFresh.ConnectorManager.Connectors.Cast<Connector>()
                 .Where(c => c.ConnectorType == ConnectorType.End).OrderBy(c => c.Origin.DistanceTo(breakPt)).First();
-            origConn.ConnectTo(newConn);
+            // Real Union fitting, NOT a bare ConnectTo - a fitting-less direct duct-duct joint can be
+            // silently re-merged by Revit later, losing the split entirely (live-proven 2026-07-26).
+            var union = Document.Create.NewUnionFitting(origConn, newConn);
+            if (union == null) throw new InvalidOperationException("NewUnionFitting returned null - no union family available for this duct type.");
             t.Commit();
-            sb.AppendLine($"Cut at {cutDist*304.8:F0}mm along trunk: split piece {piece.Id} -> new piece {newId}, joint reconnected (IsConnected={origConn.IsConnected && newConn.IsConnected}).");
+            sb.AppendLine($"Cut at {cutDist*304.8:F0}mm along trunk: split piece {piece.Id} -> new piece {newId}, union {union.Id} joins them (IsConnected={origConn.IsConnected && newConn.IsConnected}).");
             cutCount++;
         }
         catch (Exception ex)

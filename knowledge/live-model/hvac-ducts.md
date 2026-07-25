@@ -245,8 +245,9 @@ on the still-whole (unsliced) trunk — never break at the takeoff's own center 
 the offset point is still a valid point on the original curve (as long as it's within bounds), the
 takeoff — whose host reference was established back when `NewTakeoffFitting` first ran, well before any of
 this slicing — ends up correctly inside whichever of the two new pieces naturally contains its true
-location, with no need to move anything. Reconnect the new joint the same way as any other split (find
-each piece's open connector nearest the break point, `ConnectTo` between them).
+location, with no need to move anything. Join the new joint with a real Union fitting — find each piece's
+open connector nearest the break point, then `doc.Create.NewUnionFitting(c1, c2)` (NOT a bare `ConnectTo`;
+see the union rule in "Why the trunk gets split" below — a fitting-less joint can be silently re-merged).
 
 **Checkerboard layouts put two takeoffs at the exact same longitudinal position — group by position before
 cutting, don't cut per-takeoff.** Live-verified (2026-07-17) on a room with 2 terminals per row (one on each
@@ -317,4 +318,58 @@ rotate so the cap's connector `BasisZ` faces OPPOSITE the duct connector's (`Ang
 axis; fall back to any perpendicular axis when antiparallel), set its `Duct Width`/`Duct Height` params
 to the duct size, `MoveElement` so the connector origins coincide, then `openEnd.ConnectTo(capConn)`.
 Clears the "open connector" warning on the duct. Live-proven 2026-07-26 (id 921372 in the session model).
+
+## Why the trunk gets split: the user's sizing rule (taught by worked example 2026-07-26)
+The slicing section above covers HOW to cut safely; this is WHY and what size each piece gets. The user
+demonstrated by manually splitting/sizing the 6-terminal FCU system, then had the pattern verified
+(6/6 terminals still BFS-traced to the FCU afterward — his splits sat ~400-600mm downstream of each tap,
+clear of the fitting body, matching the slicing section's offset rule; no split after the last tap group).
+- **Why:** airflow accumulates. The trunk at the equipment carries the SUM of all downstream terminal
+  flows and drops after every tap (his example: 6×235 = 1410 L/s at the FCU → 940 → 470 after each
+  column). One unsplit duct holds ONE size, so split at every tap group, then size per segment.
+- **Sizing rule (verified exact on all his sizes):** square duct, max velocity 5 m/s, side rounded UP to
+  the next 25mm — `side_mm = ceil(sqrt((Q_m3s) / 5.0) * 1000 / 25) * 25`. His picks: 1410 L/s → 550×550,
+  940 → 450×450, 470 → 325×325, branch 235 → 225×225 (velocities 4.45-4.66 m/s).
+- **Read flow, don't compute it:** each segment's `RBS_DUCT_FLOW_PARAM` already holds the accumulated
+  flow (Revit sums connected terminals) — size from that, and join different-size segments with
+  transitions. Branches follow the same rule per terminal flow (transition at the terminal connector if
+  its connection size differs).
+- **The preparation stage comes first (his second demo, same day):** split BEFORE sizing. Right after
+  splitting, all pieces still hold the original size and are joined by **Union fittings** (what the UI
+  Split tool leaves), but each piece already reports its OWN accumulated flow — that per-segment flow
+  readout is the entire purpose of splitting first. When the sizes are then applied, Revit swaps those
+  unions into transitions automatically. So the check for "is the model ready for sizing": trunk split
+  at every tap group (none after the last), unions at the joints, all terminals still tracing to the
+  equipment, distinct flow per segment.
+- **SIZING IS THE USER'S OWN STEP — stop after split+verify and hand the model over** (his decision,
+  2026-07-26). Don't script it, and don't drive the UI dialog for it either unless he explicitly asks.
+  Deliver the model ready-for-sizing (built, split at every tap group with unions in place, every
+  terminal tracing to its equipment, 0 open ends) and say it's ready; he runs Duct/Pipe Sizing himself.
+  The rest of this bullet is background for the case where he does ask for it.
+  **It must go through the UI dialog — it cannot be scripted** (tested both paths live 2026-07-26). There is no API and **no postable command ID**:
+  the journal records the ribbon button as `Jrn.PushButton "ToolBar , ... Dialog_BuildingSystems_
+  RbsDuctSizingBar" , "Sizing..., Control_BuildingSystems_RbsBtnSizing"` — a toolbar push-button, not a
+  `Jrn.Command`, so `LookupCommandId`/`PostCommand` have nothing to post (Autodesk's own forum answer says
+  the same: no API for it). Scripted sizing (setting `RBS_CURVE_WIDTH_PARAM`/`RBS_CURVE_HEIGHT_PARAM` per
+  duct from `RBS_DUCT_FLOW_PARAM`) computes the RIGHT numbers — identical to the dialog's — but wrecks the
+  fittings: Revit re-fittings on regenerate, swapping each trunk Union into two back-to-back Transitions
+  with their facing connectors left OPEN, silently fragmenting the system (tested twice: BFS fell to 2/6,
+  then a second attempt broke a system down to 20 of 37 elements even with an automatic joint-repair
+  sweep; both were reverted with native Undo). The dialog does the same job with zero warnings and zero
+  open ends.
+  **The fast workflow (proven, and it is fast — the slow part was doing it per system):** script does
+  everything heavy — build, split, verify — then select EVERY system's elements at once with
+  `UIDocument.Selection.SetElementIds` and run the dialog ONCE for the whole model: Duct/Pipe Sizing →
+  Velocity → value → OK. One click sized 111 elements across 3 systems in ~5s, all identical to the
+  first system the dialog had sized alone (550/450/325 trunk, 225 branches, 0 warnings, 0 open ends,
+  6/6 terminals each). The dialog also remembers the last velocity, so repeat runs are just OK.
+- **Script-side splits MUST use `NewUnionFitting`, NOT plain `ConnectTo` — a direct duct-to-duct joint
+  does not reliably survive.** Live-proven the hard way (2026-07-26, 4-FCU build): after
+  `MechanicalUtils.BreakCurve`, rejoining the two open end connectors with `ConnectTo` creates a
+  fitting-less direct joint, and Revit **silently re-merged one such pair back into a single duct**
+  during later edits (the split vanished; the merged-away piece's Id returned null). The union fitting
+  is what physically preserves the split. Correct sequence per cut: `BreakCurve` → find both open end
+  connectors at the cut point → `c1.DisconnectFrom(c2)` if touching → `doc.Create.NewUnionFitting(c1,
+  c2)`. (The older ConnectTo advice in the splitting sections above predates this discovery — it held in
+  the one-off split case, but for sizing-prep splits that must persist, always place the union.)
 

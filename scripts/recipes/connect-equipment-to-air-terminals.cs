@@ -21,6 +21,12 @@
 //   5. Extend the main ~500mm PAST the last branch centerline (a tap landing on the cut end of the
 //      main cannot seat properly - Ajmal caught this live with a screenshot), then close the open
 //      end with an end cap (duct fitting family with PartType=Cap).
+//   6. NEXT STAGE (separate script): before duct sizing, split the trunk after each tap group with
+//      slice-trunk-for-sizing.cs - joints must be real Union fittings (NewUnionFitting), never bare
+//      ConnectTo (a fitting-less joint can be silently re-merged by Revit, losing the split).
+//   7. SIZING IS THE USER'S OWN STEP - this script's job ends at built + split + verified. Never set
+//      duct sizes by parameter to "size" a system (right numbers, wrecked fittings - see hvac-ducts.md)
+//      and don't drive the sizing dialog either unless he asks. Report the model as ready for sizing.
 //
 // GOTCHA: terminals sitting exactly ON the main's centerline axis are skipped (a lateral branch has
 // zero length there - they'd need an inline tee/straight drop instead; handle those by hand).
