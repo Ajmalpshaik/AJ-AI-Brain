@@ -65,6 +65,11 @@ Two habits, always on, regardless of which skill (if any) is handling the actual
   the size/splitting rules. Create-then-report: save it, then tell the user what was saved and why in the
   same reply — don't ask permission first, but always say what happened. Deleting or replacing something
   that already exists still needs the user's explicit OK.
+- **The Brain is the only portable memory** (the user's rule, 2026-07-26). An AI assistant's own local
+  memory (machine- or account-specific) is a cache, not the record — anything worth remembering (methods
+  the user teaches, gotchas, standards, working preferences) must ALSO be written into Brain files
+  (`knowledge/`, `scripts/`, `skills/`), because moving to another system means copying this folder only.
+  If it exists only in local memory, it will be lost on the next machine.
 
 This is what makes the Brain "day by day stronger" without a scheduled job or extra setup — it's a
 standing discipline baked into how every task gets worked, not a separate process running in the
