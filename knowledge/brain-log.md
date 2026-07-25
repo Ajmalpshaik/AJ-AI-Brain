@@ -133,6 +133,12 @@ complete. New items land here as they surface.
   found and fixed: it wrote UTF-8 WITH a BOM (StreamWriter + `Encoding.UTF8` default), which the proven
   Node client never sends; now no-BOM, byte-for-byte matching. Added a ping-test line to the live
   checklist since the fallback caller itself has never been exercised live.
+- 2026-07-26 — New recipe `connect-equipment-to-air-terminals.cs` (the user's connection method
+  end-to-end, live-proven same day) + new hvac-ducts.md section (connection method, connector-overload
+  size/system inheritance, end-cap-by-script technique) + first live-model log.md entries. New standing
+  rule from the user recorded in START-HERE.md: the Brain is the only portable memory — everything the
+  assistant saves to its local machine memory must ALSO be written into Brain files, because moving to
+  another system means copying the Brain folder only.
 - 2026-07-23 — Parallel consistency pass (independent of Parts 1–6 above, same day): found and fixed
   the same ps1 recursion bug, the same set_parameter_value validation gap, the same AGENT-SPEC.md
   staleness, and most of the same stale headers — reconciled to Parts 1–6's versions on merge (the

@@ -287,3 +287,34 @@ that enqueues *every* connector in `AllRefs` (not just the first) when verifying
 FCU/equipment — this is what `verify-duct-connectivity.cs` already does; don't write a shortcut linear
 walk for a one-off check, it will lie at any junction.
 
+## The user's connection method — drawing duct/pipe FROM any connector-bearing element (taught 2026-07-26)
+The user's standing rule for connecting anything to equipment/terminals, live-proven twice on 2026-07-26
+(40 stubs off 8 rotated/mirrored FCUs, then a full 6-terminal branched system). One-click version:
+[`../../scripts/recipes/connect-equipment-to-air-terminals.cs`](../../scripts/recipes/connect-equipment-to-air-terminals.cs).
+**Never draw blind — element → connectors → domain/size → direction → then draw:**
+1. **Check connectors exist** — `MEPModel.ConnectorManager` (null-check both). No connectors, no drawing.
+2. **Check what kind** — `Connector.Domain` (`DomainHvac`=duct, `DomainPiping`=pipe, `DomainElectrical`=
+   nothing drawable), plus `DuctSystemType`/`PipeSystemType`, `Shape`, size, `IsConnected`.
+3. **Check the real direction** — `Connector.CoordinateSystem.BasisZ` + `Origin`. Never assume an axis:
+   in the 8-FCU exercise the 4 mirrored units faced ±X while the others faced ±Y — an assumed axis would
+   have misdrawn 20 of 40 curves.
+4. **Then draw** from `Origin` along `BasisZ` at the connector's size.
+5. **Main duct with branches: extend past the last branch, then cap.** Never end a main exactly at the
+   last tap centerline — the tap has no duct body to seat on (the user caught this live with a
+   screenshot). Extend ~500mm past the last branch, then close the end with a cap (below).
+
+**The CONNECTOR overload of `Duct.Create`/`Pipe.Create` inherits size AND system type and auto-connects**
+— `Duct.Create(doc, ductTypeId, levelId, connector, endXYZ)` / same shape for `Pipe.Create`. There is NO
+`systemTypeId` argument in these overloads (passing one is a compile error on Revit 2020); system, size
+and connection all come from the connector. This is the exception to the earlier note that `Duct.Create`
+doesn't inherit size — that warning applies to the XYZ+XYZ overload only, which still needs explicit
+`RBS_CURVE_WIDTH_PARAM`/`RBS_CURVE_HEIGHT_PARAM` sizing.
+
+**Placing an end cap on an open duct end by script** (no direct cap API exists): find a duct-fitting
+`FamilySymbol` whose Family `FAMILY_CONTENT_PART_TYPE` is `PartType.Cap` (e.g. `M_Rectangular Endcap`),
+`Activate()` it, place with `NewFamilyInstance(openConn.Origin, sym, StructuralType.NonStructural)`,
+rotate so the cap's connector `BasisZ` faces OPPOSITE the duct connector's (`AngleTo` + cross-product
+axis; fall back to any perpendicular axis when antiparallel), set its `Duct Width`/`Duct Height` params
+to the duct size, `MoveElement` so the connector origins coincide, then `openEnd.ConnectTo(capConn)`.
+Clears the "open connector" warning on the duct. Live-proven 2026-07-26 (id 921372 in the session model).
+
