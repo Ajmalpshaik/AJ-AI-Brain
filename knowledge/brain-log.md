@@ -298,3 +298,9 @@ complete. New items land here as they surface.
   deliberate feeders. **Lesson on presentation, not maths: feeders drawn mixed in with room runs READ as
   errors even when correct** — the user flagged the picture as wrong when it was right. Draw them
   separately (own colour/weight), or leave them out.
+- 2026-07-26 — `action-plan-shortest-route.cs` gained `groupDrawnRoute` + `drawnGroupName` after the user
+  asked for the route "in single stretch". **Revit has NO polyline element** — every curve element is one
+  straight line or one arc — so a continuous route is always stored as joined segments. A GROUP is what
+  makes it behave as a single thing: one click selects the whole run, and it moves/deletes as a unit.
+  Verified live on the 17-terminal run (16 segments -> one detail group named `MEP_Terminal_Run`, matching
+  the office MEP_ prefix).

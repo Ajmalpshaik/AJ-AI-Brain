@@ -60,6 +60,10 @@
 //         sit above a plan's cut plane and are simply invisible there — this cost a real head-scratch on
 //         2026-07-26. Set drawInViewIdInt to the view you actually work in and this fragment picks the
 //         right kind for you.
+// GOTCHA: Revit has NO polyline element — every curve element is one straight line or one arc — so a
+//         route is always stored as joined segments, never a single curve. `groupDrawnRoute` bundles them
+//         into a Group, which is what makes the run behave as ONE thing: click once, select the lot, move
+//         or delete as a unit. Asked for and verified 2026-07-26 ("in single stretch").
 // PERFORMANCE — MEASURED 2026-07-26 on this machine, synthetic points, same code as below:
 //         n        tree(Prim)   chain(NN + 2-opt x4)   total
 //         100          0 ms            2 ms             2 ms
@@ -101,6 +105,8 @@ bool connectGroups = false;        // true = also link the groups to each other 
 int startElementIdInt = 0;         // 0 = start anywhere; else the panel/FCU/source the run begins at
 bool drawRoute = false;            // true = draw the route so you can SEE it
 int drawInViewIdInt = 0;           // 0 = model lines (3D, every view); a PLAN view Id = detail lines there
+bool groupDrawnRoute = false;      // true = bundle the drawn lines into ONE selectable Group
+string drawnGroupName = "";        // optional name for that group, e.g. "MEP_Terminal_Run"
 int twoOptPasses = 4;              // chain mode only — improvement passes; higher = slower, slightly better
 int maxNodesFor2Opt = 2500;        // above this the 2-opt polish is skipped and reported (see PERFORMANCE)
 int maxSegmentsListed = 40;        // detail cap; totals always cover every segment
@@ -404,6 +410,7 @@ else
             try
             {
                 int drawn = 0;
+                var drawnIds = new List<ElementId>();
                 // for a plan view, flatten onto the view's own plane or the lines are not valid 2D geometry
                 double flatZ = 0;
                 if (asDetail && drawView is ViewPlan)
@@ -417,15 +424,29 @@ else
                     if (asDetail && drawView is ViewPlan) { a = new XYZ(a.X, a.Y, flatZ); b = new XYZ(b.X, b.Y, flatZ); }
                     if (a.DistanceTo(b) < 1e-6) continue;
                     var line = Line.CreateBound(a, b);
-                    if (asDetail) Document.Create.NewDetailCurve(drawView, line);
+                    if (asDetail) drawnIds.Add(Document.Create.NewDetailCurve(drawView, line).Id);
                     else
                     {
                         var d = (b - a).Normalize();
                         var helper = Math.Abs(d.Z) < 0.9 ? XYZ.BasisZ : XYZ.BasisX;
                         var sp = SketchPlane.Create(Document, Plane.CreateByNormalAndOrigin(d.CrossProduct(helper).Normalize(), a));
-                        Document.Create.NewModelCurve(line, sp);
+                        drawnIds.Add(Document.Create.NewModelCurve(line, sp).Id);
                     }
                     drawn++;
+                }
+                // one selectable object instead of N loose lines. Revit has NO polyline element — a curve
+                // element is always a single line or arc — so a Group is how a route becomes one thing you
+                // can click, move or delete in one go.
+                if (groupDrawnRoute && drawnIds.Count > 1)
+                {
+                    try
+                    {
+                        var grp = Document.Create.NewGroup(drawnIds);
+                        if (!string.IsNullOrEmpty(drawnGroupName))
+                        { try { grp.GroupType.Name = drawnGroupName; } catch { } } // name collision — keeps the default
+                        sb.AppendLine($"  Grouped the {drawnIds.Count} segment(s) into ONE selectable group '{grp.GroupType.Name}' (Id {grp.Id.IntegerValue}).");
+                    }
+                    catch (Exception exG) { sb.AppendLine($"  Grouping failed ({exG.Message}) — the lines are still there as separate joined segments."); }
                 }
                 t.Commit();
                 sb.AppendLine(asDetail
