@@ -8,7 +8,22 @@ here "just works."
 
 ## 1. Point your AI coding tool at this folder
 
-If your tool (e.g. Claude Code) loads skills/knowledge from a `.claude/` folder:
+**Option A — install as a Claude Code plugin (recommended).** This repo is itself an installable
+plugin (manifest in `.claude-plugin/`): one install gets all 8 skills auto-loaded on every project on
+that machine, plus the bundled MCP relay — no folder copying, no `.mcp.json` editing. In an
+interactive Claude Code session on the target machine:
+
+1. `/plugin marketplace add <path to this folder>` — e.g. `D:\Ajmal\AJ AI Brain`, or the private
+   GitHub repo URL if that machine's git is already signed in to it.
+2. `/plugin install aj-ai-brain@aj-ai-brain`
+
+Two footnotes: the plugin's MCP relay runs `node` from PATH — if the relay shows as failed, run
+`npm install` once inside the installed plugin copy's `mcp-server/` folder, and if Node isn't on PATH
+at all, register the relay manually instead (step 2 below, full path to `node.exe`). And **don't do
+both Option A and step 2's manual `.mcp.json` on the same machine** — same server key twice.
+
+**Option B — manual copy (Claude Code without plugin support, or other tools that load a `.claude/`
+folder):**
 - **Per-project**: copy this Brain's `skills/`, `knowledge/`, `scripts/`, and `tools/` subfolders into
   that project's own `.claude/` folder (merge, don't overwrite anything already there).
 - **Every project on this machine**: copy the same subfolders into your tool's global config folder
@@ -18,8 +33,13 @@ If your tool (e.g. Claude Code) loads skills/knowledge from a `.claude/` folder:
 Either way, also put [`START-HERE.md`](START-HERE.md) somewhere your tool reads automatically at the
 start of a session (e.g. as that project's own `CLAUDE.md`, or referenced from it) — that's what makes
 the "verify, don't trust" / "fresh reads" / self-improving habits apply without being asked for.
+(Working *inside this Brain folder itself*, that's already done: this repo's own
+[`CLAUDE.md`](CLAUDE.md) imports `START-HERE.md` automatically.)
 
 ## 2. Wire up your own MCP bridge
+
+**Skip this whole step if you installed the plugin (Option A above)** — the plugin already registers
+the same relay under the same key.
 
 1. `cd mcp-server && npm install` (this folder ships `index.js` + `package.json`, not `node_modules` —
    installing fresh keeps the Brain small and avoids shipping stale dependency binaries).

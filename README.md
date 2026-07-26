@@ -29,8 +29,9 @@ picture in one document if you'd rather read start-to-finish.
   [`knowledge/INDEX.md`](knowledge/INDEX.md))
 - `scripts/` — reusable C# fragments (filters, actions, creators, context, recipes — see
   [`scripts/README.md`](scripts/README.md))
-- `tools/` — `invoke-bridge.ps1` (fallback bridge caller) and `verify-consistency.ps1` (checks links/frontmatter across this whole folder; `verify-consistency.mjs` is the same three checks in portable Node, for sessions with no PowerShell — e.g. Claude Code on the web)
+- `tools/` — `invoke-bridge.ps1` (fallback bridge caller) and `verify-consistency.ps1` (checks links/frontmatter across this whole folder; `verify-consistency.mjs` is the same three checks in portable Node, for sessions with no PowerShell — e.g. Claude Code on the web; `verify-consistency-hook.ps1` wraps it as the auto-run edit hook wired in `.claude/settings.json`)
 - `mcp-server/` — the Node.js relay that talks to a Revit-side bridge listener (see [`SETUP.md`](SETUP.md) step 2)
+- `.claude-plugin/` — makes this whole repo installable as a Claude Code **plugin** (all 8 skills + the MCP relay in one install — see [`SETUP.md`](SETUP.md) step 1, Option A)
 
 ## What this deliberately does NOT cover
 
