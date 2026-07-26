@@ -55,6 +55,16 @@ rather than just act on existing ones and don't fit the filter+action shape.
   they crossed the threshold. **The fix is to soften the OUTPUT WORDING of genuinely read-only scripts
   ("Unused, removable later", "see X") — never to pass `allowDestructive: true` just to get a read past
   the guard.** Doing that would train away the one protection that catches a real mistake.
+- **`ReferenceIntersector` (ray-casting) ONLY FINDS WHAT ITS 3D VIEW SHOWS — a silent, dangerous
+  failure mode** (found live 2026-07-26). It runs inside a `View3D` and obeys that view's hidden
+  categories, section box, view filters and closed worksets. A hidden category is invisible to a ray, so a
+  probe reports "nothing there" with a wall standing right in front of it — no error, no warning, just a
+  confident wrong answer. Proven with identical code on the same element: view `{3D}` with Walls hidden
+  returned **0** hits; view `3D Plumbing` with Walls visible returned **4**. Always check
+  `view.GetCategoryHidden(catId)` before trusting an empty ray result, prefer a full-visibility
+  coordination view, and never let a ray-driven MOVE run against a partially hidden model — it will snap
+  elements onto whatever happens to be visible behind the real surface. The ray fragments now warn (and
+  `action-move-to-ray-hit.cs` refuses) when the target category is hidden.
 - **Reflection / assembly-loading is hard-blocked** ("Loads assemblies or uses reflection to bypass normal
   API usage") — cannot reach into the add-in's own internal (non-public) classes this way. Only plain
   Revit API calls work. If a task seems to need this, do it with plain Revit API calls instead, or ask the

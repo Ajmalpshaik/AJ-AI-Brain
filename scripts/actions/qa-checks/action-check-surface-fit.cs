@@ -25,6 +25,11 @@
 //
 // GOTCHA: ray-casting needs a real View3D (Revit's rule) — active view if it's 3D, else the first
 //         unlocked non-template one. With none, it reports and stops.
+// **RAYS ONLY SEE WHAT THE 3D VIEW SHOWS.** A category hidden in that view is invisible to the probe, so
+//         every element comes back "NOTHING found" and the check looks like a clean pass when it never
+//         tested anything. Proven live 2026-07-26 (0 hits vs 4 for identical code, purely from Walls being
+//         hidden in one view). A suspiciously perfect result on a real model is the symptom — check the
+//         view's visibility before trusting it.
 // GOTCHA: rays start slightly OFF the element (startOffsetMm along the ray) so they clear its own body;
 //         self-hits are dropped as well. Both are needed — the offset alone is not reliable for a family
 //         whose insertion point sits inside deep geometry.
