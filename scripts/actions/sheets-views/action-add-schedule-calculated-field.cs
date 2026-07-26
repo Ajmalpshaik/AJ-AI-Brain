@@ -3,7 +3,7 @@
 // PURPOSE: Add a COMBINED PARAMETER field (several existing fields merged into one column with
 //          prefix/suffix/separator per part) to every ViewSchedule in `elements`. Also supports
 //          mode="formula" IF the installed Revit version's API supports it (see CONFIDENCE NOTE).
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // LIVE-VERIFIED 2026-07-22 on Revit 2020, mode="combined" only — see notes below.

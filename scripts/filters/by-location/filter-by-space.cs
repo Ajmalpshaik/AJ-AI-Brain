@@ -8,7 +8,7 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// SOURCE: mirrors filter-by-room.cs's Z-mismatch handling (../../knowledge/live-model/core.md §
+// SOURCE: mirrors filter-by-room.cs's Z-mismatch handling (../../../knowledge/live-model/core.md §
 //         Room.IsPointInRoom...) — Space.IsPointInSpace is the Space-class equivalent of
 //         Room.IsPointInRoom.
 // LIVE-VERIFIED 2026-07-22 — FOUND AND FIXED A REAL BUG in the name-matching logic (IsPointInSpace itself

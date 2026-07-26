@@ -1,5 +1,5 @@
 // ============================================================
-// FRAGMENT (action) — action-material-takeoff.cs
+// FRAGMENT (action) — action-report-material-takeoff.cs
 // PURPOSE: Sum material area/volume across every element in `elements`, grouped by material name —
 //          a quantities/takeoff report. Read-only, no transaction needed.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.

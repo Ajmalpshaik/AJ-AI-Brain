@@ -10,12 +10,12 @@ is unavailable because "we don't have that node."** Translate and route:
 | `Element.GetParameterValueByName` / `SetParameterByName` | native `report_parameters` / `set_parameter_value` tools, or `action-report-parameters.cs` / `action-set-parameter-value.cs` |
 | `Element.Name/Id/Category/Level/OwnerView` | any filter fragment — reports always include these (Element-ID rule) |
 | `Element.Room` / `Element.Space` (which room holds it) | `action-count-by-spatial-container.cs`; the reverse (elements in a room) is `filter-by-room.cs` / `filter-by-space.cs` |
-| `All Elements of Category` / `All Elements in Active View` | `filter-by-category.cs` / `filter-by-view.cs` |
+| `All Elements of Category` / `All Elements in Active View` | `filter-by-category.cs` / `filter-by-elements-in-view.cs` |
 | `Select Model Element(s)` | `filter-by-current-selection.cs` (read) / `select_elements` tool (write) |
 | `FamilyInstance.ByPoint` / `.Symbol` / `.Host` | `create-point-based-element.cs` / `filter-by-family-type.cs` / `filter-by-host.cs` |
 | `ElementType.Duplicate` | `action-duplicate-type.cs` |
 | `Element.MoveByVector/Rotate/Copy/Delete` | the `actions/move-copy-rotate/` group + `action-delete-elements.cs` |
-| `Element.SetWorkset` / `SetPhase` / `GetMaterials` / `BoundingBox` | `action-set-workset.cs` / `action-set-element-phase.cs` / `action-material-takeoff.cs` + `filter-by-material.cs` / `action-report-bounding-box.cs` |
+| `Element.SetWorkset` / `SetPhase` / `GetMaterials` / `BoundingBox` | `action-set-workset.cs` / `action-set-element-phase.cs` / `action-report-material-takeoff.cs` + `filter-by-material.cs` / `action-report-bounding-box.cs` |
 | `View.*` (create, duplicate, template, scale, crop, isolate/hide) | `create-view.cs`, `action-duplicate-views.cs`, `action-apply-view-template.cs`, `action-set-view-properties.cs`, `action-set-view-crop.cs`, isolate/hide actions |
 | `Sheet.*` / `Viewport.*` / `TitleBlock.ByName` | `create-sheet.cs`, `action-place-viewport-on-sheet.cs`, `action-report-sheet-title-blocks.cs` / `action-set-sheet-title-block.cs`; viewports are Elements — move them with `action-move-elements.cs` |
 | `Room.*` / `Space.*` (area, volume, number, center) | `action-report-room-space-data.cs`; boundaries are used inside the HVAC recipes |

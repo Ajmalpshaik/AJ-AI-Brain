@@ -8,7 +8,7 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// SOURCE: ../knowledge/live-model/core.md § Room.IsPointInRoom silently returns false...
+// SOURCE: ../../../knowledge/live-model/core.md § Room.IsPointInRoom silently returns false...
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

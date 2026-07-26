@@ -2,7 +2,7 @@
 // EXAMPLE — fully assembled, ready to run via run_csharp
 // Matches the user's own scenario verbatim: "change all the colors of the 500mm height duct, then
 // isolate and select them."
-// Assembled from: filters/filter-by-category-and-numeric-param.cs
+// Assembled from: filters/by-property/filter-by-category-and-numeric-param.cs
 //                + actions/color-graphics/action-set-color-uniform.cs
 //                + actions/visibility/action-isolate-elements.cs
 //                + actions/selection/action-select-elements.cs

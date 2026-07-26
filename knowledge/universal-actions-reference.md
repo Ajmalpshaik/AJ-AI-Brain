@@ -260,13 +260,13 @@ reading this file top-to-bottom. See [`../scripts/README.md`](../scripts/README.
 descriptions and live-verification notes.
 
 **Filters** (`scripts/filters/`, 48 real fragments total — items 35-48 above cover 14 of them):
-- `filter-by-level.cs` — everything on a given Level across the whole model, optional category scope
+- `filter-by-elements-on-level.cs` — everything on a given Level across the whole model, optional category scope
 - `filter-by-levels.cs` — every Level ELEMENT itself (not elements sitting on one), ordered by elevation
 - `filter-by-electrical-system.cs` — elements in a specific Electrical System (circuit), by Circuit Type and/or name
 - `filter-by-system-name.cs` — pipes/ducts/fittings narrowed to one specific System instance's own name
 - `filter-by-tag-status.cs` — category elements that ARE or ARE NOT tagged in a given view
 - `filter-by-views.cs` — every View (not ViewSheet), optional ViewType + name filter
-- `filter-by-view.cs` — category narrowed to instances actually visible in a given view
+- `filter-by-elements-in-view.cs` — category narrowed to instances actually visible in a given view
 - `filter-by-view-templates.cs` — View Templates themselves, optional name filter + usage mode
 - `filter-by-element-intersection.cs` — elements whose real geometry intersects one specific target element
 - `filter-by-solid-intersection.cs` — elements whose real geometry intersects a custom 3D box/clearance solid
