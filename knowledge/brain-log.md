@@ -325,3 +325,25 @@ complete. New items land here as they surface.
   every later session obeys it; if it is a guess, mark it FLAGGED like the other honest unknowns.
   **(2) clean-up must be verified too** — the replacement pass deleted one group but orphaned the other's
   932 arcs; counting curves afterwards (1431 where 499 was expected) is what caught it.
+- 2026-07-26 — **Session sweep at the user's request ("did you forget to save anything") found three real
+  gaps** — things built live and demonstrated, then left in chat:
+  (1) the room COVERAGE LAYOUT generator, run three times live and never saved → now
+  `recipes/generate-room-coverage-layout.cs` (sample the real room shape → hexagonal or square covering
+  lattice → greedy set-cover reduction → VERIFY by counting uncovered points → draw). Verified: Room 4
+  287.7 m², r=3000 → 20 heads hexagonal / 21 square, zero gaps; r=500 → 466, zero gaps.
+  (2) placing UNPLACED rooms into enclosed regions, done live to unblock room grouping → now
+  `creators/create-rooms-in-enclosed-regions.cs`, which reuses existing Area-0 rooms rather than orphaning
+  them.
+  (3) `sampleMode="fan"` on `action-report-ray-hits.cs` — demonstrated, explicitly offered, never built.
+  Now implemented and verified: 36 rays from 24 distinct start points found 5 neighbours where the single
+  centre ray found 4. **The header had claimed "4 vs 7" from the earlier ad-hoc test; that number was not
+  reproducible and has been corrected to the measured 4 vs 5** — same discipline as the circle correction.
+  Lesson: *demonstrating* something in chat is not *saving* it, and an offer made and not taken is a gap.
+- 2026-07-26 — **MAJOR bridge gotcha, found while verifying the fan: `ReferenceIntersector` ONLY FINDS
+  WHAT ITS 3D VIEW SHOWS.** Identical code, same element, same direction: view `{3D}` (Walls category
+  hidden) → **0** hits; view `3D Plumbing` (Walls visible) → **4**. Hidden categories, section boxes, view
+  filters and closed worksets all silently remove geometry from ray results — no error, just a confident
+  wrong "nothing there". This affects every ray fragment, and is genuinely dangerous in
+  `action-move-to-ray-hit.cs`, which would snap elements onto whatever is visible behind the real surface.
+  Recorded in `live-model/core.md`; the report fragments now WARN and the move fragment REFUSES when the
+  target category is hidden in the chosen view.
