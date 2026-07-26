@@ -220,3 +220,15 @@ complete. New items land here as they surface.
   real edit was ~90. Repaired with a targeted per-character map. **Rule: for bulk text edits across this
   repo use `[System.IO.File]::ReadAllText/WriteAllText` with an explicit UTF8Encoding($false), never
   Get-Content/Set-Content.**
+- 2026-07-26 — **Generalised ray-tracing (the user's idea, extending his own 2026-07-14 one).** His point:
+  don't build "ray to ceiling", build "ray to whatever I name today" — slab, wall, beam, or simply the
+  nearest thing — and fire in every direction, not just up. Two fragments:
+  `actions/reporting/action-report-ray-hits.cs` (LOOK — up/down/sideways/plan-diagonals or all 26 cube
+  directions, target category a per-request input, read-only) and
+  `actions/move-copy-rotate/action-move-to-ray-hit.cs` (MOVE — one direction, signed offset, dry-run by
+  default). `recipes/ray-trace-to-ceiling.cs` stays as the ceiling-only shortcut, now cross-referenced.
+  Report fragment ✓ live-verified same day. **Bug caught by that test: `ReferenceIntersector.FindNearest`
+  returns the SOURCE element's own face when the ray starts inside it, so dropping the self-hit left
+  "nothing found" — 1 hit reported where there were 11.** Always Find-all → drop-self → take-nearest;
+  FindNearest is only safe when a category filter makes a self-hit impossible (which is why the old
+  ceiling recipe never showed the bug). Geometry cross-checked: diagonals came back at axis x root-2.
