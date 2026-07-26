@@ -431,10 +431,13 @@ complete. New items land here as they surface.
   whole repo for the old one.** A superseded figure written into a header reads as authoritative next
   session, and the file it sits in was already marked verified.
 - 2026-07-27 — `creators/create-sheet.cs` gained a SEQUENCE mode (prefix + running number + zero padding,
-  sheet names counting 01, 02, 03... independently of the number). A drawing series is the normal way sheets
-  get asked for ("TRG-786-MECH-AC-001026 and next number like that"); hand-typing 26 tuples into the
-  explicit-list mode is where transcription errors come from. Explicit-list mode kept unchanged. Live-verified
-  the same day: 26 HVAC layout sheets created in one transaction, read back correct.
+  sheet names counting 01, 02, 03...). Hand-typing 26 tuples into the explicit-list mode is where
+  transcription errors come from. Explicit-list mode unchanged. Live-verified: 26 sheets in one transaction.
+  **Lesson, caught by the user the same session:** the mode was first committed with that job's real prefix
+  and start number as the defaults — the exact thing this fragment's own INPUTS header and START-HERE rule 3
+  forbid. A real value left in a fragment reads as a project standard next session. Replaced with deliberately
+  fake placeholders (`XXX-000-`, `SHEET `) so an unfilled input shows up in the created sheets instead of
+  looking plausible. Applies to every fragment, not just this one.
 - 2026-07-27 — Post-commit sweep found the recipe CONTRADICTING its own knowledge file: the area-per-device
   check computed `room area / device count`, while `nfpa13-sprinkler-spacing.md` records that NFPA means
   `A_s = S x L` from the grid dimensions. Fixed to report A_s as the governing value, with the average shown
@@ -446,3 +449,12 @@ complete. New items land here as they surface.
   end-to-end from disk via `tools/invoke-bridge.ps1 -CodeFile` for both inset modes. Lesson: **writing a rule
   into a knowledge file does not make the script obey it** — when a method is corrected in prose, grep the
   scripts that implement it, and run the file, not a paraphrase of it.
+- 2026-07-27 — Same trap found in `recipes/generate-room-coverage-layout.cs` immediately after the
+  create-sheet one: `radiusMm = 3000` was a PAST JOB's figure sitting in the INPUTS block as a default, in a
+  file whose own header says "edit every time". A plausible number is worse than a blank one — it runs, it
+  looks deliberate, and nobody re-asks. Now `radiusMm = 0` with a guard that refuses to run and says to state
+  the radius for this job (and, for sprinklers, not to pick one at all — derive the grid from the NFPA
+  spacing limits and let the drawn radius fall out as half the cell diagonal). Both paths verified live from
+  disk: 0 refuses, 3000 runs. A grep of all 264 fragments found no other real project value left in an INPUTS
+  block — only a commented `e.g.` example, which is fine. **General rule: a fragment's default must be
+  either neutral (0, null, "") or a guard, never a working value from the job that created it.**
