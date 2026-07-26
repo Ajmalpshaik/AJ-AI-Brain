@@ -10,6 +10,14 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: ReferenceIntersector needs a real View3D to run in. Uses the active view if it's already 3D;
 //          otherwise falls back to the first unlocked, non-template 3D view in the project.
+// SUPERSEDED FOR EVERYTHING BUT ITS EXACT CASE (2026-07-26): this is the ceiling-only, up-only shortcut.
+// For any other target — snap to the SLAB, a wall, a beam, or whatever is simply nearest — use
+// ../actions/move-copy-rotate/action-move-to-ray-hit.cs, where the target category and direction are
+// per-request inputs. To LOOK before moving, ../actions/reporting/action-report-ray-hits.cs fires rays in
+// up to 26 directions and just reports. Both came from generalising this recipe at the user's request.
+// GOTCHA (carried back from that work): this recipe uses FindNearest, which is only safe HERE because the
+// filter is ceilings-only, so the source element can never be its own first hit. Do not copy the
+// FindNearest pattern into an unfiltered ray — it silently reports "nothing found".
 // NOT YET LIVE-VERIFIED FOR THE POSITIVE CASE: this project's live model currently has 0 Ceiling
 // elements, so the "actually finds and snaps to a real ceiling" path is unverified — confirmed only that
 // the "no ceiling found above" path runs cleanly with no exception on 720 real duct terminals. Re-verify
