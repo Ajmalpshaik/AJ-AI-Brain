@@ -14,16 +14,19 @@ var sheetsToCreate = new List<(string number, string name)> {
 };
 
 // MODE B — sequential run. Set sequenceCount > 0 to use this INSTEAD of the list above.
-// A drawing series ("TRG-786-MECH-AC-001026 and next number like that", named "HVAC LAYOUT 01, 02, ...")
-// is the common real request — typing 26 tuples by hand is where the transcription errors come from.
-int    sequenceCount   = 0;                     // 0 = use MODE A
-string numberPrefix    = "TRG-786-MECH-AC-";    // text before the running number
-int    numberStart     = 1026;                  // FIRST number, as an integer
-int    numberPadding   = 6;                     // 1026 + padding 6 -> "001026"
-string numberSuffix    = "";                    // text after the running number, if any
-string namePrefix      = "HVAC LAYOUT ";        // sheet NAME prefix
-int    namePadding     = 2;                     // 1 -> "01"
-bool   nameCountsFromOne = true;                // name counts 01,02,03... independently of the sheet number
+// For a drawing series where the number runs and the name counts: typing 26 tuples into MODE A by hand is
+// where transcription errors come from.
+// ASK FOR EVERY VALUE BELOW, EVERY TIME — count, prefix, start number, padding and name text are per-job
+// inputs the user states fresh. The placeholders are deliberately fake so an unfilled one is obvious in the
+// created sheets rather than silently plausible. Never carry a past job's series across.
+int    sequenceCount   = 0;             // how many sheets — 0 = use MODE A instead — ASK
+string numberPrefix    = "XXX-000-";    // text before the running number — ASK
+int    numberStart     = 1;             // FIRST number, as an integer — ASK
+int    numberPadding   = 3;             // digits, zero-padded: padding 6 turns 1026 into "001026" — ASK
+string numberSuffix    = "";            // text after the running number, if any
+string namePrefix      = "SHEET ";      // sheet NAME text before the count — ASK
+int    namePadding     = 2;             // 1 -> "01"
+// Names always count 1, 2, 3... from the first sheet, independent of the number series.
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
@@ -35,8 +38,7 @@ if (sequenceCount > 0)
     for (int i = 0; i < sequenceCount; i++)
     {
         string num = numberPrefix + (numberStart + i).ToString("D" + numberPadding) + numberSuffix;
-        int    nameIndex = nameCountsFromOne ? (i + 1) : (numberStart + i);
-        string nm  = namePrefix + nameIndex.ToString("D" + namePadding);
+        string nm  = namePrefix + (i + 1).ToString("D" + namePadding);
         sheetsToCreate.Add((num, nm));
     }
 }
