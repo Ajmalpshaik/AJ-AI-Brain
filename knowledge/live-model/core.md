@@ -73,6 +73,27 @@ rather than just act on existing ones and don't fit the filter+action shape.
   different Revit document without saying so. If a later call's `context-active-view.cs` snapshot shows a
   different model title than earlier in the same conversation, treat every earlier element ID / view ID /
   family name from before the switch as invalid — re-orient before continuing, don't assume continuity.
+- **An empty result (zero elements, `[]`) is a valid answer, not an error.** If a correctly-scoped
+  filter returns nothing, report the honest zero — don't assume the script failed, silently loosen the
+  filter, or retry until something appears. Only re-check the scope if the user's wording suggests the
+  filter itself was wrong.
+- **Never invent or guess an ElementId.** Every id a script acts on must come from a query in this same
+  session, recent enough to still trust (fresh-reads rule) — ids remembered from an earlier conversation
+  or "probably still the same" are how a script silently acts on the wrong element.
+- **Spatial words ("move it left / up / north") are view-relative — resolve the real direction before
+  acting.** Left/right/up/down depend on the active view's orientation (and north can mean true vs
+  project north); never guess a sign or an axis. Read the active view's orientation and a real reference
+  (grids, levels, a named target element) first, restate the resolved direction plainly ("left in this
+  view = −X, toward Grid A"), then move.
+- **One composed script beats many bridge calls.** When many elements need the same change, run one
+  filter+action script in one transaction — not a per-element loop of separate `run_csharp` calls.
+  Fewer round-trips, a single undo step, one thing to verify.
+- **Verify small after changing.** Read back fresh (never skip that), but scope the read-back to what
+  changed — the count, or the changed elements' new values — not a whole-category re-dump (pairs with
+  the unbounded-output rule above).
+- **On a workshared model, the bridge can't sync or relinquish.** After bulk changes (the context
+  snapshot reports worksharing), remind the user to Synchronize with Central themselves — edited
+  elements stay borrowed by them until they do.
 - **An element hosted on a linked model's face (not this document's own levels) reports `LevelId ==
   InvalidElementId` — this is expected, not a bug.** Grouping such elements by level via the normal
   `LevelId`/level-parameter lookup silently fails for them. If level-grouping matters for an element like

@@ -168,3 +168,25 @@ complete. New items land here as they surface.
   (`.claude/settings.json` → `tools/verify-consistency-hook.ps1`) that re-runs the consistency checker
   after every edit in this repo — drift now surfaces same-turn (exit-2/stderr path live-tested with a
   planted unlisted script, then removed).
+- 2026-07-26 — Harvested 6 principles from a third-party Revit-MCP doctrine the user found (an external tool
+  connector — different product, its tool names don't apply here) into `live-model/core.md` Bridge
+  basics: empty-result-is-valid, never-invent-ElementIds, resolve view-relative direction words before
+  moving, one-composed-script-over-many-calls, verify-small, workshared-sync reminder. Its
+  "reuse cached state, don't re-query" rule was rejected — conflicts with our proven fresh-reads rule.
+- 2026-07-26 — Tool-gap backlog build: user compared this setup against another Revit MCP server's tool
+  list; 9 gaps found became 14 new fragments — room elevations, floors, sheet sets, compare-elements,
+  parameter CSV round-trip (Excel via agent-side xlsx), model-health-audit recipe, compact save,
+  sync-with-central, link unload/remove, and DWG/IFC/NWC/image exports. All marked NOT live-verified yet.
+- 2026-07-26 — Round 2 (self-proposed gaps, user approved all): 17 more fragments — load-family,
+  create duct/pipe/cable-tray/conduit/wall, create-ceiling recorded as IMPOSSIBLE on 2020 (API is 2022+),
+  revision clouds, HVAC zones, insulation add/remove, sleeve-at-wall-penetrations recipe (dry-run first),
+  spot elevations, print settings, workset rename (delete = impossible on 2020), element ownership
+  report, shared-coordinates context, TextNote find/replace. All NOT live-verified yet.
+- 2026-07-26 — User's third comparison list was Dynamo's 100 standard nodes — all 100 already covered
+  natively (fragments + LINQ + raw API). No fragments built; saved the translation as
+  `knowledge/dynamo-vocabulary-map.md` + INDEX row so Dynamo-vocabulary requests route instantly.
+- 2026-07-26 — Round 3, Dynamo PACKAGE harvest (Clockwork/Rhythm/MEPover/Bimorph/Genius Loci/archi-lab):
+  7 new fragments — connector report (packages the user's connection-method steps 1-3, cross-linked from
+  hvac-ducts.md), sub-components filter, compound-structure report, room boundaries, CAD-layer curve
+  extraction (dry-run first), duplicate-sheet-with-views, copy-from-link. Spring Nodes/Data-Shapes/Orchid
+  recorded as deliberate non-builds in the map's package table. All NOT live-verified yet.
