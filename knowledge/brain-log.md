@@ -264,3 +264,22 @@ complete. New items land here as they surface.
   and why manhattan is the honest default for cable.** Both headers state plainly that these are
   point-to-point estimates, NOT routed cable schedules. Obstacle-aware A* routing deliberately NOT built —
   named in the header as out of scope until a concrete case exists.
+- 2026-07-26 — **The user spotted the real flaw in nearest-neighbour routing: it does not know walls
+  exist.** "If the nearest element is in the next room it will go there and come back." Measured on the
+  chain actually drawn: it changed zone **6 times where 2 would do** — it genuinely leaves a zone and
+  returns, which nobody would pull cable like. Answer was grouping, not a separate tool:
+  `action-plan-shortest-route.cs` gained `groupBy` (none/room/space/level/parameter), `connectGroups`
+  (second-level feeder tree between groups) and a view-aware `drawRoute`.
+  **The counter-intuitive result, now written into the header so nobody "fixes" it: grouping reports a
+  LONGER total — 134.3 m grouped vs 106.8 m ungrouped, 26% up.** Grouping is a constraint and constraints
+  cost length; the ungrouped figure is only shorter because it cheats by running back and forth through
+  walls. The ungrouped number is unbuildable, the grouped one is real.
+  Also fixed the same day: `drawRoute` drew MODEL lines only, which are invisible in a plan view when the
+  geometry sits above the cut plane (cost a real head-scratch when the user asked to see the chain in
+  "1 - Mech" at a 1200 mm cut, with terminals at 2100-3000). It now takes a target view and draws DETAIL
+  lines for plan/section/elevation, model lines otherwise.
+- 2026-07-26 — **Bridge gotcha: `PostCommand(Undo)` does NOT fire while a run_csharp script holds Revit's
+  UI thread.** Posted an undo to remove 16 stray model lines, and the very next query showed the count
+  unchanged (32 before, 32 after) — caught only because the script's own hardcoded "so they're gone"
+  message contradicted the number printed beside it. For cleanup INSIDE a script, delete explicitly by Id;
+  native Undo is for the user's own "that was a mistake", between calls, not mid-script.
