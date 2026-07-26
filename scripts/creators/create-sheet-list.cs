@@ -11,7 +11,8 @@
 //         skipped and REPORTED, with the available names listed so the next run can be exact.
 // GOTCHA: to include sheets that don't exist yet, Revit uses placeholder sheets — those are UI-created
 //         and not covered here.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// ✓ LIVE-VERIFIED 2026-07-26 on Project1 — created a real sheet list with both columns and the sort field,
+//   then reverted it with commands/native-undo.cs. `ViewSchedule.CreateSheetList` does exist on Revit 2020.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

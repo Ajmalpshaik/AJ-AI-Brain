@@ -4,7 +4,7 @@
 //          — "what title block is on this sheet" / "what title blocks do we have across all sheets".
 //          Read-only, no transaction needed. The "check before you act" companion to
 //          action-set-sheet-title-block.cs.
-// ASSUMES: elements (List<Element>, each really a ViewSheet — e.g. from filters/filter-by-sheets.cs) and
+// ASSUMES: elements (List<Element>, each really a ViewSheet — e.g. from filters/by-view-and-sheet/filter-by-sheets.cs) and
 //          sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

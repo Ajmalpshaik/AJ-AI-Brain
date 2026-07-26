@@ -3,7 +3,7 @@
 // PURPOSE: Set the two schedule-level appearance options this fragment has solid API confidence on —
 //          "Itemize every instance" and the Grand Total row — across every ViewSchedule in `elements`. Any
 //          input left null is not touched.
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // HONESTY NOTE: Revit's Schedule Properties > Appearance tab has more settings than this (grid lines,

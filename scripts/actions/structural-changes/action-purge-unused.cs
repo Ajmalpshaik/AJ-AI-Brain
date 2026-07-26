@@ -9,7 +9,7 @@
 // Patterns, and several other categories in that dialog rely on internal Revit heuristics with no public
 // API equivalent — this fragment only covers what can be checked correctly: View Templates (is it assigned
 // to any view), Filters (is it applied to any view), Materials (does any element in the whole model
-// actually reference it, via the same GetMaterialIds() scan action-material-takeoff.cs uses). Run the
+// actually reference it, via the same GetMaterialIds() scan action-report-material-takeoff.cs uses). Run the
 // native Purge Unused command too for families/patterns — this is a supplement, not a substitute.
 // GOTCHA: Materials mode does a WHOLE-MODEL element scan (every non-type element's GetMaterialIds()) — can
 //         be slow on a large model, same caution as any unbounded scan in this repo.

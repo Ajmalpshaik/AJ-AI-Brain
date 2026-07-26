@@ -20,57 +20,81 @@ Everything below is what an actual script task needs: the routing table, the rul
 ## Current fragments
 
 ### Filters (produce `elements`)
+Grouped into subfolders under `filters/` by what you already know about the elements you want —
+the same job-grouping idea used for `actions/`. Split from one flat 49-file folder on 2026-07-26.
+
+**What the element IS — category, family, type, material, datum** — [`filters/by-identity/`](filters/by-identity/)
 | Fragment | Job |
 |---|---|
-| [`filter-by-category.cs`](filters/filter-by-category.cs) | Every instance of one category, optional level scope |
-| [`filter-by-category-and-family.cs`](filters/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
-| [`filter-by-category-and-numeric-param.cs`](filters/filter-by-category-and-numeric-param.cs) | Category narrowed by a numeric parameter vs. an mm value (the "500mm duct" filter) |
-| [`filter-by-length.cs`](filters/filter-by-length.cs) | Category narrowed by Length (mm) vs. an mm value — bound to `CURVE_ELEM_LENGTH` directly |
-| [`filter-by-size.cs`](filters/filter-by-size.cs) | Category narrowed by size — round (Diameter) and rectangular (Width x Height) handled together, or a plain "Size" text match |
-| [`filter-by-room.cs`](filters/filter-by-room.cs) | Category narrowed to instances physically inside one room, matched by Id, Name, and/or Number |
-| [`filter-by-system-type.cs`](filters/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP System TYPE/classification (e.g. "CDP", "Supply Air") — ✓ verified 2026-07-23 (UnionWith fix, story in header) |
-| [`filter-by-system-name.cs`](filters/filter-by-system-name.cs) | Pipes/ducts/fittings narrowed to one specific System instance's own name (e.g. "DXS 1") — ✓ verified 2026-07-23 (same UnionWith fix) |
-| [`filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) | Whatever's currently selected in Revit |
-| [`filter-by-category-name.cs`](filters/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum |
-| [`filter-by-region.cs`](filters/filter-by-region.cs) | Category narrowed to instances whose bounding box intersects a given mm region |
-| [`filter-by-multiple-categories.cs`](filters/filter-by-multiple-categories.cs) | Several categories collected as one group, e.g. duct system / pipe system / cable tray system |
-| [`filter-by-parameter-text.cs`](filters/filter-by-parameter-text.cs) | Category or whole-model scan narrowed by text in family/type/parameter values |
-| [`filter-by-workset.cs`](filters/filter-by-workset.cs) | Elements on one user workset, optional category scope |
-| [`filter-by-links.cs`](filters/filter-by-links.cs) | Every RVT link and/or CAD link instance, optional name substring — feeds `action-set-workset.cs` ("move the links onto a workset") |
-| [`filter-by-scope-box.cs`](filters/filter-by-scope-box.cs) | Every Scope Box, optional name substring — feeds `action-assign-scope-box-to-view.cs`; delete via `action-delete-elements.cs`, no dedicated fragment needed |
-| [`filter-by-linked-model-elements.cs`](filters/filter-by-linked-model-elements.cs) | Elements of a category INSIDE a specific linked RVT model, not the link instance itself — read-only composition only, see the file's own GOTCHA |
-| [`filter-by-sheets.cs`](filters/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring — live-verified 2026-07-23, zero bugs |
-| [`filter-by-phase.cs`](filters/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
-| [`filter-by-id-list.cs`](filters/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
-| [`filter-by-space.cs`](filters/filter-by-space.cs) | Category narrowed to instances physically inside one MEP Space (not a Room), matched by Id, Name, and/or Number — ✓ verified 2026-07-22 (name-matching fix in header) |
-| [`filter-by-family.cs`](filters/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
-| [`filter-by-family-type.cs`](filters/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
-| [`filter-by-view.cs`](filters/filter-by-view.cs) | Category narrowed to instances actually visible in a given view (any view, not just active) — live-verified 2026-07-23, zero bugs |
-| [`filter-by-element-intersection.cs`](filters/filter-by-element-intersection.cs) | Elements whose real geometry intersects one specific target element (`ElementIntersectsElementFilter`) |
-| [`filter-by-solid-intersection.cs`](filters/filter-by-solid-intersection.cs) | Elements whose real geometry intersects a custom 3D box/clearance solid (`ElementIntersectsSolidFilter`) — live-verified 2026-07-22 |
-| [`filter-by-host.cs`](filters/filter-by-host.cs) | Elements hosted on a specific parent (`FamilyInstance.Host` or insulation/lining `HostElementId`) — ✓ graceful path only 2026-07-22 (no hosted fixture) |
-| [`filter-by-assembly.cs`](filters/filter-by-assembly.cs) | Member elements of a specific Revit Assembly (`AssemblyInstance`) — ✓ graceful path only 2026-07-22 (no Assembly fixture) |
-| [`filter-by-group.cs`](filters/filter-by-group.cs) | Member elements of a specific Model Group instance |
-| [`filter-by-parameter-exists.cs`](filters/filter-by-parameter-exists.cs) | Elements that have a given parameter attached, whether blank or not — QA sweep, distinct from `filter-by-parameter-text.cs`'s value match |
-| [`filter-by-design-option.cs`](filters/filter-by-design-option.cs) | Elements in a named Design Option, or the Main Model when left unset — ✓ Main Model path 2026-07-22; named-option path blocked (no Design Option exists, none creatable via API — see action-set-design-option.cs) |
-| [`filter-by-material.cs`](filters/filter-by-material.cs) | Elements using a specific Revit Material, category-scoped |
-| [`filter-by-level.cs`](filters/filter-by-level.cs) | Everything on a given Level across the WHOLE model, optional category scope |
-| [`filter-by-tag-status.cs`](filters/filter-by-tag-status.cs) | Category elements that ARE or ARE NOT tagged in a given view |
-| [`filter-by-connection-status.cs`](filters/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected |
-| [`filter-by-pin-status.cs`](filters/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
-| [`filter-by-views.cs`](filters/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter |
-| [`filter-by-view-templates.cs`](filters/filter-by-view-templates.cs) | View Templates themselves, optional name filter + usage mode (all/used/unused) — makes templates composable with any action (rename, report, delete, ...) instead of needing a bespoke fragment |
-| [`filter-by-warnings.cs`](filters/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set |
-| [`filter-by-electrical-system.cs`](filters/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — ✓ graceful path only 2026-07-22 (no electrical fixture) |
-| [`filter-by-insulation-status.cs`](filters/filter-by-insulation-status.cs) | Pipe/duct elements that HAVE insulation/lining applied, or don't — ✓ graceful path only 2026-07-22 (no insulation fixture) |
-| [`filter-by-insulation-type.cs`](filters/filter-by-insulation-type.cs) | The insulation/lining elements themselves, by kind/type/material/thickness — ✓ graceful path only 2026-07-22 (no insulation fixture) |
-| [`filter-by-grid.cs`](filters/filter-by-grid.cs) | Every Grid, optional name substring — feeds `creators/create-dimension.cs` |
-| [`filter-by-levels.cs`](filters/filter-by-levels.cs) | Every Level ELEMENT itself (not elements sitting on one — that's `filter-by-level.cs`), ordered by elevation |
-| [`filter-by-schedules.cs`](filters/filter-by-schedules.cs) | Every ViewSchedule, optional name substring — feeds `action-export-schedule-to-csv.cs`/`action-place-schedule-on-sheet.cs` |
-| [`filter-by-selection-filter.cs`](filters/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — live-verified 2026-07-22, both branches |
-| [`filter-by-unenclosed-spatial-elements.cs`](filters/filter-by-unenclosed-spatial-elements.cs) | QA sweep — every Room/Space in the model with zero Area ("Not Enclosed") |
-| [`filter-by-types.cs`](filters/filter-by-types.cs) | The TYPE elements themselves (FamilySymbol or system-family type), matched by family/type name — reaches a type with zero placed instances, unlike the instance-derived type actions |
-| [`filter-by-subcomponents.cs`](filters/filter-by-subcomponents.cs) | NESTED sub-components inside parent FamilyInstances (optionally recursive) — the members a category filter never finds; reverse direction of `filter-by-host.cs` — NOT yet live-verified (2026-07-26 round 3, Clockwork-equivalent) |
+| [`filter-by-category.cs`](filters/by-identity/filter-by-category.cs) | Every instance of one category, optional level scope |
+| [`filter-by-category-and-family.cs`](filters/by-identity/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
+| [`filter-by-category-name.cs`](filters/by-identity/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum |
+| [`filter-by-family.cs`](filters/by-identity/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
+| [`filter-by-family-type.cs`](filters/by-identity/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
+| [`filter-by-grid.cs`](filters/by-identity/filter-by-grid.cs) | Every Grid, optional name substring — feeds `creators/create-dimension.cs` |
+| [`filter-by-id-list.cs`](filters/by-identity/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
+| [`filter-by-levels.cs`](filters/by-identity/filter-by-levels.cs) | Every Level ELEMENT itself (not elements sitting on one — that's `filter-by-elements-on-level.cs`), ordered by elevation |
+| [`filter-by-material.cs`](filters/by-identity/filter-by-material.cs) | Elements using a specific Revit Material, category-scoped |
+| [`filter-by-multiple-categories.cs`](filters/by-identity/filter-by-multiple-categories.cs) | Several categories collected as one group, e.g. duct system / pipe system / cable tray system |
+| [`filter-by-types.cs`](filters/by-identity/filter-by-types.cs) | The TYPE elements themselves (FamilySymbol or system-family type), matched by family/type name — reaches a type with zero placed instances, unlike the instance-derived type actions |
+
+**A parameter's VALUE — size, length, text, presence** — [`filters/by-property/`](filters/by-property/)
+| Fragment | Job |
+|---|---|
+| [`filter-by-category-and-numeric-param.cs`](filters/by-property/filter-by-category-and-numeric-param.cs) | Category narrowed by a numeric parameter vs. an mm value (the "500mm duct" filter) |
+| [`filter-by-length.cs`](filters/by-property/filter-by-length.cs) | Category narrowed by Length (mm) vs. an mm value — bound to `CURVE_ELEM_LENGTH` directly |
+| [`filter-by-parameter-exists.cs`](filters/by-property/filter-by-parameter-exists.cs) | Elements that have a given parameter attached, whether blank or not — QA sweep, distinct from `filter-by-parameter-text.cs`'s value match |
+| [`filter-by-parameter-text.cs`](filters/by-property/filter-by-parameter-text.cs) | Category or whole-model scan narrowed by text in family/type/parameter values |
+| [`filter-by-size.cs`](filters/by-property/filter-by-size.cs) | Category narrowed by size — round (Diameter) and rectangular (Width x Height) handled together, or a plain "Size" text match |
+
+**WHERE it sits — room, space, region, real geometry intersection** — [`filters/by-location/`](filters/by-location/)
+| Fragment | Job |
+|---|---|
+| [`filter-by-element-intersection.cs`](filters/by-location/filter-by-element-intersection.cs) | Elements whose real geometry intersects one specific target element (`ElementIntersectsElementFilter`) |
+| [`filter-by-elements-on-level.cs`](filters/by-location/filter-by-elements-on-level.cs) | Everything on a given Level across the WHOLE model, optional category scope |
+| [`filter-by-region.cs`](filters/by-location/filter-by-region.cs) | Category narrowed to instances whose bounding box intersects a given mm region |
+| [`filter-by-room.cs`](filters/by-location/filter-by-room.cs) | Category narrowed to instances physically inside one room, matched by Id, Name, and/or Number |
+| [`filter-by-solid-intersection.cs`](filters/by-location/filter-by-solid-intersection.cs) | Elements whose real geometry intersects a custom 3D box/clearance solid (`ElementIntersectsSolidFilter`) — live-verified 2026-07-22 |
+| [`filter-by-space.cs`](filters/by-location/filter-by-space.cs) | Category narrowed to instances physically inside one MEP Space (not a Room), matched by Id, Name, and/or Number — ✓ verified 2026-07-22 (name-matching fix in header) |
+| [`filter-by-unenclosed-spatial-elements.cs`](filters/by-location/filter-by-unenclosed-spatial-elements.cs) | QA sweep — every Room/Space in the model with zero Area ("Not Enclosed") |
+
+**What it's ATTACHED TO — host, group, link, MEP system, insulation** — [`filters/by-relationship/`](filters/by-relationship/)
+| Fragment | Job |
+|---|---|
+| [`filter-by-assembly.cs`](filters/by-relationship/filter-by-assembly.cs) | Member elements of a specific Revit Assembly (`AssemblyInstance`) — ✓ graceful path only 2026-07-22 (no Assembly fixture) |
+| [`filter-by-connection-status.cs`](filters/by-relationship/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected |
+| [`filter-by-electrical-system.cs`](filters/by-relationship/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — ✓ graceful path only 2026-07-22 (no electrical fixture) |
+| [`filter-by-group.cs`](filters/by-relationship/filter-by-group.cs) | Member elements of a specific Model Group instance |
+| [`filter-by-host.cs`](filters/by-relationship/filter-by-host.cs) | Elements hosted on a specific parent (`FamilyInstance.Host` or insulation/lining `HostElementId`) — ✓ graceful path only 2026-07-22 (no hosted fixture) |
+| [`filter-by-insulation-status.cs`](filters/by-relationship/filter-by-insulation-status.cs) | Pipe/duct elements that HAVE insulation/lining applied, or don't — ✓ graceful path only 2026-07-22 (no insulation fixture) |
+| [`filter-by-insulation-type.cs`](filters/by-relationship/filter-by-insulation-type.cs) | The insulation/lining elements themselves, by kind/type/material/thickness — ✓ graceful path only 2026-07-22 (no insulation fixture) |
+| [`filter-by-linked-model-elements.cs`](filters/by-relationship/filter-by-linked-model-elements.cs) | Elements of a category INSIDE a specific linked RVT model, not the link instance itself — read-only composition only, see the file's own GOTCHA |
+| [`filter-by-links.cs`](filters/by-relationship/filter-by-links.cs) | Every RVT link and/or CAD link instance, optional name substring — feeds `action-set-workset.cs` ("move the links onto a workset") |
+| [`filter-by-subcomponents.cs`](filters/by-relationship/filter-by-subcomponents.cs) | NESTED sub-components inside parent FamilyInstances (optionally recursive) — the members a category filter never finds; reverse direction of `filter-by-host.cs` — NOT yet live-verified (2026-07-26 round 3, Clockwork-equivalent) |
+| [`filter-by-system-name.cs`](filters/by-relationship/filter-by-system-name.cs) | Pipes/ducts/fittings narrowed to one specific System instance's own name (e.g. "DXS 1") — ✓ verified 2026-07-23 (same UnionWith fix) |
+| [`filter-by-system-type.cs`](filters/by-relationship/filter-by-system-type.cs) | Pipes/ducts/fittings narrowed by MEP System TYPE/classification (e.g. "CDP", "Supply Air") — ✓ verified 2026-07-23 (UnionWith fix, story in header) |
+
+**Its role in DOCUMENTATION — views, sheets, schedules, tags** — [`filters/by-view-and-sheet/`](filters/by-view-and-sheet/)
+| Fragment | Job |
+|---|---|
+| [`filter-by-elements-in-view.cs`](filters/by-view-and-sheet/filter-by-elements-in-view.cs) | Category narrowed to instances actually visible in a given view (any view, not just active) — live-verified 2026-07-23, zero bugs |
+| [`filter-by-schedules.cs`](filters/by-view-and-sheet/filter-by-schedules.cs) | Every ViewSchedule, optional name substring — feeds `action-export-schedule-to-csv.cs`/`action-place-schedule-on-sheet.cs` |
+| [`filter-by-scope-box.cs`](filters/by-view-and-sheet/filter-by-scope-box.cs) | Every Scope Box, optional name substring — feeds `action-assign-scope-box-to-view.cs`; delete via `action-delete-elements.cs`, no dedicated fragment needed |
+| [`filter-by-sheets.cs`](filters/by-view-and-sheet/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring — live-verified 2026-07-23, zero bugs |
+| [`filter-by-tag-status.cs`](filters/by-view-and-sheet/filter-by-tag-status.cs) | Category elements that ARE or ARE NOT tagged in a given view |
+| [`filter-by-views.cs`](filters/by-view-and-sheet/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter |
+| [`filter-by-view-templates.cs`](filters/by-view-and-sheet/filter-by-view-templates.cs) | View Templates themselves, optional name filter + usage mode (all/used/unused) — makes templates composable with any action (rename, report, delete, ...) instead of needing a bespoke fragment |
+
+**Project STATE — workset, phase, design option, pin, warnings, selection** — [`filters/by-status/`](filters/by-status/)
+| Fragment | Job |
+|---|---|
+| [`filter-by-current-selection.cs`](filters/by-status/filter-by-current-selection.cs) | Whatever's currently selected in Revit |
+| [`filter-by-design-option.cs`](filters/by-status/filter-by-design-option.cs) | Elements in a named Design Option, or the Main Model when left unset — ✓ Main Model path 2026-07-22; named-option path blocked (no Design Option exists, none creatable via API — see action-set-design-option.cs) |
+| [`filter-by-phase.cs`](filters/by-status/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
+| [`filter-by-pin-status.cs`](filters/by-status/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
+| [`filter-by-selection-filter.cs`](filters/by-status/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — live-verified 2026-07-22, both branches |
+| [`filter-by-warnings.cs`](filters/by-status/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set |
+| [`filter-by-workset.cs`](filters/by-status/filter-by-workset.cs) | Elements on one user workset, optional category scope |
 
 ### Actions (consume `elements`)
 Grouped into subfolders under `actions/` by job — same grouping used whenever these are listed out loud.
@@ -113,7 +137,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-set-view-workset-visibility.cs`](actions/visibility/action-set-view-workset-visibility.cs) | Make one view show ONLY named workset(s) — the "Workset 3D View" pattern, every other user workset turned off in that view; does NOT consume `elements` — BLOCKED (model isn't workshared); graceful path ✓ |
 | [`action-assign-scope-box-to-view.cs`](actions/visibility/action-assign-scope-box-to-view.cs) | Assign (or clear) a named Scope Box as a view's own Scope Box property — ✓ clear-mode 2026-07-22; assign path blocked (no Scope Box can exist — see create-scope-box.cs) |
 | [`action-set-crop-box-settings.cs`](actions/visibility/action-set-crop-box-settings.cs) | Turn Crop Region on/off, its boundary visibility on/off, and/or Annotation Crop on/off across views — independent flags, pairs with `action-set-view-crop.cs` for resizing |
-| [`action-set-view-range.cs`](actions/visibility/action-set-view-range.cs) | Report or set a plan view's View Range — cut plane, top, bottom, view depth, each as level + mm offset; the "why don't my ducts show" fix; report-mode first (plane-order rule + ceiling-plan gotcha in header); does NOT consume `elements` — NOT yet live-verified (2026-07-26 round 4) |
+| [`action-set-view-range.cs`](actions/visibility/action-set-view-range.cs) | Report or set a plan view's View Range — cut plane, top, bottom, view depth, each as level + mm offset; the "why don't my ducts show" fix; report-mode first (plane-order rule + ceiling-plan gotcha in header); does NOT consume `elements` — ✓ report mode verified 2026-07-26 (4 plan views; a real sentinel-level bug was found and fixed that run); set mode unexercised |
 
 **Selection** — [`actions/selection/`](actions/selection/)
 | Fragment | Job |
@@ -153,15 +177,15 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-report-parameter-inventory.cs`](actions/reporting/action-report-parameter-inventory.cs) | Discover what parameters an element actually HAS — name, kind (Built-in/Shared/Project-Family), group, storage type, Instance vs Type, read-only, value — before you know the names to ask for |
 | [`action-report-location.cs`](actions/reporting/action-report-location.cs) | Report each element's position (point, line endpoints, or bounding-box-center fallback); read-only |
 | [`action-report-bounding-box.cs`](actions/reporting/action-report-bounding-box.cs) | Report each element's bounding box + the combined extents of the set; read-only |
-| [`action-material-takeoff.cs`](actions/reporting/action-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
-| [`action-length-by-size.cs`](actions/reporting/action-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
+| [`action-report-material-takeoff.cs`](actions/reporting/action-report-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
+| [`action-report-length-by-size.cs`](actions/reporting/action-report-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
 | [`action-report-room-space-data.cs`](actions/reporting/action-report-room-space-data.cs) | Area/Volume/Level/Occupancy table for Rooms or Spaces; read-only — ✓ verified 2026-07-23 (ROOM_VOLUME fix in header) |
-| [`action-compare-elements.cs`](actions/reporting/action-compare-elements.cs) | Side-by-side parameter diff of 2-8 elements — only differing values by default, instance + [T] type params; read-only — NOT yet live-verified (2026-07-26 gap backlog) |
-| [`action-export-parameters-to-csv.cs`](actions/reporting/action-export-parameters-to-csv.cs) | Write chosen parameters of `elements` to a CSV (ElementId first column) — Revit half of the Excel round-trip, agent converts CSV↔xlsx outside Revit; paired with `action-import-parameters-from-csv.cs` — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-compare-elements.cs`](actions/reporting/action-compare-elements.cs) | Side-by-side parameter diff of 2-8 elements — only differing values by default, instance + [T] type params; read-only — ✓ verified 2026-07-26 (3 walls: surfaced the 3 differing params, suppressed ~50 identical) |
+| [`action-export-parameters-to-csv.cs`](actions/sheets-views/action-export-parameters-to-csv.cs) | Write chosen parameters of `elements` to a CSV (ElementId first column) — Revit half of the Excel round-trip, agent converts CSVâ†”xlsx outside Revit; paired with `action-import-parameters-from-csv.cs` — NOT yet live-verified (2026-07-26 gap backlog) |
 | [`action-report-element-ownership.cs`](actions/reporting/action-report-element-ownership.cs) | Worksharing ownership per element — checkout status, creator, current owner, last changed by (the Worksharing tooltip in bulk); read-only — BLOCKED (not workshared), NOT yet live-verified (2026-07-26 round 2) |
 | [`action-report-connectors.cs`](actions/reporting/action-report-connectors.cs) | Every MEP connector per element — domain, shape, size, origin, facing (BasisZ), REAL connected partners (not just the IsConnected flag) — packages step 1 of the user's connection method (`../knowledge/live-model/hvac-ducts.md`); optional open-only mode — reads are the live-proven core of the connect recipe, fragment itself NOT yet run (2026-07-26 round 3, MEPover-equivalent) |
-| [`action-report-compound-structure.cs`](actions/reporting/action-report-compound-structure.cs) | Layer build-up of wall/floor/roof/ceiling TYPES — function, material, thickness per layer, core marks, total; deduped per type; read-only — NOT yet live-verified (2026-07-26 round 3, Clockwork-equivalent) |
-| [`action-report-room-boundaries.cs`](actions/reporting/action-report-room-boundaries.cs) | Room/Space boundary loops as mm segments + the wall behind each segment (finish or centerline); outer loop vs holes marked; read-only — geometry feed for `create-wall.cs`/`create-line.cs` — NOT yet live-verified (2026-07-26 round 3, Genius-Loci-equivalent) |
+| [`action-report-compound-structure.cs`](actions/reporting/action-report-compound-structure.cs) | Layer build-up of wall/floor/roof/ceiling TYPES — function, material, thickness per layer, core marks, total; deduped per type; read-only — ✓ verified 2026-07-26 (9 walls -> 1 type, core layer marked) |
+| [`action-report-room-boundaries.cs`](actions/reporting/action-report-room-boundaries.cs) | Room/Space boundary loops as mm segments + the wall behind each segment (finish or centerline); outer loop vs holes marked; read-only — geometry feed for `create-wall.cs`/`create-line.cs` — ✓ graceful path verified 2026-07-26 (3 unplaced rooms -> honest "0 loops"); positive path still needs an enclosed room |
 
 **QA Checks** — [`actions/qa-checks/`](actions/qa-checks/)
 | Fragment | Job |
@@ -200,7 +224,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-add-remove-insulation.cs`](actions/structural-changes/action-add-remove-insulation.cs) | Add or remove insulation (ducts+pipes) or lining (ducts only) — the WRITE counterpart to the two insulation filters; one insulation per element, already-insulated skipped+reported — BLOCKED (no insulation fixture), NOT yet live-verified (2026-07-26 round 2) |
 | [`action-extract-cad-curves.cs`](actions/structural-changes/action-extract-cad-curves.cs) | Trace linked/imported CAD into Revit Model/Detail lines, filtered by DWG layer — dry-run first reports curve counts PER LAYER so the layer filter comes from reality; polylines exploded, splines skipped+counted — NOT yet live-verified, needs a CAD fixture (2026-07-26 round 3, Bimorph-equivalent) |
 | [`action-place-accessory-on-run.cs`](actions/structural-changes/action-place-accessory-on-run.cs) | Insert a duct/pipe ACCESSORY (VCD, damper, valve) INTO each run — Revit breaks the run and connects both cut ends; position by fraction or mm from start; domain-mismatched families and too-close-to-end runs skipped+reported; produces `newAccessoryIds` — MODIFIES existing runs, explorer-first applies — NOT yet live-verified (2026-07-26 round 4, break-in overload FLAGGED in header) |
-| [`action-purge-unused-families.cs`](actions/structural-changes/action-purge-unused-families.cs) | Find/delete loadable family TYPES with zero placed instances, and whole families where every type is unused — the file-size half `action-purge-unused.cs` leaves out; nested symbols protected; dry-run by default, `allowDestructive: true` to really delete — NOT yet live-verified (2026-07-26 round 4) |
+| [`action-purge-unused-families.cs`](actions/structural-changes/action-purge-unused-families.cs) | Find/delete loadable family TYPES with zero placed instances, and whole families where every type is unused — the file-size half `action-purge-unused.cs` leaves out; nested symbols protected; dry-run by default, `allowDestructive: true` to really delete — ✓ dry-run verified 2026-07-26 (found 184/184 types and 107 whole families unused); real delete unexercised |
 | [`action-copy-from-link.cs`](actions/structural-changes/action-copy-from-link.cs) | Copy elements FROM a linked model INTO the host at true position (link transform applied) — source Ids are LINKED-doc Ids from `filter-by-linked-model-elements.cs`; copies never update with the link (say so every time) — BLOCKED (0 links), NOT yet live-verified (2026-07-26 round 3) |
 | [`action-duplicate-type.cs`](actions/structural-changes/action-duplicate-type.cs) | Duplicate the distinct TYPE(s) behind a set of instances under a new name (prefix/suffix/fixed) — Type-level counterpart to `action-rename-family.cs` — ✓ verified 2026-07-22 |
 | [`action-update-scope-box.cs`](actions/structural-changes/action-update-scope-box.cs) | Report a named Scope Box's dependent views (does NOT consume `elements`) — resize CONFIRMED IMPOSSIBLE on Revit 2020 (needs Scope Box creation, which has no API — see create-scope-box.cs); the destructive resize step was removed entirely |
@@ -238,7 +262,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-export-nwc.cs`](actions/sheets-views/action-export-nwc.cs) | Export the model (or one 3D view's scope) to Navisworks NWC — detects the exporter add-in first, reports gracefully if absent; does NOT consume `elements` — NOT yet live-verified (2026-07-26 gap backlog) |
 | [`action-export-view-image.cs`](actions/sheets-views/action-export-view-image.cs) | Export each View/Sheet in `elements` as a PNG at a chosen pixel width — the "screenshot this view properly" job — NOT yet live-verified (2026-07-26 gap backlog) |
 | [`action-add-spot-elevations.cs`](actions/sheets-views/action-add-spot-elevations.cs) | Place a Spot Elevation on each element in one view — reference dug from element geometry (the fragile part, FLAGGED in header); no-reference elements skipped+reported — NOT yet live-verified (2026-07-26 round 2) |
-| [`action-set-print-settings.cs`](actions/sheets-views/action-set-print-settings.cs) | Report the current driver's paper sizes + saved Print Settings, or save a named Print Setting (paper/orientation/zoom) — completes the print chain with `action-manage-sheet-sets.cs` + PDF export; does NOT consume `elements` — NOT yet live-verified (2026-07-26 round 2, PrintParameters quirks FLAGGED) |
+| [`action-set-print-settings.cs`](actions/sheets-views/action-set-print-settings.cs) | Report the current driver's paper sizes + saved Print Settings, or save a named Print Setting (paper/orientation/zoom) — completes the print chain with `action-manage-sheet-sets.cs` + PDF export; does NOT consume `elements` — ✓ report mode verified 2026-07-26 (34 paper sizes off a PHYSICAL Kyocera 6008ci); save mode still unexercised |
 | [`action-duplicate-sheet.cs`](actions/sheets-views/action-duplicate-sheet.cs) | Duplicate each sheet — same title block, views duplicated and placed at the SAME viewport positions, schedules re-placed; produces `newSheetIds`; loose sheet annotations/guide grids/revisions NOT copied (header) — NOT yet live-verified (2026-07-26 round 3, Rhythm-equivalent) |
 | [`action-add-aligned-dimensions.cs`](actions/sheets-views/action-add-aligned-dimensions.cs) | One aligned dimension string through 2+ FamilyInstances along X or Y — uses the families' own centre references so the dimension holds when elements move; sorted into drafting order; reference-less families skipped+reported — extends `create-dimension.cs` past Grid/Level — NOT yet live-verified (2026-07-26 round 4, family-authoring dependency FLAGGED) |
 
@@ -284,8 +308,8 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-hvac-zone.cs`](creators/create-hvac-zone.cs) | Create an HVAC Zone on a Level and add existing Spaces to it — the grouping layer above `create-space.cs`; one-zone-per-space + phase-match gotchas in header — NOT yet live-verified (2026-07-26 round 2) |
 | [`create-mep-system-type.cs`](creators/create-mep-system-type.cs) | New duct/pipe SYSTEM TYPE by duplicating an existing one + name/abbreviation/colour — how a project gets separately-filterable systems (CHWS, CHWR, Supply Air - Zone 1); no create-from-nothing API exists, hence the required source; feeds `filter-by-system-type.cs` — NOT yet live-verified (2026-07-26 round 4) |
 | [`create-callout-view.cs`](creators/create-callout-view.cs) | Callout view inside a parent view over an mm MODEL-coordinate rectangle — the last common view type `create-view.cs` excluded; inherits the parent's type by default — NOT yet live-verified (2026-07-26 round 4) |
-| [`create-legend-view.cs`](creators/create-legend-view.cs) | New Legend by DUPLICATING an existing one — the only route the API offers (no `ViewLegend.Create` on any version, and placing NEW legend components has no API either); reports that plainly when the project has zero legends — NOT yet live-verified (2026-07-26 round 4) |
-| [`create-sheet-list.cs`](creators/create-sheet-list.cs) | Sheet List / drawing index schedule (`ViewSchedule.CreateSheetList`) — schedules SHEETS not model elements, so `create-schedule.cs` can't make one; unschedulable field names reported with the available list — NOT yet live-verified (2026-07-26 round 4) |
+| [`create-legend-view.cs`](creators/create-legend-view.cs) | New Legend by DUPLICATING an existing one — the only route the API offers (no `ViewLegend.Create` on any version, and placing NEW legend components has no API either); reports that plainly when the project has zero legends — ✓ graceful path verified 2026-07-26 (zero-legend project); duplicate path needs a project that has one |
+| [`create-sheet-list.cs`](creators/create-sheet-list.cs) | Sheet List / drawing index schedule (`ViewSchedule.CreateSheetList`) — schedules SHEETS not model elements, so `create-schedule.cs` can't make one; unschedulable field names reported with the available list — ✓ verified 2026-07-26 (created with both columns + sort, then reverted via native-undo) |
 | [`create-key-schedule.cs`](creators/create-key-schedule.cs) | KEY schedule for a category (`ViewSchedule.CreateKeySchedule`) — the preset-lookup table; ALSO adds the key parameter to every element of that category, a model-wide change (say so first); key ROWS stay a manual job — NOT yet live-verified (2026-07-26 round 4) |
 
 ### Recipes (bespoke multi-stage builds, not filter+action shaped)
@@ -307,7 +331,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`recipes/create-parametric-box-family-with-duct-connector.cs`](recipes/create-parametric-box-family-with-duct-connector.cs) | Family Editor authoring (not project-doc editing): set category, build a parametric box body extrusion + optional rectangular neck stub + duct connector, all resizable via Length/Width/Height/Neck Width/Neck Height/Neck Depth parameters — code-reviewed 2026-07-23, NOT live-executed (requires activating a Family Editor document, a visible workspace change not made without asking first) | `../knowledge/live-model/families.md` § Building a parametric family from scratch |
 | [`recipes/create-mep-line-standards.cs`](recipes/create-mep-line-standards.cs) | One-click MEP drafting line standard: line patterns (ISO 128 / ASME Y14.2 basis), MEP_-prefixed line styles capped at weight 3, object styles (matchline/callout/scope box/ref planes/grids), 2 filled region types, and a `MEP_Line_Styles_Legend` drafting view — idempotent, safe to re-run; deliberately NO system/service styles (the user's rule) | office standard — full rules in the script header |
 | [`recipes/create-mep-text-standards.cs`](recipes/create-mep-text-standards.cs) | One-click MEP text standard: 120 Arial text note types (6 sizes x 10 colours x box/no-box, `MEP_Anno_Arial_…` naming, Black = no suffix) plus a `MEP_Text_Styles_Legend` drafting view — idempotent, only missing types are created | office standard — full rules (exact RGB per colour) in the script header |
-| [`recipes/model-health-audit.cs`](recipes/model-health-audit.cs) | One read-only whole-model health report — warnings by severity + top offenders, in-place families, embedded CAD imports, unenclosed Rooms/Spaces, views not on sheets, groups, purgeable templates/filters (dry-run counts); each section names its drill-down fragment — NOT yet live-verified (2026-07-26 gap backlog) | tool-gap backlog 2026-07-26 |
+| [`recipes/model-health-audit.cs`](recipes/model-health-audit.cs) | One read-only whole-model health report — warnings by severity + top offenders, in-place families, embedded CAD imports, unenclosed Rooms/Spaces, views not on sheets, groups, unused templates/filters (dry-run counts); each section names its drill-down fragment — ✓ verified 2026-07-26 (found 3 unenclosed rooms, 16 views off sheets, 16 unused templates); its output wording had to be softened so the destructive-op guard stops refusing a read-only script | tool-gap backlog 2026-07-26 |
 | [`recipes/place-sleeves-at-wall-penetrations.cs`](recipes/place-sleeves-at-wall-penetrations.cs) | Find every duct/pipe crossing through straight host-model walls (centerline method) and — after the dry-run count is approved — place a sleeve family at each, rotated to the run, sized service + clearance; curved walls / non-straight runs skipped+counted — NOT yet live-verified, needs a sleeve family fixture (2026-07-26 round 2) | round-2 suggestions 2026-07-26 |
 
 ### Commands (no element set)
@@ -336,9 +360,9 @@ The original 9 live-verified 2026-07-22, zero bugs; newer ones marked individual
 | [`context/context-design-options.cs`](context/context-design-options.cs) | Every Design Option — name, Id, Primary flag — orientation step before `filter-by-design-option.cs`/`action-set-design-option.cs` |
 | [`context/context-levels-and-grids.cs`](context/context-levels-and-grids.cs) | Every Level (name + elevation) and Grid (name) — feeds `create-dimension.cs`, `filter-by-grid.cs`, `filter-by-levels.cs` |
 | [`context/context-linked-models.cs`](context/context-linked-models.cs) | Every RVT link — loaded/unloaded status, pinned, workset — orientation step before `filter-by-links.cs`/`filter-by-linked-model-elements.cs`/`action-reload-links.cs` |
-| [`context/context-shared-coordinates.cs`](context/context-shared-coordinates.cs) | Project Base Point, Survey Point, active Project Location, True North rotation — reported in m + mm — the "is this model sitting/rotated right" orientation step — NOT yet live-verified (2026-07-26 round 2) |
+| [`context/context-shared-coordinates.cs`](context/context-shared-coordinates.cs) | Project Base Point, Survey Point, active Project Location, True North rotation — reported in m + mm — the "is this model sitting/rotated right" orientation step — ✓ verified 2026-07-26 (note in header: a project can report more than one non-shared BasePoint) |
 
-"Current selection" is already covered by [`filters/filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) — not duplicated here.
+"Current selection" is already covered by [`filters/by-status/filter-by-current-selection.cs`](filters/by-status/filter-by-current-selection.cs) — not duplicated here.
 
 ### Examples (fully assembled)
 | Example | Demonstrates |
@@ -356,9 +380,38 @@ what I found/changed" list, a list of elements needing a decision — include ea
 the output. It's the one identifier guaranteed unique per element in a model (see the "Element ID" entry
 in [`../knowledge/glossary.md`](../knowledge/glossary.md)), so it's what lets the user re-select, verify,
 or reference that exact element later (including via
-[`filters/filter-by-id-list.cs`](filters/filter-by-id-list.cs)). The `action-report-*` fragments already
+[`filters/by-identity/filter-by-id-list.cs`](filters/by-identity/filter-by-id-list.cs)). The `action-report-*` fragments already
 do this by default — keep that default on when writing a new one, and don't drop it just to shorten
 output.
+
+## Naming conventions (audited 2026-07-26 — keep new files inside these rules)
+
+| Folder | Filename pattern | Example |
+|---|---|---|
+| `filters/` | `filter-by-<what>.cs` | `filter-by-size.cs` |
+| `actions/**/` | `action-<verb>-<what>.cs` — always a VERB first | `action-set-view-range.cs` |
+| `creators/` | `create-<what>.cs`, or the verb that's actually true | `create-duct.cs`, `load-family.cs` |
+| `commands/` | `command-<what>.cs` | `command-activate-view.cs` |
+| `context/` | `context-<what>.cs` | `context-project-units.cs` |
+| `recipes/` | free — a plain-language description of the job | `place-sleeves-at-wall-penetrations.cs` |
+
+Two rules matter more than the patterns:
+
+- **Singular vs plural must never be the ONLY difference between two names.** Picking the wrong one of
+  such a pair returns a confidently wrong answer instead of an error, which is the worst failure mode
+  this library can have. `filter-by-level.cs`/`filter-by-levels.cs` and `filter-by-view.cs`/
+  `filter-by-views.cs` were exactly that trap; they are now
+  [`filter-by-elements-on-level.cs`](filters/by-location/filter-by-elements-on-level.cs) and
+  [`filter-by-elements-in-view.cs`](filters/by-view-and-sheet/filter-by-elements-in-view.cs) — the name says what the
+  fragment RETURNS. Keep doing that.
+- **Read-only reporting actions use the `report` verb** so they sort together and read as safe at a
+  glance: `action-report-*`. Nouns-first names (`action-material-takeoff.cs`) were renamed for this.
+
+Three deliberate exceptions, kept on purpose — do not "fix" them:
+[`load-family.cs`](creators/load-family.cs) (it loads from disk, it does not create — a `create-` prefix
+would make the name lie), [`native-undo.cs`](commands/native-undo.cs) and
+[`unhide-all-active-view.cs`](commands/unhide-all-active-view.cs) (both older, both more findable as they
+are than with a `command-` prefix bolted on).
 
 ## Modular-by-default rule
 

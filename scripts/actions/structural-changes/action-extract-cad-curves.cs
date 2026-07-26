@@ -4,7 +4,7 @@
 //          layer(s) from the ImportInstances in `elements` and recreate them as Model Lines or Detail
 //          Lines. The "convert this CAD background to Revit linework" job every modeller knows.
 //          (Dynamo-package equivalent: Bimorph's CurvesFromCADLayers.)
-// ASSUMES: elements (List<Element>, ImportInstances — from filters/filter-by-links.cs with CAD included)
+// ASSUMES: elements (List<Element>, ImportInstances — from filters/by-relationship/filter-by-links.cs with CAD included)
 //          and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: run with dryRun=true first — it reports curve counts PER LAYER so the layer name filter can be

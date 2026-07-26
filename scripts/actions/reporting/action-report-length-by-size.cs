@@ -1,5 +1,5 @@
 // ============================================================
-// FRAGMENT (action) — action-length-by-size.cs
+// FRAGMENT (action) — action-report-length-by-size.cs
 // PURPOSE: Report count AND total length per size group for linear MEP elements (ducts, pipes, cable
 //          trays — anything with a "Size" string parameter and a Length parameter). Different from
 //          action-count-and-report.cs's breakdown table, which counts per size but doesn't sum length.
@@ -28,12 +28,12 @@ foreach (var e in elements)
     groups[size] = Tuple.Create(cur.Item1 + 1, cur.Item2 + lenMm);
 }
 
-// Sort key: parse the leading number(s) out of the size string ("450x250" -> 450,250; "250ø" -> 250,250)
+// Sort key: parse the leading number(s) out of the size string ("450x250" -> 450,250; "250Ã¸" -> 250,250)
 // so rows read smallest-to-largest like a Revit schedule, not by qty/length. the user's standing rule
 // (2026-07-18, see reply-style.md) — never sort a size breakdown by qty or length.
 Func<string, Tuple<double, double>> sizeSortKey = s =>
 {
-    var parts = s.Replace("ø", "").Split('x');
+    var parts = s.Replace("Ã¸", "").Split('x');
     double a = 0, b = 0;
     double.TryParse(parts[0], out a);
     if (parts.Length > 1) double.TryParse(parts[1], out b); else b = a;

@@ -4,7 +4,7 @@
 //          filter-by-links.cs) — pulls in the latest saved version of a coordination link from disk,
 //          Revit's own "Reload" in Manage Links, scripted. Dedupes by link Type so one file shared by
 //          several instances only reloads once.
-// ASSUMES: elements (List<Element>, each really a RevitLinkInstance — from filters/filter-by-links.cs) and
+// ASSUMES: elements (List<Element>, each really a RevitLinkInstance — from filters/by-relationship/filter-by-links.cs) and
 //          sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: Reload reads from the file path Revit already has stored for that link (or its last-known Model

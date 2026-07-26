@@ -9,7 +9,7 @@
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
 // ============================================================
-// Whole-model, unbounded scan — per ../../knowledge/live-model/core.md "watch for unbounded output",
+// Whole-model, unbounded scan — per ../../../knowledge/live-model/core.md "watch for unbounded output",
 // this walks every FamilyInstance in the document. Fine for a single family-name lookup; don't chain
 // several of these in one composed script.
 
