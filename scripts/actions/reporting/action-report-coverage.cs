@@ -29,13 +29,18 @@
 // GOTCHA: coverage here is a flat circle on plan. It ignores ceiling height, throw direction, obstructions
 //         and whether the diffuser actually blows that way. It answers "how much floor is this responsible
 //         for", not "will the air reach". Say that when reporting it.
-// GOTCHA: a full-circle Arc is rejected by Revit — each circle is drawn as TWO half arcs. That is why the
-//         segment count is double the element count.
+// A CIRCLE IS ONE ELEMENT — DO NOT DRAW TWO HALF ARCS. `Arc.Create(centre, r, 0, 2*PI, X, Y)` gives a
+//         closed, unbound arc that `NewDetailCurve` accepts directly: one element, one click, one circle.
+//         (`Ellipse.CreateCurve` with equal radii also works.) An earlier version of THIS FILE claimed
+//         full circles were "rejected by Revit" and drew two half arcs instead — that claim was never
+//         tested and is FALSE, corrected 2026-07-26 after the user pointed out the halves were selectable
+//         separately. Lesson kept deliberately: an untested assumption written down as a gotcha is worse
+//         than no gotcha, because everyone after you obeys it.
 // GOTCHA: drawing into a PLAN view uses DETAIL arcs (view-specific); model geometry at ceiling height
 //         would sit above the cut plane and be invisible. Same trap as action-plan-shortest-route.cs.
 // ✓ LIVE-VERIFIED 2026-07-26 on Project1, 17 air terminals in 3 rooms:
 //     spacing radii 1883 / 2492 / 3520 mm (min / avg / max), areas 11.1 / 20.2 / 38.9 m2, total 344.1 m2
-//     drawn as 17 circles (34 arcs), grouped as 'MEP_Terminal_Coverage'
+//     drawn as 17 circles — 17 elements, not 34 — grouped as 'MEP_Terminal_Coverage'
 //     flow method at an invented 2 L/s/m2 gave 117.5 m2 EACH — 262% of the floor, which is exactly why
 //     that figure must come from the user rather than from this file.
 // ============================================================
@@ -180,11 +185,9 @@ else
                         var c = centreOf(e); double r = radius[e.Id.IntegerValue];
                         if (r <= 0) continue;
                         var ctr = new XYZ(c.X, c.Y, flatZ);
-                        // a full-circle Arc is rejected — two half arcs make the circle
-                        foreach (var arc in new Curve[]{
-                            Arc.Create(ctr, r, 0, Math.PI, XYZ.BasisX, XYZ.BasisY),
-                            Arc.Create(ctr, r, Math.PI, 2*Math.PI, XYZ.BasisX, XYZ.BasisY) })
-                            made.Add(Document.Create.NewDetailCurve(dv, arc).Id);
+                        // ONE closed circle, one element — verified 2026-07-26
+                        var circle = Arc.Create(ctr, r, 0, 2 * Math.PI, XYZ.BasisX, XYZ.BasisY);
+                        made.Add(Document.Create.NewDetailCurve(dv, circle).Id);
                     }
                     if (groupDrawn && made.Count > 1)
                     {

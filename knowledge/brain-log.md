@@ -313,6 +313,15 @@ complete. New items land here as they surface.
   `fixed`. The flow path REFUSES to run without the user's design rate rather than defaulting, because
   2 vs 10 L/s/m2 changes the answer fivefold. ✓ verified live: radii 1883/2492/3520 mm min/avg/max,
   circles drawn and grouped as `MEP_Terminal_Coverage`.
-  Two gotchas recorded: **~45% floor coverage is geometrically NORMAL** (circles cannot tile a plane —
-  even perfect packing reaches only ~78%), so it must not be read as "half the room is unserved"; and a
-  **full-circle Arc is rejected by Revit**, so every circle is two half arcs.
+  Gotcha recorded: **~45% floor coverage is geometrically NORMAL** (circles cannot tile a plane — even
+  perfect packing reaches only ~78%), so it must not be read as "half the room is unserved".
+- 2026-07-26 — **CORRECTION, and the lesson matters more than the fact.** The entry above originally also
+  claimed "a full-circle Arc is rejected by Revit, so every circle is two half arcs". **That is FALSE.**
+  `Arc.Create(centre, r, 0, 2*PI, X, Y)` returns a closed unbound arc that `NewDetailCurve` accepts as ONE
+  element (`Ellipse.CreateCurve` with equal radii works too) — probe-tested and rolled back. I had written
+  it from assumption without ever testing it, and it went into a fragment header, this log, and 932 real
+  arcs in the user's model, until he noticed the halves selected separately. Two rules from this:
+  **(1) never write an untested claim as a GOTCHA** — an unverified gotcha is worse than none, because
+  every later session obeys it; if it is a guess, mark it FLAGGED like the other honest unknowns.
+  **(2) clean-up must be verified too** — the replacement pass deleted one group but orphaned the other's
+  932 arcs; counting curves afterwards (1431 where 499 was expected) is what caught it.
