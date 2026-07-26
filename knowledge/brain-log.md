@@ -239,3 +239,15 @@ complete. New items land here as they surface.
   fixed-Z set would have put 11 of them in the wrong slab. Dry run first, matched exactly; read-back
   confirmed each Z equals its ceiling underside. Model state changes between messages — the fresh-read
   rule earned its keep here too: an earlier query in the SAME session had found 0 terminals and 0 ceilings.
+- 2026-07-26 — **Better ray algorithm, after the user asked whether ours was simple and whether volume
+  would break it.** Measured first: ~0.07 ms per category-filtered ray, ~0.11 ms unfiltered, on a
+  3239-instance model. So 1000 elements x 5 footprint rays is under a second — **ray count is NOT the
+  bottleneck; OUTPUT VOLUME is** (1000 elements x 26 directions = 26k lines). New
+  `actions/qa-checks/action-check-surface-fit.cs` therefore reports BY EXCEPTION: always a summary, detail
+  only for failures, capped and never silently truncated. It supersamples the element's footprint
+  (centre + corners, or 3x3) and flags STRADDLING / OVERHANGING / UNEVEN / SLOPED. ✓ Both paths verified
+  live — and the detection path was proven by deliberately parking a terminal on a real ceiling boundary,
+  where the footprint said OVERHANGING and a single centre ray said "ceiling 920058", confidently wrong.
+  **Lesson from a false start in that test: never infer which surface is above a point from BOUNDING
+  BOXES** — two of these ceilings had overlapping boxes but non-overlapping real shapes, which produced a
+  misleading "OK" until the rays were read directly. Probe, don't infer from extents.
