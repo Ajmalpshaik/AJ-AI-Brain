@@ -232,3 +232,10 @@ complete. New items land here as they surface.
   "nothing found" — 1 hit reported where there were 11.** Always Find-all → drop-self → take-nearest;
   FindNearest is only safe when a category filter makes a self-hit impossible (which is why the old
   ceiling recipe never showed the bug). Geometry cross-checked: diagonals came back at axis x root-2.
+- 2026-07-26 — `action-move-to-ray-hit.cs` ✓ live-verified on its first real job: the user added 17 air
+  terminals and 3 ceilings, and asked for the terminals to be moved up to the ceiling. One pass moved all
+  17, 0 misses. **The ceilings were at three different heights (2100 / 2400 / 3000 mm) and each terminal
+  found the ceiling above ITSELF** (6 / 6 / 5) — the case that makes ray-casting worth having, since a
+  fixed-Z set would have put 11 of them in the wrong slab. Dry run first, matched exactly; read-back
+  confirmed each Z equals its ceiling underside. Model state changes between messages — the fresh-read
+  rule earned its keep here too: an earlier query in the SAME session had found 0 terminals and 0 ceilings.
