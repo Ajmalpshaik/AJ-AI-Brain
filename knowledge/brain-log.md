@@ -347,3 +347,86 @@ complete. New items land here as they surface.
   `action-move-to-ray-hit.cs`, which would snap elements onto whatever is visible behind the real surface.
   Recorded in `live-model/core.md`; the report fragments now WARN and the move fragment REFUSES when the
   target category is hidden in the chosen view.
+- 2026-07-27 — First real *use* of `recipes/generate-room-coverage-layout.cs` (Room 4, r=3000, square, drawn
+  into `1 - Mech`): 21 circles, 3,243/3,243 points covered, 0 gaps, grouped
+  `MEP_Room4_Coverage_R3000_Square`. Two improvements folded back in. (1) The recipe reported *how many*
+  centres but never *where* they are, so the output could not be used to place the devices — it now prints
+  `CENTRES (mm, project X,Y)`. (2) Recorded the buildability payoff as a measured number: square spacing is
+  4,243 mm vs hexagonal 5,196 mm, so square costs one extra device but PASSES a 4,600 mm max-spacing cap
+  that hexagonal fails. Lesson: a saved recipe can be correct and still not be *actionable* — the first
+  live use is what exposes that.
+- 2026-07-27 — Drew the hexagonal coverage alongside the square one in Room 4 (both kept, separate groups:
+  21 red square / 20 green hexagonal, both 0 gaps). The read-back nearly produced a false alarm: a
+  view-scoped `FilteredElementCollector(Document, viewId)` run right after the create+group transaction
+  returned 20 curve elements and 1 group, so the square set looked deleted — the identical query moments
+  later returned 74 and 3, with nothing changed in between. Recorded in `live-model/core.md`: never
+  conclude an element is gone from a view-scoped read; confirm document-wide first. The pair also gave the
+  spacing trade-off as measured fact — square 4,243 mm PASSES a 4,600 mm cap, hexagonal 5,196 mm FAILS,
+  for one device less.
+- 2026-07-27 — **The user looked at the two drawn layouts and asked "did you find any mistake?" — there were
+  three, and the recipe was wrong, not just the run.** (1) `cover` mode optimises coverage OF THE FLOOR, and a
+  circle centred beyond the wall still covers floor, so it returned centres OUTSIDE the room: 6 of 21 (square,
+  a whole row at Y=17,733 past the wall at Y=17,663) and 8 of 20 (hexagonal). Both reported "FULL COVERAGE, no
+  gaps" and both were unbuildable — coverage was true and useless. (2) Greedy set-cover never re-checks its
+  picks, so the hexagonal 20 contained a fully redundant circle; the real number was 19. I over-reported.
+  (3) I checked device-to-device spacing against 4,600 mm but never distance-to-wall — half a code check.
+  Fix is PHASING, not more circles: a wall-inset grid on the same room needs 20 devices, 0 outside, 0 gaps,
+  spacing 4,140 x 3,475 mm, wall 2,070 mm — fewer devices than the 21 `cover` found, and passes both caps.
+  Recipe restructured into `inset` (default, buildable) vs `cover` (theoretical), with a prune pass, an
+  inside-room constraint, a BUILDABLE line in every report, and a wall-distance check. Lesson worth keeping:
+  **a verified metric can still be the wrong metric — "no gaps" said nothing about whether a device could
+  physically be mounted, and the drawings showed it before any check did.**
+- 2026-07-27 — Buildable hexagonal added to `recipes/generate-room-coverage-layout.cs` (`inset` + `hexagonal`),
+  drawn as `MEP_Room4_Coverage_R3000_Staggered`: 19 devices, 0 gaps, 19/19 inside. Two findings worth more
+  than the layout. (1) **The shifted-row construction swings the answer 40%** — giving shifted rows nx-1
+  devices (the obvious "it's offset, drop one" instinct) needed 32 devices; giving them nx+1 with the ends
+  pulled inside the wall needed 19. Same room, radius and idea of "staggered". So nx/ny are now found by a
+  verified SEARCH, never a spacing formula. (2) **Hexagonal's efficiency edge is a plane result and four
+  walls mostly destroy it**: square inset 20 with both code caps PASSING, vs staggered 19 that FAILS both by
+  ~20-30 mm, vs compliant staggered 22. One device out of twenty, bought by breaking spacing — so the
+  textbook "hexagonal is ~30% fewer" must never be quoted for a room. Both recorded in the recipe header.
+- 2026-07-27 — Session sweep (user: "did you forget anything to update?"). Five gaps found, all outside the
+  files the work had naturally touched: (1) `START-HERE.md` had NO route row for device coverage layouts —
+  the request type the user had just made twice was unroutable from the entry point; added one pointing at
+  the recipe. (2) `glossary.md` had no "coverage" entry, though the Brain holds two different coverage jobs
+  (report what existing elements serve vs generate where devices go) that a request can't distinguish —
+  added, plus hexagonal/staggered as the same thing. (3) `AGENT-SPEC.md` §5.2 recipe table didn't list the
+  coverage recipe. (4) §6.2 lacked the view-scoped-collector staleness gotcha. (5) §6.7 (new) + §8 now carry
+  the layout/optimisation lessons — verified-but-wrong metric, lattice phasing, prune greedy, plane-optimum
+  doesn't survive walls, try more than one construction. Lesson about the sweep itself: the files a task
+  edits naturally are not the files that route FUTURE requests to it — an entry-point route row and a
+  glossary disambiguation are the two most commonly missed, because the work never has to touch them.
+- 2026-07-27 — **New skill `ajtools-fire-sprinkler-layout` + new knowledge file `nfpa13-sprinkler-spacing.md`**
+  (user: fire fighting follows its own rules, study NFPA first). Researched NFPA 13 spacing from secondary
+  sources (the standard itself is copyrighted and edition-specific, so the file is a cited paraphrase that
+  must be confirmed against the adopted edition — sources disagreed: light hazard reported as 225 / 200 /
+  "130-200" ft²). Recorded: max area per head by hazard class, max head-to-head, max/min distance to wall,
+  min head spacing, small-room rule, deflector position, obstruction rules incl. the three-times rule,
+  sidewall limits, extended coverage. AHJ note: the user's projects answer to **QCDD**, which enforces NFPA
+  plus its own requirements — an NFPA-only check must never be called "compliant".
+  **Two findings that invalidate part of the earlier coverage work.** (1) 15 ft = **4,572 mm, not 4,600** —
+  the cap used all session was 28 mm LENIENT. (2) There are **four** code limits, not two: the missing one
+  is **max floor area per head**, which a covering algorithm never looks at and which sets a hard MINIMUM
+  head count. Room 4's 20-head zero-gap layout passes spacing, min-spacing and wall checks against real NFPA
+  numbers but FAILS the area rule on ordinary hazard — it needs at least 24. So it is a light-hazard layout
+  only. Recipe now takes `minSpacingMm` and `maxAreaPerDeviceM2` and reports all four; verified live.
+  Lesson: **the drawn geometry was never the deliverable — the governing rule set was, and nobody had asked
+  which one applied.** Three sessions of "verified, zero gaps" said nothing about the code that governs it.
+- 2026-07-27 — First layout produced through `ajtools-fire-sprinkler-layout` instead of the generic coverage
+  recipe: Room 4, Ordinary Hazard I/II, 6 x 4 = 24 heads, all seven code checks PASS, drawn as
+  `MEP_Room4_Sprinkler_OH_24Heads`. The method inverted — the grid is derived FROM the limits (smallest
+  nx x ny satisfying max/min spacing, max/min wall distance and max area per head simultaneously) and the
+  drawn radius falls out of the grid (half the cell diagonal, 2,448 mm), instead of a radius being chosen
+  first and the grid falling out of it. Also recorded: **area per head is `A_s = S x L` from the grid
+  dimensions, NOT room area / head count** — the two agree only when the grid tiles the room exactly with
+  half-spacing insets, and S x L is what the code means. Worked example appended to
+  `nfpa13-sprinkler-spacing.md`.
+- 2026-07-27 — Sweep before committing caught the worst kind of drift: **numbers that were correct when
+  written and became wrong later in the same session.** Three claims in the coverage recipe header still
+  judged layouts against the assumed 4,600 mm cap after NFPA had established 4,572 — so the header said
+  "over by 33 mm" where the truth is 61 mm, and "FAILS 4,600" where the real cap is 4,572. Corrected. Also
+  added to `AGENT-SPEC.md`: §1.4 now states the engineering boundary (no hydraulics, no hazard-class calls,
+  no compliance declarations — AHJ/QCDD and a licensed engineer own those), and §6.7 carries the governing
+  rule-set lesson. Lesson: **when a session later learns the real value of a number it had assumed, grep the
+  whole repo for the old one.** A superseded figure written into a header reads as authoritative next
+  session, and the file it sits in was already marked verified.

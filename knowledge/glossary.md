@@ -73,6 +73,24 @@ values with your own project's real ones as you go.
   → Materials → View Filters) and the Revit-side gotchas that came up doing this are in
   [`live-model/mep-color-standard.md`](live-model/mep-color-standard.md).
 
+- **"Coverage" → ambiguous, two different jobs exist in this Brain — ask which before starting.**
+  (a) *Report* coverage of elements that already exist — "how much floor does each diffuser serve"
+  → [`action-report-coverage.cs`](../scripts/actions/reporting/action-report-coverage.cs), which also has
+  to be told WHERE the radius comes from (spacing / flow / a stated figure) because the standard supply
+  diffuser carries no coverage parameter at all. (b) *Generate* a layout that doesn't exist yet — "how
+  many sprinklers at 3 m coverage, and where do they go"
+  → [`generate-room-coverage-layout.cs`](../scripts/recipes/generate-room-coverage-layout.cs). "Draw the
+  coverage" points at (b); "what's the coverage" usually points at (a). Guessing wrong wastes the whole run.
+  **(c) If the devices are fire sprinklers it is neither — it is a code job**, with several simultaneous NFPA
+  limits and no coverage-radius concept at all →
+  [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../skills/ajtools-fire-sprinkler-layout/SKILL.md).
+- **"Fire fighting" / "fire figting" (dictation)** → the sprinkler system, and in this Brain it means the
+  NFPA-governed sprinkler *layout/check* job, not HVAC or generic coverage. It does NOT mean hydraulic
+  calculation, pipe sizing or pump selection — none of which this Brain does.
+- **"Hexagonal" / "staggered" grid (device layout)** → the same thing: alternate rows shifted by half the
+  in-row spacing. Worth knowing it is NOT automatically the cheaper option inside a room, despite the
+  textbook plane result — see the gotchas in `generate-room-coverage-layout.cs` before quoting a saving.
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one

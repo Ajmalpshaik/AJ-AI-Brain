@@ -48,6 +48,11 @@ for generic Revit questions with no live model involved.
 - **Destructive operations (Delete/Purge/file writes) are refused unless explicitly allowed** per call.
 - **Only works from a session that executes directly on the machine with Revit open** — a remote/cloud
   execution sandbox cannot reach a local named pipe, this is architectural, not a config issue.
+- **Not an engineering authority.** It can lay out geometry and check it against code limits it has been
+  given, with the measured numbers shown; it does not perform hydraulic calculation, pipe sizing, pump/tank
+  selection, or density/remote-area design, and it does not decide hazard class or declare a design
+  compliant. The AHJ (for these projects **QCDD**) and a licensed engineer own those calls — see
+  `knowledge/nfpa13-sprinkler-spacing.md` for how that boundary is stated in practice.
 
 ---
 
@@ -287,6 +292,7 @@ Real recipes in this library and the pattern they demonstrate:
 | `slice-trunk-for-sizing.cs` | HIGH RISK pattern — compute the offset break point BEFORE calling `BreakCurve`, never break at a feature's center and relocate the joint afterward (this specific mistake silently deletes a takeoff fitting and orphans its branch) |
 | `verify-duct-connectivity.cs` | Full BFS across every connector in `AllRefs`, not a single-hop check — a naive linear walk gives false "broken" results at any tee/takeoff junction |
 | `create-parametric-box-family-with-duct-connector.cs` | Family Editor authoring — reference-plane alignment, EQ-dimension symmetric resize, `AssociateElementParameterToFamilyParameter`, all inside one `run_csharp` call where an exception anywhere later rolls back everything earlier, even committed transactions |
+| `generate-room-coverage-layout.cs` | Sample → lay out → verify, where the verification must cover BUILDABILITY as well as the obvious metric — an optimiser told only "cover the floor" returns device positions outside the walls and still reports zero gaps (§6.7) |
 
 ### 5.3 Multi-step reasoning
 For a request that splits into a genuine sequence with real dependencies, state the plan before executing
@@ -340,6 +346,12 @@ way" summary.
   color/pattern *validity*, not the visibility getters.
 - Current selection can include elements outside the active view's own collector (e.g. tags belonging to
   a different open view) — a mismatch between selected-count and in-view-count is not automatically a bug.
+- A **view-scoped** `FilteredElementCollector(Document, viewId)` can UNDER-REPORT immediately after a
+  create+group transaction — measured 20 curve elements / 1 group where the byte-identical query moments
+  later returned 74 / 3, with nothing created, deleted or hidden in between. Never conclude that earlier
+  work was deleted from a view-scoped read; confirm document-wide (`Document.GetElement`, or an unscoped
+  collector grouped by `OwnerViewId`) first — those were correct on the first try. Detail:
+  `knowledge/live-model/core.md`.
 
 ### 6.3 Version & type gotchas
 - Check which Revit version is actually open before assuming a unit API — `UnitTypeId` is 2021+ only; use
@@ -390,6 +402,37 @@ exception naming the real unclear parameter. Three steps, no memorized guessing.
   correctness property (e.g. flow-direction-correct siding) that a smarter first-pass placement wouldn't
   have broken in the first place.
 
+### 6.7 Layout & optimisation (device coverage, spacing, anything solved by search)
+- **A verified metric can still be the WRONG metric.** A room-coverage run reported "3,243/3,243 points
+  covered, zero gaps" — measured, true, and useless: 6 of 21 device positions were outside the room, past
+  the wall, because the optimiser was told to cover floor and a circle centred beyond the wall still covers
+  floor. Every optimisation needs its physical constraint stated as an explicit, reported check ("how many
+  of these can actually be installed?"), not left implied by the objective.
+- **Where a lattice is PHASED matters as much as its spacing.** An unconstrained lattice starting at
+  `bb.Min - r` lands relative to the walls by accident; the same room phased inset from the walls needed
+  FEWER devices (20 vs 21) with none outside. Cheaper and buildable at once — the constraint was not a cost.
+- **Greedy set-cover leaves redundant picks — always prune and re-verify.** It selects by immediate gain and
+  never re-checks, so a pick can become unnecessary once later ones land: a "20 devices" answer contained a
+  circle whose removal changed nothing. Over-reporting by one is a real quantity error on a real BOQ.
+- **A textbook optimum for the infinite plane does not survive four walls.** Hexagonal covering (r·√3) beats
+  square (r·√2) on an unbounded plane, but inside a room the edge circles are half-wasted: measured 20
+  square (both code caps passing) vs 19 staggered (both failing marginally) vs 22 compliant staggered. Never
+  quote the plane figure as a room saving.
+- **Try more than one construction of "the same" idea before reporting a number.** Two equally reasonable
+  ways to build staggered rows — shifted rows with one device fewer vs one more, ends pulled inside the wall
+  — gave 32 vs 19 devices on the identical room and radius. Search the arrangement and verify each candidate;
+  a single plausible construction is not an answer.
+- **Ask which RULE SET governs before optimising anything, not after.** Three rounds of "verified, zero
+  gaps" on a room layout said nothing about the code that governed it. Once NFPA 13 was actually read, two
+  things changed: the metric cap in use (15 ft is 4,572 mm, not the 4,600 that had been assumed — a rounded
+  conversion is LENIENT and passes layouts the code fails), and the number of limits (four, not two — the
+  missing one being max floor area per device, which no covering algorithm looks at and which sets a hard
+  MINIMUM device count). The same 20-device zero-gap layout was legal for light hazard and 4 devices short
+  for ordinary hazard. **Derive the grid FROM the limits; do not pick a radius and check afterwards.**
+- Full detail and the live-verified figures: `scripts/recipes/generate-room-coverage-layout.cs` header.
+  Fire sprinklers are their own job with their own rules: `skills/ajtools-fire-sprinkler-layout/SKILL.md`
+  and `knowledge/nfpa13-sprinkler-spacing.md`.
+
 ---
 
 ## 7. Best Practices
@@ -439,6 +482,10 @@ in this Brain's history, not a theoretical best practice.
 - Run tag-vs-tag and tag-vs-duct overlap resolution as two sequential passes — resolving one can
   reintroduce the other; combine into one loop.
 - Skip the explorer-first count-check before a bulk or destructive action because "it's probably fine."
+- Report a geometric or optimiser result without checking it is physically installable — "zero gaps" said
+  nothing about 6 of 21 devices sitting outside the room (§6.7).
+- Trust a greedy optimiser's output as the minimum without a prune-and-re-verify pass.
+- Conclude that elements are missing or were deleted based on a view-scoped collector read (§6.2).
 - Reflect into the add-in's own internal (non-public) classes to bypass a normal-API limitation — this is
   a deliberate, permanent block, not a bug to route around.
 - Claim a `NEEDS_REVIEW` action is production-ready.

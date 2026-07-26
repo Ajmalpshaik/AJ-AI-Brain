@@ -46,6 +46,8 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Placing HVAC air terminals (count + layout) | [`skills/ajtools-hvac-terminal-layout/SKILL.md`](skills/ajtools-hvac-terminal-layout/SKILL.md) |
 | Calculating/updating a room's Space airflow | [`skills/ajtools-hvac-space-airflow/SKILL.md`](skills/ajtools-hvac-space-airflow/SKILL.md) |
 | Placing an FCU, drawing/connecting ductwork | [`skills/ajtools-hvac-duct-routing/SKILL.md`](skills/ajtools-hvac-duct-routing/SKILL.md) |
+| **Fire fighting** — sprinkler head layout or an NFPA spacing check ("how many sprinklers", "check my sprinkler spacing") | [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](skills/ajtools-fire-sprinkler-layout/SKILL.md) — its own code rules, NOT the plain coverage job |
+| Laying out fixed-radius devices so a room has no gap — smoke detectors, CCTV, WiFi, lighting ("how many at 3 m coverage, and where") | [`scripts/recipes/generate-room-coverage-layout.cs`](scripts/recipes/generate-room-coverage-layout.cs) — read its header first; it records which mistakes this has already made |
 | Checking whether ductwork already built is still fully connected | [`skills/ajtools-mep-connectivity-verify/SKILL.md`](skills/ajtools-mep-connectivity-verify/SKILL.md) |
 | Figuring out unknown/ambiguous real MEP connectivity (what connects to what) | [`skills/ajtools-mep-trace/SKILL.md`](skills/ajtools-mep-trace/SKILL.md) |
 | Building a brand-new parametric family (.rfa) in the Family Editor | [`skills/ajtools-family-creation/SKILL.md`](skills/ajtools-family-creation/SKILL.md) |
