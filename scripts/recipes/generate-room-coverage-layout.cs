@@ -339,13 +339,27 @@ else
         // MAX AREA PER DEVICE — the limit a covering algorithm has no reason to look at, and the one that
         // sets a hard MINIMUM device count. Proven 2026-07-27: a 20-head layout with zero gaps was legal on
         // light hazard (155 ft2/head) and short by 4 heads on ordinary hazard (130 ft2 limit).
+        //
+        // TWO methods, and NFPA means the FIRST one:
+        //   A_s = S x L  — the grid dimensions (spacing along the branch x spacing between branches).
+        //                  This is what NFPA 13 defines, and it is reported as the governing value.
+        //   area / count — a convenience average. Agrees with A_s ONLY when the grid tiles the room exactly
+        //                  with half-spacing insets. On an L-shape, an irregular room, or a grid whose cells
+        //                  hang outside the boundary, it UNDERSTATES A_s and can pass a failing layout.
+        // Both are printed, and a divergence is called out rather than hidden behind one number.
         if (maxAreaPerDeviceM2 > 0)
         {
-            double per = toM2(room.Area) / Math.Max(1, chosen.Count);
+            double asGrid = toM2(spX * spY);                                  // NFPA method
+            double avg = toM2(room.Area) / Math.Max(1, chosen.Count);          // convenience average
             int minNeeded = (int)Math.Ceiling(toM2(room.Area) / maxAreaPerDeviceM2);
-            sb.AppendLine(per <= maxAreaPerDeviceM2
-                ? $"  AREA/DEVICE CHECK: {per:F1} m2 within your {maxAreaPerDeviceM2:F1} m2 limit — PASS (rule needs at least {minNeeded:N0}, layout has {chosen.Count:N0})."
-                : $"  AREA/DEVICE CHECK: {per:F1} m2 EXCEEDS your {maxAreaPerDeviceM2:F1} m2 limit — FAIL. The area rule alone needs at least {minNeeded:N0} devices; this layout has {chosen.Count:N0}.");
+            sb.AppendLine(asGrid <= maxAreaPerDeviceM2
+                ? $"  AREA/DEVICE CHECK (A_s = S x L = {asGrid:F2} m2): within your {maxAreaPerDeviceM2:F2} m2 limit — PASS."
+                : $"  AREA/DEVICE CHECK (A_s = S x L = {asGrid:F2} m2): EXCEEDS your {maxAreaPerDeviceM2:F2} m2 limit — FAIL.");
+            sb.AppendLine($"    area/count average {avg:F2} m2 | area rule needs at least {minNeeded:N0} devices, layout has {chosen.Count:N0}"
+                + (chosen.Count >= minNeeded ? " — OK." : " — SHORT."));
+            if (Math.Abs(asGrid - avg) > 0.05)
+                sb.AppendLine($"    NOTE: the two differ by {Math.Abs(asGrid-avg):F2} m2 — the grid does not tile this room exactly"
+                    + " (irregular shape or cells overhanging the boundary). A_s is the one the code means; trust it, not the average.");
         }
 
         // --- 3. draw ---
