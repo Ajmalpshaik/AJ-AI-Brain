@@ -92,7 +92,10 @@
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int roomIdInt = 0;                  // the room to cover (must be PLACED — Area > 0)
-double radiusMm = 3000;             // device coverage radius
+double radiusMm = 0;                // device coverage radius — ASK. 0 refuses to run rather than guess.
+                                    // 3000 was ONE past job's figure; a plausible number left here reads as
+                                    // a standard next session. For sprinklers this is not even an NFPA
+                                    // concept — derive it from the spacing rules, see the fire skill.
 string layoutMode = "inset";        // "inset" = buildable, centres inside the room (ISSUE THIS)
                                     // "cover" = theoretical minimum, may put centres OUTSIDE the room
 string gridType = "square";         // "square" (straight runs, better spacing) | "hexagonal" (staggered rows)
@@ -118,7 +121,14 @@ Func<double,double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUni
 
 var room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
 
-if (room == null) { sb.AppendLine($"roomIdInt {roomIdInt} is not a Room."); }
+if (radiusMm <= 0)
+{
+    sb.AppendLine("radiusMm is not set. State the coverage radius for THIS job — it is a per-request input,");
+    sb.AppendLine("  never a carried-over default. For fire sprinklers do not pick one at all: derive the grid");
+    sb.AppendLine("  from the NFPA spacing limits first (skills/ajtools-fire-sprinkler-layout/SKILL.md), then");
+    sb.AppendLine("  the drawn radius falls out of it as half the cell diagonal.");
+}
+else if (room == null) { sb.AppendLine($"roomIdInt {roomIdInt} is not a Room."); }
 else if (room.Area <= 0)
 {
     sb.AppendLine($"'{room.Name}' is UNPLACED (0 m2) — it encloses nothing, so there is nothing to cover.");
