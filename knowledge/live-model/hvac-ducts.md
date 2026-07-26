@@ -293,6 +293,9 @@ The user's standing rule for connecting anything to equipment/terminals, live-pr
 (40 stubs off 8 rotated/mirrored FCUs, then a full 6-terminal branched system). One-click version:
 [`../../scripts/recipes/connect-equipment-to-air-terminals.cs`](../../scripts/recipes/connect-equipment-to-air-terminals.cs).
 **Never draw blind — element → connectors → domain/size → direction → then draw:**
+Steps 1-3 are packaged as one reusable read:
+[`../../scripts/actions/reporting/action-report-connectors.cs`](../../scripts/actions/reporting/action-report-connectors.cs)
+(2026-07-26) — run it on the element(s) first, then draw from what it reports.
 1. **Check connectors exist** — `MEPModel.ConnectorManager` (null-check both). No connectors, no drawing.
 2. **Check what kind** — `Connector.Domain` (`DomainHvac`=duct, `DomainPiping`=pipe, `DomainElectrical`=
    nothing drawable), plus `DuctSystemType`/`PipeSystemType`, `Shape`, size, `IsConnected`.
