@@ -12,6 +12,14 @@
 //         go-ahead, then rerun with dryRun=false. Same explorer-first rule as every bulk fragment here.
 // GOTCHA: ray-casting needs a real View3D (Revit's rule) — active view if it's 3D, else the first
 //         unlocked non-template 3D view. With none, it reports and stops.
+// **DANGER — RAYS ONLY SEE WHAT THE 3D VIEW SHOWS, AND THIS FRAGMENT MOVES THINGS.** ReferenceIntersector
+//         respects the view's hidden categories, section box, view filters and worksets. If the TARGET
+//         category is hidden in the view this picks, every ray finds nothing and the fragment reports
+//         "found nothing above" — which is merely wrong, not dangerous. The dangerous case is a PARTIALLY
+//         hidden model, where rays skip the real nearest surface and snap elements onto whatever is
+//         visible behind it. Proven live 2026-07-26: identical code found 0 neighbours in a view with
+//         Walls hidden and 4 in one where they were visible. This fragment now WARNS when the target
+//         category is hidden — heed it, and prefer a full-visibility coordination view for snapping.
 // GOTCHA: the ray starts INSIDE the source element so it can hit itself — self-hits are dropped.
 // GOTCHA: the element moves so its INSERTION POINT lands on the hit point. A family whose insertion point
 //         isn't its top face (most air terminals) will look half-buried in the slab — that's what
@@ -73,7 +81,17 @@ else
             Category cat = null;
             foreach (Category c in Document.Settings.Categories) if (c.Name == targetCategoryName) { cat = c; break; }
             if (cat == null) { sb.AppendLine($"Target category '{targetCategoryName}' not found — list them with context/context-model-categories.cs."); ready = false; }
-            else intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+            else
+            {
+                try {
+                    if (rayView.GetCategoryHidden(cat.Id))
+                    {
+                        sb.AppendLine($"*** STOPPING: category '{targetCategoryName}' is HIDDEN in view '{rayView.Name}'. Rays cannot see it, so nothing would be found — and moving elements on a blind ray is worse than not moving them. Pick a 3D view where '{targetCategoryName}' is visible.");
+                        ready = false;
+                    }
+                } catch { }
+                if (ready) intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+            }
         }
         else
         {
