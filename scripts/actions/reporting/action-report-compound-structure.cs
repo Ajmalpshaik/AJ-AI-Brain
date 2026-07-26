@@ -8,7 +8,7 @@
 //          filter-by-types.cs) and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Read-only, model never changes.
 // GOTCHA: curtain walls and model-in-place have no compound structure — reported as such, not an error.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest).
+// ✓ LIVE-VERIFIED 2026-07-26 on Project1 — 9 walls correctly deduped to 1 type, layer/width/core reported.
 // ============================================================
 
 Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);

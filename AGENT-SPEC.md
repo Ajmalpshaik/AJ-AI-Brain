@@ -244,13 +244,13 @@ sequence (e.g. `filter-by-category-and-numeric-param.cs` → `action-set-color-u
 ```
 Is this a plain count / one-parameter breakdown?
   YES → model_summary
-  NO ↓
+  NO â†“
 Does the request name one specific value ("the 300x300 VCDs"), not a full breakdown?
   YES → filter + action-report-parameters.cs (lists items WITH Element ID)
-  NO ↓
+  NO â†“
 Is this "which elements" + "what to do to them"?
   YES → filter/creator + action (§4.1)
-  NO ↓
+  NO â†“
 Is this a bespoke, multi-stage, order-dependent build (drawing/connecting/tracing/authoring)?
   YES → check scripts/recipes/ for an existing one, or design a new TransactionGroup-wrapped sequence (§5)
   NO → smallest correct one-off script; decide immediately after whether to save it as a new fragment
@@ -259,7 +259,7 @@ Is this a bespoke, multi-stage, order-dependent build (drawing/connecting/tracin
 ### 4.4 Worked example
 Request: *"Change the color of the 500mm-height ducts, then isolate and select them."*
 ```
-filters/filter-by-category-and-numeric-param.cs                 (Ducts, Height, = 500mm)  → produces `elements`
+filters/by-property/filter-by-category-and-numeric-param.cs                 (Ducts, Height, = 500mm)  → produces `elements`
     + actions/color-graphics/action-set-color-uniform.cs                                   → colors `elements`
     + actions/visibility/action-isolate-elements.cs                                         → isolates `elements`
     + actions/selection/action-select-elements.cs                                           → selects `elements`
@@ -486,7 +486,7 @@ Full detail and provenance: `knowledge/live-model/core.md`.
 |---|---|
 | "How many X?" | `filter-by-category.cs` + `action-count-and-report.cs` |
 | "How many X, what size?" | same + `wantBreakdownTable = true` |
-| "How many X, size + total length?" | `filter-by-category.cs` + `action-length-by-size.cs` |
+| "How many X, size + total length?" | `filter-by-category.cs` + `action-report-length-by-size.cs` |
 | "Show me/list the [specific value] X" | matching filter + `action-report-parameters.cs` |
 | "Color/isolate/hide/select X" | matching filter + the matching action |
 | Full fragment index | `scripts/README.md` |

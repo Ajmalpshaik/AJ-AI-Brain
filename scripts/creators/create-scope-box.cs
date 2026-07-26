@@ -30,6 +30,6 @@ List<(double minXMm, double minYMm, double minZMm, double maxXMm, double maxYMm,
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-sb.AppendLine($"Cannot create {boxesToCreate.Count} scope box(es) — Revit's public API has no Scope Box creation method on this Revit version (confirmed by reflection, see file header). Create scope box(es) manually via View tab > Scope Box, then use filters/filter-by-scope-box.cs to reference them by name.");
+sb.AppendLine($"Cannot create {boxesToCreate.Count} scope box(es) — Revit's public API has no Scope Box creation method on this Revit version (confirmed by reflection, see file header). Create scope box(es) manually via View tab > Scope Box, then use filters/by-view-and-sheet/filter-by-scope-box.cs to reference them by name.");
 // ---- continue with an action fragment below (e.g. action-assign-scope-box-to-view.cs), or add
 //      return sb.ToString(); to stop here ----

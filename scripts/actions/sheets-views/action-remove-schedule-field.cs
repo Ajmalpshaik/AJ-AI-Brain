@@ -2,7 +2,7 @@
 // FRAGMENT (action) — action-remove-schedule-field.cs
 // PURPOSE: Remove one or more columns/fields (matched by current column heading / field name) from every
 //          ViewSchedule in `elements` — the paired undo for action-add-schedule-field.cs.
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).

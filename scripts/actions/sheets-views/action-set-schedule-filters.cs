@@ -4,7 +4,7 @@
 //          whatever filters already existed first, then adds the new list. Not additive by design (avoids
 //          silently stacking filters run after run); re-run with the SAME list plus one more entry if the
 //          intent is genuinely additive.
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: value is always given as a string here and converted — numeric filter types

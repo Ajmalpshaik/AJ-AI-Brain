@@ -12,7 +12,9 @@
 //         whole thing rolls back. Run mode="report" first and change one plane at a time.
 // GOTCHA: on a CEILING plan the planes are measured looking UP — the same numbers behave differently
 //         than on a floor plan. Report first, always.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// ✓ LIVE-VERIFIED (report mode) 2026-07-26 on Project1 — read 4 plan views incl. ceiling plans. Found and
+//   fixed a real bug that run: Revit's sentinel level Ids (level above/below/unlimited) printed as raw
+//   "Id -2"; now decoded by name. SET mode still unexercised.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -28,9 +30,14 @@ double? depthOffsetMm = null;       int depthLevelIdInt = 0;
 Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
 Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
 
+// Revit encodes three special planes as SENTINEL ElementIds, not real levels — decode them by name or
+// the report prints a meaningless "Id -2" (found live 2026-07-26 on a ceiling plan).
 Func<ElementId, string> levelName = id =>
 {
     if (id == null || id == ElementId.InvalidElementId) return "(unlimited)";
+    if (id == PlanViewRange.Unlimited) return "(unlimited)";
+    if (id == PlanViewRange.LevelAbove) return "(level above)";
+    if (id == PlanViewRange.LevelBelow) return "(level below)";
     return Document.GetElement(id)?.Name ?? $"Id {id.IntegerValue}";
 };
 

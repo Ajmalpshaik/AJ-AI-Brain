@@ -3,7 +3,7 @@
 // PURPOSE: Replace ALL sort/group fields on every ViewSchedule in `elements` with the ones given here, in
 //          order — clears whatever sort/group setup already existed first, then adds the new list (same
 //          "replace, not additive" reasoning as action-set-schedule-filters.cs).
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).

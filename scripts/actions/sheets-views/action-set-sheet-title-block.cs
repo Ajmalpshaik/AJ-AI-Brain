@@ -9,7 +9,7 @@
 //          block (revision-schedule position edits, per-sheet overrides) are lost in that case; only
 //          Sheet-level parameters (Sheet Number/Name, issue date, etc.) are unaffected since those live on
 //          the ViewSheet itself, not the title block instance.
-// ASSUMES: elements (List<Element>, each really a ViewSheet — e.g. from filters/filter-by-sheets.cs) and
+// ASSUMES: elements (List<Element>, each really a ViewSheet — e.g. from filters/by-view-and-sheet/filter-by-sheets.cs) and
 //          sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: run action-report-sheet-title-blocks.cs first to see current state/family before a cross-family

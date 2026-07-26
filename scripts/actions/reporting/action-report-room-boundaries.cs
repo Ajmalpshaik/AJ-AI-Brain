@@ -11,7 +11,8 @@
 //         output matters. Unenclosed rooms report zero loops (valid empty, not an error).
 // GOTCHA: segments come back in Finish boundary location by default here — the wall FACE the room sees,
 //         not the wall centerline; switch the SpatialElementBoundaryLocation input for centerlines.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest).
+// ✓ GRACEFUL PATH LIVE-VERIFIED 2026-07-26 on Project1 — 3 unplaced rooms correctly reported as
+//   "0 boundary loops" rather than erroring. The positive path (a real enclosed room) is still untested.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

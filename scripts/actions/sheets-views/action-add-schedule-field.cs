@@ -3,7 +3,7 @@
 // PURPOSE: Add one or more columns/fields to every ViewSchedule in `elements` — same
 //          GetSchedulableFields()/AddField() call creators/create-schedule.cs uses, split out so it can be
 //          run again later on a schedule that already exists.
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: fieldNames must match GetSchedulableFields()'s real names for that schedule's category exactly

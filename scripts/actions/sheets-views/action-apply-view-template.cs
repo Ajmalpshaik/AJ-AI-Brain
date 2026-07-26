@@ -4,7 +4,7 @@
 //          graphic/visibility settings (V/G overrides, View Filters, Category overrides, Phase, Detail
 //          Level, Scale, Discipline) into one named preset instead of setting each view up by hand.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — operates on VIEWS, not model elements. Pair
-//          with filters/filter-by-views.cs if you want to pick which views to apply this to by
+//          with filters/by-view-and-sheet/filter-by-views.cs if you want to pick which views to apply this to by
 //          type/name rather than listing Element Ids by hand (cast the resulting `elements` back to
 //          `View` and pass their Ids in here).
 // ============================================================

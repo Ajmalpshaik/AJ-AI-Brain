@@ -7,10 +7,12 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: available paper sizes come from the CURRENT print driver — a size that exists on the PDF
 //         printer may not exist on a physical one; report-mode first lists what this driver actually has.
-// FLAGGED 2026-07-26 (static review): PrintParameters on 2020 is quirky — some drivers throw on
-//         PaperSize assignment, and SaveAs rejects names already in use. First failure = check those two
-//         before suspecting the logic.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
+// FLAGGED 2026-07-26 (static review, still open for SAVE mode): PrintParameters on 2020 is quirky — some
+//         drivers throw on PaperSize assignment, and SaveAs rejects names already in use. First save-mode
+//         failure = check those two before suspecting the logic.
+// ✓ LIVE-VERIFIED (report mode) 2026-07-26 on Project1 — enumerated 34 paper sizes from a physical Kyocera
+//   6008ci and listed the saved print settings. Report mode's flag concern was unfounded. SAVE mode still
+//   unexercised — and note the active printer here is PHYSICAL, so save+print needs real care.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
