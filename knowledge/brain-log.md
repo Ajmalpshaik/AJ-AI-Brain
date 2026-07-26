@@ -430,3 +430,19 @@ complete. New items land here as they surface.
   rule-set lesson. Lesson: **when a session later learns the real value of a number it had assumed, grep the
   whole repo for the old one.** A superseded figure written into a header reads as authoritative next
   session, and the file it sits in was already marked verified.
+- 2026-07-27 — `creators/create-sheet.cs` gained a SEQUENCE mode (prefix + running number + zero padding,
+  sheet names counting 01, 02, 03... independently of the number). A drawing series is the normal way sheets
+  get asked for ("TRG-786-MECH-AC-001026 and next number like that"); hand-typing 26 tuples into the
+  explicit-list mode is where transcription errors come from. Explicit-list mode kept unchanged. Live-verified
+  the same day: 26 HVAC layout sheets created in one transaction, read back correct.
+- 2026-07-27 — Post-commit sweep found the recipe CONTRADICTING its own knowledge file: the area-per-device
+  check computed `room area / device count`, while `nfpa13-sprinkler-spacing.md` records that NFPA means
+  `A_s = S x L` from the grid dimensions. Fixed to report A_s as the governing value, with the average shown
+  beside it and an explicit NOTE when they diverge. **The divergence is real, not theoretical** — proven the
+  same hour on the staggered layout: A_s 15.99 m² vs average 15.14 m², 0.84 m² apart, because shifted rows
+  with clamped ends do not tile the room exactly. The old method understated the governing figure by 5%,
+  which on a tighter room is the difference between PASS and FAIL. Also closed a verification gap: the recipe
+  had only ever been exercised by hand-written equivalents of its logic, never as the file itself — now run
+  end-to-end from disk via `tools/invoke-bridge.ps1 -CodeFile` for both inset modes. Lesson: **writing a rule
+  into a knowledge file does not make the script obey it** — when a method is corrected in prose, grep the
+  scripts that implement it, and run the file, not a paraphrase of it.
