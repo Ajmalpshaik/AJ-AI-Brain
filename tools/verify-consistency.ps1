@@ -12,7 +12,8 @@
     Checks performed:
       1. Every skills/*/SKILL.md has YAML frontmatter with both "name" and "description".
       2. Every markdown-style relative link [text](path) inside skills/**/*.md,
-         knowledge/*.md, scripts/**/*.md, and START-HERE.md resolves to a real file.
+         knowledge/*.md, scripts/**/*.md, and the root docs (START-HERE.md, SETUP.md,
+         AGENT-SPEC.md, README.md, CLAUDE.md) resolves to a real file.
       3. Every .cs file under scripts/{filters,actions,recipes,creators,commands,examples}
          is mentioned in scripts/README.md, and every .cs path mentioned in that README
          actually exists on disk - catches drift between the index and the real folder contents.
@@ -62,12 +63,10 @@ $mdFiles = @()
 $mdFiles += Get-ChildItem -Path (Join-Path $claudeDir "skills") -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
 $mdFiles += Get-ChildItem -Path (Join-Path $claudeDir "knowledge") -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
 $mdFiles += Get-ChildItem -Path (Join-Path $claudeDir "scripts") -Filter "*.md" -Recurse -ErrorAction SilentlyContinue
-$startHere = Join-Path $brainRoot "START-HERE.md"
-if (Test-Path $startHere) { $mdFiles += Get-Item $startHere }
-$setupDoc = Join-Path $brainRoot "SETUP.md"
-if (Test-Path $setupDoc) { $mdFiles += Get-Item $setupDoc }
-$agentSpec = Join-Path $brainRoot "AGENT-SPEC.md"
-if (Test-Path $agentSpec) { $mdFiles += Get-Item $agentSpec }
+foreach ($rootDoc in @("START-HERE.md", "SETUP.md", "AGENT-SPEC.md", "README.md", "CLAUDE.md")) {
+    $rootDocPath = Join-Path $brainRoot $rootDoc
+    if (Test-Path $rootDocPath) { $mdFiles += Get-Item $rootDocPath }
+}
 $toolsReadme = Join-Path $brainRoot "mcp-server\tools\README.md"
 if (Test-Path $toolsReadme) { $mdFiles += Get-Item $toolsReadme }
 
