@@ -304,3 +304,15 @@ complete. New items land here as they surface.
   makes it behave as a single thing: one click selects the whole run, and it moves/deletes as a unit.
   Verified live on the 17-terminal run (16 segments -> one detail group named `MEP_Terminal_Run`, matching
   the office MEP_ prefix).
+- 2026-07-26 — **Coverage analysis** (user: "if we draw a circle, that is coverage") →
+  `actions/reporting/action-report-coverage.cs`. **Key discovery: the standard M_Supply Diffuser has NO
+  coverage or throw parameter at all** — it carries Flow, Pressure Drop, Diffuser/Duct sizes, Max/Min
+  Flow, nothing about reach. So coverage must be DERIVED, and the fragment offers three sources that
+  **disagree by ~6x on the same 17 terminals**: `spacing` (half the gap to the nearest neighbour — pure
+  geometry, 344 m2 total) vs `flow` (Flow / design L/s-per-m2 — 1,998 m2 at an invented 2 L/s/m2) vs
+  `fixed`. The flow path REFUSES to run without the user's design rate rather than defaulting, because
+  2 vs 10 L/s/m2 changes the answer fivefold. ✓ verified live: radii 1883/2492/3520 mm min/avg/max,
+  circles drawn and grouped as `MEP_Terminal_Coverage`.
+  Two gotchas recorded: **~45% floor coverage is geometrically NORMAL** (circles cannot tile a plane —
+  even perfect packing reaches only ~78%), so it must not be read as "half the room is unserved"; and a
+  **full-circle Arc is rejected by Revit**, so every circle is two half arcs.
