@@ -70,6 +70,7 @@ Everything below is what an actual script task needs: the routing table, the rul
 | [`filter-by-selection-filter.cs`](filters/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — live-verified 2026-07-22, both branches |
 | [`filter-by-unenclosed-spatial-elements.cs`](filters/filter-by-unenclosed-spatial-elements.cs) | QA sweep — every Room/Space in the model with zero Area ("Not Enclosed") |
 | [`filter-by-types.cs`](filters/filter-by-types.cs) | The TYPE elements themselves (FamilySymbol or system-family type), matched by family/type name — reaches a type with zero placed instances, unlike the instance-derived type actions |
+| [`filter-by-subcomponents.cs`](filters/filter-by-subcomponents.cs) | NESTED sub-components inside parent FamilyInstances (optionally recursive) — the members a category filter never finds; reverse direction of `filter-by-host.cs` — NOT yet live-verified (2026-07-26 round 3, Clockwork-equivalent) |
 
 ### Actions (consume `elements`)
 Grouped into subfolders under `actions/` by job — same grouping used whenever these are listed out loud.
@@ -137,6 +138,9 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-delete-phase.cs`](actions/parameters-naming/action-delete-phase.cs) | Permanently delete Phases by name — completes the phase lifecycle — does NOT consume `elements` — ✓ verified 2026-07-22 (rollback-probe technique, detail in header) |
 | [`action-set-workset.cs`](actions/parameters-naming/action-set-workset.cs) | Assign elements to a named user workset (write counterpart to `filter-by-workset.cs`) — BLOCKED (model isn't workshared); graceful path ✓ |
 | [`action-set-design-option.cs`](actions/parameters-naming/action-set-design-option.cs) | Add elements to a named Design Option via the copy-while-active-option workaround (write counterpart to `filter-by-design-option.cs`) — Revit 2020 has NO API to activate a Design Option, so the option must be activated manually first (story in header) — graceful paths ✓ 2026-07-22, success path blocked |
+| [`action-import-parameters-from-csv.cs`](actions/parameters-naming/action-import-parameters-from-csv.cs) | Read a CSV (ElementId + parameter columns — the shape `action-export-parameters-to-csv.cs` writes) and bulk-set the values back — write half of the Excel round-trip; does NOT consume `elements` (rows resolve by Id); explorer-first applies — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-rename-workset.cs`](actions/parameters-naming/action-rename-workset.cs) | Rename a user Workset (`WorksetTable.RenameWorkset`); workset DELETE is CONFIRMED IMPOSSIBLE on 2020 (API is 2022+) — reported, not thrown; does NOT consume `elements` — BLOCKED (not workshared), NOT yet live-verified (2026-07-26 round 2) |
+| [`action-find-replace-text-notes.cs`](actions/parameters-naming/action-find-replace-text-notes.cs) | Find (report) or find-and-replace inside TextNote TEXT — the words on the drawing, not parameter values; find-first then replace per the explorer-first rule — NOT yet live-verified (2026-07-26 round 2) |
 
 **Reporting** — [`actions/reporting/`](actions/reporting/)
 | Fragment | Job |
@@ -151,6 +155,12 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-material-takeoff.cs`](actions/reporting/action-material-takeoff.cs) | Material area/volume quantities across `elements`, grouped by material |
 | [`action-length-by-size.cs`](actions/reporting/action-length-by-size.cs) | Count + total length per size group, for linear MEP elements (duct/pipe/cable tray) |
 | [`action-report-room-space-data.cs`](actions/reporting/action-report-room-space-data.cs) | Area/Volume/Level/Occupancy table for Rooms or Spaces; read-only — ✓ verified 2026-07-23 (ROOM_VOLUME fix in header) |
+| [`action-compare-elements.cs`](actions/reporting/action-compare-elements.cs) | Side-by-side parameter diff of 2-8 elements — only differing values by default, instance + [T] type params; read-only — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-export-parameters-to-csv.cs`](actions/reporting/action-export-parameters-to-csv.cs) | Write chosen parameters of `elements` to a CSV (ElementId first column) — Revit half of the Excel round-trip, agent converts CSV↔xlsx outside Revit; paired with `action-import-parameters-from-csv.cs` — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-report-element-ownership.cs`](actions/reporting/action-report-element-ownership.cs) | Worksharing ownership per element — checkout status, creator, current owner, last changed by (the Worksharing tooltip in bulk); read-only — BLOCKED (not workshared), NOT yet live-verified (2026-07-26 round 2) |
+| [`action-report-connectors.cs`](actions/reporting/action-report-connectors.cs) | Every MEP connector per element — domain, shape, size, origin, facing (BasisZ), REAL connected partners (not just the IsConnected flag) — packages step 1 of the user's connection method (`../knowledge/live-model/hvac-ducts.md`); optional open-only mode — reads are the live-proven core of the connect recipe, fragment itself NOT yet run (2026-07-26 round 3, MEPover-equivalent) |
+| [`action-report-compound-structure.cs`](actions/reporting/action-report-compound-structure.cs) | Layer build-up of wall/floor/roof/ceiling TYPES — function, material, thickness per layer, core marks, total; deduped per type; read-only — NOT yet live-verified (2026-07-26 round 3, Clockwork-equivalent) |
+| [`action-report-room-boundaries.cs`](actions/reporting/action-report-room-boundaries.cs) | Room/Space boundary loops as mm segments + the wall behind each segment (finish or centerline); outer loop vs holes marked; read-only — geometry feed for `create-wall.cs`/`create-line.cs` — NOT yet live-verified (2026-07-26 round 3, Genius-Loci-equivalent) |
 
 **QA Checks** — [`actions/qa-checks/`](actions/qa-checks/)
 | Fragment | Job |
@@ -185,6 +195,10 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-split-elements.cs`](actions/structural-changes/action-split-elements.cs) | Split each Duct/Pipe at a point along its own length (fraction or mm from start), joint held by a real Union fitting (2026-07-26 fix: bare ConnectTo joints can be silently re-merged by Revit, losing the split) — generalized from `recipes/split-duct-near-equipment.cs` — ✓ verified 2026-07-22, union fix not yet live-run |
 | [`action-purge-unused.cs`](actions/structural-changes/action-purge-unused.cs) | Delete unused View Templates, Filters, or Materials — the subset of native Purge Unused provably correct from the public API; does NOT consume `elements`, dry-run by default — ✓ dry-run 2026-07-22 all 3 modes; real delete not yet exercised |
 | [`action-reload-links.cs`](actions/structural-changes/action-reload-links.cs) | Reload the distinct RVT link type(s) behind a set of link instances — Manage Links' Reload, scripted — BLOCKED (0 links in this model; see also the enum flag in the header) |
+| [`action-unload-remove-links.cs`](actions/structural-changes/action-unload-remove-links.cs) | Unload (keep, drop from memory) or REMOVE (delete from project — destructive, `allowDestructive: true` required) the link type(s) behind a set of link instances — completes Manage Links alongside `action-reload-links.cs` — BLOCKED (0 links), graceful path only (2026-07-26 gap backlog) |
+| [`action-add-remove-insulation.cs`](actions/structural-changes/action-add-remove-insulation.cs) | Add or remove insulation (ducts+pipes) or lining (ducts only) — the WRITE counterpart to the two insulation filters; one insulation per element, already-insulated skipped+reported — BLOCKED (no insulation fixture), NOT yet live-verified (2026-07-26 round 2) |
+| [`action-extract-cad-curves.cs`](actions/structural-changes/action-extract-cad-curves.cs) | Trace linked/imported CAD into Revit Model/Detail lines, filtered by DWG layer — dry-run first reports curve counts PER LAYER so the layer filter comes from reality; polylines exploded, splines skipped+counted — NOT yet live-verified, needs a CAD fixture (2026-07-26 round 3, Bimorph-equivalent) |
+| [`action-copy-from-link.cs`](actions/structural-changes/action-copy-from-link.cs) | Copy elements FROM a linked model INTO the host at true position (link transform applied) — source Ids are LINKED-doc Ids from `filter-by-linked-model-elements.cs`; copies never update with the link (say so every time) — BLOCKED (0 links), NOT yet live-verified (2026-07-26 round 3) |
 | [`action-duplicate-type.cs`](actions/structural-changes/action-duplicate-type.cs) | Duplicate the distinct TYPE(s) behind a set of instances under a new name (prefix/suffix/fixed) — Type-level counterpart to `action-rename-family.cs` — ✓ verified 2026-07-22 |
 | [`action-update-scope-box.cs`](actions/structural-changes/action-update-scope-box.cs) | Report a named Scope Box's dependent views (does NOT consume `elements`) — resize CONFIRMED IMPOSSIBLE on Revit 2020 (needs Scope Box creation, which has no API — see create-scope-box.cs); the destructive resize step was removed entirely |
 
@@ -215,6 +229,14 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-export-schedule-to-csv.cs`](actions/sheets-views/action-export-schedule-to-csv.cs) | Export ViewSchedules to CSV via Revit's native `ViewSchedule.Export` — one file per schedule — ✓ verified 2026-07-22 (real CSV content confirmed) |
 | [`action-report-sheet-title-blocks.cs`](actions/sheets-views/action-report-sheet-title-blocks.cs) | Report which title block (Family + Type) is on each sheet — read-only |
 | [`action-set-sheet-title-block.cs`](actions/sheets-views/action-set-sheet-title-block.cs) | Change each sheet's title block to a named Type — in-place `ChangeTypeId` if same family, delete+replace at origin if a different family — ✓ verified 2026-07-22 |
+| [`action-manage-sheet-sets.cs`](actions/sheets-views/action-manage-sheet-sets.cs) | Named Sheet/View Sets (`ViewSheetSet`, the Print/Export saved sets) — report / create-from-`elements` / delete / rename; pairs with `action-export-sheets-to-pdf.cs` — NOT yet live-verified (2026-07-26 gap backlog, delete/rename FLAGGED in header) |
+| [`action-export-views-to-dwg.cs`](actions/sheets-views/action-export-views-to-dwg.cs) | Export each View/Sheet in `elements` to its own DWG (optional saved export setup by name) — writes files on disk, go-ahead first — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-export-ifc.cs`](actions/sheets-views/action-export-ifc.cs) | Export the model (or one 3D view's scope) to IFC — IFC2x3CV2/IFC4/IFC2x3; does NOT consume `elements`; transaction-wrapped on purpose (FLAGGED note in header) — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-export-nwc.cs`](actions/sheets-views/action-export-nwc.cs) | Export the model (or one 3D view's scope) to Navisworks NWC — detects the exporter add-in first, reports gracefully if absent; does NOT consume `elements` — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-export-view-image.cs`](actions/sheets-views/action-export-view-image.cs) | Export each View/Sheet in `elements` as a PNG at a chosen pixel width — the "screenshot this view properly" job — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`action-add-spot-elevations.cs`](actions/sheets-views/action-add-spot-elevations.cs) | Place a Spot Elevation on each element in one view — reference dug from element geometry (the fragile part, FLAGGED in header); no-reference elements skipped+reported — NOT yet live-verified (2026-07-26 round 2) |
+| [`action-set-print-settings.cs`](actions/sheets-views/action-set-print-settings.cs) | Report the current driver's paper sizes + saved Print Settings, or save a named Print Setting (paper/orientation/zoom) — completes the print chain with `action-manage-sheet-sets.cs` + PDF export; does NOT consume `elements` — NOT yet live-verified (2026-07-26 round 2, PrintParameters quirks FLAGGED) |
+| [`action-duplicate-sheet.cs`](actions/sheets-views/action-duplicate-sheet.cs) | Duplicate each sheet — same title block, views duplicated and placed at the SAME viewport positions, schedules re-placed; produces `newSheetIds`; loose sheet annotations/guide grids/revisions NOT copied (header) — NOT yet live-verified (2026-07-26 round 3, Rhythm-equivalent) |
 
 **Sheet Dates & Revisions** — [`actions/sheet-dates-revisions/`](actions/sheet-dates-revisions/)
 | Fragment | Job |
@@ -242,9 +264,20 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`create-filled-region.cs`](creators/create-filled-region.cs) | Create a filled/hatched polygon annotation from a closed loop of mm points — ✓ verified 2026-07-22 |
 | [`create-grid.cs`](creators/create-grid.cs) | Create one or more straight Grids from mm endpoint pairs |
 | [`create-view.cs`](creators/create-view.cs) | Create a Floor Plan, 3D, or Section view — the three simple/reliable ViewFamily cases, not Callout/Elevation/Drafting |
+| [`create-room-elevations.cs`](creators/create-room-elevations.cs) | Place an `ElevationMarker` at a room's center (or an mm point) in a plan view and create 1-4 interior elevation views — fills the Elevation slot `create-view.cs` excludes; marker not auto-rotated to walls (gotcha in header) — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`create-floor.cs`](creators/create-floor.cs) | Create one flat Floor from a closed mm boundary on a Level — legacy `NewFloor` (static `Floor.Create` is 2022+, don't "modernize") — NOT yet live-verified (2026-07-26 gap backlog) |
 | [`create-revision.cs`](creators/create-revision.cs) | Create one or more Revisions directly (date/description/issued-to/by already known) — plain version of `recipes/create-revisions-from-sheet-dates.cs` — ✓ verified 2026-07-22 |
 | [`create-workset.cs`](creators/create-workset.cs) | Create one or more new user Worksets — feeds `action-set-workset.cs`; produces no `elements` (Workset isn't an Element) — BLOCKED (model isn't workshared); graceful path ✓ |
 | [`create-scope-box.cs`](creators/create-scope-box.cs) | CONFIRMED IMPOSSIBLE on Revit 2020 — no Scope Box creation API exists (reflection-confirmed; UI-only, View tab > Scope Box) — fragment reports this instead of a compile error |
+| [`load-family.cs`](creators/load-family.cs) | Load .rfa files from disk into the project (File > Load Family) — produces the loaded FamilySymbols; deliberately does NOT overwrite an existing same-name family — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-duct.cs`](creators/create-duct.cs) | Draw ONE straight duct between two mm points (system type, duct type, level, W/H or dia) — the plain version of what the HVAC recipes do; unconnected segment, check open ends after — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-pipe.cs`](creators/create-pipe.cs) | Draw ONE straight pipe between two mm points — Plumbing twin of `create-duct.cs`; diameter snaps to the type's allowed sizes — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-cable-tray.cs`](creators/create-cable-tray.cs) | Draw ONE straight cable tray between two mm points (type, level, W/H) — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-conduit.cs`](creators/create-conduit.cs) | Draw ONE straight conduit between two mm points (type, level, dia) — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-wall.cs`](creators/create-wall.cs) | Create one straight basic Wall between two mm plan points (type, level, unconnected height, structural flag) — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-ceiling.cs`](creators/create-ceiling.cs) | CONFIRMED IMPOSSIBLE on Revit 2020 — `Ceiling.Create` only exists from Revit 2022 (UI-only: Architecture > Ceiling) — fragment reports this instead of a compile error; existing ceilings still workable (ray-trace recipe, filters) |
+| [`create-revision-cloud.cs`](creators/create-revision-cloud.cs) | Draw a rectangular Revision Cloud in any view/sheet tied to an existing Revision (rectangle in the view's own plane, so the same mm numbers work in plan/section/sheet) — completes the Revision lifecycle's annotation half — NOT yet live-verified (2026-07-26 round 2) |
+| [`create-hvac-zone.cs`](creators/create-hvac-zone.cs) | Create an HVAC Zone on a Level and add existing Spaces to it — the grouping layer above `create-space.cs`; one-zone-per-space + phase-match gotchas in header — NOT yet live-verified (2026-07-26 round 2) |
 
 ### Recipes (bespoke multi-stage builds, not filter+action shaped)
 | Recipe | Job | Source |
@@ -265,9 +298,11 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`recipes/create-parametric-box-family-with-duct-connector.cs`](recipes/create-parametric-box-family-with-duct-connector.cs) | Family Editor authoring (not project-doc editing): set category, build a parametric box body extrusion + optional rectangular neck stub + duct connector, all resizable via Length/Width/Height/Neck Width/Neck Height/Neck Depth parameters — code-reviewed 2026-07-23, NOT live-executed (requires activating a Family Editor document, a visible workspace change not made without asking first) | `../knowledge/live-model/families.md` § Building a parametric family from scratch |
 | [`recipes/create-mep-line-standards.cs`](recipes/create-mep-line-standards.cs) | One-click MEP drafting line standard: line patterns (ISO 128 / ASME Y14.2 basis), MEP_-prefixed line styles capped at weight 3, object styles (matchline/callout/scope box/ref planes/grids), 2 filled region types, and a `MEP_Line_Styles_Legend` drafting view — idempotent, safe to re-run; deliberately NO system/service styles (the user's rule) | office standard — full rules in the script header |
 | [`recipes/create-mep-text-standards.cs`](recipes/create-mep-text-standards.cs) | One-click MEP text standard: 120 Arial text note types (6 sizes x 10 colours x box/no-box, `MEP_Anno_Arial_…` naming, Black = no suffix) plus a `MEP_Text_Styles_Legend` drafting view — idempotent, only missing types are created | office standard — full rules (exact RGB per colour) in the script header |
+| [`recipes/model-health-audit.cs`](recipes/model-health-audit.cs) | One read-only whole-model health report — warnings by severity + top offenders, in-place families, embedded CAD imports, unenclosed Rooms/Spaces, views not on sheets, groups, purgeable templates/filters (dry-run counts); each section names its drill-down fragment — NOT yet live-verified (2026-07-26 gap backlog) | tool-gap backlog 2026-07-26 |
+| [`recipes/place-sleeves-at-wall-penetrations.cs`](recipes/place-sleeves-at-wall-penetrations.cs) | Find every duct/pipe crossing through straight host-model walls (centerline method) and — after the dry-run count is approved — place a sleeve family at each, rotated to the run, sized service + clearance; curved walls / non-straight runs skipped+counted — NOT yet live-verified, needs a sleeve family fixture (2026-07-26 round 2) | round-2 suggestions 2026-07-26 |
 
 ### Commands (no element set)
-All 6 live-verified 2026-07-22.
+The original 6 live-verified 2026-07-22; the 2 marked below are newer and not yet run.
 | Command | Job |
 |---|---|
 | [`commands/native-undo.cs`](commands/native-undo.cs) | Revert the last transaction via Revit's own Undo — ✓ verified precisely (throwaway-element round trip) |
@@ -276,9 +311,11 @@ All 6 live-verified 2026-07-22.
 | [`commands/command-clear-selection.cs`](commands/command-clear-selection.cs) | Clear the active Revit selection |
 | [`commands/command-activate-view.cs`](commands/command-activate-view.cs) | Switch the active view to a given View/ViewSheet |
 | [`commands/command-zoom-to-fit.cs`](commands/command-zoom-to-fit.cs) | Zoom the active view's open UI window to fit its current content |
+| [`commands/command-compact-save.cs`](commands/command-compact-save.cs) | Save with Compact = true (Revit's "Compact File") + before/after file size — writes the file on disk, go-ahead first — NOT yet live-verified (2026-07-26 gap backlog) |
+| [`commands/command-sync-with-central.cs`](commands/command-sync-with-central.cs) | Synchronize with Central + relinquish all (comment, save-local flags) — BLOCKED (model isn't workshared), graceful path only; sync writes the central, go-ahead first (2026-07-26 gap backlog) |
 
 ### Context (whole-document, read-only orientation — no element set, model never changes)
-All 9 live-verified 2026-07-22, zero bugs.
+The original 9 live-verified 2026-07-22, zero bugs; newer ones marked individually.
 | Fragment | Job |
 |---|---|
 | [`context/context-active-view.cs`](context/context-active-view.cs) | Session snapshot — Revit version, active model (family/project, worksharing, open docs) + active view name/type/scale/level, screen Right/Up directions, open views, selection count. Standing follow-up to every successful ping (core.md rule) |
@@ -290,6 +327,7 @@ All 9 live-verified 2026-07-22, zero bugs.
 | [`context/context-design-options.cs`](context/context-design-options.cs) | Every Design Option — name, Id, Primary flag — orientation step before `filter-by-design-option.cs`/`action-set-design-option.cs` |
 | [`context/context-levels-and-grids.cs`](context/context-levels-and-grids.cs) | Every Level (name + elevation) and Grid (name) — feeds `create-dimension.cs`, `filter-by-grid.cs`, `filter-by-levels.cs` |
 | [`context/context-linked-models.cs`](context/context-linked-models.cs) | Every RVT link — loaded/unloaded status, pinned, workset — orientation step before `filter-by-links.cs`/`filter-by-linked-model-elements.cs`/`action-reload-links.cs` |
+| [`context/context-shared-coordinates.cs`](context/context-shared-coordinates.cs) | Project Base Point, Survey Point, active Project Location, True North rotation — reported in m + mm — the "is this model sitting/rotated right" orientation step — NOT yet live-verified (2026-07-26 round 2) |
 
 "Current selection" is already covered by [`filters/filter-by-current-selection.cs`](filters/filter-by-current-selection.cs) — not duplicated here.
 
