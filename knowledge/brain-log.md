@@ -283,3 +283,18 @@ complete. New items land here as they surface.
   unchanged (32 before, 32 after) — caught only because the script's own hardcoded "so they're gone"
   message contradicted the number printed beside it. For cleanup INSIDE a script, delete explicitly by Id;
   native Undo is for the user's own "that was a mistake", between calls, not mid-script.
+- 2026-07-26 — **The user designed a better routing algorithm than the one I had built, and the numbers
+  prove it.** His method (now `mode="continuous"`): finish a room completely, then from its LAST fitting
+  jump to the genuinely nearest fitting in any room not yet done — that jump decides both which room comes
+  next and where you enter it. His sharp insight was that **where a room ENDS must be optimised, not
+  accepted**, because the exit determines the jump; so every candidate exit is tried and scored on
+  (path through the room + jump out of it). Measured on Project1's 17 terminals in 3 placed rooms:
+  **109.0 m (95.1 inside + 13.9 across, 2 jumps) vs 134.3 m for my independent-groups-plus-centroid-feeders
+  version — 25 m better, and within ~2% of the 106.8 m unconstrained minimum that cheats through walls.**
+  Prototyped live first, then transcribed into the fragment and re-run to confirm the transcription
+  matched (identical 109.0 m / 16 segments).
+  Also verified that day, once the user's 3 rooms were placed (239/251/271 m2): room grouping is correct —
+  6/6/5 terminals, and 14 of 16 drawn lines stayed inside their room, the only 2 crossings being the
+  deliberate feeders. **Lesson on presentation, not maths: feeders drawn mixed in with room runs READ as
+  errors even when correct** — the user flagged the picture as wrong when it was right. Draw them
+  separately (own colour/weight), or leave them out.
