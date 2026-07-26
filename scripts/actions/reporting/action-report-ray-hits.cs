@@ -17,6 +17,23 @@
 // GOTCHA: `Proximity` is measured from the ray origin (the element's insertion point), NOT from its
 //         outer face — so a 600mm-deep diffuser reports ~300mm less clearance than you'd measure on site.
 //         Read it as "distance from the element's centre point".
+// **THE BIGGEST TRAP IN THIS FILE — RAYS ONLY SEE WHAT THE 3D VIEW SHOWS.** `ReferenceIntersector` runs
+//         inside a View3D and respects that view's visibility completely: hidden categories, section
+//         boxes, view filters, closed worksets. A hidden category is INVISIBLE TO A RAY, so the probe
+//         reports "clear" with a wall standing right there — silently, with no error.
+//         Proven live 2026-07-26: the same element, same code, same direction —
+//           view '{3D}'        (Walls category hidden) -> 0 neighbours
+//           view '3D Plumbing' (Walls visible)         -> 4 neighbours
+//         The fragment therefore WARNS when the target category is hidden in the view it picked. If a ray
+//         result looks impossibly empty, check the view before doubting the geometry.
+// GOTCHA: **ONE RAY PER DIRECTION MISSES THINGS ON ANYTHING PHYSICALLY LARGE.** A single ray from the
+//         insertion point only sees what is directly in line with the element's CENTRE — a pipe passing
+//         the corner of an AHU is invisible to it. Verified live 2026-07-26 on a 1980 mm-wide element in
+//         a view where the walls were visible: centre = 4 rays from 1 point found 4 neighbours;
+//         sampleMode="fan" = 36 rays from 24 distinct start points found 5. For a 600 mm diffuser
+//         "centre" is fine; for equipment a metre or more across, use "fan" or the answer to "what is
+//         around this unit" is quietly incomplete. Same supersampling idea as
+//         ../qa-checks/action-check-surface-fit.cs.
 // ✓ LIVE-VERIFIED 2026-07-26 on Project1 — 8 rays x 2 walls returned 11 correct hits. A real bug was
 //   caught that run: the first version used FindNearest, whose single result is the source element's own
 //   face, so dropping the self-hit left "nothing found" (1 hit instead of 11). Fixed to Find-all →
@@ -29,6 +46,9 @@ string directionSet = "vertical";   // "up" | "down" | "vertical" | "horizontal"
 string targetCategoryName = null;   // e.g. "Ceilings", "Walls", "Floors"; null = hit ANYTHING
 double maxRayDistanceMm = 5000;     // ignore hits farther than this
 bool nearestOnly = true;            // true = first hit per ray; false = every hit along the ray
+string sampleMode = "centre";       // "centre" = 1 ray per direction from the insertion point
+                                    // "fan"    = 3x3 rays spread across each FACE — see the header;
+                                    //            essential for anything physically large (AHU, FCU)
 int maxElementsReported = 25;       // detail cap; the summary always covers the whole set
 // ---- END INPUTS ----
 
@@ -90,7 +110,15 @@ else
                 sb.AppendLine($"Category '{targetCategoryName}' not found — list them with context/context-model-categories.cs.");
                 intersector = null;
             }
-            else intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+            else
+            {
+                // a hidden category is invisible to a ray — warn rather than report a false "clear"
+                try {
+                    if (rayView.GetCategoryHidden(cat.Id))
+                        sb.AppendLine($"*** WARNING: category '{targetCategoryName}' is HIDDEN in view '{rayView.Name}'. Rays cannot see it — every result below will be empty. Use a 3D view where it is visible.");
+                } catch { }
+                intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+            }
         }
         else
         {
@@ -114,8 +142,49 @@ else
                 if (reported >= maxElementsReported) continue;
                 sb.AppendLine($"- '{el.Name}' (Id {el.Id.IntegerValue}) from ({toMm(origin.X):F0}, {toMm(origin.Y):F0}, {toMm(origin.Z):F0}) mm:");
 
+                var elBox = el.get_BoundingBox(null);
+
                 foreach (var d in dirs)
                 {
+                    // where the rays start for this direction: one from the centre, or a 3x3 fan spread
+                    // across the face the ray leaves through. The fan is what catches a neighbour sitting
+                    // beside the element rather than dead in front of its middle.
+                    var starts = new List<XYZ> { origin };
+                    if (sampleMode == "fan" && elBox != null)
+                    {
+                        // sit the 9 start points ON the face the ray leaves through, spread across the
+                        // element's other two dimensions. Built in world coordinates directly — an
+                        // earlier vector-offset version of this was unreadable and wrong.
+                        starts.Clear();
+                        var dv2 = d.Value;
+                        bool alongX = Math.Abs(dv2.X) > 0.5, alongY = Math.Abs(dv2.Y) > 0.5;
+                        for (int i = 0; i <= 2; i++)
+                            for (int j = 0; j <= 2; j++)
+                            {
+                                double fi = i / 2.0, fj = j / 2.0;
+                                double x, y, z;
+                                if (alongX)
+                                {
+                                    x = dv2.X > 0 ? elBox.Max.X : elBox.Min.X;
+                                    y = elBox.Min.Y + (elBox.Max.Y - elBox.Min.Y) * fi;
+                                    z = elBox.Min.Z + (elBox.Max.Z - elBox.Min.Z) * fj;
+                                }
+                                else if (alongY)
+                                {
+                                    y = dv2.Y > 0 ? elBox.Max.Y : elBox.Min.Y;
+                                    x = elBox.Min.X + (elBox.Max.X - elBox.Min.X) * fi;
+                                    z = elBox.Min.Z + (elBox.Max.Z - elBox.Min.Z) * fj;
+                                }
+                                else   // up/down, and the diagonal cases fall here too
+                                {
+                                    z = dv2.Z > 0 ? elBox.Max.Z : elBox.Min.Z;
+                                    x = elBox.Min.X + (elBox.Max.X - elBox.Min.X) * fi;
+                                    y = elBox.Min.Y + (elBox.Max.Y - elBox.Min.Y) * fj;
+                                }
+                                starts.Add(new XYZ(x, y, z));
+                            }
+                    }
+
                     // ALWAYS Find() (every hit), never FindNearest() — the ray starts inside the source
                     // element, so FindNearest returns the element's own face; dropping that self-hit would
                     // then leave nothing and wrongly report "clear". Found live 2026-07-26: a wall reported
@@ -124,8 +193,11 @@ else
                     var found = new List<ReferenceWithContext>();
                     try
                     {
-                        var many = intersector.Find(origin, d.Value);
-                        if (many != null) found.AddRange(many);
+                        foreach (var s in starts)
+                        {
+                            var many = intersector.Find(s, d.Value);
+                            if (many != null) found.AddRange(many);
+                        }
                     }
                     catch (Exception exRay) { sb.AppendLine($"    {d.Key,-8} ray failed: {exRay.Message}"); continue; }
 
