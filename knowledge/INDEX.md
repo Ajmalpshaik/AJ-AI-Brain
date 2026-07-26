@@ -9,6 +9,7 @@ that one file — don't read the whole folder.**
 |---|---|
 | Any live-model / AJ AI Bridge task at all — running scripts, view visibility, MEP tracing, undo, HVAC terminals/ducts, tagging, revisions, families | [`live-model/README.md`](live-model/README.md) **← its own index, route from there** |
 | "What actions are available" / a plain-language menu of universal Revit actions | [`universal-actions-reference.md`](universal-actions-reference.md) |
+| Fire sprinkler spacing rules — head count, spacing, distance to walls, area per head, hazard class, obstructions | [`nfpa13-sprinkler-spacing.md`](nfpa13-sprinkler-spacing.md) (the workflow is [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../skills/ajtools-fire-sprinkler-layout/SKILL.md)) |
 | An ambiguous or misheard term in a request | [`glossary.md`](glossary.md) |
 | A request phrased in Dynamo node names (`Element.GetParameterValueByName`, `List.FilterByBoolMask`, ...) | [`dynamo-vocabulary-map.md`](dynamo-vocabulary-map.md) |
 | How to format a reply (counts, tables, the Final Report) | [`reply-style.md`](reply-style.md) |
