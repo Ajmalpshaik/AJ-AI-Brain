@@ -111,6 +111,18 @@ rather than just act on existing ones and don't fit the filter+action shape.
 - **On a workshared model, the bridge can't sync or relinquish.** After bulk changes (the context
   snapshot reports worksharing), remind the user to Synchronize with Central themselves — edited
   elements stay borrowed by them until they do.
+- **A view-scoped `FilteredElementCollector(Document, viewId)` UNDER-REPORTS right after a create+group
+  transaction — it can miss elements that are genuinely there and fully visible.** Measured 2026-07-27:
+  immediately after drawing + grouping 20 detail circles in `1 - Mech`, the query
+  `FilteredElementCollector(Document, view.Id).OfClass(typeof(CurveElement))` returned **20** curve
+  elements and **1** group; the byte-identical query re-run moments later returned **74** and **3**. Nothing
+  had been created, deleted or hidden in between — checked: `IsHidden(view)` false for every member, Lines
+  category not hidden, no crop box, no temporary hide/isolate. The first read simply didn't see the
+  pre-existing elements. This is dangerous precisely because the *wrong* answer looks like a clean fact and
+  invites the conclusion "the user's earlier work was deleted." **Never conclude something is gone from a
+  view-scoped read alone.** Confirm existence document-wide first (`Document.GetElement(id)`, or an
+  unscoped collector grouped by `OwnerViewId`) — those were correct and complete on the first try — and
+  only then, if you truly need visibility, re-run the view-scoped query.
 - **An element hosted on a linked model's face (not this document's own levels) reports `LevelId ==
   InvalidElementId` — this is expected, not a bug.** Grouping such elements by level via the normal
   `LevelId`/level-parameter lookup silently fails for them. If level-grouping matters for an element like
