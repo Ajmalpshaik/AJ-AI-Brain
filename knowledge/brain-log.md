@@ -190,3 +190,9 @@ complete. New items land here as they surface.
   hvac-ducts.md), sub-components filter, compound-structure report, room boundaries, CAD-layer curve
   extraction (dry-run first), duplicate-sheet-with-views, copy-from-link. Spring Nodes/Data-Shapes/Orchid
   recorded as deliberate non-builds in the map's package table. All NOT live-verified yet.
+- 2026-07-26 — Round 4, gap search after the package harvest: 9 fragments — accessory-into-run (VCD/valve,
+  breaks the run and reconnects), purge unused FAMILIES/types (the file-size half `action-purge-unused.cs`
+  omits), view range, MEP system TYPE creation, aligned dimensions on family instances, callout views,
+  legend duplication, sheet list, key schedule. Auto duct SIZING was explicitly NOT built — hvac-ducts.md
+  records it as the user's own step. Legends and workset delete recorded as partial/absent APIs.
+  All NOT live-verified yet. Library now 256 fragments.
