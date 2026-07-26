@@ -3,7 +3,7 @@
 // PURPOSE: Unload (keep the link, drop it from memory/view) or REMOVE (delete from the project entirely)
 //          the distinct RVT link TYPE(s) behind the link instances in `elements` — the two Manage Links
 //          operations action-reload-links.cs doesn't cover. Dedupe by Type, same as reload.
-// ASSUMES: elements (List<Element>, each a RevitLinkInstance — from filters/filter-by-links.cs) and
+// ASSUMES: elements (List<Element>, each a RevitLinkInstance — from filters/by-relationship/filter-by-links.cs) and
 //          sb (StringBuilder) exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: mode="unload" needs NO transaction (document-management I/O, same reasoning as

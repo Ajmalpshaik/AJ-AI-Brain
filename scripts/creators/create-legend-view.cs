@@ -11,7 +11,8 @@
 //         project, duplicate it here, then edit its text via action-find-replace-text-notes.cs.
 // GOTCHA: legends are the one view type that can sit on MANY sheets at once — no need to duplicate per
 //         sheet, just place the same one repeatedly (action-place-viewport-on-sheet.cs).
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// ✓ GRACEFUL PATH LIVE-VERIFIED 2026-07-26 on Project1 (zero legends present) — correctly reported that
+//   the first legend cannot be created from script. The duplicate path needs a project that has one.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

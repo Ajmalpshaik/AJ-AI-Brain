@@ -1,7 +1,7 @@
 // ============================================================
 // SCRIPT: command-activate-view.cs
 // PURPOSE: Switch Revit's active view to a given View/ViewSheet — useful before a screenshot, before a
-//          view-scoped filter (filter-by-view.cs, action-tag-elements.cs) that's meant to run "in view X",
+//          view-scoped filter (filter-by-elements-in-view.cs, action-tag-elements.cs) that's meant to run "in view X",
 //          or simply because the user asked to be shown a different view.
 // GOTCHA: some view types can't become the active view in every host state (e.g. a schedule embedded on a
 //         sheet vs. its own tab) — reported as a failure, not silently ignored.

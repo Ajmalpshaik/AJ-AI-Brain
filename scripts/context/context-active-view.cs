@@ -36,6 +36,6 @@ var openNames = openViews.Select(v => (Document.GetElement(v.ViewId) as View)?.N
 sb.AppendLine($"Open views ({openViews.Count}): {string.Join(", ", openNames)}");
 
 int selCount = UIDocument.Selection.GetElementIds().Count;
-sb.AppendLine($"Currently selected: {selCount} element(s). (Use filters/filter-by-current-selection.cs to get the actual elements.)");
+sb.AppendLine($"Currently selected: {selCount} element(s). (Use filters/by-status/filter-by-current-selection.cs to get the actual elements.)");
 
 return sb.ToString();

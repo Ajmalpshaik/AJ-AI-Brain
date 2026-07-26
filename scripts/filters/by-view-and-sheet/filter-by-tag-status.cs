@@ -5,7 +5,7 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// SOURCE: ../../knowledge/live-model/tagging.md — this Revit version (2020) has no
+// SOURCE: ../../../knowledge/live-model/tagging.md — this Revit version (2020) has no
 //         IndependentTag.GetTaggedLocalElementIds() (that's the 2022+ multi-reference tag API); uses the
 //         confirmed single-reference IndependentTag.TaggedLocalElementId property instead.
 // ============================================================

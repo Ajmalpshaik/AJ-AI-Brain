@@ -5,12 +5,12 @@
 //          "CDP") contains a filter string. Distinct from filter-by-system-name.cs, which matches one
 //          specific System instance's own name (e.g. "Supply Air 2") — several different named systems
 //          can share the same Type.
-//          The filter string is ALWAYS an input — check ../../knowledge/glossary.md for the user's word
+//          The filter string is ALWAYS an input — check ../../../knowledge/glossary.md for the user's word
 //          -> the real Revit system-type name(s) (e.g. "refrigerant" -> anything containing "DXS").
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// SOURCE: ../../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity
+// SOURCE: ../../../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity
 // ============================================================
 // RBS_PIPING_SYSTEM_TYPE_PARAM / RBS_DUCT_SYSTEM_TYPE_PARAM are ElementId-storage parameters pointing at
 // the PipingSystemType/MechanicalSystemType element — AsValueString() resolves that to its display name,

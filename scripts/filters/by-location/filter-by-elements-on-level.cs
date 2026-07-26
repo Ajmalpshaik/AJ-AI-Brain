@@ -1,5 +1,5 @@
 // ============================================================
-// FRAGMENT (filter) — filter-by-level.cs
+// FRAGMENT (filter) — filter-by-elements-on-level.cs
 // PURPOSE: Everything on a given Level, across the WHOLE model — no category picked first. Use this
 //          when the request is "what's on Level 2" with no category named. If the category is already
 //          known, filter-by-category.cs already has a level scope built in and is cheaper — prefer that
@@ -10,7 +10,7 @@
 // ============================================================
 // Level matching uses the same fallback chain as filter-by-category.cs (Wall/FamilyInstance/etc. each
 // store their level differently — no single universal property). Optional categoryScope bounds the scan
-// per ../../knowledge/live-model/core.md's "watch for unbounded output" — leave empty only for a
+// per ../../../knowledge/live-model/core.md's "watch for unbounded output" — leave empty only for a
 // genuinely whole-model question.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

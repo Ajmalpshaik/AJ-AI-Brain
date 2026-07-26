@@ -1,5 +1,5 @@
 // ============================================================
-// FRAGMENT (filter) — filter-by-view.cs
+// FRAGMENT (filter) — filter-by-elements-in-view.cs
 // PURPOSE: Every instance of a category that is actually VISIBLE in a given view (view-specific
 //          graphics/filters/crop/phase all apply) — not just "exists in the model". Works against any
 //          view by Id, not only the active one. For "in the active view" specifically, several other

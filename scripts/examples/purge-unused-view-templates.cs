@@ -1,7 +1,7 @@
 // ============================================================
 // EXAMPLE — fully assembled, ready to run via run_csharp
 // Purges every View Template not currently applied to any view.
-// Assembled from: filters/filter-by-view-templates.cs   (usage = "unused")
+// Assembled from: filters/by-view-and-sheet/filter-by-view-templates.cs   (usage = "unused")
 //                + actions/structural-changes/action-delete-elements.cs
 // This is what composing looks like in practice for a destructive job — copy this shape, but see the
 // MANDATORY safety note below before running it for real. See ../README.md for the full explanation.

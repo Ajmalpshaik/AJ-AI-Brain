@@ -10,7 +10,8 @@
 //         2500 internal-feet noise doesn't produce false differences; truly unset vs "" both read "(none)".
 // GOTCHA: with many elements the table gets wide — happiest at 2-5 elements; hard cap of 8 columns,
 //         extras are reported skipped, not silently dropped.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog.
+// ✓ LIVE-VERIFIED 2026-07-26 on Project1 — 3 walls compared, surfaced exactly the 3 differing parameters
+//   (Area, Length, Volume) and suppressed the ~50 identical ones.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

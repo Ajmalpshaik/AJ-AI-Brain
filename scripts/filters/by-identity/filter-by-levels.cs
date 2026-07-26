@@ -1,7 +1,7 @@
 // ============================================================
 // FRAGMENT (filter) — filter-by-levels.cs
 // PURPOSE: Every Level element in the model ITSELF, optionally narrowed by a name substring — NOT the
-//          same job as filter-by-level.cs, which finds elements SITTING ON a given level. Use this one to
+//          same job as filter-by-elements-on-level.cs, which finds elements SITTING ON a given level. Use this one to
 //          feed creators/create-dimension.cs (a dimension string across named Levels) or to rename/report
 //          on the Levels themselves.
 // PRODUCES: elements (List<Element>, each one really a Level — cast back with `as Level` in the action),

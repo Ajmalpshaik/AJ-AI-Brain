@@ -14,7 +14,7 @@ How to answer, separate from what to build or fix.
   (`Id | Family and Type | ...`) rather than a bare count. The reason: a narrowed-down request like this
   is almost always the setup for a next step ("now select those", "now move them", "what's their length")
   — the Element IDs are what make that next step possible without re-filtering from scratch. Compose
-  [`filters/filter-by-category-and-numeric-param.cs`](../scripts/filters/filter-by-category-and-numeric-param.cs)
+  [`filters/by-property/filter-by-category-and-numeric-param.cs`](../scripts/filters/by-property/filter-by-category-and-numeric-param.cs)
   (or whichever filter matches) with
   [`actions/reporting/action-report-parameters.cs`](../scripts/actions/reporting/action-report-parameters.cs) for this —
   `action-count-and-report.cs` is for a bare count/aggregate breakdown, not this case.

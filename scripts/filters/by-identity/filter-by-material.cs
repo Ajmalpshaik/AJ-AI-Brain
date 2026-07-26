@@ -2,7 +2,7 @@
 // FRAGMENT (filter) — filter-by-material.cs
 // PURPOSE: Elements that use a specific Revit Material — compound-layer/structural material by default;
 //          set includePaint = true to also catch paint overrides. Pairs naturally with
-//          action-material-takeoff.cs (which reports material quantities once elements are picked some
+//          action-report-material-takeoff.cs (which reports material quantities once elements are picked some
 //          other way) — this fragment is the reverse: pick elements BY material.
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
@@ -10,7 +10,7 @@
 // ============================================================
 // Whole-category scan is required — Revit has no direct "material -> elements" collector, so this walks
 // the category's elements and checks each one's GetMaterialIds(). Keep useCategoryFilter on to bound the
-// scan; per ../../knowledge/live-model/core.md, an unfiltered whole-model version is unbounded.
+// scan; per ../../../knowledge/live-model/core.md, an unfiltered whole-model version is unbounded.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string materialName = "Steel, Galvanized";

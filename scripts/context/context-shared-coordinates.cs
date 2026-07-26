@@ -5,7 +5,9 @@
 //          sit in the right place / is it rotated correctly" coordination question.
 // STANDALONE — read-only, zero input, safe anytime. Same role as the other context scripts.
 // GOTCHA: values are reported in METERS (survey convention) with mm in brackets — E/W is X, N/S is Y.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
+// GOTCHA: a project can report MORE than one non-shared BasePoint (Project1 showed two on 2026-07-26) —
+//         `IsShared` separates Survey Point from Project Base Point, but don't assume exactly one of each.
+// ✓ LIVE-VERIFIED 2026-07-26 on Project1 — reported Internal location, 0° true north, survey + base points.
 // ============================================================
 
 var sb = new System.Text.StringBuilder();

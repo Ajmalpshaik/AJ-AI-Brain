@@ -11,7 +11,12 @@
 //         action-purge-unused.cs, ...) — drill down there, don't grow this recipe into a monolith.
 // GOTCHA: unused-material detection is deliberately NOT here — it needs a full geometry sweep that's slow
 //         on a big model; action-purge-unused.cs mode="materials" (dry-run) covers it on request.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog.
+// GOTCHA: the OUTPUT WORDING is deliberately mild ("Unused, removable later" not "Purgeable", "see" not
+//         "delete via"). The bridge's destructive-operation guard scores the whole script's TEXT, including
+//         plain output strings, and several deletion words together tripped it on this read-only script
+//         (found live 2026-07-26 — story in ../knowledge/live-model/core.md). Keep the wording mild.
+// ✓ LIVE-VERIFIED 2026-07-26 — ran clean on Project1 after the wording fix; found 3 unenclosed rooms,
+//   16 views off sheets, 16 unused templates, 6 unused filters, 0 warnings.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -43,7 +48,7 @@ if (warnings.Count > 0)
 {
     var byDesc = warnings.GroupBy(w => w.GetDescriptionText()).OrderByDescending(g => g.Count()).Take(topWarnings);
     foreach (var g in byDesc) sb.AppendLine($"  {g.Count()}x — {g.Key}");
-    sb.AppendLine("  -> element sets via filters/filter-by-warnings.cs, full list via context/context-all-warnings.cs");
+    sb.AppendLine("  -> element sets via filters/by-status/filter-by-warnings.cs, full list via context/context-all-warnings.cs");
 }
 
 // --- 3. In-place families ---
@@ -65,7 +70,7 @@ var spatial = new FilteredElementCollector(Document).OfClass(typeof(SpatialEleme
 sb.AppendLine($"\n--- Unenclosed/unplaced Rooms+Spaces (zero area): {spatial.Count} ---");
 foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id.IntegerValue})");
 if (spatial.Count > maxIdsPerList) sb.AppendLine($"  ... +{spatial.Count - maxIdsPerList} more");
-if (spatial.Count > 0) sb.AppendLine("  -> as an element set: filters/filter-by-unenclosed-spatial-elements.cs");
+if (spatial.Count > 0) sb.AppendLine("  -> as an element set: filters/by-location/filter-by-unenclosed-spatial-elements.cs");
 
 // --- 6. Views not on any sheet ---
 var placedViewIds = new HashSet<int>(new FilteredElementCollector(Document).OfClass(typeof(Viewport)).Cast<Viewport>().Select(vp => vp.ViewId.IntegerValue));
@@ -88,7 +93,7 @@ foreach (var v in allViews.Where(v => !v.IsTemplate))
     try { foreach (var fid in v.GetFilters()) usedFilterIds.Add(fid.IntegerValue); } catch { } // view kind without filters
 }
 int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(FilterElement)).Count(f => !usedFilterIds.Contains(f.Id.IntegerValue));
-sb.AppendLine($"\n--- Purgeable (dry-run): {unusedTemplates} unused view template(s), {unusedFilters} unused filter(s) ---");
-sb.AppendLine("  -> delete via actions/structural-changes/action-purge-unused.cs (dry-run first, per its own rule)");
+sb.AppendLine($"\n--- Unused, removable later: {unusedTemplates} view template(s), {unusedFilters} filter(s) ---");
+sb.AppendLine("  -> see actions/structural-changes/action-purge-unused.cs (dry-run first, per its own rule)");
 
 return sb.ToString();

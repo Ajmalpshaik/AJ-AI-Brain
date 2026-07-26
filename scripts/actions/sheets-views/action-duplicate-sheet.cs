@@ -4,7 +4,7 @@
 //          request) duplicates of every placed view dropped at the SAME viewport positions, and
 //          schedules re-placed at their same spots. The job Revit's UI still doesn't do in one click.
 //          (Dynamo-package equivalent: Rhythm's Sheet.Duplicate nodes.)
-// ASSUMES: elements (List<Element>, ViewSheets — from filters/filter-by-sheets.cs) and sb exist from a
+// ASSUMES: elements (List<Element>, ViewSheets — from filters/by-view-and-sheet/filter-by-sheets.cs) and sb exist from a
 //          filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Produces `newSheetIds` for chaining.
 // GOTCHA: sheet numbers must be unique — the new number is old number + numberSuffix; a collision fails

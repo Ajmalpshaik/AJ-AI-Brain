@@ -4,12 +4,12 @@
 //          own name, e.g. "Supply Air 2", "DXS 1" — auto-numbered off its System Type unless renamed)
 //          contains a filter string. Distinct from filter-by-system-type.cs, which matches every system
 //          sharing a TYPE/classification, not just one specific run/loop.
-//          The filter string is ALWAYS an input — check ../../knowledge/glossary.md for the user's word
+//          The filter string is ALWAYS an input — check ../../../knowledge/glossary.md for the user's word
 //          -> the real Revit system name(s).
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// SOURCE: ../../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity — this is the
+// SOURCE: ../../../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity — this is the
 //         system-NAME half of what filter-by-system-type.cs used to conflate before being split in two.
 // LIVE-VERIFIED 2026-07-23 — FIXED the same real UnionWith bug documented in filter-by-system-type.cs's
 // header (this file shares the identical category-union pattern): `.WhereElementIsNotElementType()`

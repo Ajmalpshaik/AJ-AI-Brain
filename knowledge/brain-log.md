@@ -196,3 +196,27 @@ complete. New items land here as they surface.
   legend duplication, sheet list, key schedule. Auto duct SIZING was explicitly NOT built — hvac-ducts.md
   records it as the user's own step. Legends and workset delete recorded as partial/absent APIs.
   All NOT live-verified yet. Library now 256 fragments.
+- 2026-07-26 — First live-verification pass on the new fragments (bridge up, Revit 2020 / Project1):
+  11 confirmed working — shared-coordinates, model-health-audit, purge-unused-families (dry-run),
+  compound-structure, view-range (report), room-boundaries (graceful), compare-elements,
+  print-settings (report), sheet-list (created + undone), native-undo, legend (graceful). Two real bugs
+  found and fixed in place: view-range printed raw sentinel Ids ("Id -2") instead of "(level above)", and
+  a pre-existing wrong relative path in filter-by-room.cs. MEP/link/CAD/worksharing fragments remain
+  fixture-blocked — this model has walls, rooms and levels only.
+- 2026-07-26 — **Bridge gotcha found live: the destructive-op guard reads the whole script as TEXT and is
+  CUMULATIVE.** A 100% read-only audit was refused because two OUTPUT strings together mentioned purging
+  and deleting. Fix is to soften read-only scripts' wording, never to pass allowDestructive to get a read
+  through. Recorded in `live-model/core.md`.
+- 2026-07-26 — Architecture pass (assessed first: restructure NOT needed, targeted fixes were):
+  `filters/` split from 49 flat files into 6 job-grouped subfolders (by-identity / by-property /
+  by-location / by-relationship / by-view-and-sheet / by-status), matching the 2026-07-22 actions/ split
+  precedent. Renamed the two dangerous singular-plural pairs to say what they RETURN
+  (`filter-by-elements-on-level.cs`, `filter-by-elements-in-view.cs`), gave the two noun-first reports
+  their `report` verb, moved the stray parameters-CSV export in with the other exports, and wrote the
+  naming rules into `scripts/README.md` so they stop being folklore.
+- 2026-07-26 — **Self-inflicted incident worth remembering: PowerShell `Get-Content`/`Set-Content` for
+  bulk edits double-encoded UTF-8 in 41 files** (em dashes and ✓ became mojibake) because 5.1's
+  Get-Content reads UTF-8-without-BOM as ANSI. Caught by noticing the README diff was 285 lines when the
+  real edit was ~90. Repaired with a targeted per-character map. **Rule: for bulk text edits across this
+  repo use `[System.IO.File]::ReadAllText/WriteAllText` with an explicit UTF8Encoding($false), never
+  Get-Content/Set-Content.**

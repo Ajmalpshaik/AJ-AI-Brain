@@ -6,7 +6,7 @@
 //          action-remove-schedule-field.cs/action-set-schedule-field-format.cs (both need an exact
 //          existing field name), and shows which columns are already Calculated/Combined fields from
 //          action-add-schedule-calculated-field.cs.
-// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/filter-by-schedules.cs)
+// ASSUMES: elements (List<Element>, each really a ViewSchedule — e.g. from filters/by-view-and-sheet/filter-by-schedules.cs)
 //          and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================
