@@ -64,7 +64,7 @@ const mdFiles = [
   ...walk(path.join(brainRoot, "knowledge"), (n) => n.endsWith(".md")),
   ...walk(path.join(brainRoot, "scripts"), (n) => n.endsWith(".md")),
 ];
-for (const f of ["START-HERE.md", "SETUP.md", "AGENT-SPEC.md"]) {
+for (const f of ["START-HERE.md", "SETUP.md", "AGENT-SPEC.md", "README.md", "CLAUDE.md"]) {
   const p = path.join(brainRoot, f);
   if (fs.existsSync(p)) mdFiles.push(p);
 }

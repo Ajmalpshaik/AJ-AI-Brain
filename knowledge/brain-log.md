@@ -17,11 +17,11 @@ original full text.)
 complete. New items land here as they surface.
 
 **Needs a live Revit session (bridge connected, on the Windows machine):**
-1. Run `tools/verify-consistency.ps1` once to confirm the 2026-07-23 recursion fix works on real
-   PowerShell (the fix mirrors the proven `.mjs` logic but has never executed). Also run
-   `tools/invoke-bridge.ps1 -Ping` once — same session found it sent a UTF-8 BOM the Node client never
-   sends (fixed to no-BOM 2026-07-23, matching the proven client byte-for-byte, but the fallback caller
-   itself has never been ping-tested live).
+1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
+   client never sends (fixed to no-BOM that day, matching the proven client byte-for-byte, but the
+   fallback caller itself has never been ping-tested live). (The other half of this item —
+   `verify-consistency.ps1` on real PowerShell — was proven 2026-07-26: it ran live, caught real
+   drift, and passed after the fix; no Revit needed for that part after all.)
 2. Live-verify the 14 native MCP tools (structurally tested via `npm test` only).
 3. `action-reload-links.cs`: confirm `LinkLoadResultType.LinkNotNeeded` is a real enum member (see the
    file's header flag — suspected wrong identifier, would be a compile error).
@@ -158,3 +158,13 @@ complete. New items land here as they surface.
   `create-parametric-box-family-with-duct-connector.cs`/`place-fcu.cs`/`place-terminals-checkerboard.cs`/
   `set-space-airflow.cs` (none of which this pass touched), and the missing null checks in
   `draw-main-duct-with-cap.cs`/`split-duct-near-equipment.cs`. Full text in git history (PR #3).
+- 2026-07-26 — Audit pass: `verify-consistency.ps1` first real PowerShell run caught genuine drift —
+  the 2 MEP standards recipes (`create-mep-line-standards.cs`, `create-mep-text-standards.cs`) were on
+  disk but missing from `scripts/README.md`; rows added, checker green.
+- 2026-07-26 — Brain became an installable Claude Code plugin: `.claude-plugin/plugin.json` (8 skills +
+  bundled MCP relay via `${CLAUDE_PLUGIN_ROOT}`) + `marketplace.json` so the repo itself is the
+  marketplace — SETUP.md step 1 Option A has the two install commands. Also new: root `CLAUDE.md`
+  (auto-imports START-HERE.md when a session opens in this folder) and a PostToolUse hook
+  (`.claude/settings.json` → `tools/verify-consistency-hook.ps1`) that re-runs the consistency checker
+  after every edit in this repo — drift now surfaces same-turn (exit-2/stderr path live-tested with a
+  planted unlisted script, then removed).
