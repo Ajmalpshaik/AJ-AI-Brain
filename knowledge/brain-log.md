@@ -251,3 +251,16 @@ complete. New items land here as they surface.
   **Lesson from a false start in that test: never infer which surface is above a point from BOUNDING
   BOXES** — two of these ceilings had overlapping boxes but non-overlapping real shapes, which produced a
   misleading "OK" until the rays were read directly. Probe, don't infer from extents.
+- 2026-07-26 — **Proximity + route planning (user's idea): "nearest element" and "least wire".** Two
+  fragments, both ✓ live-verified same day. `action-report-nearest-elements.cs` — nearest target(s) per
+  source across any categories or a fixed Id list, with THREE metrics that deliberately disagree: `gap`
+  (real clearance between bounding boxes), `centre` (straight line), `manhattan` (orthogonal,
+  cable-realistic). Verified: 17 terminals -> 6 FCUs, zoning 4/4/3/2/2/2.
+  `action-plan-shortest-route.cs` — `tree` mode is **Prim's minimum spanning tree**, EXACT, the real shape
+  of a branching homerun; `chain` mode is nearest-neighbour + 2-opt, a HEURISTIC (travelling salesman has
+  no fast exact answer) and the output says which guarantee applies. Verified on 17 terminals: manhattan
+  tree 111.7 m vs best chain 132.9 m (tree 16% shorter); 2-opt earned its keep, taking 3.9 m off the
+  straight-line chain. **Manhattan ran ~30% longer than straight line — that is the orthogonal penalty,
+  and why manhattan is the honest default for cable.** Both headers state plainly that these are
+  point-to-point estimates, NOT routed cable schedules. Obstacle-aware A* routing deliberately NOT built —
+  named in the header as out of scope until a concrete case exists.
