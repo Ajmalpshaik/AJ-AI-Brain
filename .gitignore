@@ -1,2 +1,7 @@
 node_modules/
 *.log
+
+# Generated knowledge graph (rebuild with `/graphify`). Derived from knowledge/,
+# scripts/ and skills/ — it goes stale the moment any of those is edited, and a
+# stale index in this repo is worse than no index.
+graphify-out/

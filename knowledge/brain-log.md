@@ -458,3 +458,72 @@ complete. New items land here as they surface.
   disk: 0 refuses, 3000 runs. A grep of all 264 fragments found no other real project value left in an INPUTS
   block — only a commented `e.g.` example, which is fine. **General rule: a fragment's default must be
   either neutral (0, null, "") or a guard, never a working value from the job that created it.**
+- 2026-08-01 — **Gotcha found live (project 4355): view-filter names can lie about their real category.**
+  Two filters named `..._Cable Trays_Service Type_Refrigerant Pipes Tray` sound mechanical but
+  `ParameterFilterElement.GetCategories()` showed they actually target `Cable Trays`/`Cable Tray Fittings`
+  — Revit's Electrical discipline — because the project routes refrigerant-pipe support trays on a Cable
+  Tray category element. Classifying a template's filters as mechanical/electrical now means resolving
+  real categories, not reading names. Documented in `live-model/mep-color-standard.md`. Also duplicated a
+  view TEMPLATE for the first time: `View.Duplicate()` throws "View cannot be duplicated" on templates
+  (`CanViewBeDuplicated` returns false for all options) — `ElementTransformUtils.CopyElements(doc, ids,
+  doc, Transform.Identity, new CopyPasteOptions())` works instead and Revit auto-suffixes the name, which
+  then gets set to the real target name in a second step. Not yet promoted to a reusable fragment — only
+  done inline twice so far.
+- 2026-08-01 — **Correction from the user (project 4355): "change filter color" defaulted to line+fill,
+  should be line-only.** Applied black to 4 pipe filters' line AND fill together (matching
+  `action-apply-view-filter.cs`'s `includeFill=true`, meant for the full MEP Color Data Standard sync);
+  user undid it in Revit and clarified fill should stay untouched for a plain color-change request. Fixed
+  by reusing the existing `OverrideGraphicSettings` and setting only `SetProjectionLineColor`/
+  `SetCutLineColor`. Documented in `live-model/mep-color-standard.md`.
+- 2026-08-01 — Built a 3-sheet site shaft-coordination set for project 4355 (Duct/Piping/Electrical Cable
+  Tray) — 6 duplicated view templates, one hero-system-full-color + rest-gray(80,80,80) scheme per sheet,
+  the mislabeled Cable Tray filters grouped with Piping (their real function) not Electrical (their Revit
+  category). First real multi-system use of the template-duplicate technique from the same day. Took two
+  passes to get the 3x3 color matrix confirmed exactly against the user's wording before trusting it was
+  right. Documented in `live-model/mep-color-standard.md`.
+- 2026-08-01 — Fill-color cleanup on `TRG_Accessories_Duct` silently reverted between two script calls
+  despite a same-script verification passing right after the change — root cause not confirmed (the next
+  script's logic looked correct on inspection, never referenced this filter by name). Caught by an
+  independent later re-check, re-cleared, re-verified in a third separate call, held. New standing rule
+  added to `core.md`: don't trust same-call verification alone for multi-element graphic-override
+  mutations — check again in a separate later call before reporting success.
+- 2026-08-01 — View title extension-line length: confirmed no API lever exists on Revit 2020 (this
+  project's version) — traced to Rhythm-for-Dynamo's own source throwing "only works in Revit 2022."
+  Also found and fixed a blast-radius miss along the way: the viewport type holding the title style was
+  shared by 77 viewports document-wide, not just the 3 new site sheets — duplicated the type before
+  touching it, per the user's explicit choice. Documented both in `live-model/core.md`.
+- 2026-08-01 — View title POSITION also unsettable on Revit 2020 (reflection on `Viewport` shows only
+  read-only `GetLabelOutline()`, no `LabelOffset`). Turned the dead end into a deliverable: computed each
+  title's exact centering offset from `GetBoxOutline()` vs `GetLabelOutline()` so the user's manual drag
+  is a known mm figure per view (23 views across the 3 site sheets). The same read exposed inconsistent
+  title HEIGHTS between sheets, invisible when checking one sheet at a time. Technique in
+  `live-model/core.md`. Also caught during the same pass: `Piping only section 05` had been deleted from
+  the model entirely (lost in one of the user's undos) — found only because a fresh full-sheet read was
+  done rather than trusting the earlier "3 plans + 5 sections" verification.
+- 2026-08-01 — **New technique: measure-by-rollback.** User pushed back on the "extension line can't be
+  adjusted" answer, so re-verified exhaustively (full `Viewport` reflection + every viewport-related
+  BuiltInParameter enumerated + Rhythm source) — no API lever on 2020, confirmed. But the re-check turned
+  up something better: toggling `SHOW_EXTENSION_LINE` off inside a Transaction, `Regenerate()`, measuring,
+  then `RollBack()` gives the text-only label width with zero persistent change — and the delta vs the
+  normal measurement is the line's exact overhang past the text, i.e. the precise mm to drag each grip.
+  Found 10 of 23 titles had over-long lines (58–169mm overhang), all on the duplicated Piping/Cable Tray
+  views; the original Ducting ones were already correct. Also corrected the earlier centering figures,
+  which had wrongly centered text+line rather than the visible text. Technique in `live-model/core.md` —
+  generalises to any "what would this look like if…" question, and never enters the user's undo stack.
+- 2026-08-01 — Root cause of the over-long title lines, found when the user pushed back a third time:
+  **a script-placed viewport defaults its title line to `boxWidth + 6.4mm`** (exact, all 5 measured),
+  vs a hand-set 92.6mm constant on the originals — so bulk `Viewport.Create` on Revit 2020 always leaves
+  lines needing a manual drag, and re-placing doesn't help. Also learned that a viewport's sheet box width
+  comes from ANNOTATION extents not the crop (two views, identical 158.4mm crop, 202.1 vs 215.7mm boxes),
+  killing the "tighten the crop to shorten the line" theory. And a caveat on the rollback-measure technique:
+  `GetBoxOutline()` does NOT refresh mid-transaction after a `CropBox` change even though
+  `GetLabelOutline()` does after a parameter change — so such a test must assert the input really changed
+  before trusting a "nothing moved" result. All in `live-model/core.md`.
+- 2026-08-04 — Built a `/graphify` knowledge graph over the whole Brain (624 nodes, 728 edges, 334 files).
+  `graphify-out/` is gitignored — it is derived from `knowledge/`, `scripts/`, `skills/` and goes stale on
+  any edit, so it is rebuilt on demand, never committed.
+- 2026-08-04 — The graph named `AGENT-SPEC.md` the top cross-community bridge and showed *why*: its §5.2,
+  §6.4 and §9.3 summary tables restate 8 gotchas whose home file is elsewhere (`live-model/hvac-ducts.md`,
+  `families.md`, `hvac-terminals.md`). That is the spec's duplication surface — the 8 places "one fact, one
+  file" is deliberately broken so `AGENT-SPEC.md` can be read start-to-finish. All 8 verified in sync
+  2026-08-04; re-check them whenever those three knowledge files change.
