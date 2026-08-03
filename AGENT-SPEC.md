@@ -10,6 +10,26 @@ act without hopping files. It intentionally duplicates summary-level facts that 
 authoritative deep-dive. If the two ever disagree, the topic file wins and this document is stale —
 update this file, don't trust it blindly.
 
+**Where that duplication actually is** (enumerated 2026-08-04 from a graph of the whole Brain, which
+named this file its most-connected cross-topic node — the restatements below are exactly why). These
+eight rows are the ones carrying a fact whose home file is elsewhere, so they are the only places this
+file can silently go stale when that home file changes:
+
+| This file | Restates a fact owned by |
+|---|---|
+| §5.2 `verify-duct-connectivity` row | [`knowledge/live-model/hvac-ducts.md`](knowledge/live-model/hvac-ducts.md) — full BFS over `AllRefs`, never a single hop |
+| §5.2 `slice-trunk-for-sizing` row | [`knowledge/live-model/hvac-ducts.md`](knowledge/live-model/hvac-ducts.md) — compute the offset break point before `BreakCurve` |
+| §5.2 `connect-terminal-branch` row | [`knowledge/live-model/hvac-ducts.md`](knowledge/live-model/hvac-ducts.md) — `ConnectTo` alone inserts no fitting geometry |
+| §6.4 connector placeholder size | [`knowledge/live-model/families.md`](knowledge/live-model/families.md) — a new `ConnectorElement` defaults to a generic size |
+| §6.4 void-cut verification | [`knowledge/live-model/families.md`](knowledge/live-model/families.md) — unresolved, needs a human visual check |
+| §9.1 category ID table | [`knowledge/live-model/core.md`](knowledge/live-model/core.md) — read-only reference, never hardcode |
+| §9.2 unit conversion table | [`knowledge/live-model/core.md`](knowledge/live-model/core.md) — `DisplayUnitType` on 2020, `UnitTypeId` on 2021+ |
+| §9.3 duplicate `Flow` parameter | [`knowledge/live-model/hvac-terminals.md`](knowledge/live-model/hvac-terminals.md) — use `RBS_DUCT_FLOW_PARAM` explicitly |
+
+All eight were checked against their home file and are in sync as of 2026-08-04. Re-check them whenever
+`hvac-ducts.md`, `families.md`, `hvac-terminals.md` or `core.md` changes — that is a much smaller job
+than a full staleness pass over this document.
+
 ---
 
 ## 1. Purpose

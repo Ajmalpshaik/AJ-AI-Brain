@@ -522,8 +522,14 @@ complete. New items land here as they surface.
 - 2026-08-04 — Built a `/graphify` knowledge graph over the whole Brain (624 nodes, 728 edges, 334 files).
   `graphify-out/` is gitignored — it is derived from `knowledge/`, `scripts/`, `skills/` and goes stale on
   any edit, so it is rebuilt on demand, never committed.
-- 2026-08-04 — The graph named `AGENT-SPEC.md` the top cross-community bridge and showed *why*: its §5.2,
-  §6.4 and §9.3 summary tables restate 8 gotchas whose home file is elsewhere (`live-model/hvac-ducts.md`,
-  `families.md`, `hvac-terminals.md`). That is the spec's duplication surface — the 8 places "one fact, one
-  file" is deliberately broken so `AGENT-SPEC.md` can be read start-to-finish. All 8 verified in sync
-  2026-08-04; re-check them whenever those three knowledge files change.
+- 2026-08-04 — The graph named `AGENT-SPEC.md` the most-connected cross-topic node, and the reason is the
+  duplication its own header has always declared ("intentionally duplicates summary-level facts… the topic
+  file wins"). What was missing was *which* rows and *whether they're still true*: 8 of them, in §5.2, §6.4,
+  §9.1, §9.2 and §9.3, owned by `live-model/hvac-ducts.md`, `families.md`, `hvac-terminals.md` and `core.md`.
+  Now enumerated as a table in `AGENT-SPEC.md`'s header, all 8 verified in sync. Re-check that table when
+  any of those four files changes — far cheaper than a full staleness pass over the spec.
+- 2026-08-04 — Health check with no Revit available: `npm test` in `mcp-server/` green (3/3), and both
+  consistency checkers (`verify-consistency.mjs` and the `.ps1`) agree exactly — 9 skills, 504 links across
+  38 files, 264 scripts, no drift. Also confirmed the graph's "45 isolated nodes" warning is structural
+  noise, not a documentation gap: it is mostly the ~250 script fragments, each correctly referenced once by
+  `scripts/README.md`. Not worth chasing.
