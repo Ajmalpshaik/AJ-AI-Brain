@@ -12,12 +12,16 @@
 //         RevitLinkType.LoadFrom for that, not covered here.
 // GOTCHA: no Transaction wraps this — Reload is a document-management I/O operation, not a regular model
 //         edit (same reasoning as action-export-schedule-to-csv.cs not needing one).
-// NOT YET LIVE-VERIFIED — test on one link first before trusting it on a batch.
-// FLAGGED 2026-07-23 (static review, no Revit connection available to confirm either way): unsure
-// whether `LinkLoadResultType.LinkNotNeeded` below is a real enum member on this Revit version — tried to
-// check Autodesk's API docs but the reference sites blocked automated fetches from this session. If this
-// fragment fails to even COMPILE the first time it's run, this is the first thing to check — not a logic
-// bug, a possible wrong enum member name.
+// NOT YET LIVE-VERIFIED against a real link — test on one link first before trusting it on a batch.
+// RESOLVED 2026-08-04 (live, Revit 2020): the 2026-07-23 flag was correct — `LinkLoadResultType.LinkNotNeeded`
+// does NOT exist and this fragment could never have compiled ("error CS0117: 'LinkLoadResultType' does not
+// contain a definition for 'LinkNotNeeded'"). The enum's 13 real members are: Uninitialized, LinkLoaded,
+// LinkNotFound, LinkNotOpenable, LinkOpenAsHost, SameModelAsHost, SameCentralModelAsHost,
+// LinkNotLoadedOtherError, LinkMayBeUpgraded, ExternalServerMissing, LinkExists, CouldNotChangeViewReference,
+// UsedExisting. `UsedExisting` is the closest in meaning to the intended "already current, nothing to do"
+// — it is counted as success below, but which value `Reload()` ACTUALLY returns for an up-to-date link is
+// still UNVERIFIED (needs a model with a real link; this one had none). The raw `result.LoadResult` is
+// printed for every link precisely so the first real run reveals the truth instead of hiding it.
 // ============================================================
 
 var linkTypeIds = elements
@@ -38,7 +42,7 @@ foreach (var typeId in linkTypeIds)
     {
         var result = linkType.Reload();
         results.Add($"'{linkType.Name}': {result.LoadResult}");
-        if (result.LoadResult == LinkLoadResultType.LinkLoaded || result.LoadResult == LinkLoadResultType.LinkNotNeeded)
+        if (result.LoadResult == LinkLoadResultType.LinkLoaded || result.LoadResult == LinkLoadResultType.UsedExisting)
             reloaded++;
         else
             skipped++;

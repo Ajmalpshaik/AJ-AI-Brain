@@ -13,26 +13,39 @@ original full text.)
 
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
-**Doable in any session:** none right now — the multi-session health pass (Parts 1–6, 2026-07-23) is
-complete. New items land here as they surface.
+Split three ways 2026-08-04, because the old flat list mixed "do it next session", "can never be done"
+and "already done" together and so always read as unfinished.
 
-**Needs a live Revit session (bridge connected, on the Windows machine):**
+**Doable in any session (no Revit):** none right now.
+
+**Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
    client never sends (fixed to no-BOM that day, matching the proven client byte-for-byte, but the
    fallback caller itself has never been ping-tested live). (The other half of this item —
    `verify-consistency.ps1` on real PowerShell — was proven 2026-07-26: it ran live, caught real
-   drift, and passed after the fix; no Revit needed for that part after all.)
-2. Live-verify the 14 native MCP tools (structurally tested via `npm test` only).
-3. `action-reload-links.cs`: confirm `LinkLoadResultType.LinkNotNeeded` is a real enum member (see the
-   file's header flag — suspected wrong identifier, would be a compile error).
-4. `action-add-project-parameter.cs`: quick compile check — the Revit-2020 legacy-API fix was re-applied
-   here 2026-07-23 after being found only in the `.claude` mirror copy.
-5. The fixture-blocked positive paths (worksharing, Assembly, Design Option, insulation, electrical,
-   links, Ceilings, a flip-capable family, the PDF print go-ahead) — each listed with its exact blocker
-   in `scripts/README.md`'s per-fragment notes.
-6. The 2026-07-23 transaction/null-check safety fixes to `create-parametric-box-family-with-duct-
+   drift, and passed after the fix; no Revit needed for that part after all.) NOTE: run this LAST in a
+   session — the bridge allows one active connection at a time, so the helper may disturb the MCP one.
+2. `delete_elements` — the only one of the 17 native tools still unverified live (2026-08-04 verified the
+   other 16; the user stopped before the confirm-and-remove step). Needs any throwaway element.
+
+**Needs a live bridge AND a model that actually contains the fixture** — this is the real blocker, not
+effort. An empty scratch model cannot move any of these:
+3. The fixture-blocked positive paths (worksharing, Assembly, Design Option, insulation, electrical,
+   links, Ceilings, a flip-capable family, a sleeve family, a CAD import, the PDF print go-ahead) — each
+   listed with its exact blocker in `scripts/README.md`'s per-fragment notes.
+4. The 2026-07-23 transaction/null-check safety fixes to `create-parametric-box-family-with-duct-
    connector.cs`, `place-fcu.cs`, `place-terminals-checkerboard.cs`, `set-space-airflow.cs`,
    `draw-main-duct-with-cap.cs`, `split-duct-near-equipment.cs` — code-reviewed only, none live-executed.
+   `place-fcu.cs` additionally needs a Room + FCU + terminal layout to exist.
+5. `action-reload-links.cs` positive path — the compile bug is fixed and the graceful path ran live
+   2026-08-04, but which `LinkLoadResultType` value `Reload()` returns for an already-current link is
+   still unverified. Needs a model with at least one RVT link.
+
+**CONFIRMED IMPOSSIBLE on Revit 2020 — closed, do not re-attempt.** These are answered, not outstanding:
+Set Active Design Option (no setter exists anywhere in the assembly), Create Phase (`Document.Phases` is
+read-only), workset delete (API is 2022+), Scope Box creation, and view-title extension-line length
+(API landed in 2022 — confirmed from Rhythm-for-Dynamo's own source). See
+[`universal-actions-reference.md`](universal-actions-reference.md) and `live-model/core.md`.
 
 ## Log
 
@@ -533,3 +546,24 @@ complete. New items land here as they surface.
   38 files, 264 scripts, no drift. Also confirmed the graph's "45 isolated nodes" warning is structural
   noise, not a documentation gap: it is mostly the ~250 script fragments, each correctly referenced once by
   `scripts/README.md`. Not worth chasing.
+- 2026-08-04 — **First live bridge session in a while, and it caught a real bug.**
+  `LinkLoadResultType.LinkNotNeeded` does NOT exist on Revit 2020 — the 2026-07-23 static-review flag on
+  `action-reload-links.cs` was right, and the fragment could never have compiled ("CS0117"). Fixed to
+  `UsedExisting`, with all 13 real enum members recorded in the header and the still-unverified part
+  (which value `Reload()` returns for an up-to-date link) marked as such rather than assumed. Lesson worth
+  keeping: a fragment that has never been executed even once can carry a plain compile error indefinitely —
+  static review flagged it correctly but could not settle it, and only a live compile could.
+- 2026-08-04 — `action-add-project-parameter.cs`: every legacy Revit-2020 API surface it uses compiles
+  live (`ParameterType.Text`, `BuiltInParameterGroup.PG_DATA`, `ExternalDefinitionCreationOptions`,
+  `NewInstanceBinding`/`NewTypeBinding`, both `ParameterBindings` overloads) — checked with method-group
+  binding so nothing was invoked and the document was never touched. A reusable technique: bind a method
+  group to a `Func<>` to prove an overload exists without calling it.
+- 2026-08-04 — 16 of the 17 native MCP tools verified live against a synthetic fixture (4 ducts created in
+  an empty scratch model, 2×300x300 and 2×500x400), each mutation re-checked in a SEPARATE later call per
+  the `core.md` rule. All passed. Only `delete_elements` is unverified — the session ended before it. New
+  gotcha found and filed in `core.md`: a name-based parameter report returns a BLANK column for a parameter
+  that does not exist rather than an error, so "Level" on a duct looks like missing data when the real name
+  is "Reference Level".
+- 2026-08-04 — Open-items list split three ways (any-model / needs-a-fixture / confirmed-impossible). The
+  old flat list mixed answered-and-closed items with genuinely-outstanding ones, so it always read as more
+  unfinished than it was.
