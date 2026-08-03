@@ -89,6 +89,18 @@ view.SetFilterOverrides(filterId, ogs);
 then `view.SetFilterVisibility(filterId, true)` then `SetFilterOverrides` as above — the filter's own
 element-matching rule is shared/reused automatically, only the per-view override + visibility needs setting.
 
+**"Change this filter's color" is ambiguous between line-only and line+fill — don't default to both.**
+Corrected live (project 4355, 2026-08-01): asked to "change filter color to black," applied
+`SetProjectionLineColor` + `SetCutLineColor` + `SetSurfaceForegroundPatternColor`/`SetCutForegroundPatternColor`
+together (matching `action-apply-view-filter.cs`'s `includeFill=true` default, which is right for a full MEP
+Color Data Standard sync). The user had to undo it in Revit — for a plain "change the color" request the
+fill/pattern is a much bigger visual change than they wanted and they hadn't asked for it. Re-applied with
+only `SetProjectionLineColor`/`SetCutLineColor` touched, `SetSurfaceForegroundPatternColor`/`SetCutForegroundPatternColor`
+left completely alone (don't even call those setters — reuse the existing `ogs` object so whatever fill
+state is already there survives untouched). **Rule going forward: an ad-hoc "set this filter/element to
+color X" request defaults to line color only; only touch fill/pattern when the user asks for fill, asks to
+"match the standard," or the request is explicitly the full MEP Color Data Standard sync workflow above.**
+
 **Verifying enum-based classification values against the real installed API, not memory**: for systems
 that don't exist in the model yet (so there's nothing to read their real classification from), get the
 authoritative list first — `Enum.GetNames(typeof(Autodesk.Revit.DB.MEPSystemClassification))` — rather
@@ -108,4 +120,52 @@ Supply/Return. Several fire-suppression types (Foam, Clean Agent, Water Mist, De
 value either and are genuine judgment calls — Autodesk's docs confirm Water Mist/Clean Agent are meant to
 be "Other"; Deluge has no authoritative single answer (candidates: Dry, Pre-Action, or Other) since it
 behaves like both (empty until activated like Dry, but detection-triggered like Pre-Action).
+
+**Classifying a view/template's filters as "mechanical" vs "electrical" — go by real category, not by
+filter name.** `ParameterFilterElement.GetCategories()` returns the actual `ICollection<ElementId>` of
+categories a filter targets; resolve each with `Category.GetCategory(doc, id).Name`. Filter *names* in a
+project can be repurposed and stop describing what they actually filter — found live (project 4355,
+template `Trg_Wip_Mech_Duct_Layout`): two filters named `..._Cable Trays_Service Type_Refrigerant Pipes
+Tray` sound mechanical (refrigerant is an HVAC service) but their real categories are `Cable Trays` /
+`Cable Tray Fittings` — Revit classifies Cable Tray under the **Electrical** discipline regardless of what
+it's being used to carry. This project routes refrigerant-pipe support trays on an Electrical-category
+element, so a name-only read of "mechanical filters on this template" would have missed that 2 of the 22
+were actually Electrical-category. A catch-all filter (e.g. `TRG_Grayout_All`) that lists dozens of
+categories spanning every discipline is neither mechanical nor electrical — it's a cross-discipline
+utility filter; don't force it into either bucket.
+
+**Site shaft-coordination sheet set — one sheet per system, built by duplicating a single "hero" template
+three times.** Built live on project 4355 (2026-08-01): 3 sheets (Duct / Piping / Electrical Cable Tray),
+each with the SAME 3 floor plans + 5 sections duplicated onto it (`views.md` § Duplicating a view template
+— same `ElementTransformUtils.CopyElements` technique, since these are templates), positioned at identical
+`Viewport.GetBoxCenter()` coordinates on every sheet so the sheets line up when flipped between. Each
+sheet gets its own Layout+Section template pair (6 templates total), all duplicated from one already-tuned
+source pair, then recolored per sheet with **one system full color (the "hero"), everything else pushed to
+a single neutral gray (this project used RGB 80,80,80), line-color only** (see the line-vs-fill rule
+above). **The key subtlety: group by what an element actually carries, not by its Revit category or which
+sheet "owns" the category.** The 2 Cable Tray-category filters here are functionally refrigerant PIPE
+trays (see the classification note above) — so on the Piping sheet they got the hero treatment alongside
+real pipes, not gray; only on the Electrical sheet (where Cable Tray is the actual hero) do real ducts AND
+real pipes both drop to gray, cable tray stays colored. Getting this grouping right required asking the
+user to restate the 3x3 (sheet × system) color matrix explicitly rather than inferring it, then verifying
+the live result back against their exact wording — a plausible-looking inferred scheme is not the same as
+a confirmed one when 3 systems × multiple filters are in play.
+
+**A "system's filters" is not just its System Type filters — Accessories/Insulation are separate filters
+easy to forget.** Found live same day: after coloring the 4 duct System Type filters (EA/FA/RA/SA) to
+80,80,80 on the piping/electrical templates, the user reported ducts still showing colored. Root cause:
+`TRG_Accessories_Duct` and `TRG_Insulation_Duct` are TWO MORE filters matching duct-category elements,
+never included in the "duct filters" pass — some Duct Access Door elements (family
+`TCM_DAD_T002_DuctAccessDoor_Rectangular`) were still rendering via `TRG_Accessories_Duct`'s untouched
+black override. Same pattern exists for `TRG_Accessories_Pipe`/`TRG_Insulation_Pipe`. **When a task says
+"color/gray out the duct filters" (or pipe/tray), audit ALL filters whose category scope includes that
+system's categories, not just the ones whose name says "System_Type."**
+
+**Diagnostic pitfall: `ParameterFilterElement.GetElementFilter()` returns `null` for a filter with no
+rule** (a pure category-scope filter, like `TRG_Accessories_Duct` — no condition, matches everything in
+its category). Calling `.PassesFilter(...)` directly on that null throws `NullReferenceException` — if
+wrapped in a bare `try { } catch { }` (as an early version of this diagnostic was), the exception is
+silently swallowed and the element reads as "no filter matched," which is wrong: a null `ElementFilter`
+means the category match is unconditional, i.e. it always passes. Guard explicitly:
+`ef == null ? true : ef.PassesFilter(doc, elementId)` — do not let a bare catch hide this.
 

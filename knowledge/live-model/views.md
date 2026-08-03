@@ -63,3 +63,18 @@ actually `inViewCollector` before reporting a discrepancy as an error.
   view.Id)` element count) before calling it done — confirms the crop/depth actually captures real model
   content instead of an accidentally-empty slice.
 
+## Duplicating a VIEW TEMPLATE — `View.Duplicate()` does not work on templates
+Confirmed live 2026-08-01: calling `.Duplicate(ViewDuplicateOption.Duplicate)` on a `View` where
+`IsTemplate == true` throws `"View cannot be duplicated"` — and `CanViewBeDuplicated(...)` returns `false`
+for every `ViewDuplicateOption` on a template, so there's no supported combination that makes the direct
+call work. Use an element copy instead, inside a `Transaction`:
+```csharp
+var copiedIds = ElementTransformUtils.CopyElements(
+    doc, new List<ElementId> { sourceTemplateId }, doc, Transform.Identity, new CopyPasteOptions());
+var newTemplate = doc.GetElement(copiedIds.First()) as View;
+```
+Revit auto-suffixes the copy's name (e.g. `SourceName1`) since template names must be unique — read
+`newTemplate.Name` back and set it to the real target name in a second transaction rather than assuming
+the suffix. The copy carries over all filters, overrides and visibility settings from the source
+unchanged; the source template itself is untouched, so anything else still using it is unaffected.
+
