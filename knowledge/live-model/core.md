@@ -138,6 +138,15 @@ rather than just act on existing ones and don't fit the filter+action shape.
   `LevelId`/level-parameter lookup silently fails for them. If level-grouping matters for an element like
   this, read its real Z coordinate (`get_Location`-style bounding-box or `LocationPoint.Point.Z`) and
   compare against known level elevations instead.
+- **A parameter report by display name gives a BLANK column for a parameter that doesn't exist — it never
+  says "no such parameter".** Verified live 2026-08-04: `report_parameters` asked for `Level` on Ducts
+  returned an empty cell on every row, which reads exactly like "the parameter is there but unset." The real
+  name on a duct is **`Reference Level`** (`BuiltInParameter.RBS_START_LEVEL_PARAM`); with that name every
+  row filled in immediately. So a blank column is ambiguous between "empty value" and "wrong parameter
+  name", and on a takeoff or a schedule that ambiguity is a silent wrong answer, not a visible error.
+  **Before reporting a blank column as missing data, confirm the name exists on one sample element** — loop
+  `element.Parameters` and print the definition names — rather than concluding the value is unset. Applies
+  to any name-based parameter read, the native tool and hand-written script alike.
 
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`
