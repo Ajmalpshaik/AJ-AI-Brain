@@ -8,7 +8,7 @@
 // GOTCHA: the mm rectangle is in the VIEW's own plane (view coordinates from its Origin along
 //         RightDirection/UpDirection) — so the same numbers work in a plan, a section, or on a sheet.
 // GOTCHA: placing a cloud in a view auto-adds that view's sheet to the Revision's sheet list (Revit
-//         behavior) — same interaction noted in ../knowledge/live-model/revisions.md.
+//         behavior) — same interaction noted in ../../knowledge/live-model/revisions.md.
 // NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
 // ============================================================
 

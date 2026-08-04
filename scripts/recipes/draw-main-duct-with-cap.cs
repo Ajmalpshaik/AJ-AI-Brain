@@ -9,13 +9,13 @@
 // PURPOSE: Draw a single main duct piece from the FCU's supply connector along the room's long axis,
 //          sized to the FCU connector, connected at the FCU end, and cap the open far end with the
 //          full sized+positioned+rotated recipe (a bare ConnectTo does NOT prove the cap is correct).
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md § Drawing a duct between two points, § Capping an open duct end
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Drawing a duct between two points, § Capping an open duct end
 // STATUS:  living document — refine in place, don't fork a v2 file. This is the most failure-prone
 //          recipe in the set (real damage happened here before) — read the full narrative in
-//          ../knowledge/live-model/hvac-ducts.md before changing this script, not just the code.
+//          ../../knowledge/live-model/hvac-ducts.md before changing this script, not just the code.
 // ============================================================
 // Does NOT include trunk-slicing for progressive duct sizing — that's a separate, higher-risk,
-// ask-first request (see ../knowledge/live-model/hvac-ducts.md § Slicing a main trunk). This script draws ONE piece.
+// ask-first request (see ../../knowledge/live-model/hvac-ducts.md § Slicing a main trunk). This script draws ONE piece.
 //
 // The whole draw+connect+cap sequence runs inside ONE TransactionGroup: any failure at any step rolls
 // back everything (duct AND cap), so a partial run never leaves an uncapped/half-connected duct behind
@@ -119,7 +119,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
         sb.AppendLine($"Drew main duct, FCU end connected. Size {UnitUtils.ConvertFromInternalUnits(supplyConn.Width, DisplayUnitType.DUT_MILLIMETERS):F0}x{UnitUtils.ConvertFromInternalUnits(supplyConn.Height, DisplayUnitType.DUT_MILLIMETERS):F0}mm.");
 
         // --- Cap the open far end: get type from Routing Preferences, duplicate a sized type, place,
-        // --- size, move, rotate, re-move, connect. See ../knowledge/live-model/hvac-ducts.md for why every step is needed.
+        // --- size, move, rotate, re-move, connect. See ../../knowledge/live-model/hvac-ducts.md for why every step is needed.
         var capRule = ductType.RoutingPreferenceManager.GetRule(RoutingPreferenceRuleGroupType.Caps, 0);
         var capSymbolId = capRule?.MEPPartId;
         var capBaseSymbol = capSymbolId != null ? Document.GetElement(capSymbolId) as FamilySymbol : null;

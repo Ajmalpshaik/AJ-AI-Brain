@@ -4,7 +4,7 @@
 //          and Connector.IsConnected can't be trusted. Bulk-clusters the whole filtered set at once
 //          (not one named path at a time), finds each circuit's open ends, and matches those to the
 //          nearest real equipment.
-// SOURCE:  ../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity (when tags/naming can't be trusted)
+// SOURCE:  ../../knowledge/live-model/mep-trace.md § Tracing real MEP connectivity (when tags/naming can't be trusted)
 // STATUS:  living document — refine in place, don't fork a v2 file.
 // LIVE-VERIFIED 2026-07-23 — FOUND AND FIXED A REAL BUG: the category-union collector below applied
 // `.WhereElementIsNotElementType()` to EACH category before `.UnionWith(...)` — confirmed via isolated
@@ -56,7 +56,7 @@ foreach (var e in candidates)
 
 // Step 2 — bulk-cluster by matching connector positions within tolerance (fallback path; try the
 // fast path first in a real run by sampling Connector.IsConnected within one MEPSystem — omitted here
-// for brevity, see ../knowledge/live-model/mep-trace.md for that shortcut).
+// for brevity, see ../../knowledge/live-model/mep-trace.md for that shortcut).
 var parent = elemConnectors.Keys.ToDictionary(id => id, id => id); // union-find
 Func<ElementId, ElementId> find = null;
 find = id => parent[id] == id ? id : (parent[id] = find(parent[id]));

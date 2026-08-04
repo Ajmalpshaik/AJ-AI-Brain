@@ -9,7 +9,7 @@
 //          a real elbow fitting at the turn, then a horizontal run tapped into the main duct via a
 //          takeoff tee. Skips the horizontal segment entirely if the terminal already lines up under
 //          the main duct's line (near-zero offset would throw a minimum-length error).
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md § Branch duct from a terminal to a main duct
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Branch duct from a terminal to a main duct
 // STATUS:  living document — refine in place, don't fork a v2 file.
 // GOTCHA (flagged 2026-07-23 static review): the riser is drawn VERTICALLY by design — correct for a
 //         ceiling diffuser whose duct connector points up, but a side-inlet terminal (connector pointing
