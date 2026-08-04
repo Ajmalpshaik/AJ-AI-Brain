@@ -28,14 +28,22 @@ foreach (var e in elements)
     groups[size] = Tuple.Create(cur.Item1 + 1, cur.Item2 + lenMm);
 }
 
-// Sort key: parse the leading number(s) out of the size string ("450x250" -> 450,250; "250Ã¸" -> 250,250)
+// Sort key: parse the leading number(s) out of the size string ("450x250" -> 450,250; "250ø" -> 250,250)
 // so rows read smallest-to-largest like a Revit schedule, not by qty/length. the user's standing rule
 // (2026-07-18, see reply-style.md) — never sort a size breakdown by qty or length.
+// Strip every non-numeric decoration rather than one named symbol: round sizes arrive as "250ø", "ø250"
+// or "DN200" depending on the family, and a literal diameter symbol in this file is itself fragile — it
+// was silently double-encoded once by an ANSI read-modify-write, after which the Replace matched nothing,
+// TryParse failed, and every round size sorted as 0 (see brain-log 2026-08-04). Keeping the comparison
+// logic pure ASCII means that class of corruption can't break this sort again.
 Func<string, Tuple<double, double>> sizeSortKey = s =>
 {
-    var parts = s.Replace("Ã¸", "").Split('x');
+    var cleaned = new string((s ?? "").Select(c => char.IsDigit(c) || c == '.' || c == 'x' || c == 'X' ? c : ' ').ToArray());
+    var parts = cleaned.Replace('X', 'x').Split(new[] { 'x' }, StringSplitOptions.RemoveEmptyEntries);
     double a = 0, b = 0;
-    double.TryParse(parts[0], out a);
+    // "unknown" / a blank Size parameter legitimately yields no parts — sort those first at 0,0 rather
+    // than indexing into an empty array.
+    if (parts.Length > 0) double.TryParse(parts[0], out a);
     if (parts.Length > 1) double.TryParse(parts[1], out b); else b = a;
     return Tuple.Create(a, b);
 };

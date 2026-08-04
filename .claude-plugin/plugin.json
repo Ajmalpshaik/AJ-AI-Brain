@@ -1,7 +1,7 @@
 {
   "name": "aj-ai-brain",
   "version": "1.0.0",
-  "description": "Ajmal's portable Revit/BIM brain: 8 skills for live Revit model work through the AJ AI Bridge (live model queries and edits, HVAC terminal layout, space airflow, duct routing, MEP connectivity verify, MEP tracing, family creation, brain self-maintenance), plus the bundled MCP relay server that talks to the Revit-side bridge listener.",
+  "description": "Ajmal's portable Revit/BIM brain: 9 skills for live Revit model work through the AJ AI Bridge (live model queries and edits, HVAC terminal layout, space airflow, duct routing, fire sprinkler layout and NFPA 13 spacing checks, MEP connectivity verify, MEP tracing, family creation, brain self-maintenance), plus the bundled MCP relay server that talks to the Revit-side bridge listener.",
   "author": {
     "name": "Ajmal Alavudheen",
     "email": "ajmalnattika@gmail.com"

@@ -16,7 +16,7 @@ connectivity. This skill exists to verify the real thing instead of reporting a 
 1. **Ping first**: `mcp__aj-tools-aj-ai__ping`. If Revit isn't connected, say so plainly — a trace
    needs the live model, there's no static fallback.
 2. **Check [`glossary.md`](../../knowledge/glossary.md)** for the system-name mapping and for any pairing
-   already traced and recorded (e.g. the CRAC Aâ†”B pattern) — don't re-trace what's already confirmed.
+   already traced and recorded (e.g. the CRAC A↔B pattern) — don't re-trace what's already confirmed.
 3. **Check [`live-model/mep-trace.md`](../../knowledge/live-model/mep-trace.md)** for the bulk-clustering trace
    method and the color-coding pattern before writing new C#.
 4. **Start from [`scripts/recipes/trace-mep-circuits.cs`](../../scripts/recipes/trace-mep-circuits.cs)**
@@ -48,7 +48,7 @@ system-type name(s) to filter on before starting.
    `live-model/mep-trace.md`.
 4. **Report what you actually found**, even if it contradicts what the naming would suggest — that
    contradiction is often the useful finding, not a mistake to paper over. Check `glossary.md` first in
-   case this exact pairing was already traced and recorded (e.g. the CRAC Aâ†”B pattern) — no need to
+   case this exact pairing was already traced and recorded (e.g. the CRAC A↔B pattern) — no need to
    re-trace something already confirmed.
 5. **If asked to color-code the result**: apply per-element `OverrideGraphicSettings` (line color AND
    solid surface fill — see `live-model/mep-trace.md` for the exact pattern; the user specifically wants both, not
@@ -72,6 +72,6 @@ verified or resolved from an already-documented pattern.
   `trace-mep-circuits.cs` in place, rather than letting the improvement live only in this conversation.
 - **Never assume a pattern found for one system automatically holds for every other similar system** —
   confirm each one by tracing, at least the first time. Once several instances confirm the same pattern
-  (as happened here — all 4 CRAC systems showed the same Aâ†”B cross-connection), it's reasonable to say so
+  (as happened here — all 4 CRAC systems showed the same A↔B cross-connection), it's reasonable to say so
   explicitly and treat it as an established, documented fact going forward — that's exactly what
   `glossary.md` is for.

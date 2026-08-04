@@ -18,6 +18,7 @@ picture in one document if you'd rather read start-to-finish.
 | [`ajtools-hvac-terminal-layout`](skills/ajtools-hvac-terminal-layout/SKILL.md) | Placing HVAC air terminals (count + layout) |
 | [`ajtools-hvac-space-airflow`](skills/ajtools-hvac-space-airflow/SKILL.md) | Calculating/updating a room's Space airflow |
 | [`ajtools-hvac-duct-routing`](skills/ajtools-hvac-duct-routing/SKILL.md) | Placing an FCU, drawing/connecting ductwork |
+| [`ajtools-fire-sprinkler-layout`](skills/ajtools-fire-sprinkler-layout/SKILL.md) | Fire fighting — sprinkler head layout and NFPA 13 spacing checks |
 | [`ajtools-mep-connectivity-verify`](skills/ajtools-mep-connectivity-verify/SKILL.md) | Checking whether ductwork already built is still fully connected |
 | [`ajtools-mep-trace`](skills/ajtools-mep-trace/SKILL.md) | Figuring out unknown/ambiguous real MEP connectivity (what connects to what) |
 | [`ajtools-family-creation`](skills/ajtools-family-creation/SKILL.md) | Building a brand-new parametric family (.rfa) in the Family Editor |
@@ -29,9 +30,9 @@ picture in one document if you'd rather read start-to-finish.
   [`knowledge/INDEX.md`](knowledge/INDEX.md))
 - `scripts/` — reusable C# fragments (filters, actions, creators, context, recipes — see
   [`scripts/README.md`](scripts/README.md))
-- `tools/` — `invoke-bridge.ps1` (fallback bridge caller) and `verify-consistency.ps1` (checks links/frontmatter across this whole folder; `verify-consistency.mjs` is the same three checks in portable Node, for sessions with no PowerShell — e.g. Claude Code on the web; `verify-consistency-hook.ps1` wraps it as the auto-run edit hook wired in `.claude/settings.json`)
+- `tools/` — `invoke-bridge.ps1` (fallback bridge caller) and `verify-consistency.ps1` (six drift checks over this whole folder: skill frontmatter, markdown link targets, scripts-README-vs-disk, skill coverage in the entry docs, AGENT-SPEC's fragment counts, and text encoding; `verify-consistency.mjs` is the same six checks in portable Node, for sessions with no PowerShell — e.g. Claude Code on the web; `verify-consistency-hook.ps1` wraps it as the auto-run edit hook wired in `.claude/settings.json`)
 - `mcp-server/` — the Node.js relay that talks to a Revit-side bridge listener (see [`SETUP.md`](SETUP.md) step 2)
-- `.claude-plugin/` — makes this whole repo installable as a Claude Code **plugin** (all 8 skills + the MCP relay in one install — see [`SETUP.md`](SETUP.md) step 1, Option A)
+- `.claude-plugin/` — makes this whole repo installable as a Claude Code **plugin** (all 9 skills + the MCP relay in one install — see [`SETUP.md`](SETUP.md) step 1, Option A)
 
 ## What this deliberately does NOT cover
 
