@@ -14,7 +14,7 @@
 // overlap", not "preserve why this tag was on this side". v3 fixes this by deciding each tag's final
 // position ONCE, scored against a live registry of everything placed so far — so a later tag simply
 // never chooses a position that clashes, instead of clashing then being dragged away from its correct
-// side afterward. See ../knowledge/live-model/tagging.md § Registry-based scored placement for the full writeup.
+// side afterward. See ../../knowledge/live-model/tagging.md § Registry-based scored placement for the full writeup.
 // ------------------------------------------------------------
 // GOTCHA — tag SIDE is scored, not fixed (the user, 2026-07-14): earlier "always below / always right"
 // rule was too rigid — the user confirmed above OR below is fine, but must be CONSISTENT and must not force
@@ -39,11 +39,11 @@
 // GOTCHA — check view.Scale FIRST, always (the user, 2026-07-13, standing rule): every mm-based clearance
 // below is computed from one shared viewScaleRatio, computed as literally the first step. A clearance
 // tuned at one view scale silently breaks the moment the view scale changes (already caused a real
-// 546-tag regression once) — see ../knowledge/live-model/tagging.md § Check view.Scale FIRST.
+// 546-tag regression once) — see ../../knowledge/live-model/tagging.md § Check view.Scale FIRST.
 // GOTCHA — tag type: use Document.GetDefaultFamilyTypeId(tagCategory.Id), not a hardcoded family name —
 // matches whatever Revit's own "Tag by Category" would use. ALSO: IndependentTag.Create()'s symId
 // argument is not reliable — always verify tag.GetTypeId() after Create() and force it with
-// ChangeTypeId() if it doesn't match. Full detail in ../knowledge/live-model/tagging.md.
+// ChangeTypeId() if it doesn't match. Full detail in ../../knowledge/live-model/tagging.md.
 // GOTCHA — leader side must be REAL flow direction (the user, 2026-07-13, confirmed): for horizontal
 // ducts, read Connector.Direction (In/Out) off the duct's own ConnectorManager and extend the leader
 // toward the downstream (Out) side — not a geometric guess. This project's model already has calculated
@@ -62,7 +62,7 @@ double levelToleranceMm = 1.0;             // endpoint Z difference below this c
 // baseline FULL tag box size measured at view scale 1:50 (this project's default duct tag family) —
 // used as the starting size ESTIMATE for scoring before any real tag has been placed this run; refined
 // by a running average of REAL measured boxes as soon as a few tags exist. Re-measure if using a
-// different tag family — see the gotcha in ../knowledge/live-model/tagging.md § Registry-based scored placement.
+// different tag family — see the gotcha in ../../knowledge/live-model/tagging.md § Registry-based scored placement.
 double baselineTagWidthMm = 790.0;
 double baselineTagHeightMm = 486.0;
 // ---- END INPUTS ----
@@ -587,7 +587,7 @@ using (var txFix = new Transaction(doc, "Correct elbow clearance using real meas
 // PASS D — residual tag-vs-tag / tag-vs-duct cleanup (ad hoc, only fires if registry placement left a
 // residual — confirmed 2026-07-14 this is NOT automatic from PASS A/B/C alone: a dense pocket's "forced"
 // tags (bestT1 == null path) can still land overlapping each other or nearby duct geometry). Combined
-// loop per ../knowledge/live-model/tagging.md "resolve together, not sequentially" — moves ONLY the straight-leader tag
+// loop per ../../knowledge/live-model/tagging.md "resolve together, not sequentially" — moves ONLY the straight-leader tag
 // of a clashing pair (L-shaped stays put, per the user's "no need to move" feedback); tag-vs-duct always
 // moves the tag (the duct never moves). Bounded iteration cap — a genuine geometric deadlock in one dense
 // pocket does NOT always fully converge; report the residual honestly, don't claim clash-free if the cap

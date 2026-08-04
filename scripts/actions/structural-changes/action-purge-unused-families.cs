@@ -14,7 +14,7 @@
 //         only loadable families (.rfa content) are in scope.
 // GOTCHA: the DRY-RUN message wording is deliberately mild. The bridge's destructive-op guard scores the
 //         whole script's TEXT cumulatively — several deletion words together refuse even a read-only run
-//         (story in ../knowledge/live-model/core.md, found 2026-07-26).
+//         (story in ../../../knowledge/live-model/core.md, found 2026-07-26).
 // ✓ LIVE-VERIFIED (dry-run) 2026-07-26 on Project1 — correctly found 184 of 184 family types unused and
 //   107 entirely unused families. The real delete path is still unexercised.
 // ============================================================

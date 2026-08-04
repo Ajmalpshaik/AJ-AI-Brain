@@ -2,7 +2,7 @@
 // Portable (cross-platform, no PowerShell needed) equivalent of verify-consistency.ps1 — for sessions
 // running on Linux/macOS/Claude Code on the web, where `pwsh`/Windows PowerShell isn't available.
 //
-// Same six checks, same job: catch drift in this Brain's cross-references before it goes stale.
+// Same seven checks, same job: catch drift in this Brain's cross-references before it goes stale.
 // Kept in sync by hand with verify-consistency.ps1 — if you change what one checks, change both.
 //
 // Usage: node tools/verify-consistency.mjs
@@ -264,6 +264,27 @@ for (const f of textFiles) {
   });
 }
 console.log(`Checked ${textFiles.length} text file(s) for double-encoded characters.`);
+
+// === 7. Cross-references inside script fragments ===
+// Fragment headers point at the knowledge file that explains them ("// SOURCE: ../../knowledge/..."),
+// which is how an agent gets from a piece of code to the reasoning behind it. These are plain C#
+// comments, NOT markdown links, so check 2 never saw them - and 19 of them were silently broken, every
+// recipe/command/context/creator fragment using ../knowledge/ where its depth needed ../../knowledge/.
+// An agent following one landed on nothing.
+console.log("\n=== 7. Cross-references inside script fragments ===");
+let fragRefCount = 0;
+for (const f of walk(scriptsDir, (n) => n.endsWith(".cs"))) {
+  const content = fs.readFileSync(f, "utf8");
+  for (const m of content.matchAll(/\.\.[./]*[\w./-]*\.md/g)) {
+    fragRefCount++;
+    const resolved = path.resolve(path.dirname(f), m[0]);
+    if (!fs.existsSync(resolved)) {
+      const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+      issues.push(`BROKEN FRAGMENT REF in ${rel}: '${m[0]}' does not resolve (check the ../ depth for this file's folder)`);
+    }
+  }
+}
+console.log(`Checked ${fragRefCount} cross-reference(s) inside script fragments.`);
 
 // === Result ===
 console.log("\n=== Result ===");

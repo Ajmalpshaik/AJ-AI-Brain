@@ -575,6 +575,39 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`tools/brain-status.mjs` — one honest answer to "what is the state of this Brain?"**
+  Counts, how much of the library has actually been run against a real model, open items, oversized
+  files, and drift, all computed from disk on every run and stored nowhere, because the recurring
+  failure in this repo has been its own documentation getting ahead of reality. Wired as a SessionStart
+  hook, so a fresh session knows before it acts instead of trusting a summary. `--full`,
+  `--capabilities` (what this Brain can actually do, generated not written down) and `--json`. Stance is
+  the user's call, 2026-08-04: **warn and keep working** — report what's unproven, never block. First run
+  surfaced three knowledge files past the repo's own ~300-line split rule (`hvac-ducts.md` 379,
+  `tagging.md` 325, `universal-actions-reference.md` 309).
+- 2026-08-04 — **19 fragment `// SOURCE:` headers pointed at nothing.** Every recipe/command/context/
+  creator fragment used `../knowledge/...` where its folder depth needed `../../knowledge/...`, and two
+  `actions/*/` ones needed `../../../`. That header is how an agent gets from a piece of code to the
+  reasoning behind it, so following one landed on a missing file. They are plain C# comments rather than
+  markdown links, which is exactly why check 2 never saw them. All 19 repaired by recomputing each path
+  from its real location, and check 7 added to both verifiers — 50 refs now checked every run.
+- 2026-08-04 — **The edit hook had never once fired in a non-Windows session.** `.claude/settings.json`
+  hardcoded `powershell`, so on Claude Code for web (and any Linux/macOS container) the PostToolUse hook
+  silently did nothing — no warning, no output. An entire session of ~18 edits went through with zero
+  automatic checking; the drift found that day was caught only because the checker was run by hand.
+  Now wired to `tools/verify-consistency-hook.mjs`, which runs the portable checker with identical
+  semantics (quiet exit 0 when clean, exit 2 + stderr on drift so the model sees it in the same turn).
+  Node is the safer dependency: this repo already requires it for the MCP relay, and it exists on all
+  three platforms. The `.ps1` wrapper is kept for a Windows machine with no Node on PATH. Lesson worth
+  keeping: a guard that fails silently on a platform is worse than no guard, because it reads as passing.
+- 2026-08-04 — Routing spot-check by walking one real question ("what is the maximum duct size used?")
+  end to end. The routing itself is fine — START-HERE → `ajtools-live-model` → `model_summary` fast path,
+  2-3 files read out of 264 scripts and 38 documents, no folder scan. But the question is ambiguous in a
+  way nothing recorded: round ducts carry Diameter, rectangular carry Width × Height, no single number
+  ranks them together, and the size-breakdown table's last row is the largest FIRST dimension rather than
+  the largest duct. The skill sends the agent to `glossary.md` for exactly this, and `glossary.md` had no
+  "size" entry — so a fresh session would have routed fast and then answered confidently wrong. Entry
+  added. Worth repeating as a technique: pick a real question, walk it, and see what the router actually
+  lands on.
 - 2026-08-04 — `verify-consistency.ps1`/`.mjs` grew checks 4-6, because checks 1-3 could not see any of
   the three problems above: skill coverage in the entry docs, AGENT-SPEC's fragment counts vs disk, and a
   mojibake scan. The encoding check builds its patterns by *simulating* the corruption (UTF-8 encode, then
