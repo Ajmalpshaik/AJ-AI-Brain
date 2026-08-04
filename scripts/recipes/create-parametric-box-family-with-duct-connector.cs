@@ -39,7 +39,11 @@ string defaultTypeName = "Default"; // rename after AJ_ discussion, e.g. "600x60
 
 if (!Document.IsFamilyDocument) return "Active document is not a family document — open the family and make it active first.";
 
-using Autodesk.Revit.DB;
+// NOTE: there was a `using Autodesk.Revit.DB;` line here. A using DIRECTIVE is only legal at the
+// top of a file, and a fragment is pasted into the MIDDLE of a composed script — so the compiler
+// read it as a using STATEMENT and failed with CS1001 before reaching any real code. The bridge
+// already supplies that namespace (every other fragment names FilteredElementCollector unqualified),
+// so the line was pure breakage. Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
 var fm = Document.FamilyManager;
 double LFt(double mm) => UnitUtils.ConvertToInternalUnits(mm, DisplayUnitType.DUT_MILLIMETERS);
 double MM(double ft) => UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);

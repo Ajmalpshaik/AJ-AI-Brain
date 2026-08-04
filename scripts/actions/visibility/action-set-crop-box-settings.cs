@@ -42,8 +42,19 @@ using (var t = new Transaction(Document, "AJ Tools - Set Crop Box Settings"))
             }
             if (annotationCropActive.HasValue)
             {
-                try { view.AnnotationCropActive = annotationCropActive.Value; annoSet++; }
-                catch (Exception ex) { failures.Add($"'{view.Name}' AnnotationCropActive: {ex.Message}"); }
+                // View.AnnotationCropActive does NOT exist on Revit 2020 — the property was added later.
+                // The try/catch that used to wrap it was worthless: a missing member is a COMPILE error
+                // (CS1061), not a runtime exception, so this fragment never built at all. The 2020 route
+                // is the built-in parameter, which is what the UI checkbox drives anyway.
+                // Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
+                try
+                {
+                    var annoParam = view.get_Parameter(BuiltInParameter.VIEWER_ANNOTATION_CROP_ACTIVE);
+                    if (annoParam == null || annoParam.IsReadOnly)
+                        failures.Add($"'{view.Name}' AnnotationCrop: parameter missing or read-only on this view type");
+                    else { annoParam.Set(annotationCropActive.Value ? 1 : 0); annoSet++; }
+                }
+                catch (Exception ex) { failures.Add($"'{view.Name}' AnnotationCrop: {ex.Message}"); }
             }
         }
         t.Commit();

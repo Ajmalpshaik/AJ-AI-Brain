@@ -50,7 +50,11 @@ else
             var definition = schedule.Definition;
             if (!string.IsNullOrEmpty(keyName))
             {
-                try { definition.SetKeyName(keyName); }
+                // ScheduleDefinition.SetKeyName does NOT exist on Revit 2020. The try/catch around it
+                // was worthless — a missing method is a COMPILE error (CS1061), not a runtime one, so
+                // this fragment never built. The 2020 route is the settable property on the schedule
+                // itself. Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
+                try { schedule.KeyScheduleParameterName = keyName; }
                 catch (Exception exKey) { sb.AppendLine($"  Key parameter NOT renamed to '{keyName}': {exKey.Message}"); }
             }
 
