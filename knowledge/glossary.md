@@ -90,8 +90,25 @@ values with your own project's real ones as you go.
 - **"Hexagonal" / "staggered" grid (device layout)** → the same thing: alternate rows shifted by half the
   in-row spacing. Worth knowing it is NOT automatically the cheaper option inside a room, despite the
   textbook plane result — see the gotchas in `generate-room-coverage-layout.cs` before quoting a saving.
+- **"Biggest/maximum size" of a duct or pipe → ambiguous, and there is no single right answer.**
+  Rectangular ducts carry **Width × Height**; round ducts carry **Diameter**. No one number ranks the two
+  kinds together, so `1200x600`, `900ø` and `800x800` are each "the biggest" under a different rule —
+  largest first dimension, largest single dimension, or largest cross-sectional area. **The size-breakdown
+  table is sorted by first number then second** (`action-count-and-report.cs`,
+  `action-report-length-by-size.cs`), so its last row is the largest *first dimension*, NOT necessarily the
+  largest duct. Don't report that row as "the maximum" without saying which rule it reflects — ask which
+  measure the user means, or give the breakdown table and state the rule plainly.
+  Separately, **"size" itself points at two different data sources**: the `Size` *string* parameter
+  (`RBS_CALCULATED_SIZE`, e.g. `"450x250"` or `"250ø"`, one text value covering both shapes) versus the
+  individual numeric Width / Height / Diameter parameters. The string is right for grouping and display;
+  the numerics are right for comparing, filtering or sorting. Pick deliberately — they answer different
+  questions, and only the numerics can be compared across round and rectangular.
 
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one
   rather than assuming.
+- 2026-08-04 — "the maximum duct size" has no single right answer: round carries Diameter, rectangular
+  carries Width × Height, and the breakdown table's last row is the largest FIRST dimension, not the
+  largest duct. Found by walking that exact question through the routing to see what a fresh session
+  would do with it.
