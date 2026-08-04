@@ -377,6 +377,12 @@ The original 9 live-verified 2026-07-22, zero bugs; newer ones marked individual
 |---|---|
 | [`examples/color-isolate-select-by-size.cs`](examples/color-isolate-select-by-size.cs) | filter-by-category-and-numeric-param + 3 chained actions, the user's own worked scenario |
 | [`examples/purge-unused-view-templates.cs`](examples/purge-unused-view-templates.cs) | filter-by-view-templates.cs (usage="unused") + action-delete-elements.cs — a destructive composition, run the filter alone first per the file's own MANDATORY note |
+| [`examples/prelude-smoke-test.cs`](examples/prelude-smoke-test.cs) | Verifies every helper in `lib/prelude.cs` in ONE call — units, view targeting, collecting, parameters, level, size sort, and both the commit AND rollback paths of the transaction wrapper. Read-only in effect (its two transactions change nothing). Run this before trusting the prelude — NOT yet live-verified (2026-08-04, written without Revit) |
+
+### Shared toolkit (`lib/`)
+| Fragment | Job |
+|---|---|
+| [`lib/prelude.cs`](lib/prelude.cs) | The helpers 150+ fragments each re-implement — `InTransaction`/`InTransactionGroup` (start/commit/rollback/report), `ToFeet`/`ToMm`, `ResolveView`, `ParamOf`/`ParamText` (missing vs blank kept distinct), `LevelIdOf`, `CollectOf`, `SizeSortKey`. Paste FIRST, before the filter. **Additive — declares no name an existing fragment declares, in particular not `sb` or `elements`, so it composes with un-migrated fragments unchanged.** The real win is one place to be wrong: `DisplayUnitType` is named here twice instead of in 80 files, so a Revit 2021+ port is a two-line edit — NOT yet live-verified (2026-08-04, assembled from proven parts but never compiled; run `examples/prelude-smoke-test.cs` first) |
 
 
 ## The rules that apply to every script
@@ -467,6 +473,12 @@ they're safe to reuse blindly.
    run, into one script. Every fragment shares the same two variable names — `elements` and `sb` — so
    they chain without any glue code. None of them end in `return`; you add exactly one
    `return sb.ToString();` as the very last line of the whole composed script.
+   **Optionally paste [`lib/prelude.cs`](lib/prelude.cs) ahead of the filter** when a fragment you are
+   writing or editing wants its helpers (`InTransaction`, `ToFeet`/`ToMm`, `ResolveView`, `ParamText`,
+   `LevelIdOf`, `CollectOf`, `SizeSortKey`). It is optional today: no shipped fragment requires it, and
+   it declares no name any fragment already declares, so adding it never breaks a composition. New
+   fragments should prefer it — it is the one place `DisplayUnitType`, transaction rollback and the
+   missing-vs-blank parameter rule are written down, instead of the 80/150/38 copies that exist now.
 4. Fill in every `INPUTS` block with today's actual values — nothing pre-filled in these files is a
    default, per the rule below.
 5. Run the composed script via `mcp__aj-tools-aj-ai__run_csharp`.

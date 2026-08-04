@@ -92,7 +92,7 @@ const readmePath = path.join(scriptsDir, "README.md");
 // moment scripts/actions/ was reorganized into job-grouped subfolders — see brain-log.md 2026-07-22.
 // Paths below are always the FULL path relative to scripts/, subfolders included, so a nested file like
 // actions/color-graphics/action-x.cs is checked against that exact string, not a flattened one.
-const topLevelBuckets = ["filters", "actions", "recipes", "creators", "commands", "examples", "context"];
+const topLevelBuckets = ["filters", "actions", "recipes", "creators", "commands", "examples", "context", "lib"];
 
 if (fs.existsSync(readmePath)) {
   const readmeContent = fs.readFileSync(readmePath, "utf8");
@@ -174,7 +174,7 @@ const specPath = path.join(brainRoot, "AGENT-SPEC.md");
 if (fs.existsSync(specPath)) {
   const flat = fs.readFileSync(specPath, "utf8").replace(/\s+/g, " ");
   const countRe =
-    /(\d+) real C# fragments in `scripts\/` \((\d+) filters, (\d+) actions, (\d+) creators, (\d+) commands, (\d+) recipes, (\d+) examples, (\d+) read-only/;
+    /(\d+) real C# fragments in `scripts\/` \((\d+) filters, (\d+) actions, (\d+) creators, (\d+) commands, (\d+) recipes, (\d+) examples, (\d+) read-only `context\/` fragments, (\d+) shared/;
   const m = flat.match(countRe);
   if (!m) {
     issues.push(
@@ -184,6 +184,7 @@ if (fs.existsSync(specPath)) {
     const claimed = {
       total: Number(m[1]), filters: Number(m[2]), actions: Number(m[3]), creators: Number(m[4]),
       commands: Number(m[5]), recipes: Number(m[6]), examples: Number(m[7]), context: Number(m[8]),
+      lib: Number(m[9]),
     };
     const actual = { total: 0 };
     for (const bucket of topLevelBuckets) {
