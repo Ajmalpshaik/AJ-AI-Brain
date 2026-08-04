@@ -18,6 +18,15 @@ and "already done" together and so always read as unfinished.
 
 **Doable in any session (no Revit):** none right now.
 
+**Needs Ajmal's machine, but NOT a bridge or an open model** — only Revit *installed*, for its DLLs:
+1. Run `tools\verify-fragments-compile.ps1` once. It compile-checks all 266 fragments against the real
+   `RevitAPI.dll` in about a minute and turns the 147 never-run fragments into a pass/fail list. Needs a
+   **Roslyn** `csc.exe`, not the C# 5 one in `C:\Windows\Microsoft.NET\Framework64` — 69 fragments use
+   C# 7 pattern matching, so the old compiler would report hundreds of failures that aren't real; the
+   script detects this and says so rather than producing a misleading run. Migrating fragments onto
+   `lib/prelude.cs` waits on this: refactoring code that has never been compiled leaves no way to tell a
+   new break from an old one.
+
 **Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
    client never sends (fixed to no-BOM that day, matching the proven client byte-for-byte, but the
@@ -575,6 +584,23 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`tools/verify-fragments-compile.ps1` — compile-check all 266 fragments without opening
+  Revit.** Closes the gap that let `action-reload-links.cs` carry `LinkLoadResultType.LinkNotNeeded` — an
+  enum member that does not exist on 2020 — for months: static review flagged it and could not settle it,
+  only a compile could. Each fragment is wrapped in a harness class supplying what the bridge supplies
+  (`Document`/`doc`/`UIDocument`/`uidoc`/`Application`/`UIApplication`) plus `sb`/`elements` when the
+  fragment doesn't declare them, then compiled as a library and thrown away. **Whether to inject is
+  decided from the CODE, not the header prose** — `ASSUMES:` lines come in a dozen wordings, but "does
+  this file declare `sb`?" is unambiguous; comment lines are stripped first, because several fragments
+  (including the prelude) quote `var sb = new ...` inside a comment and would otherwise be mis-detected.
+  A `#line` directive maps every error back to the fragment's own line numbers.
+  Two things it deliberately refuses to fudge: it requires a **Roslyn** `csc.exe` and explains why the
+  C# 5 Framework one would produce hundreds of false failures (69 fragments use C# 7 pattern matching),
+  and its header states plainly that compiling is a floor, not a ceiling — a fragment that compiles can
+  still delete the wrong elements.
+  Validated as far as possible without Revit: parses clean under PowerShell, and `-DryRun` generated all
+  266 wrappers with zero duplicate `sb` declarations and correct per-fragment injection. The compile
+  itself is unrun — that needs a machine with Revit installed.
 - 2026-08-04 — **`scripts/lib/prelude.cs` — the shared toolkit the library never had.** Measured first:
   150 of 264 fragments carry their own `Transaction`+rollback, 136 their own collector setup, 80 their
   own `DisplayUnitType` call, 38 their own parameter lookup. The prelude holds `InTransaction`/
