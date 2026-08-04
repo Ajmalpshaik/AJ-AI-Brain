@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"tools/verify-consistency-hook.ps1\""
+            "command": "node \"tools/verify-consistency-hook.mjs\""
           }
         ]
       }
