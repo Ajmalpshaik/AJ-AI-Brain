@@ -22,10 +22,15 @@
       5. AGENT-SPEC.md section 3.5's fragment counts match what's actually on disk.
       6. No file contains double-encoded (mojibake) text - the signature of a UTF-8 file
          read as ANSI and written back, which CLAUDE.md warns about.
+      7. Every relative .md reference inside a scripts/**/*.cs fragment resolves - the
+         "// SOURCE: ../../knowledge/..." headers that link a fragment to its reasoning.
+         These are plain C# comments, not markdown links, so check 2 never saw them.
 
     Checks 4-6 were added 2026-08-04 after an audit found the fire sprinkler skill missing
     from README/SETUP/plugin.json, AGENT-SPEC 58 fragments out of date, and a corrupted
     string literal silently breaking a sort - none of which checks 1-3 could see.
+    Check 7 followed the same day, after 19 fragment SOURCE headers turned out to point at
+    nothing (../knowledge/ from a folder whose depth needed ../../knowledge/).
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File tools\verify-consistency.ps1
@@ -259,6 +264,25 @@ foreach ($file in $textFiles) {
     }
 }
 Write-Host ("Checked {0} text file(s) for double-encoded characters." -f @($textFiles).Count)
+
+Write-Host "`n=== 7. Cross-references inside script fragments ===" -ForegroundColor Cyan
+# Fragment headers point at the knowledge file that explains them ("// SOURCE: ../../knowledge/..."),
+# which is how an agent gets from a piece of code to the reasoning behind it. These are plain C#
+# comments, NOT markdown links, so check 2 never saw them - and 19 were silently broken, every
+# recipe/command/context/creator fragment using ../knowledge/ where its depth needed ../../knowledge/.
+$fragRefCount = 0
+foreach ($frag in Get-ChildItem -Path $scriptsDir -Filter "*.cs" -Recurse -ErrorAction SilentlyContinue) {
+    $content = [System.IO.File]::ReadAllText($frag.FullName, [System.Text.Encoding]::UTF8)
+    foreach ($m in [regex]::Matches($content, '\.\.[./]*[\w./-]*\.md')) {
+        $fragRefCount++
+        $resolved = [System.IO.Path]::GetFullPath((Join-Path $frag.DirectoryName $m.Value))
+        if (-not (Test-Path $resolved)) {
+            $rel = $frag.FullName.Substring($brainRoot.Length).TrimStart('\', '/')
+            $issues.Add("BROKEN FRAGMENT REF in " + $rel + ": '" + $m.Value + "' does not resolve (check the ../ depth for this file's folder)")
+        }
+    }
+}
+Write-Host ("Checked {0} cross-reference(s) inside script fragments." -f $fragRefCount)
 
 Write-Host "`n=== Result ===" -ForegroundColor Cyan
 if ($issues.Count -eq 0) {

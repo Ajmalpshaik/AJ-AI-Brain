@@ -8,7 +8,7 @@
 // PURPOSE: Place an FCU (Mechanical Equipment) in a room at the given ceiling-void height, optionally
 //          shift it toward the room's door (perpendicular-to-wall axis only), and rotate its real
 //          supply-air connector to face the centroid of the room's air terminals.
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md § Placing equipment relative to a door, § Rotating equipment to face
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Placing equipment relative to a door, § Rotating equipment to face
 //          a target direction
 // STATUS:  living document — refine in place, don't fork a v2 file.
 // ============================================================

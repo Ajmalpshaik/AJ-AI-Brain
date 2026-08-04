@@ -4,7 +4,7 @@
 //          HVAC Airflow, Piping Flow, etc.) and what display unit each is currently set to — e.g. is
 //          this project in mm or m, CFM or L/s. Read-only, zero input, safe to call anytime.
 // GOTCHA: this project's live Revit is 2020 — uses the old `UnitType`/`DisplayUnitType` API, not the
-//         2021+ `ForgeTypeId`/`UnitTypeId` API. See ../knowledge/live-model/core.md's unit-conversion notes.
+//         2021+ `ForgeTypeId`/`UnitTypeId` API. See ../../knowledge/live-model/core.md's unit-conversion notes.
 // ============================================================
 
 var sb = new System.Text.StringBuilder();

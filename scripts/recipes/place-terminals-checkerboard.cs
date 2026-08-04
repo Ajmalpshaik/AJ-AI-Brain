@@ -2,7 +2,7 @@
 // SCRIPT: place-terminals-checkerboard.cs
 // PURPOSE: Place a room's brand-new supply/return air terminals in a near-square checkerboard grid
 //          with matched supply/return counts, and set each instance's own Flow parameter.
-// SOURCE:  ../knowledge/live-model/hvac-terminals.md § HVAC air terminal layout (checkerboard grid, near-square row count,
+// SOURCE:  ../../knowledge/live-model/hvac-terminals.md § HVAC air terminal layout (checkerboard grid, near-square row count,
 //          grid orientation auto-detect, duplicate-"Flow"-parameter gotcha)
 // STATUS:  living document — refine in place, don't fork a v2 file.
 // ============================================================

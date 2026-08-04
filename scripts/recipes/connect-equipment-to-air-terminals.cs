@@ -5,7 +5,7 @@
 //          300x300 (or terminal-size) branch -> elbow -> vertical drop into each terminal's up-facing
 //          connector -> extend main past the LAST branch -> end cap. Ajmal's connection method,
 //          proven live 2026-07-26 (8-FCU exercise, then full 6-terminal system, 0 failures).
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md ("Connecting equipment to terminals" section)
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md ("Connecting equipment to terminals" section)
 // STATUS:  living document - refine in place, don't fork a v2 file.
 // ============================================================
 // THE METHOD (never draw blind - element -> connectors -> domain/size -> direction -> then draw):

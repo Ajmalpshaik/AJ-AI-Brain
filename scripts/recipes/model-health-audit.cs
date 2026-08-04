@@ -14,7 +14,7 @@
 // GOTCHA: the OUTPUT WORDING is deliberately mild ("Unused, removable later" not "Purgeable", "see" not
 //         "delete via"). The bridge's destructive-operation guard scores the whole script's TEXT, including
 //         plain output strings, and several deletion words together tripped it on this read-only script
-//         (found live 2026-07-26 — story in ../knowledge/live-model/core.md). Keep the wording mild.
+//         (found live 2026-07-26 — story in ../../knowledge/live-model/core.md). Keep the wording mild.
 // ✓ LIVE-VERIFIED 2026-07-26 — ran clean on Project1 after the wording fix; found 3 unenclosed rooms,
 //   16 views off sheets, 16 unused templates, 6 unused filters, 0 warnings.
 // ============================================================

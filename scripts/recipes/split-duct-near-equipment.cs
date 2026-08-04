@@ -4,7 +4,7 @@
 //          at an FCU for a future flex-duct connection), and explicitly reconnect the resulting joint.
 //          Simpler cousin of slice-trunk-for-sizing.cs - one fixed-offset cut from one known reference
 //          connector, no grouping/clustering, no "skip the last one" logic.
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md § Splitting an existing duct into two segments at a given point
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Splitting an existing duct into two segments at a given point
 // STATUS:  living document - refine in place, don't fork a v2 file.
 // ============================================================
 // NOTE: this is NOT a standing default. ajtools-hvac-duct-routing's own convention is "no split near the

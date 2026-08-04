@@ -575,6 +575,21 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`tools/brain-status.mjs` — one honest answer to "what is the state of this Brain?"**
+  Counts, how much of the library has actually been run against a real model, open items, oversized
+  files, and drift, all computed from disk on every run and stored nowhere, because the recurring
+  failure in this repo has been its own documentation getting ahead of reality. Wired as a SessionStart
+  hook, so a fresh session knows before it acts instead of trusting a summary. `--full`,
+  `--capabilities` (what this Brain can actually do, generated not written down) and `--json`. Stance is
+  the user's call, 2026-08-04: **warn and keep working** — report what's unproven, never block. First run
+  surfaced three knowledge files past the repo's own ~300-line split rule (`hvac-ducts.md` 379,
+  `tagging.md` 325, `universal-actions-reference.md` 309).
+- 2026-08-04 — **19 fragment `// SOURCE:` headers pointed at nothing.** Every recipe/command/context/
+  creator fragment used `../knowledge/...` where its folder depth needed `../../knowledge/...`, and two
+  `actions/*/` ones needed `../../../`. That header is how an agent gets from a piece of code to the
+  reasoning behind it, so following one landed on a missing file. They are plain C# comments rather than
+  markdown links, which is exactly why check 2 never saw them. All 19 repaired by recomputing each path
+  from its real location, and check 7 added to both verifiers — 50 refs now checked every run.
 - 2026-08-04 — **The edit hook had never once fired in a non-Windows session.** `.claude/settings.json`
   hardcoded `powershell`, so on Claude Code for web (and any Linux/macOS container) the PostToolUse hook
   silently did nothing — no warning, no output. An entire session of ~18 edits went through with zero
