@@ -1,0 +1,253 @@
+<#
+.SYNOPSIS
+    Compile-checks every C# fragment in scripts/ against the real Revit API DLLs, without opening Revit.
+
+.DESCRIPTION
+    The gap this closes: 147 of the library's fragments have never been executed even once, and the repo
+    has already been bitten by exactly what that allows. action-reload-links.cs referenced
+    LinkLoadResultType.LinkNotNeeded - an enum member that does not exist on Revit 2020 - and carried
+    that plain compile error for months. A static review flagged it and could not settle it; only a
+    compile could. This script is that compile, for all 266 fragments at once, in about a minute.
+
+    What it CAN catch: misspelled API members, wrong overloads, types that do not exist on this Revit
+    version, missing casts, syntax errors - the CS#### family. That is the whole class of bug above.
+
+    What it CANNOT catch: whether a fragment does the RIGHT thing. A fragment that compiles perfectly can
+    still delete the wrong elements. Compiling is a floor, not a ceiling - "it compiled" is never a
+    substitute for running it on one element and checking the real result.
+
+    HOW IT WORKS
+    Fragments are not standalone programs. They are pasted into a composed script where the bridge
+    supplies `Document` and friends, and where a filter fragment has already declared `sb` and
+    `elements`. So each fragment is wrapped in a small harness class that supplies exactly what it is
+    missing, then compiled as a library and thrown away.
+
+    Whether a fragment needs `sb`/`elements` injected is decided by looking at the CODE, not the header
+    prose - the "ASSUMES:" lines are written for humans and come in a dozen wordings, while
+    "does this file declare sb?" is unambiguous. Comment lines are stripped before that test, because
+    several fragments mention `var sb = new ...` inside a comment.
+
+.PARAMETER RevitPath
+    Revit install folder holding RevitAPI.dll (e.g. "C:\Program Files\Autodesk\Revit 2020").
+    Omit to auto-detect the newest installed Revit.
+
+.PARAMETER CscPath
+    Full path to csc.exe. Omit to auto-detect. MUST be the Roslyn compiler, not the old
+    C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe - 69 fragments use C# 7 pattern matching
+    (`if (e is Wall wall)`) and every one of them uses string interpolation, so the old C# 5 compiler
+    would report ~200 failures that are not real.
+
+.PARAMETER DryRun
+    Do everything except invoke the compiler: resolve each fragment, work out what it needs injected,
+    and write the wrapper it would compile. Needs neither Revit nor csc, so the harness itself can be
+    validated on a machine that has neither.
+
+.PARAMETER Filter
+    Wildcard against the fragment's path relative to scripts/ (e.g. "recipes/*", "*duct*").
+
+.PARAMETER KeepWrappers
+    Leave the generated wrappers on disk for inspection instead of deleting them.
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File tools\verify-fragments-compile.ps1
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File tools\verify-fragments-compile.ps1 -RevitPath "C:\Program Files\Autodesk\Revit 2020"
+.EXAMPLE
+    pwsh tools/verify-fragments-compile.ps1 -DryRun -Filter "recipes/*"
+#>
+
+param(
+    [string]$RevitPath,
+    [string]$CscPath,
+    [switch]$DryRun,
+    [string]$Filter = "*",
+    [switch]$KeepWrappers
+)
+
+$ErrorActionPreference = "Stop"
+$brainRoot  = Split-Path -Parent $PSScriptRoot
+$scriptsDir = Join-Path $brainRoot "scripts"
+$workDir    = Join-Path ([System.IO.Path]::GetTempPath()) ("aj-fragment-compile-" + $PID)
+New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+# ---------------------------------------------------------------------------------------------------
+# 1. Locate the Revit API assemblies
+# ---------------------------------------------------------------------------------------------------
+$revitApi = $null; $revitApiUi = $null
+if (-not $DryRun) {
+    if (-not $RevitPath) {
+        $candidates = @()
+        foreach ($base in @("${env:ProgramFiles}\Autodesk", "${env:ProgramW6432}\Autodesk")) {
+            if (Test-Path $base) {
+                $candidates += Get-ChildItem -Path $base -Directory -Filter "Revit *" -ErrorAction SilentlyContinue
+            }
+        }
+        # Newest version wins - the name sorts correctly because it always ends in a 4-digit year.
+        $RevitPath = ($candidates | Sort-Object Name -Descending | Select-Object -First 1).FullName
+    }
+    if (-not $RevitPath -or -not (Test-Path $RevitPath)) {
+        Write-Host "Could not find a Revit install. Pass -RevitPath 'C:\Program Files\Autodesk\Revit 2020'." -ForegroundColor Red
+        exit 2
+    }
+    $revitApi   = Join-Path $RevitPath "RevitAPI.dll"
+    $revitApiUi = Join-Path $RevitPath "RevitAPIUI.dll"
+    foreach ($dll in @($revitApi, $revitApiUi)) {
+        if (-not (Test-Path $dll)) {
+            Write-Host "Not found: $dll — is -RevitPath the folder that holds RevitAPI.dll?" -ForegroundColor Red
+            exit 2
+        }
+    }
+    Write-Host ("Revit API : {0}" -f $RevitPath) -ForegroundColor Cyan
+}
+
+# ---------------------------------------------------------------------------------------------------
+# 2. Locate a ROSLYN csc.exe - see the CscPath note above for why the Framework one is not acceptable
+# ---------------------------------------------------------------------------------------------------
+if (-not $DryRun) {
+    if (-not $CscPath) {
+        $roslynGlobs = @(
+            "${env:ProgramFiles(x86)}\Microsoft Visual Studio\*\*\MSBuild\Current\Bin\Roslyn\csc.exe",
+            "${env:ProgramFiles}\Microsoft Visual Studio\*\*\MSBuild\Current\Bin\Roslyn\csc.exe",
+            "${env:ProgramFiles(x86)}\MSBuild\*\Bin\Roslyn\csc.exe",
+            "${env:ProgramFiles}\dotnet\sdk\*\Roslyn\bincore\csc.dll"
+        )
+        foreach ($glob in $roslynGlobs) {
+            $hit = Get-ChildItem -Path $glob -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+            if ($hit) { $CscPath = $hit.FullName; break }
+        }
+    }
+    if (-not $CscPath) {
+        Write-Host "No Roslyn csc.exe found." -ForegroundColor Red
+        Write-Host "  The old C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe will NOT do: it is a" -ForegroundColor Yellow
+        Write-Host "  C# 5 compiler, and 69 fragments use C# 7 pattern matching plus string interpolation," -ForegroundColor Yellow
+        Write-Host "  so it would report a few hundred failures that are not real." -ForegroundColor Yellow
+        Write-Host "  Fix: install 'Build Tools for Visual Studio' (free), or pass -CscPath to a Roslyn csc.exe." -ForegroundColor Yellow
+        exit 2
+    }
+    Write-Host ("Compiler  : {0}" -f $CscPath) -ForegroundColor Cyan
+}
+
+# ---------------------------------------------------------------------------------------------------
+# 3. Wrap and compile each fragment
+# ---------------------------------------------------------------------------------------------------
+$fragments = Get-ChildItem -Path $scriptsDir -Filter "*.cs" -Recurse |
+    Sort-Object FullName |
+    Where-Object { ($_.FullName.Substring($scriptsDir.Length).TrimStart('\','/') -replace '\\','/') -like $Filter }
+
+Write-Host ("Fragments : {0}{1}" -f $fragments.Count, $(if ($DryRun) { "  (DRY RUN - generating wrappers, not compiling)" } else { "" })) -ForegroundColor Cyan
+Write-Host ""
+
+$pass = 0; $fail = 0; $failures = @()
+
+foreach ($frag in $fragments) {
+    $rel = ($frag.FullName.Substring($scriptsDir.Length).TrimStart('\','/')) -replace '\\','/'
+    $src = [System.IO.File]::ReadAllText($frag.FullName, [System.Text.Encoding]::UTF8)
+
+    # Detection runs on code only. Several fragments quote "var sb = new ..." inside a comment, and
+    # lib/prelude.cs explicitly discusses `sb` in prose - matching those would inject nothing and the
+    # fragment would fail to compile for a reason that is purely an artefact of this harness.
+    $code = ($src -split "`r?`n" | Where-Object { -not $_.TrimStart().StartsWith('//') }) -join "`n"
+
+    $declaresSb       = $code -match '\b(var|System\.Text\.StringBuilder|StringBuilder)\s+sb\s*='
+    $declaresElements = $code -match '\b(var|List<Element>|IList<Element>)\s+elements\s*='
+    $usesElements     = $code -match '\belements\b'
+
+    $inject = New-Object System.Text.StringBuilder
+    if (-not $declaresSb)                        { [void]$inject.AppendLine('        var sb = new System.Text.StringBuilder();') }
+    if (-not $declaresElements -and $usesElements) { [void]$inject.AppendLine('        var elements = new List<Element>();') }
+
+    # The harness mirrors what the bridge provides. Fields named the same as their type (Document
+    # Document) are legal C# - the "Color Color" rule - and this is how fragments already address them.
+    # `doc`/`uidoc` are aliases: 3 fragments use the lowercase form, and a fragment that declares its own
+    # local of that name simply shadows the field, which is also legal.
+    $wrapper = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
+using Autodesk.Revit.DB.Mechanical;
+using Autodesk.Revit.DB.Plumbing;
+using Autodesk.Revit.DB.Electrical;
+using Autodesk.Revit.DB.Structure;
+using Autodesk.Revit.DB.Architecture;
+
+public class AjFragmentHarness
+{
+    public Document Document;
+    public Document doc;
+    public UIDocument UIDocument;
+    public UIDocument uidoc;
+    public Autodesk.Revit.ApplicationServices.Application Application;
+    public UIApplication UIApplication;
+
+    public string Run()
+    {
+$($inject.ToString())
+#line 1 "$rel"
+$src
+#line default
+        return sb.ToString();
+    }
+}
+"@
+
+    $wrapperPath = Join-Path $workDir (($rel -replace '[\\/]', '_') + ".wrapper.cs")
+    [System.IO.File]::WriteAllText($wrapperPath, $wrapper, (New-Object System.Text.UTF8Encoding($false)))
+
+    if ($DryRun) {
+        $needs = @()
+        if (-not $declaresSb) { $needs += "sb" }
+        if (-not $declaresElements -and $usesElements) { $needs += "elements" }
+        $needsText = if ($needs.Count) { "injects " + ($needs -join "+") } else { "self-contained" }
+        Write-Host ("  {0,-62} {1}" -f $rel, $needsText)
+        $pass++
+        continue
+    }
+
+    $outDll = Join-Path $workDir "out.dll"
+    $args = @(
+        "/nologo", "/target:library", "/langversion:latest", "/warn:0",
+        "/out:$outDll", "/reference:$revitApi", "/reference:$revitApiUi", $wrapperPath
+    )
+    $result = & $CscPath @args 2>&1
+    # Only CS#### *errors* count. Warnings are suppressed by /warn:0 anyway, but a fragment that already
+    # ends in `return sb.ToString();` makes the harness's own trailing return unreachable - a warning,
+    # never a failure.
+    $errors = @($result | Where-Object { $_ -match ':\s*error\s+CS\d+' })
+
+    if ($errors.Count -eq 0) {
+        $pass++
+        Write-Host ("  PASS  {0}" -f $rel) -ForegroundColor Green
+    } else {
+        $fail++
+        Write-Host ("  FAIL  {0}" -f $rel) -ForegroundColor Red
+        foreach ($e in $errors | Select-Object -First 4) { Write-Host ("          {0}" -f $e) -ForegroundColor DarkYellow }
+        $failures += [pscustomobject]@{ Fragment = $rel; Errors = ($errors -join "`n") }
+    }
+}
+
+# ---------------------------------------------------------------------------------------------------
+# 4. Report
+# ---------------------------------------------------------------------------------------------------
+Write-Host ""
+Write-Host "=== Result ===" -ForegroundColor Cyan
+if ($DryRun) {
+    Write-Host ("Dry run: {0} wrapper(s) generated in {1}" -f $pass, $workDir) -ForegroundColor Green
+    Write-Host "Nothing was compiled. Re-run without -DryRun on a machine with Revit + Roslyn csc."
+    if (-not $KeepWrappers) { Remove-Item -Recurse -Force $workDir -ErrorAction SilentlyContinue }
+    exit 0
+}
+
+Write-Host ("{0} passed, {1} failed, of {2} fragment(s)." -f $pass, $fail, $fragments.Count)
+if ($fail -gt 0) {
+    $reportPath = Join-Path $brainRoot "fragment-compile-failures.txt"
+    $failures | ForEach-Object { "=== $($_.Fragment)`n$($_.Errors)`n" } |
+        Set-Content -Path $reportPath -Encoding UTF8
+    Write-Host ("Full errors written to {0}" -f $reportPath) -ForegroundColor Yellow
+    Write-Host "Fix the fragment, not the harness - unless the error names a type the harness failed to" -ForegroundColor Yellow
+    Write-Host "supply, in which case add the missing using/field above and say so in brain-log.md." -ForegroundColor Yellow
+}
+if (-not $KeepWrappers) { Remove-Item -Recurse -Force $workDir -ErrorAction SilentlyContinue }
+exit $(if ($fail -gt 0) { 1 } else { 0 })
