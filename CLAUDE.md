@@ -15,6 +15,12 @@ never-verified fragment on one element, check the real result, then use it for t
 that's what you're doing. It is never a reason to refuse the job. Run
 `node tools/brain-status.mjs --capabilities` when you need what this Brain can actually do.
 
+**Before writing any new C#, look for an existing fragment first** —
+`node tools/fragment-index.mjs --find <word>` searches all 267 by purpose and input field and shows each
+one's proven status; `--show <path>` prints what a given fragment needs filled in. That is one lookup
+instead of reading `scripts/README.md` end to end, which is the read that gets skipped when it feels
+expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
+
 ## Maintaining this repo (the Brain itself)
 
 - Every file edit in this repo triggers a PostToolUse hook ([`.claude/settings.json`](.claude/settings.json)
