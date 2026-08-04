@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Compile-checks every C# fragment in scripts/ against the real Revit API DLLs, without opening Revit.
 
