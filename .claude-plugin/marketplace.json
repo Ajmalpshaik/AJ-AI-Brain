@@ -12,7 +12,7 @@
     {
       "name": "aj-ai-brain",
       "source": "./",
-      "description": "Live Revit model work through the AJ AI Bridge: model queries/edits, HVAC terminals and airflow, duct routing, MEP connectivity and tracing, family creation, plus the bundled MCP relay server.",
+      "description": "Live Revit model work through the AJ AI Bridge: model queries/edits, HVAC terminals and airflow, duct routing, fire sprinkler layout (NFPA 13), MEP connectivity and tracing, family creation, plus the bundled MCP relay server.",
       "author": {
         "name": "Ajmal Alavudheen"
       }
