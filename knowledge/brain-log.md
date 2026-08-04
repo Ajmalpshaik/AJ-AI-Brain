@@ -575,6 +575,23 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`hvac-ducts.md` split three ways; `tagging.md` and `universal-actions-reference.md`
+  reviewed and deliberately kept whole.** The 379-line duct file was three different jobs sharing a
+  filename, so it became `hvac-ducts.md` (drawing/branching/connecting, 228), `hvac-duct-sizing.md`
+  (slicing a trunk + why, 112) and `hvac-equipment-placement.md` (rotating/placing an FCU, 47). Cut
+  mechanically at section seams and proved lossless — all 347 content lines accounted for, 0 missing.
+  The dominant topic kept the original filename so most inbound references stayed valid; the 11 that
+  pointed at moved sections were retargeted (fragments, `scripts/README.md`, `AGENT-SPEC.md`'s
+  duplication table, `log.md`, the duct-routing skill), including one already-stale `§ Applying the
+  sizes by script` that named a section which had not existed for some time.
+  The other two files were NOT split, per the brain-self-maintain rule that 300 lines is "a split
+  candidate, not a mandate": `tagging.md`'s sections are interlocking lessons about one algorithm (scale
+  → clearances → overlap → leader side), and "Registry-based scored placement" explicitly supersedes an
+  earlier section, so splitting would separate a lesson from what it replaces. `universal-actions-
+  reference.md` is a menu that `knowledge/INDEX.md` routes "what actions are available" to — answering
+  that means scanning all of it. Both now carry a `split-review: kept whole` marker recording the
+  reasoning, which `brain-status.mjs` reads so the file stops being flagged and the decision doesn't get
+  re-argued every time someone notices the line count.
 - 2026-08-04 — **`tools/brain-status.mjs` — one honest answer to "what is the state of this Brain?"**
   Counts, how much of the library has actually been run against a real model, open items, oversized
   files, and drift, all computed from disk on every run and stored nowhere, because the recurring

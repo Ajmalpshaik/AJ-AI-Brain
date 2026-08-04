@@ -3,7 +3,7 @@
 // PURPOSE: Trace every terminal's full connector chain out to its FCU (riser -> elbow -> branch ->
 //          takeoff -> main trunk -> FCU), reporting exactly where any silent break is. NEVER stops at
 //          the terminal's own IsConnected flag - that only reflects the local link, not the full path.
-// SOURCE:  ../../knowledge/live-model/hvac-ducts.md (orphan-recovery trace technique, written for the trunk-slicing bug)
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md (full BFS over AllRefs); the orphan-recovery case it was written for is in hvac-duct-sizing.md
 // STATUS:  living document - refine in place, don't fork a v2 file.
 // ============================================================
 // Read-only / diagnostic - this script does NOT fix anything it finds broken.

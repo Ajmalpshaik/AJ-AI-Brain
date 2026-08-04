@@ -1,5 +1,12 @@
 # Universal Revit Actions — reference list (v3 — full Revisions lifecycle added)
 
+<!-- split-review: kept whole 2026-08-04 — reviewed against the ~300-line rule and deliberately NOT split.
+     This is a MENU, not a topic file: knowledge/INDEX.md routes "what actions are available" here, and
+     answering that means scanning the whole list. Split by category and the one question it exists to
+     answer would need every piece opened. The 182-action count is also anchored to this single file.
+     It is 8 lines over a guideline that the brain-self-maintain skill states is "a split candidate, not a
+     mandate". brain-status.mjs reads this marker and stops flagging the file. -->
+
 Plain-language index of generic, category-agnostic Revit actions available (or genuinely buildable)
 through the bridge. Every action works on **any category/element** — variables in `[brackets]` are
 always supplied per request, never hardcoded. See
