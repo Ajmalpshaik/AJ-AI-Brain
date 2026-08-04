@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Checks the AJ AI Brain (skills, knowledge, scripts) for consistency drift - broken
     cross-references, missing frontmatter, an out-of-sync scripts README.

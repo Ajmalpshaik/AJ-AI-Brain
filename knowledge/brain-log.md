@@ -19,13 +19,23 @@ and "already done" together and so always read as unfinished.
 **Doable in any session (no Revit):** none right now.
 
 **Needs Ajmal's machine, but NOT a bridge or an open model** — only Revit *installed*, for its DLLs:
-1. Run `tools\verify-fragments-compile.ps1` once. It compile-checks all 266 fragments against the real
-   `RevitAPI.dll` in about a minute and turns the 147 never-run fragments into a pass/fail list. Needs a
-   **Roslyn** `csc.exe`, not the C# 5 one in `C:\Windows\Microsoft.NET\Framework64` — 69 fragments use
-   C# 7 pattern matching, so the old compiler would report hundreds of failures that aren't real; the
-   script detects this and says so rather than producing a misleading run. Migrating fragments onto
-   `lib/prelude.cs` waits on this: refactoring code that has never been compiled leaves no way to tell a
-   new break from an old one.
+1. **DONE 2026-08-04** — `tools\verify-fragments-compile.ps1` ran for the first time against Revit 2020
+   + the VS 2022 Roslyn `csc.exe`: **259 of 267 fragments compile**. What remains is fixing the 4 real
+   failures it found (below), not running it again. Re-run it after any fragment edit; it takes ~1 min.
+2. Fix the 4 fragments that genuinely do not compile on Revit 2020:
+   - `actions/move-copy-rotate/action-fillet-elements.cs:156` — CS0136, a local `t` shadows an enclosing
+     `t`. Plain C# bug, nothing to do with Revit.
+   - `recipes/create-parametric-box-family-with-duct-connector.cs:42` — CS1001, identifier expected. A
+     syntax error that has sat in the library unnoticed.
+   - `actions/visibility/action-set-crop-box-settings.cs:45` — `View.AnnotationCropActive` does not exist
+     on Revit 2020. Same class of bug as the `LinkNotNeeded` one: a real API gap, not a typo.
+   - `creators/create-key-schedule.cs:53` — `ScheduleDefinition.SetKeyName` does not exist on Revit 2020.
+   The other 4 failures are **harness artifacts, not fragment bugs** — do not "fix" the fragments:
+   `examples/prelude-smoke-test.cs` calls `lib/prelude.cs` helpers the harness never includes (it is a
+   prelude smoke test, so it cannot compile standalone by definition), and `filter-by-category-and-family`,
+   `filter-by-size`, `filter-by-insulation-type` each declare their own `elements` while the harness
+   injects one too (CS0128). Teaching the harness to skip injection when the fragment already declares
+   `elements` would clear all three.
 
 **Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
@@ -723,3 +733,20 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   `graphify.extract.extract(..., parallel=False)` — serial extraction gave 94 nodes from the same 34
   files that had just produced zero. Same shape as the hook bug above, and the recurring lesson of this
   whole log: a silent zero looks exactly like a clean pass.
+- 2026-08-04 — **A `.ps1` saved as UTF-8 *without* a BOM does not run on Windows PowerShell 5.1.** PS 5.1
+  assumes ANSI for a BOM-less script, so an em dash (`—`, UTF-8 `E2 80 94`) is read as `â€"` — and that
+  final byte is cp1252 `0x94`, a **smart right double-quote, which PowerShell accepts as a string
+  delimiter**. One em dash inside one string therefore opens an unterminated string and cascades: 33
+  parse errors, most of them nonsense about C# `using` lines inside a here-string. `verify-fragments-compile.ps1`
+  had never run once for this reason. Proof it was encoding, not syntax: the same file parsed with
+  **0 errors** when its bytes were handed to the parser as UTF-8. Fixed by writing a BOM onto the three
+  `.ps1` files that contain non-ASCII (`invoke-bridge`, `verify-consistency`, `verify-fragments-compile`);
+  content is byte-identical otherwise. This is the same PS 5.1 ANSI assumption already logged for
+  `Get-Content`/`Set-Content` bulk edits — but it bites *executing* a script, not just editing one. Rule:
+  **any `.ps1` in this repo that contains a non-ASCII character must be saved with a UTF-8 BOM.**
+- 2026-08-04 — With that fixed, `verify-fragments-compile.ps1` ran for the first time (Revit 2020 + VS 2022
+  Roslyn): **259 of 267 fragments compile.** It immediately earned its keep by finding two more Revit 2020
+  API gaps of exactly the `LinkNotNeeded` kind — `View.AnnotationCropActive` and
+  `ScheduleDefinition.SetKeyName` — plus a variable-shadowing bug and a plain syntax error that had sat in
+  the library unnoticed. 4 of the 8 failures are harness artifacts, not fragment bugs; see the Open items
+  list above for which is which before touching anything.
