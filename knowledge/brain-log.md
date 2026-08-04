@@ -712,3 +712,14 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   own source. Each of the six checks was proven to fire by deliberately re-introducing the defect, in both
   the Node and PowerShell versions, then reverting. Also found while testing: `Get-ChildItem -Recurse`
   needs `-Force`, or PowerShell skips dot-directories on Linux/macOS and never scans `.claude-plugin/`.
+- 2026-08-04 — Node **is** installed on Ajmal's Windows machine (v24.18.0, at
+  `~/Documents/node-v24.18.0-win-x64/node.exe`) but was **not on PATH**, so both hooks in
+  `.claude/settings.json` failed to launch and the per-edit drift check silently never ran. Both `.mjs`
+  tools worked fine when called with the full path — the fix was a PATH entry, not an install.
+  **Resolved same day:** that folder was appended to the user PATH, so the hooks work in any terminal
+  started afterwards. The `.ps1` wrapper stays as the fallback for a machine without Node on PATH.
+- 2026-08-04 — graphify's AST pass returns **0 nodes** on this machine: every `ProcessPool` worker dies
+  ("terminated abruptly") and the failure reads as an empty corpus rather than an error. Call
+  `graphify.extract.extract(..., parallel=False)` — serial extraction gave 94 nodes from the same 34
+  files that had just produced zero. Same shape as the hook bug above, and the recurring lesson of this
+  whole log: a silent zero looks exactly like a clean pass.
