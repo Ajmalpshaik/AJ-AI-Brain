@@ -103,7 +103,7 @@ $scriptsDir = Join-Path $claudeDir "scripts"
 $readmePath = Join-Path $scriptsDir "README.md"
 # Declared out here, not inside the if, because check 5 below reuses it - PowerShell has no block
 # scoping, but an assignment that never runs still leaves it null.
-$subfolders = @("filters", "actions", "recipes", "creators", "commands", "examples", "context")
+$subfolders = @("filters", "actions", "recipes", "creators", "commands", "examples", "context", "lib")
 if (Test-Path $readmePath) {
     $readmeContent = Get-Content -Path $readmePath -Raw
     # Recursive, and paths are always the FULL path relative to scripts/ (subfolders included, forward
@@ -182,7 +182,7 @@ Write-Host "`n=== 5. AGENT-SPEC fragment counts ===" -ForegroundColor Cyan
 $specPath = Join-Path $brainRoot "AGENT-SPEC.md"
 if (Test-Path $specPath) {
     $specFlat = [regex]::Replace([System.IO.File]::ReadAllText($specPath, [System.Text.Encoding]::UTF8), '\s+', ' ')
-    $countRe = '(\d+) real C# fragments in `scripts/` \((\d+) filters, (\d+) actions, (\d+) creators, (\d+) commands, (\d+) recipes, (\d+) examples, (\d+) read-only'
+    $countRe = '(\d+) real C# fragments in `scripts/` \((\d+) filters, (\d+) actions, (\d+) creators, (\d+) commands, (\d+) recipes, (\d+) examples, (\d+) read-only `context/` fragments, (\d+) shared'
     $specMatch = [regex]::Match($specFlat, $countRe)
     if (-not $specMatch.Success) {
         $issues.Add("AGENT-SPEC COUNT SENTENCE NOT FOUND: section 3.5's fragment-count sentence was reworded - re-anchor this check in tools/verify-consistency.* or the counts go unchecked")
@@ -192,6 +192,7 @@ if (Test-Path $specPath) {
             actions = [int]$specMatch.Groups[3].Value; creators = [int]$specMatch.Groups[4].Value
             commands = [int]$specMatch.Groups[5].Value; recipes = [int]$specMatch.Groups[6].Value
             examples = [int]$specMatch.Groups[7].Value; context = [int]$specMatch.Groups[8].Value
+            lib = [int]$specMatch.Groups[9].Value
         }
         $actual = [ordered]@{ total = 0 }
         foreach ($bucket in $subfolders) {

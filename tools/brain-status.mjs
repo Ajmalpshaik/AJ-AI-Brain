@@ -62,7 +62,7 @@ const skills = fs.existsSync(skillsDir)
   : [];
 
 // --- script fragments -------------------------------------------------------
-const BUCKETS = ["filters", "actions", "recipes", "creators", "commands", "examples", "context"];
+const BUCKETS = ["filters", "actions", "recipes", "creators", "commands", "examples", "context", "lib"];
 const scriptsDir = path.join(brainRoot, "scripts");
 const byBucket = {};
 let fragmentTotal = 0;

@@ -575,6 +575,26 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`scripts/lib/prelude.cs` — the shared toolkit the library never had.** Measured first:
+  150 of 264 fragments carry their own `Transaction`+rollback, 136 their own collector setup, 80 their
+  own `DisplayUnitType` call, 38 their own parameter lookup. The prelude holds `InTransaction`/
+  `InTransactionGroup`, `ToFeet`/`ToMm`, `ResolveView`, `ParamOf`/`ParamText`, `LevelIdOf`, `CollectOf`
+  and `SizeSortKey` once. The point is NOT shorter code (~10-15% of 20,948 lines) — it is **one place to
+  be wrong**: supporting Revit 2021+ today means editing 80 files correctly, and with the prelude it is
+  a two-line edit, with the replacement lines sitting in the file already.
+  Deliberately ADDITIVE: it declares no name any fragment declares — in particular not `sb` or
+  `elements`, since the filters declare those themselves — so it composes with all 264 un-migrated
+  fragments unchanged, and every reporting helper takes the StringBuilder as an argument rather than
+  capturing one. Nothing is migrated yet, and nothing has to be.
+  **NOT compiled or run** — written with no Revit and no C# compiler. Every construct is copied from a
+  fragment already proven through this bridge (`Func<>` lambdas, bare `Transaction`/`TransactionGroup`/
+  `View`/`Wall`/`StorageType`, the `LevelIdOf` chain lifted verbatim from `filter-by-category.cs`), but
+  assembled-from-proven-parts is not proven. `examples/prelude-smoke-test.cs` exercises every helper in
+  one read-only call, including BOTH the commit and rollback paths of the transaction wrapper — run it
+  before trusting any of it. `lib/` is now a tracked bucket in both consistency checkers and in
+  brain-status, so the prelude cannot drift out of the index (verified by breaking the count).
+  Sequencing decision recorded: migrating existing fragments waits for the C# compile check, because
+  refactoring the 147 that have never been run would leave no way to tell a new break from an old one.
 - 2026-08-04 — **`hvac-ducts.md` split three ways; `tagging.md` and `universal-actions-reference.md`
   reviewed and deliberately kept whole.** The 379-line duct file was three different jobs sharing a
   filename, so it became `hvac-ducts.md` (drawing/branching/connecting, 228), `hvac-duct-sizing.md`

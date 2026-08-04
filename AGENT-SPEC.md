@@ -220,9 +220,9 @@ document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 264 real C# fragments in `scripts/` (49 filters, 143
-actions, 33 creators, 8 commands, 19 recipes, 2 examples, 10 read-only `context/` fragments — count
-re-verified 2026-08-04, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
+now also have a native tool above), and the 266 real C# fragments in `scripts/` (49 filters, 143
+actions, 33 creators, 8 commands, 19 recipes, 3 examples, 10 read-only `context/` fragments, 1 shared
+`lib/` prelude — count re-verified 2026-08-04, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
 silently again), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
 matching fragment(s), fills in real values, pastes them together, and sends the composed text through
 `run_csharp`. See `scripts/README.md` for the authoritative fragment index and composition rules.
@@ -254,6 +254,11 @@ a new graphics fragment.
 4. Fill every INPUTS value from the actual current request — never reuse a prior session's value
 5. Paste filter body, then each action body in order, into one script
    (all fragments share the variable names `elements` and `sb` — no glue code needed)
+   5a. Optionally paste `scripts/lib/prelude.cs` FIRST, ahead of the filter, for the shared helpers
+       (InTransaction, ToFeet/ToMm, ResolveView, ParamText, LevelIdOf, CollectOf, SizeSortKey).
+       Optional today — no shipped fragment requires it, and it declares no name a fragment already
+       declares. Prefer it in NEW fragments: it is the single place DisplayUnitType, transaction
+       rollback and the missing-vs-blank parameter rule live, rather than 80/150/38 separate copies.
 6. Add exactly one `return sb.ToString();` as the final line
 7. For bulk/hard-to-reverse work: run the filter alone first, confirm the count, THEN append the action(s)
 8. Run via run_csharp
