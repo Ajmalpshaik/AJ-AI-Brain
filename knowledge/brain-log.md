@@ -575,6 +575,15 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **The edit hook had never once fired in a non-Windows session.** `.claude/settings.json`
+  hardcoded `powershell`, so on Claude Code for web (and any Linux/macOS container) the PostToolUse hook
+  silently did nothing — no warning, no output. An entire session of ~18 edits went through with zero
+  automatic checking; the drift found that day was caught only because the checker was run by hand.
+  Now wired to `tools/verify-consistency-hook.mjs`, which runs the portable checker with identical
+  semantics (quiet exit 0 when clean, exit 2 + stderr on drift so the model sees it in the same turn).
+  Node is the safer dependency: this repo already requires it for the MCP relay, and it exists on all
+  three platforms. The `.ps1` wrapper is kept for a Windows machine with no Node on PATH. Lesson worth
+  keeping: a guard that fails silently on a platform is worse than no guard, because it reads as passing.
 - 2026-08-04 — Routing spot-check by walking one real question ("what is the maximum duct size used?")
   end to end. The routing itself is fine — START-HERE → `ajtools-live-model` → `model_summary` fast path,
   2-3 files read out of 264 scripts and 38 documents, no folder scan. But the question is ambiguous in a

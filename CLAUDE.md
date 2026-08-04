@@ -5,9 +5,13 @@
 ## Maintaining this repo (the Brain itself)
 
 - Every file edit in this repo triggers a PostToolUse hook ([`.claude/settings.json`](.claude/settings.json)
-  → [`tools/verify-consistency-hook.ps1`](tools/verify-consistency-hook.ps1)) that runs the full
-  consistency check — skill frontmatter, markdown link targets, scripts README sync. If it reports
-  drift, fix the drift in the same turn, before finishing.
+  → [`tools/verify-consistency-hook.mjs`](tools/verify-consistency-hook.mjs)) that runs the full
+  consistency check — skill frontmatter, markdown link targets, scripts README sync, skill coverage in
+  the entry docs, AGENT-SPEC's fragment counts, and text encoding. If it reports drift, fix the drift in
+  the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
+  Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
+  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same six checks.
 - Log structural changes (new skill, split file, new/retired script) in
   [`knowledge/brain-log.md`](knowledge/brain-log.md), 1–3 lines each.
 - **Never bulk-edit files here with PowerShell `Get-Content`/`Set-Content`.** Windows PowerShell 5.1 reads
