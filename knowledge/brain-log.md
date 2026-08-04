@@ -19,23 +19,12 @@ and "already done" together and so always read as unfinished.
 **Doable in any session (no Revit):** none right now.
 
 **Needs Ajmal's machine, but NOT a bridge or an open model** — only Revit *installed*, for its DLLs:
-1. **DONE 2026-08-04** — `tools\verify-fragments-compile.ps1` ran for the first time against Revit 2020
-   + the VS 2022 Roslyn `csc.exe`: **259 of 267 fragments compile**. What remains is fixing the 4 real
-   failures it found (below), not running it again. Re-run it after any fragment edit; it takes ~1 min.
-2. Fix the 4 fragments that genuinely do not compile on Revit 2020:
-   - `actions/move-copy-rotate/action-fillet-elements.cs:156` — CS0136, a local `t` shadows an enclosing
-     `t`. Plain C# bug, nothing to do with Revit.
-   - `recipes/create-parametric-box-family-with-duct-connector.cs:42` — CS1001, identifier expected. A
-     syntax error that has sat in the library unnoticed.
-   - `actions/visibility/action-set-crop-box-settings.cs:45` — `View.AnnotationCropActive` does not exist
-     on Revit 2020. Same class of bug as the `LinkNotNeeded` one: a real API gap, not a typo.
-   - `creators/create-key-schedule.cs:53` — `ScheduleDefinition.SetKeyName` does not exist on Revit 2020.
-   The other 4 failures are **harness artifacts, not fragment bugs** — do not "fix" the fragments:
-   `examples/prelude-smoke-test.cs` calls `lib/prelude.cs` helpers the harness never includes (it is a
-   prelude smoke test, so it cannot compile standalone by definition), and `filter-by-category-and-family`,
-   `filter-by-size`, `filter-by-insulation-type` each declare their own `elements` while the harness
-   injects one too (CS0128). Teaching the harness to skip injection when the fragment already declares
-   `elements` would clear all three.
+1. **DONE 2026-08-04 — all 267 fragments now compile against Revit 2020** (VS 2022 Roslyn `csc.exe`).
+   Nothing outstanding here. Re-run `tools\verify-fragments-compile.ps1` after any fragment edit; it
+   takes about a minute. **Heads-up:** it writes ~267 unsigned `out.dll` files into `%TEMP%` in quick
+   succession, and Sophos flags that heuristically as `ML/PE-A`. It is the compiler's output, not
+   malware, and the folder is deleted at the end — but on a company-managed endpoint the detection is
+   reported to IT, so tell them before running it rather than after.
 
 **Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
@@ -750,3 +739,19 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   `ScheduleDefinition.SetKeyName` — plus a variable-shadowing bug and a plain syntax error that had sat in
   the library unnoticed. 4 of the 8 failures are harness artifacts, not fragment bugs; see the Open items
   list above for which is which before touching anything.
+- 2026-08-04 — **267 of 267 fragments now compile.** The 4 real bugs are fixed: `t` renamed to
+  `tIntersect` in `action-fillet-elements` (the Transaction `t` sat inside its scope), a stray
+  `using Autodesk.Revit.DB;` deleted from `create-parametric-box-family-...` (a using DIRECTIVE is illegal
+  mid-script, and a fragment is always pasted mid-script), and the two Revit 2020 API gaps rerouted —
+  `View.AnnotationCropActive` → the `VIEWER_ANNOTATION_CROP_ACTIVE` built-in parameter, and
+  `ScheduleDefinition.SetKeyName` → `ViewSchedule.KeyScheduleParameterName`. Worth naming the pattern:
+  **both API gaps were already wrapped in a `try/catch` that could never help**, because a missing member
+  is a compile error, not a runtime exception — the fragment never built at all. A `try` around an API you
+  are unsure of buys nothing; only a compile proves it exists.
+- 2026-08-04 — The harness had 2 bugs of its own, which is why 4 "failures" were never real. Its
+  `declaresElements` test required an `=`, so `List<Element> elements;` (no initialiser — 3 filters use
+  exactly that) read as "does not declare", and it injected a second one on top: CS0128 three times. Now
+  matches `[=;]`. And `examples/prelude-smoke-test.cs` was compiled alone even though its own header says
+  to paste `lib/prelude.cs` first; the harness now prepends the prelude for that one file, which turns a
+  guaranteed false failure into the first real proof that the prelude and its smoke test agree. Lesson:
+  when a checker reports failures, confirm the checker is right before touching the code it accuses.

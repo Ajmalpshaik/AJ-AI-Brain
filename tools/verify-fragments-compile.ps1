@@ -148,9 +148,25 @@ foreach ($frag in $fragments) {
     # fragment would fail to compile for a reason that is purely an artefact of this harness.
     $code = ($src -split "`r?`n" | Where-Object { -not $_.TrimStart().StartsWith('//') }) -join "`n"
 
-    $declaresSb       = $code -match '\b(var|System\.Text\.StringBuilder|StringBuilder)\s+sb\s*='
-    $declaresElements = $code -match '\b(var|List<Element>|IList<Element>)\s+elements\s*='
+    # The trailing [=;] matters: three filters declare `List<Element> elements;` with NO initialiser,
+    # and an '=' only pattern missed all three. The harness then injected a second `elements` on top of
+    # the fragment's own and reported CS0128 - three false failures that looked exactly like real bugs.
+    # Fixed 2026-08-04 after the first full run.
+    $declaresSb       = $code -match '\b(var|System\.Text\.StringBuilder|StringBuilder)\s+sb\s*[=;]'
+    $declaresElements = $code -match '\b(var|List<Element>|IList<Element>)\s+elements\s*[=;]'
     $usesElements     = $code -match '\belements\b'
+
+    # prelude-smoke-test.cs exists to exercise lib/prelude.cs and its own header says to paste the
+    # prelude first. Compiling it alone is therefore guaranteed to fail on every helper name - which is
+    # a harness artefact, not a defect in either file. Prepending the prelude is what the documented
+    # run does, and it turns this into a real check of the two together.
+    $prefix = ""
+    if ($rel -eq 'examples/prelude-smoke-test.cs') {
+        $preludePath = Join-Path $scriptsDir 'lib/prelude.cs'
+        if (Test-Path $preludePath) {
+            $prefix = [System.IO.File]::ReadAllText($preludePath, [System.Text.Encoding]::UTF8)
+        }
+    }
 
     $inject = New-Object System.Text.StringBuilder
     if (-not $declaresSb)                        { [void]$inject.AppendLine('        var sb = new System.Text.StringBuilder();') }
@@ -185,6 +201,7 @@ public class AjFragmentHarness
     public string Run()
     {
 $($inject.ToString())
+$prefix
 #line 1 "$rel"
 $src
 #line default

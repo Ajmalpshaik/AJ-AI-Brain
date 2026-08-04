@@ -121,8 +121,11 @@ else if (mode == "arc")
         }
         else
         {
-            double t = ((p2.X - p1.X) * d2.Y - (p2.Y - p1.Y) * d2.X) / denom;
-            XYZ corner = p1 + d1 * t;
+            // Named tIntersect, not t: the Transaction below is `t` (the library-wide convention),
+            // and this scope encloses it, so a bare `t` here is CS0136 and the fragment will not
+            // compile at all. Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
+            double tIntersect = ((p2.X - p1.X) * d2.Y - (p2.Y - p1.Y) * d2.X) / denom;
+            XYZ corner = p1 + d1 * tIntersect;
 
             XYZ farA = lineA.GetEndPoint(0).DistanceTo(corner) >= lineA.GetEndPoint(1).DistanceTo(corner) ? lineA.GetEndPoint(0) : lineA.GetEndPoint(1);
             XYZ farB = lineB.GetEndPoint(0).DistanceTo(corner) >= lineB.GetEndPoint(1).DistanceTo(corner) ? lineB.GetEndPoint(0) : lineB.GetEndPoint(1);
