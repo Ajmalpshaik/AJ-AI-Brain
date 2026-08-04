@@ -148,6 +148,17 @@ persisted value; both entries showed the same current value in testing (likely t
 same underlying storage), but `RBS_DUCT_FLOW_PARAM` is the reliable one to target directly rather than
 guessing from the plain iteration order.
 
+**"What size are the diffusers?" — an air terminal has TWO sizes, and the `Size` parameter reports the
+neck, not the face.** Confirmed live 2026-08-05 on `M_Supply Diffuser: 600 x 600 Face 300 x 300
+Connection`: the instance `Size` parameter reads **`300x300`** — that's the duct connection, not the
+600×600 face the user means when they ask what size the diffuser is. Reporting `Size` alone answers a
+different question than the one asked, and it looks authoritative. The real dimensions are **type**
+parameters: `Diffuser Width` / `Diffuser Height` (face) and `Duct Width` / `Duct Height` (neck). Reading
+`Duct Width`/`Duct Height` **as instance parameters returns a blank column** — the exact
+"blank ≠ missing, blank = wrong scope/name" trap in [`core.md`](core.md); go to
+`Document.GetElement(inst.GetTypeId()).Parameters` for them. Quote both numbers back (face + neck), and
+say which is which, rather than picking one.
+
 **Finding which room a placed terminal belongs to**: `Autodesk.Revit.DB.Architecture.Room` (fully qualify —
 same "bare name doesn't resolve" issue as `StructuralType`) has `IsPointInRoom(XYZ)` — cheap to loop over a
 level's small room set per terminal rather than anything more elaborate.
