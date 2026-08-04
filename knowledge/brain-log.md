@@ -584,6 +584,25 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`scripts/recipes/build-test-fixtures.cs` — removes the "needs a fixture" blocker.** The
+  open items had a whole category that no amount of effort could clear: fragments that can only be tested
+  against a model containing something this scratch model doesn't have. This builds what an API can build
+  — ducts, insulation, an Assembly, a model Group, and (opt-in) worksharing + worksets — unblocking the 3
+  insulation fragments, `filter-by-assembly`, `filter-by-group`/`action-ungroup-elements`, and the 5
+  worksharing ones.
+  It deliberately does NOT re-attempt what is already settled (Ceilings are 2022+, Scope Box, Phase
+  create/rename, Design Option activation, workset delete) — re-testing a closed answer is how a session
+  wastes an hour — and it names what still needs a real file nobody can generate (RVT link, CAD import,
+  PDF driver, sleeve and flip-capable families).
+  Two design decisions worth keeping: `Document.EnableWorksharing` runs OUTSIDE the TransactionGroup,
+  because it is a document-level call that cannot be made with a transaction open and cannot be rolled
+  back — putting it inside would either throw or promise an undo that does not exist. And it refuses to
+  run at all unless explicitly confirmed AND the model looks empty, since its whole job is creating
+  elements.
+  NOT run. Three calls have no prior use anywhere in this library and are the least proven part:
+  `AssemblyInstance.Create` (the assembly fragment only ever read assemblies), `EnableWorksharing`, and
+  the `GroupType.Name` setter. Header says to run the groups one at a time first and leave worksharing
+  off until the rest is proven.
 - 2026-08-04 — **`tools/verify-fragments-compile.ps1` — compile-check all 266 fragments without opening
   Revit.** Closes the gap that let `action-reload-links.cs` carry `LinkLoadResultType.LinkNotNeeded` — an
   enum member that does not exist on 2020 — for months: static review flagged it and could not settle it,
