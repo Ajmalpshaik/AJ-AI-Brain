@@ -5,3 +5,7 @@ node_modules/
 # scripts/ and skills/ — it goes stale the moment any of those is edited, and a
 # stale index in this repo is worse than no index.
 graphify-out/
+
+# Output of tools/verify-fragments-compile.ps1 — regenerated on every run, and the
+# summary that matters is recorded in knowledge/brain-log.md instead.
+fragment-compile-failures.txt

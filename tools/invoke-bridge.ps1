@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Fast local caller for the AJ Tools AJ AI bridge.
 
