@@ -575,6 +575,15 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — Routing spot-check by walking one real question ("what is the maximum duct size used?")
+  end to end. The routing itself is fine — START-HERE → `ajtools-live-model` → `model_summary` fast path,
+  2-3 files read out of 264 scripts and 38 documents, no folder scan. But the question is ambiguous in a
+  way nothing recorded: round ducts carry Diameter, rectangular carry Width × Height, no single number
+  ranks them together, and the size-breakdown table's last row is the largest FIRST dimension rather than
+  the largest duct. The skill sends the agent to `glossary.md` for exactly this, and `glossary.md` had no
+  "size" entry — so a fresh session would have routed fast and then answered confidently wrong. Entry
+  added. Worth repeating as a technique: pick a real question, walk it, and see what the router actually
+  lands on.
 - 2026-08-04 — `verify-consistency.ps1`/`.mjs` grew checks 4-6, because checks 1-3 could not see any of
   the three problems above: skill coverage in the entry docs, AGENT-SPEC's fragment counts vs disk, and a
   mojibake scan. The encoding check builds its patterns by *simulating* the corruption (UTF-8 encode, then
