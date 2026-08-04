@@ -8,7 +8,7 @@
 //          as a filter — it produces `elements` — so any action fragment can be appended after it.
 // ============================================================
 // Every point and level is a per-request input — never a default. `StructuralType` must be fully
-// qualified in this script context (bare `StructuralType` fails to compile — see ../knowledge/live-model/core.md).
+// qualified in this script context (bare `StructuralType` fails to compile — see ../../knowledge/live-model/core.md).
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string familyNameContains = "";      // e.g. "STI_ME_FCU" — leave blank to match any family

@@ -3,7 +3,7 @@
 // PURPOSE: Report every MEP connector on the elements in `elements` — domain, shape, size (mm), origin
 //          (mm), facing direction (BasisZ), and what each is REALLY connected to. This packages step 1
 //          of the user's own connection method (check connectors exist → domain/size → real direction →
-//          only then draw) as one reusable read — see ../knowledge/live-model/hvac-ducts.md.
+//          only then draw) as one reusable read — see ../../../knowledge/live-model/hvac-ducts.md.
 //          (Dynamo-package equivalent: MEPover's connector query nodes.)
 // ASSUMES: elements (List<Element>, MEPCurves and/or FamilyInstances with MEP connectors) and sb exist
 //          from a filter above.

@@ -4,7 +4,7 @@
 //          offset downstream past the takeoff's own body + a clearance margin, so each resulting segment
 //          can later be individually sized down after its branch removes some airflow. Skips the cut after
 //          the LAST takeoff before the end cap (that segment runs through in one piece to the cap).
-// SOURCE:  ../knowledge/live-model/hvac-ducts.md § Slicing a main trunk into segments for duct sizing
+// SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Slicing a main trunk into segments for duct sizing
 // STATUS:  living document - refine in place, don't fork a v2 file.
 // ============================================================
 // HIGH RISK - a past session's first attempt (slice at the takeoff's own center, then relocate the joint

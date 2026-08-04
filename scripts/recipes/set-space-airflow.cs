@@ -3,7 +3,7 @@
 // PURPOSE: Create/find the MEP Space for each room on a level, set its Specified Supply/Return
 //          Airflow from a thumb-rule, and cascade the new total to any air terminals already placed
 //          in that room (refresh their Flow parameter, don't change count/position).
-// SOURCE:  ../knowledge/live-model/hvac-terminals.md § HVAC air terminal layout — Space airflow parameters
+// SOURCE:  ../../knowledge/live-model/hvac-terminals.md § HVAC air terminal layout — Space airflow parameters
 // STATUS:  living document — refine in place, don't fork a v2 file.
 // ============================================================
 // Backs the ajtools-hvac-space-airflow skill. Every number below is a per-request input — restate
