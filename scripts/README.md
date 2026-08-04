@@ -16,6 +16,17 @@ beside this index, not in it:
 > every fragment's purpose and input fields and returns matches with their proven status;
 > `--show <path>` prints one fragment's purpose plus exactly what you have to fill in. Same information
 > as the tables below, computed from the fragments themselves, in one lookup instead of a 500-line read.
+> **`--find` is one literal substring match, not a multi-word/AND search** — confirmed 2026-08-05:
+> `--find "create sheet"` returned "Nothing matched" for a query typed as two natural words, even though
+> `creators/create-sheet.cs` already existed with purpose text "Create one or more new sheets..." — the
+> exact phrase "create sheet" is never adjacent in that sentence ("Create one or more **new** sheets"), so
+> the substring check failed, while `--find "new sheet"` succeeded (matches inside "new sheet**s**"). A
+> single-word query is safe; a multi-word query only hits if those words happen to sit adjacent, in that
+> order, in the source text — it is not smart enough to find a fragment described in different words than
+> your query. **Prefer single keywords, and if the first search comes back empty, retry with a different
+> single word before concluding no fragment exists** — this exact miss led to writing a duplicate
+> `create-sheets.cs` right next to the real, already-proven `create-sheet.cs` (caught by the
+> consistency-hook's "script not in README" check, not by the search itself).
 > It exists because this file being long is the reason "reuse before writing new C#" gets skipped —
 > the fragment was never missing, just hard to find. Add `--verified` to see only what has actually run.
 

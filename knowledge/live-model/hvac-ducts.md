@@ -193,6 +193,40 @@ that enqueues *every* connector in `AllRefs` (not just the first) when verifying
 FCU/equipment — this is what `verify-duct-connectivity.cs` already does; don't write a shortcut linear
 walk for a one-off check, it will lie at any junction.
 
+## Putting elements on a duct SYSTEM logically (no ductwork drawn) — and the `MEPSystem.Add` trap
+
+"Connect these to a duct system" can mean the logical MEP system (the `System Name` / `System Type`
+parameters and the System Browser entry), not physical ductwork — ask which, they're different jobs.
+
+**`MEPSystem.Add(ConnectorSet)` does NOT add your element to that system when the system already holds a
+physically-connected network. It re-homes the network into a BRAND-NEW system and leaves the original
+system object holding only the element you just added.** Verified live 2026-08-05 (Revit 2020, Project1):
+system `Mechanical Supply Air 1` (Id 918928) had 7 members (4 ducts + 3 elbows); calling `.Add()` with one
+unconnected air terminal's connector left 918928 with **1** member (the terminal), and silently created
+`Mechanical Supply Air 2` holding the original 7. **The added element reads back the expected system name,
+so a read-back on that element alone looks like clean success** — the damage is on the elements you never
+queried: the real trunk got moved onto a differently-named system, which quietly breaks any schedule,
+filter or takeoff keyed on the system name. Always read back the *pre-existing* system's member count and
+the other elements' `System Name` too, not just the element you touched. Fully reversible with native
+Undo ([`undo.md`](undo.md)) — confirmed restoring all 7 members and deleting the phantom system.
+
+**Root cause / the rule that follows**: a Revit MEP system is derived from physical connectivity, so an
+unconnected element cannot join an existing physical network's system. To give unconnected elements a
+system, create their own with **one atomic call** —
+`Document.Create.NewMechanicalSystem(baseEquipmentConnector, connectorSet, DuctSystemType.SupplyAir)`,
+which is exactly what Revit's own "Duct System" ribbon button does. Notes:
+- `baseEquipmentConnector` accepts **`null`** when there's no FCU/AHU — verified, systems without base
+  equipment are legal (the existing trunk system had `BaseEquipment == none` too).
+- The enum here is `Autodesk.Revit.DB.Mechanical.DuctSystemType` (`SupplyAir`/`ReturnAir`/`ExhaustAir`/…),
+  **not** the `MEPSystemClassification` used for `MechanicalSystemType.SystemClassification` — see the
+  mixing-them-up compile-error note earlier in this file.
+- Pass **all** the elements' connectors in that single `NewMechanicalSystem` call. Don't create with one
+  and then `.Add()` the rest — that walks straight back into the trap above.
+- Filter connectors by `c.Domain == Domain.DomainHvac` when gathering them.
+- Verify with `system.GetFlow()` (convert from internal units): it should equal the sum of the members'
+  Flow values — 9 terminals × 235 L/s read back as 2115.0 L/s, which is the cheap proof the right elements
+  landed on the system.
+
 ## The user's connection method — drawing duct/pipe FROM any connector-bearing element (taught 2026-07-26)
 The user's standing rule for connecting anything to equipment/terminals, live-proven twice on 2026-07-26
 (40 stubs off 8 rotated/mirrored FCUs, then a full 6-terminal branched system). One-click version:
