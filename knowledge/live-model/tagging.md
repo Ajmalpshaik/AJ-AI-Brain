@@ -2,6 +2,14 @@
 
 > Part of the live-model knowledge set. Index: [`README.md`](README.md) — go back there to route to another topic.
 
+<!-- split-review: kept whole 2026-08-04 — reviewed against the ~300-line rule and deliberately NOT split.
+     Nine of the twelve sections are interlocking lessons about a single algorithm: view scale sets the mm
+     clearances, the clearances drive overlap resolution, overlap resolution drives leader side, and
+     "Registry-based scored placement" explicitly REPLACES the earlier place-all-then-resolve section.
+     Splitting would separate a lesson from the thing it supersedes, and anyone fixing tag placement would
+     have to open both halves anyway. brain-status.mjs reads this marker and stops flagging the file. -->
+
+
 ## Posting AJ Tools' own ribbon commands — doesn't reliably work
 - `RevitCommandId.LookupCommandId(...)` with a guessed `"CustomCtrl_%CustomCtrl_%{Tab}%{Panel}%{Pulldown}%{Button}"`
   string did not resolve for a real button (`CmdSmartMepTag`) nested inside a `PulldownButton`, across

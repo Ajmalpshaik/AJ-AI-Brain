@@ -92,13 +92,23 @@ const nativeTools = walk(path.join(brainRoot, "mcp-server", "tools"), (n) => n.e
 // --- knowledge files, and any that outgrew the repo's own splitting rule -----
 // knowledge/INDEX.md: "If a file grows past ~300 lines, split it and update the relevant index."
 const knowledgeFiles = walk(path.join(brainRoot, "knowledge"), (n) => n.endsWith(".md"));
-const oversized = knowledgeFiles
-  .map((f) => ({
+// A file can opt out by recording WHY it was kept whole, in a "split-review: kept whole" marker. The
+// brain-self-maintain skill calls the 300-line rule "a split candidate, not a mandate - if it's one
+// coherent job read as a unit, splitting adds hops and makes things worse; say so and leave it." The
+// marker is that "say so", made durable: the decision stays visible in the file instead of being
+// re-argued every time someone notices the line count, and the report stops crying wolf.
+const measured = knowledgeFiles.map((f) => {
+  const text = fs.readFileSync(f, "utf8");
+  return {
     rel: path.relative(brainRoot, f).split(path.sep).join("/"),
-    lines: fs.readFileSync(f, "utf8").split(/\r?\n/).length,
-  }))
-  // brain-log.md is an append-only record, not a routed topic file - the rule was never meant for it.
-  .filter((f) => f.lines > 300 && !f.rel.endsWith("brain-log.md"));
+    lines: text.split(/\r?\n/).length,
+    keptWhole: /split-review:\s*kept whole/i.test(text),
+  };
+});
+// brain-log.md is an append-only record, not a routed topic file - the rule was never meant for it.
+const overLimit = measured.filter((f) => f.lines > 300 && !f.rel.endsWith("brain-log.md"));
+const oversized = overLimit.filter((f) => !f.keptWhole);
+const keptWhole = overLimit.filter((f) => f.keptWhole);
 
 // --- open items -------------------------------------------------------------
 const log = read("knowledge/brain-log.md");
@@ -135,7 +145,7 @@ if (args.has("--json")) {
       verified: verified.length, flaggedUntested: flagged.length,
       blocked: blocked.length, noStatus: noStatus.length, rows: rows.length,
     },
-    knowledge: { files: knowledgeFiles.length, oversized },
+    knowledge: { files: knowledgeFiles.length, oversized, keptWhole },
     openItems: openGroups,
     consistencyClean,
   }, null, 2));
@@ -190,8 +200,12 @@ if (openGroups.length) {
 }
 
 if (oversized.length) {
-  console.log("\nPast the ~300-line split rule (knowledge/INDEX.md):");
+  console.log("\nPast the ~300-line split rule (knowledge/INDEX.md) — not yet reviewed:");
   for (const f of oversized) console.log(`  ${f.rel} (${f.lines} lines)`);
+}
+if (keptWhole.length && args.has("--full")) {
+  console.log("\nOver 300 lines but reviewed and deliberately kept whole:");
+  for (const f of keptWhole) console.log(`  ${f.rel} (${f.lines} lines) — reason in the file's split-review marker`);
 }
 
 if (args.has("--full")) {

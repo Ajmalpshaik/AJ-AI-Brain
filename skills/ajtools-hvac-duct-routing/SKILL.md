@@ -97,7 +97,7 @@ you're on the right stage before running anything, since the user may only be as
 decreases past every branch) is NOT part of the standard flow above — treat it as a separate, higher-risk
 request, only when the user explicitly asks for it.** This was attempted 2026-07-09 and repeatedly caused real
 damage (a takeoff fitting silently deleted, its whole branch orphaned) before a working technique was found
-— see `live-model/hvac-ducts.md` for the corrected recipe (offset the cut past the takeoff's own body, slice
+— see `live-model/hvac-duct-sizing.md` for the corrected recipe (offset the cut past the takeoff's own body, slice
 directly at that offset point, never slice-then-relocate) — but the user ultimately found the results still
 weren't coming out right and asked to hold off. Live-verified working end-to-end 2026-07-17 (3 cuts, 8/8
 terminals still traced to the FCU afterward) — start from
