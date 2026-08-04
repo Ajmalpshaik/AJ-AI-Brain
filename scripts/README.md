@@ -12,6 +12,13 @@ They're composed per request rather than rewritten each time. **Most requests sp
 **Read this file, pick the fragment, open that one file — don't read the whole folder.** Background lives
 beside this index, not in it:
 
+> **Faster: look it up instead of reading this.** `node tools/fragment-index.mjs --find <word>` searches
+> every fragment's purpose and input fields and returns matches with their proven status;
+> `--show <path>` prints one fragment's purpose plus exactly what you have to fill in. Same information
+> as the tables below, computed from the fragments themselves, in one lookup instead of a 500-line read.
+> It exists because this file being long is the reason "reuse before writing new C#" gets skipped —
+> the fragment was never missing, just hard to find. Add `--verified` to see only what has actually run.
+
 - **Why the folder is shaped this way** (the filter+action idea, a worked example, the local-AI workflow,
   how the library grows) → [`architecture.md`](architecture.md)
 

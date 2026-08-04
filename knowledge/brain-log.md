@@ -584,6 +584,21 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — **`tools/fragment-index.mjs` — makes "reuse before writing new C#" a lookup instead of a
+  500-line read.** The rule was never the problem; finding the fragment was. `--find <word>` searches
+  every fragment's purpose AND its input fields and reports each hit's proven status; `--show <path>`
+  prints one fragment's purpose, what it needs first, what it gives back, and the exact list of values to
+  fill in — the "form fields" view that turns using a fragment into filling a form rather than reading
+  code. `--json` for other tools. Computed from the fragments every run, stored nowhere, same rule as
+  `brain-status.mjs`.
+  Two real bugs caught while testing it, both worth remembering. **`process.exit()` right after a large
+  `console.log` truncates stdout when piped** — Node's pipe writes are async and exit does not wait, so
+  `--json | python3` produced an unterminated string; the fix is `process.exitCode` + `return`, never
+  `process.exit()`, after output. And **matching a README row with `.includes(path)` is wrong**: 8
+  fragments are named inside a *different* fragment's row as prose ("feeds `creators/create-dimension.cs`"),
+  so those 8 inherited a neighbour's verification status and the tool reported 75 proven against
+  brain-status's 73. Match the markdown link target `](path)` instead. Both tools now agree exactly —
+  which is the point: two tools disagreeing about the same number is the drift this repo keeps producing.
 - 2026-08-04 — **`scripts/recipes/build-test-fixtures.cs` — removes the "needs a fixture" blocker.** The
   open items had a whole category that no amount of effort could clear: fragments that can only be tested
   against a model containing something this scratch model doesn't have. This builds what an API can build
