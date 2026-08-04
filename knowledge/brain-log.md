@@ -567,3 +567,18 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
 - 2026-08-04 — Open-items list split three ways (any-model / needs-a-fixture / confirmed-impossible). The
   old flat list mixed answered-and-closed items with genuinely-outstanding ones, so it always read as more
   unfinished than it was.
+- 2026-08-04 — **Comprehension audit: three things a fresh session would have read wrong.** (1) The fire
+  sprinkler skill was missing from `README.md`'s table, `SETUP.md` and both plugin manifests — 9 skills on
+  disk, "8 skills" everywhere a reader looks. (2) `AGENT-SPEC.md` §3.5 claimed 206 fragments against 264
+  real ones, every bucket but `examples/` wrong. (3) Four files carried double-encoded characters, and one
+  was not cosmetic: `action-report-length-by-size.cs` did `s.Replace("<corrupted ø>", "")`, so round-duct
+  sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
+  "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
+  generally, so no non-ASCII literal is load-bearing there.
+- 2026-08-04 — `verify-consistency.ps1`/`.mjs` grew checks 4-6, because checks 1-3 could not see any of
+  the three problems above: skill coverage in the entry docs, AGENT-SPEC's fragment counts vs disk, and a
+  mojibake scan. The encoding check builds its patterns by *simulating* the corruption (UTF-8 encode, then
+  cp1252 decode) instead of hand-typing them — so the list can't drift, and the checker doesn't flag its
+  own source. Each of the six checks was proven to fire by deliberately re-introducing the defect, in both
+  the Node and PowerShell versions, then reverting. Also found while testing: `Get-ChildItem -Recurse`
+  needs `-Force`, or PowerShell skips dot-directories on Linux/macOS and never scans `.claude-plugin/`.

@@ -3,7 +3,8 @@
 **Document type:** Operating manual / software specification, for LLM consumption.
 **Audience:** An AI coding agent (e.g. Claude) operating this Brain against a live Revit session.
 **Status:** Production. Some items are marked `NEEDS_REVIEW` or `UNVERIFIED` — treat those as exactly
-that, not as confirmed capability. Last full staleness re-check against the routed files: 2026-07-23.
+that, not as confirmed capability. Last full staleness re-check against the routed files: 2026-07-23;
+last count/encoding re-check: 2026-08-04.
 **Relationship to the rest of this Brain:** This is a complete, self-contained reference — read once,
 act without hopping files. It intentionally duplicates summary-level facts that also live in
 `START-HERE.md` and `knowledge/*`; where this document gives a summary, the linked topic file is the
@@ -219,9 +220,10 @@ document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 206 real C# fragments in `scripts/` (48 filters, 112
-actions, 16 creators, 6 commands, 13 recipes, 2 examples, 9 read-only `context/` fragments — count
-re-verified 2026-07-23), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
+now also have a native tool above), and the 264 real C# fragments in `scripts/` (49 filters, 143
+actions, 33 creators, 8 commands, 19 recipes, 2 examples, 10 read-only `context/` fragments — count
+re-verified 2026-08-04, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
+silently again), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
 matching fragment(s), fills in real values, pastes them together, and sends the composed text through
 `run_csharp`. See `scripts/README.md` for the authoritative fragment index and composition rules.
 `NEEDS_REVIEW` entries in the action reference have no fragment yet — do not claim they're built. Prefer
@@ -269,13 +271,13 @@ sequence (e.g. `filter-by-category-and-numeric-param.cs` → `action-set-color-u
 ```
 Is this a plain count / one-parameter breakdown?
   YES → model_summary
-  NO â†“
+  NO ↓
 Does the request name one specific value ("the 300x300 VCDs"), not a full breakdown?
   YES → filter + action-report-parameters.cs (lists items WITH Element ID)
-  NO â†“
+  NO ↓
 Is this "which elements" + "what to do to them"?
   YES → filter/creator + action (§4.1)
-  NO â†“
+  NO ↓
 Is this a bespoke, multi-stage, order-dependent build (drawing/connecting/tracing/authoring)?
   YES → check scripts/recipes/ for an existing one, or design a new TransactionGroup-wrapped sequence (§5)
   NO → smallest correct one-off script; decide immediately after whether to save it as a new fragment
