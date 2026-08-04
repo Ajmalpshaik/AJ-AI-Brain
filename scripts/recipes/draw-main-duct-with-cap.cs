@@ -15,7 +15,7 @@
 //          ../../knowledge/live-model/hvac-ducts.md before changing this script, not just the code.
 // ============================================================
 // Does NOT include trunk-slicing for progressive duct sizing — that's a separate, higher-risk,
-// ask-first request (see ../../knowledge/live-model/hvac-ducts.md § Slicing a main trunk). This script draws ONE piece.
+// ask-first request (see ../../knowledge/live-model/hvac-duct-sizing.md § Slicing a main trunk). This script draws ONE piece.
 //
 // The whole draw+connect+cap sequence runs inside ONE TransactionGroup: any failure at any step rolls
 // back everything (duct AND cap), so a partial run never leaves an uncapped/half-connected duct behind
