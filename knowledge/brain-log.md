@@ -960,3 +960,16 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   separates "this build lacks the method" from "I got the name wrong", definitively. Design Options
   therefore have to be made by hand in Manage → Design Options before `filter-by-design-option` and
   `action-set-design-option` can ever be proven.
+- 2026-08-06 — Ajmal created the option sets by hand, and verifying `filter-by-design-option` against
+  them **found a third silent-wrong-answer bug, now fixed live**. Revit names the primary option of
+  *every* option set `"Option 1 (primary)"` — so a model with 3 sets has 3 identically-named options. The
+  fragment's `FirstOrDefault` on name picked whichever came first and reported success. It now takes a
+  `designOptionSetName` and **refuses to resolve an ambiguous name**, listing the candidate sets instead.
+  Verified across 6 cases: refuses when ambiguous, resolves to the correct distinct Id when the set is
+  given, still handles Main Model, and reports name-right/set-wrong as not-found.
+- 2026-08-06 — **A default name that Revit assigns automatically is the most dangerous kind of lookup
+  key**, because duplicates are the norm rather than the exception. `"Option 1 (primary)"` is the clear
+  case, but the same reasoning applies to `"Level 1"`, `"Workset1"` and any other Revit-generated
+  default: **match on Id where one is available, and when matching on a name, check how many things
+  answer to it before using the first.** Three of today's four bugs were a lookup that could not fail
+  loudly — it returned the wrong thing, or nothing, and said success either way.
