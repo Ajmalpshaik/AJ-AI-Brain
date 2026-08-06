@@ -1186,3 +1186,9 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   clause as authoritative even when a later "verified 2026-08-07" appears in the same row, so four
   fragments stayed uncounted until the stale clause was removed. **When recording a verification, delete
   the old not-verified claim rather than appending past it.**
+- 2026-08-07 — `create-view.cs` section mode fixed: a `BoundingBoxXYZ` starts with an IDENTITY Transform
+  and `CreateSection` reads the look direction from its `BasisZ`, so every "section" this produced looked
+  straight DOWN — `ViewDirection (0,0,-1)`, a plan-shaped cut — while reporting success. **`views.md` had
+  specified the required right-handed basis since before this session; the fragment just never built it.**
+  Second time today the Brain already held the answer (see the `duplicate-view-template` entry). The
+  standing lesson stands: search the Brain before writing or fixing C#.
