@@ -36,6 +36,7 @@ else
     var color = new Autodesk.Revit.DB.Color(colorR, colorG, colorB);
     int okCount = 0;
     var skipped = new List<string>();
+    var partial = new List<string>();
 
     using (var t = new Transaction(Document, "AJ Tools - Set Category Color Override"))
     {
@@ -65,9 +66,37 @@ else
                 }
                 view.SetCategoryOverrides(category.Id, ogs);
                 okCount++;
+
+                // REVIT SILENTLY DROPS PART OF A CATEGORY OVERRIDE, depending on the category.
+                // Measured 2026-08-07 on this Revit version: with Category.IsCuttable == false
+                // (Ducts, Pipes, Air Terminals, Mechanical Equipment) the CUT line colour never
+                // sticks, and on Ducts/Pipes/Air Terminals the surface fill is dropped too — only
+                // the projection line colour survives. Walls and Doors (IsCuttable == true) keep
+                // all of it. The setters do not complain and the in-memory object holds every
+                // value; only a read-back shows the difference. Reporting "coloured, fill included"
+                // when the fill was discarded is the silent wrong answer this library exists to
+                // avoid, so say what actually stuck.
+                // See ../../../knowledge/live-model/graphic-override-precedence.md.
+                var applied = view.GetCategoryOverrides(category.Id);
+                var dropped = new List<string>();
+                if (!applied.ProjectionLineColor.IsValid) dropped.Add("projection line colour");
+                if (!applied.CutLineColor.IsValid) dropped.Add("cut line colour");
+                if (includeFill && solidFillPattern != null)
+                {
+                    if (!applied.SurfaceForegroundPatternColor.IsValid) dropped.Add("surface fill");
+                    if (!applied.CutForegroundPatternColor.IsValid) dropped.Add("cut fill");
+                }
+                if (dropped.Count > 0)
+                    partial.Add($"{category.Name} (IsCuttable={category.IsCuttable}) — Revit kept the rest but DISCARDED: {string.Join(", ", dropped)}");
             }
             t.Commit();
             sb.AppendLine($"Set category override on {okCount} categor(y/ies) to RGB({colorR},{colorG},{colorB}) in view '{view.Name}' — affects every instance of each category, present or future, not just today's selection.");
+            if (partial.Count > 0)
+            {
+                sb.AppendLine("PARTIALLY APPLIED — read back from the view, not assumed:");
+                foreach (var p in partial) sb.AppendLine("  - " + p);
+                sb.AppendLine("  A non-cuttable category cannot take a cut override at all; for a solid-looking result on those, override the ELEMENTS (action-set-color-uniform.cs) instead of the category.");
+            }
             if (skipped.Count > 0) sb.AppendLine("Skipped: " + string.Join("; ", skipped));
         }
         catch (Exception ex)
