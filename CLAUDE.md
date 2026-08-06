@@ -21,6 +21,27 @@ one's proven status; `--show <path>` prints what a given fragment needs filled i
 instead of reading `scripts/README.md` end to end, which is the read that gets skipped when it feels
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
+**When you don't know the word to search for, ask in plain English instead** —
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 306 files
+(`skills/`, `knowledge/`, `scripts/`, and the root docs) by *meaning* as well as by exact words, and
+returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
+cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
+know the keyword. Use whichever fits: keyword when you know the term, this when you only know the job.
+Each result shows `found by: meaning #3 + words #1` — **high in both is the strong signal; only one firing
+means check before trusting it.** Setup and limits: [`semantic-index/README.md`](semantic-index/README.md).
+
+**Read the top 3–5, never just #1.** Measured 2026-08-06 against 24 questions written by independent
+testers in a modeller's own words: #1 was right or useful in about three-quarters, and wrong in the rest —
+the correct file was usually still in the top 3. It fails on **site vocabulary the files don't use**:
+"add 4 more floor levels" returns `create-floor.cs` (the slab creator) instead of `create-levels.cs`, and
+"how many light fitting" matches "light hazard". [`knowledge/glossary.md`](knowledge/glossary.md) is the
+site-word → Revit-word map; when a search looks off, say the Revit word and re-run.
+
+> **It is a snapshot, not a live index.** After adding or changing anything in `skills/`, `knowledge/`,
+> `scripts/` or the root docs, run `semantic-index\index-brain.cmd` (~80 s) — otherwise search keeps
+> returning the old text with no warning that it is stale. Treat this like updating `scripts/README.md`:
+> part of finishing the edit, not a separate chore.
+
 ## Maintaining this repo (the Brain itself)
 
 - Every file edit in this repo triggers a PostToolUse hook ([`.claude/settings.json`](.claude/settings.json)

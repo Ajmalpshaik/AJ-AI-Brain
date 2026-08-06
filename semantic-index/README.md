@@ -1,28 +1,31 @@
-# Semantic search for the AJ AI Brain
+# Plain-English search for the AJ AI Brain
 
-Ask the Brain a question in plain English and get back the skill, knowledge note,
-or script fragment that best answers it — without needing the exact keyword.
+Ask the Brain a question the way you would ask a person, and get back the skill,
+knowledge note, or script fragment that answers it — without needing the exact
+keyword.
 
 This sits **alongside** the existing keyword search (`tools/fragment-index.mjs`),
-it does not replace it. They are good at different things:
+it does not replace it, and it never modifies it. Three ways to look things up:
 
 | Use | When |
 |---|---|
-| `node tools/fragment-index.mjs --find color` | You know the word that will be in the file |
-| `ask-brain "make ducts a different colour"` | You know what you want to *do*, not what it's called |
+| **`ask-brain-hybrid`** | **Almost always. Matches meaning AND exact words.** |
+| `ask-brain` | Semantic only. Kept as the baseline, to compare against. |
+| `node tools/fragment-index.mjs --find color` | C# fragments only, exact word, with PROVEN status |
 
 Nothing here touches Revit, the AJ AI Bridge, `mcp-server/`, or the compile
-checker. It only reads `skills/`, `knowledge/`, `scripts/`, and the four
-top-level guides (`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`).
+checker. It only reads `skills/`, `knowledge/`, `scripts/`, and the five
+top-level guides (`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`,
+`CLAUDE.md`).
 
 ---
 
-## The two commands
+## The commands
 
-### Ask a question
+### Ask a question — use this one
 
 ```
-"D:\Ajmal\AJ AI Brain\semantic-index\ask-brain.cmd" "how do I undo a mistake"
+"D:\Ajmal\AJ AI Brain\semantic-index\ask-brain-hybrid.cmd" "how do I undo a mistake"
 ```
 
 Options you can add:
@@ -32,30 +35,75 @@ Options you can add:
 - `--area knowledge` — only knowledge notes
 - `--area skill` — only skill workflows
 - `--area guide` — only the top-level manuals
+- `--explain` — show why each result ranked where it did
+- `--no-fragment-tool` — skip `fragment-index.mjs` (works without Node)
 
-Use `--area fragment` when you specifically want code. Without it, the longer
-prose files often rank above the fragments, because they contain more words
-about the same subject.
-
-### Where it is weakest — worth knowing before it surprises you
-
-Questions shaped like **"how many X do I need in this room"** match poorly,
-because the shape of the question ("counting devices in a room") carries more
-weight than the one word that says *which* device. Tested 2026-08-06:
-*"how many diffusers do I need in this room"* ranks the sprinkler files above
-`ajtools-hvac-terminal-layout`, even though the sprinkler skill is the wrong
-answer. The two score within half a point of each other.
-
-Say the Revit word rather than the site word and it resolves — "air terminal"
-instead of "diffuser", "sprinkler head" instead of "sprinkler". Or use the
-keyword search, which is better at exactly this:
+Each result says **how it was found**:
 
 ```
-node tools/fragment-index.mjs --find diffuser
+found by: meaning #3 + words #1
 ```
 
-This is the honest boundary of a small offline model. Fixing it properly means
-combining keyword and semantic scoring, which is a Phase 2 job, not a tweak.
+*meaning* is its position by what you meant; *words* is its position by the
+exact words you typed. **Appearing high in both is the strongest signal.** A
+result found only by meaning may be a loose association; one found only by words
+may just share vocabulary. Fragments also show `[PROVEN]` or `[unproven]`, read
+live from `fragment-index.mjs`.
+
+### Why hybrid exists — the problem it fixes
+
+Semantic search alone confused two different jobs. Asked *"how many diffusers do
+I need in this room"*, it ranked the **sprinkler** files first, because the shape
+of the question — counting devices in a room — outweighed the single word saying
+*which* device. Both jobs are device-counting; only one is about diffusers.
+
+Hybrid fixes it by adding exact-word matching, weighted by **how rare each word
+is**. "diffuser" appears in 12 files, "room" in 57 — so "diffuser" carries far
+more weight, and the right skill wins.
+
+Measured 2026-08-06, same index, same question:
+
+| Rank | Semantic only | Hybrid |
+|---|---|---|
+| 1 | `nfpa13-sprinkler-spacing.md` ✗ | **`ajtools-hvac-terminal-layout`** ✓ |
+| 2 | `ajtools-fire-sprinkler-layout` ✗ | `ajtools-fire-sprinkler-layout` |
+| 3 | `ajtools-hvac-terminal-layout` ✓ | `live-model/hvac-terminals.md` ✓ |
+
+### How reliable is it, really — measured, not claimed
+
+The before/after above is the case hybrid was *built* for, so it proves little on its own. This is the
+number that counts: **24 questions written by independent testers** in a modeller's own words, across
+HVAC, fire, tagging, sheets/views, general Revit work and the Brain itself.
+
+| Result | Count |
+|---|---|
+| #1 was the best answer | 13 |
+| #1 was useful, though not the best file | 3 |
+| **#1 was wrong** | **8** |
+
+Three mechanical causes were found and fixed after that run (2 of the 8 now correct, 1 borderline
+improved, 0 regressions). **The rest are vocabulary, and re-ranking cannot fix them:**
+
+| You type | You get | You wanted |
+|---|---|---|
+| "add 4 more **floor levels**" | `create-floor.cs` — the slab creator | `create-levels.cs` |
+| "how many **light fitting**" | matched "**light** hazard" | `action-count-by-group.cs` |
+| "take my door schedule **out to excel**" | the glossary | `action-export-schedule-to-csv.cs` |
+
+The site word simply is not in the file that answers you, so no amount of re-scoring reaches it.
+
+**So: read the top 3–5, not just #1.** The right file was usually still in that window. If a result looks
+wrong, say the Revit word instead of the site word — `knowledge/glossary.md` is exactly that map, and
+teaching the search to use it automatically is the obvious next build.
+
+### Semantic only — the baseline
+
+```
+"D:\Ajmal\AJ AI Brain\semantic-index\ask-brain.cmd" "how do I undo a mistake"
+```
+
+Same options minus `--explain` and `--no-fragment-tool`. Kept deliberately
+unchanged so the two can be compared on the same question.
 
 ### Rebuild the index
 
@@ -75,7 +123,7 @@ Add a new fragment, write a new knowledge note, or change a skill, and the
 search will keep returning the *old* text until you rebuild. So:
 
 > **After you add or change anything in `skills/`, `knowledge/`, `scripts/`, or
-> the four top-level guides, run `index-brain.cmd`.**
+> the five top-level guides, run `index-brain.cmd`.**
 
 You do not need to remember what changed. Every run throws the whole index away
 and builds it fresh from whatever is on disk right now. That is deliberate — a
@@ -91,11 +139,13 @@ Running it more often than needed costs nothing but the 80 seconds.
 
 | Item | What it is |
 |---|---|
-| `ask-brain.cmd` | Shortcut — ask a question |
+| `ask-brain-hybrid.cmd` | Shortcut — ask a question (meaning + words). **Use this one.** |
+| `ask-brain.cmd` | Shortcut — ask a question (meaning only, the baseline) |
 | `index-brain.cmd` | Shortcut — rebuild the index |
 | `brain_common.py` | Shared settings: which folders, where data goes |
 | `brain_index.py` | Reads the Brain and builds the index |
-| `brain_search.py` | Answers a question |
+| `brain_search_hybrid.py` | Answers a question using both signals |
+| `brain_search.py` | Answers a question using meaning only |
 | `requirements.txt` | The one Python package needed |
 | `venv/` | The private Python installation |
 | `model-cache/` | The downloaded language model (~166 MB) |
