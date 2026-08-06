@@ -906,3 +906,15 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   `filter-by-multiple-categories` — both scopes, and **dedupe proven by listing one category three times
   and getting 3, not 9**, which is the only way to show a `HashSet<UniqueId>` is actually doing its job.
   Proven count now 89.
+- 2026-08-06 — Four more filters verified, taking the count to **93** (73 at session start).
+  `filter-by-category-name` (display-name → Id -2008000 → 3 ducts, cross-checked against a
+  `BuiltInCategory` baseline that never touches the name), `filter-by-phase` (3 ducts on "New
+  Construction"), `filter-by-pin-status`, `filter-by-views` (2 of 35 View-class elements — the part worth
+  proving is that it **excluded all 16 view templates and the 1 schedule**).
+- 2026-08-06 — **A better way to prove a two-branch filter: change the model, watch it flip, roll back.**
+  `filter-by-pin-status` returned "3 unpinned" — true, but equally what a filter that ignores pinning
+  entirely would return. So the test pinned one duct inside a `Transaction`, confirmed the counts moved
+  to 1 pinned / 2 unpinned, then called `RollBack()`. The model is left byte-identical and the filter is
+  proven to track real state rather than to be accidentally right. **Use this wherever a boolean filter's
+  "off" state is the model's default** — otherwise the passing result and the broken result are the same
+  number.
