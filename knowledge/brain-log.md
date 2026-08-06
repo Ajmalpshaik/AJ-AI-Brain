@@ -1192,3 +1192,12 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   specified the required right-handed basis since before this session; the fragment just never built it.**
   Second time today the Brain already held the answer (see the `duplicate-view-template` entry). The
   standing lesson stands: search the Brain before writing or fixing C#.
+- 2026-08-07 — Verification housekeeping worth knowing: **a rolled-back TransactionGroup does not always
+  leave the element table byte-identical.** After a `ChangeTypeId` run on 8 walls that was fully rolled
+  back (types and thicknesses confirmed restored), 8 new elements remained on the **"Reviewable Warnings"**
+  workset — no category, no geometry, no level, invisible in every view, and not referenced by any entry
+  in `Document.GetWarnings()`. Revit's own warning bookkeeping, not model content. Likewise, activating
+  the default `{3D}` view in a workshared model creates a permanent per-user `{3D - username}` view plus
+  ~9 dependents, and that is NOT undone by a rollback either (same class as the active-view switch noted
+  in `action-section-box-and-zoom.cs`). **So judge "the model is unchanged" on category counts, parameter
+  values and geometry — not on the highest ElementId, which drifts upward from bookkeeping alone.**
