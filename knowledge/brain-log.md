@@ -918,3 +918,17 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   proven to track real state rather than to be accidentally right. **Use this wherever a boolean filter's
   "off" state is the model's default** — otherwise the passing result and the broken result are the same
   number.
+- 2026-08-06 — **The test model was extended rather than the untestable filters being skipped.** A Room
+  (enclosed, 273 m²), a Pipe (5000 mm, 50 mm) and a named Group (`MEP_TestGroup_Terminals`, 5 members)
+  were added to `Project1`, unlocking filters that had no reachable main path. `filter-by-room` and
+  `filter-by-group` verified immediately after. **Fifteen filters were blocked purely by an empty model,
+  not by anything wrong with them** — building the fixture is cheaper than leaving a third of the library
+  permanently unprovable, and `scripts/recipes/build-test-fixtures.cs` exists for exactly this.
+- 2026-08-06 — **`filter-by-room`'s result is proven by geometry, which is the standard to aim for.**
+  It returned 4 of 5 air terminals; the fifth sits at y=15862 while the enclosing wall loop tops out at
+  y=12862, so it is genuinely outside. A bare "4 of 5" would have been a plausible number and nothing
+  more — printing each terminal's coordinates and in/out verdict is what turns it into evidence. Note the
+  fragment tests with the ROOM's Z, not the element's, which is why terminals at Z=0 still resolve.
+- 2026-08-06 — Placing that Room also re-confirmed the MEP level finding from earlier today: the new Pipe
+  reports its level through `RBS_START_LEVEL_PARAM` (= 311), exactly as the fixed fallback chain now
+  expects. Ducts and pipes behave the same way here.
