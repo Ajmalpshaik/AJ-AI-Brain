@@ -1,6 +1,10 @@
 // ============================================================
-// *** NOT CHECKED — BLOCKED: the core copy-into-option behavior has never run against a real Design
-// Option. This model has none, and there is no API to create one. See the BLOCKED note below for detail. ***
+// *** PARTLY CHECKED — the copy-into-option behaviour still has not run, but the reason CHANGED on
+// 2026-08-07 and the old reason is no longer true. The test model now HAS 6 Design Options in 3 sets
+// (built as a fixture), so "this model has none" is retired. What still blocks it is narrower: no option
+// can be made ACTIVE from a script, and the copy only lands in an option while that option is active.
+// Both guard paths ARE now verified live (see below). To finish this off, make an option active in the
+// Revit UI (status bar dropdown, or Manage > Design Options > Edit Selected) and re-run. ***
 // FRAGMENT (action) — action-set-design-option.cs
 // PURPOSE: Add every element in `elements` (from the Main Model) into a named Design Option — the write
 //          counterpart to filter-by-design-option.cs, which can find elements already IN an option but has
@@ -31,12 +35,17 @@
 // resets the active design option afterward (the old GOTCHA about "leaving editing mode" no longer
 // applies — this fragment never activates one itself, so it must not deactivate one the user deliberately
 // set up, before or after running).
-// BLOCKED — full live verification of the copy-while-active-option behavior could not be completed this
-// session: this model has 0 Design Options and the public API cannot create one either (UI-only, Manage >
-// Design Options > New — see scripts/README.md prerequisites). The API calls used below
-// (DesignOption.GetActiveDesignOptionId, ElementTransformUtils.CopyElements, DesignOption.Name/Id) are
-// all confirmed to exist and compile correctly; the actual copy-into-option behavior is unverified against
-// a real option. Re-verify once a Design Option exists and can be made active.
+// STATUS 2026-08-07 — updated on the day the fixture changed, per the standing lesson in
+// knowledge/brain-log.md that a blocker list is only useful if it is edited when the blocker moves:
+//   ✓ VERIFIED live — the "Design Option not found" guard: it lists the 6 real options by name.
+//   ✓ VERIFIED live — the "not the ACTIVE editing option" guard: with the Main Model active it refuses
+//     and prints the exact UI steps, rather than copying into the wrong option or throwing.
+//   ✓ RE-CONFIRMED by reflection on this Revit build: the only member matching "ActiveDesignOption"
+//     anywhere on DesignOption or Document is the read-only `GetActiveDesignOptionId`. Still no setter.
+//   ✗ NOT VERIFIED — the copy itself (ElementTransformUtils.CopyElements landing the copies inside the
+//     active option). That needs an option to be active, which only the UI can do.
+// The old note said this was blocked because the model had 0 Design Options. It has 6 now; the remaining
+// blocker is activation, not existence.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
