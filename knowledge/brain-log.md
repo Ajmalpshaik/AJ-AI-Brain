@@ -25,9 +25,12 @@ listed as item 1 with the word DONE inside it, which made `brain-status` count a
 for two days. **Heads-up before re-running:** it writes ~267 unsigned `out.dll` files into `%TEMP%` in
 quick succession and Sophos flags that heuristically as `ML/PE-A` — compiler output, not malware, and
 the folder is deleted at the end, but on a company-managed endpoint the detection reaches IT, so tell
-them before rather than after. **Worth re-running now**: 7 fragments were edited on 2026-08-06
+them before rather than after. **Worth re-running now**: 6 fragments were edited on 2026-08-06
 — `lib/prelude.cs`, `filter-by-category.cs`, `filter-by-elements-on-level.cs`,
-`action-report-parameters.cs`, `action-count-by-group.cs`, `filter-by-design-option.cs`.)
+`action-report-parameters.cs`, `action-count-by-group.cs`, `filter-by-design-option.cs` — and 4 more on
+2026-08-07: `action-report-parameters.cs` again, `action-move-elements.cs`, `action-rotate-elements.cs`,
+and `action-mirror-elements.cs` (header only). The move/rotate edits changed real logic, so this pass
+matters more than usual.)
 
 **Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
@@ -48,9 +51,12 @@ effort. An empty scratch model cannot move any of these:
    - **CLEARED by create-then-rollback** rather than by fixture: insulation, lining, Assembly, tags,
      pinning, unplaced rooms, element overlap. That technique makes a fixture unnecessary for anything
      the API can create — see the entries below.
-   - **STILL BLOCKED, genuinely**: Ceilings, electrical content, a CAD import, a flip-capable family, a
-     sleeve family, a nested shared family (for `filter-by-subcomponents`), a Scope Box (no API), and
-     the PDF print go-ahead (needs a real printer decision, not a fixture).
+   - **CLEARED 2026-08-07**: the flip-capable family — the fixture's door (921817) reports
+     `CanFlipHand`/`CanFlipFacing` true, so `action-flip-elements.cs` ran its positive path at last.
+     Worksharing likewise unblocked `action-report-element-ownership.cs`.
+   - **STILL BLOCKED, genuinely**: Ceilings, electrical content, a CAD import, a sleeve family, a nested
+     shared family (for `filter-by-subcomponents`), a Scope Box (no API), and the PDF print go-ahead
+     (needs a real printer decision, not a fixture).
    Per-fragment blockers stay in `scripts/README.md`'s notes.
 4. The 2026-07-23 transaction/null-check safety fixes to `create-parametric-box-family-with-duct-
    connector.cs`, `place-fcu.cs`, `place-terminals-checkerboard.cs`, `set-space-airflow.cs`,
@@ -1099,3 +1105,15 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   new extraction into the existing graph — building from the changed subset alone produced 307 nodes and
   its shrink-guard correctly refused to overwrite 849. **The guard caught an operator error, which is
   exactly what it is for.**
+- 2026-08-07 — New knowledge file `live-model/geometry-and-transforms.md`: transforms that silently do
+  NOTHING while reporting success. `MoveElement` and `RotateElement` return normally and change nothing
+  on a pinned element or group member; `CopyElement` on the same elements works fine — so "it's grouped"
+  is not a blanket answer. Also records why mirroring connected MEP in place re-fits instead of
+  reflecting. Found while verifying `action-find-duplicates.cs`, whose zero refused to flip.
+- 2026-08-07 — Verification pass, actions/reporting + qa-checks + move-copy-rotate: **3 real bugs fixed**
+  — `action-move-elements.cs` and `action-rotate-elements.cs` both counted "the API didn't throw" as
+  "it worked" (they reported moving/rotating 5 grouped terminals that never budged), and
+  `action-report-parameters.cs` printed the same empty cell for a parameter that is blank and one that
+  does not exist. All three now verify against the model itself. `action-flip-elements.cs` and
+  `action-report-element-ownership.cs` came off the blocked list — the fixture now has a door and is
+  workshared, so both positive paths ran for the first time.

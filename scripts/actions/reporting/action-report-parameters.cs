@@ -14,6 +14,7 @@ int maxRows = 50;
 bool includeElementId = true;
 bool includeCategory = true;
 bool includeTypeParameters = true;
+bool markMissingParameters = true;  // print "(no such parameter)" instead of a blank that reads as empty data
 // ---- END INPUTS ----
 
 Func<string, string> cleanCell = value =>
@@ -122,8 +123,15 @@ Func<Element, string, string> getValue = (e, name) =>
     if ((p == null || !p.HasValue) && includeTypeParameters)
     {
         var type = Document.GetElement(e.GetTypeId()) as ElementType;
-        p = type?.LookupParameter(name);
+        p = type?.LookupParameter(name) ?? p;
     }
+
+    // A parameter that does NOT EXIST and one that exists-but-is-empty must not both print "".
+    // core.md records that conflation as a silent wrong answer: ask for "Duct Width" on an air
+    // terminal, get a blank column, read it as "nobody filled it in" when the real name is
+    // different. Same distinction, and the same wording, as prelude.cs ParamText.
+    // (Proved live 2026-08-07: "NoSuchParameterXYZ" printed blank, identical to an empty Mark.)
+    if (p == null) return markMissingParameters ? "(no such parameter)" : "";
 
     return parameterToText(p);
 };

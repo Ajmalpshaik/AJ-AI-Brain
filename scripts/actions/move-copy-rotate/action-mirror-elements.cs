@@ -6,6 +6,15 @@
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // PRODUCES: newElementIds (List<ElementId>) — only populated when mirrorCopy = true.
 // NOT STANDALONE — see scripts/README.md for how to compose.
+// GOTCHA (mirrorCopy = false, on CONNECTED MEP): mirroring a duct/pipe run IN PLACE without also
+//         including its fittings does NOT mirror it — Revit keeps the connections and re-fits the
+//         geometry instead, so you get a constrained shape, not a reflection, and this fragment still
+//         reports "Mirrored 3 element(s) ... in place". Proved live 2026-08-07: 3 ducts joined by
+//         fittings 919041/919049 had Y midpoints 8391/12014/15111 mm; mirroring the 3 ducts alone gave
+//         -8462/2800/-15225 instead of the true -8391/-12014/-15111, while 8 unconnected WALLS mirrored
+//         to the millimetre. **Pass the whole connected set — fittings included — or use mirrorCopy =
+//         true**, which builds a fresh set and mirrors exactly.
+//         See ../../../knowledge/live-model/geometry-and-transforms.md.
 // ============================================================
 // For anything bulk or hard to reverse, run the filter ALONE first (see README's explorer-first
 // discipline) and confirm the count/preview with the user before appending this action.
