@@ -44,7 +44,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 **What the element IS — category, family, type, material, datum** — [`filters/by-identity/`](filters/by-identity/)
 | Fragment | Job |
 |---|---|
-| [`filter-by-category.cs`](filters/by-identity/filter-by-category.cs) | Every instance of one category, optional level scope |
+| [`filter-by-category.cs`](filters/by-identity/filter-by-category.cs) | Every instance of one category, optional level scope — ✓ verified 2026-08-06 (**fixed live: the level chain never tried `RBS_START_LEVEL_PARAM`, so setting `levelIdFilter` matched ZERO ducts and reported success** — 3 vs 0 side by side) |
 | [`filter-by-category-and-family.cs`](filters/by-identity/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
 | [`filter-by-category-name.cs`](filters/by-identity/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum |
 | [`filter-by-family.cs`](filters/by-identity/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
@@ -69,7 +69,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 | Fragment | Job |
 |---|---|
 | [`filter-by-element-intersection.cs`](filters/by-location/filter-by-element-intersection.cs) | Elements whose real geometry intersects one specific target element (`ElementIntersectsElementFilter`) |
-| [`filter-by-elements-on-level.cs`](filters/by-location/filter-by-elements-on-level.cs) | Everything on a given Level across the WHOLE model, optional category scope |
+| [`filter-by-elements-on-level.cs`](filters/by-location/filter-by-elements-on-level.cs) | Everything on a given Level across the WHOLE model, optional category scope — level chain fixed 2026-08-06 (same `RBS_START_LEVEL_PARAM` gap — MEP curves silently matched nothing); NOT yet live-verified end to end |
 | [`filter-by-region.cs`](filters/by-location/filter-by-region.cs) | Category narrowed to instances whose bounding box intersects a given mm region |
 | [`filter-by-room.cs`](filters/by-location/filter-by-room.cs) | Category narrowed to instances physically inside one room, matched by Id, Name, and/or Number |
 | [`filter-by-solid-intersection.cs`](filters/by-location/filter-by-solid-intersection.cs) | Elements whose real geometry intersects a custom 3D box/clearance solid (`ElementIntersectsSolidFilter`) — live-verified 2026-07-22 |
@@ -191,7 +191,7 @@ Grouped into subfolders under `actions/` by job — same grouping used whenever 
 | [`action-count-and-report.cs`](actions/reporting/action-count-and-report.cs) | Bare count or size-breakdown table |
 | [`action-count-by-group.cs`](actions/reporting/action-count-by-group.cs) | Count broken down by ANY parameter's value (Level, System Type, Family, Comments, Phase Created, ...) — the general case beyond size |
 | [`action-count-by-spatial-container.cs`](actions/reporting/action-count-by-spatial-container.cs) | Count broken down by which Room/Space/Zone physically contains each element — spatial test, not a parameter lookup (Room/Space have no such parameter on most MEP elements) |
-| [`action-report-parameters.cs`](actions/reporting/action-report-parameters.cs) | Parameter table (values) for parameter names you already know |
+| [`action-report-parameters.cs`](actions/reporting/action-report-parameters.cs) | Parameter table (values) for parameter names you already know — level chain fixed 2026-08-06 (same `RBS_START_LEVEL_PARAM` gap — MEP curves reported a blank level); NOT yet live-verified end to end |
 | [`action-report-parameter-inventory.cs`](actions/reporting/action-report-parameter-inventory.cs) | Discover what parameters an element actually HAS — name, kind (Built-in/Shared/Project-Family), group, storage type, Instance vs Type, read-only, value — before you know the names to ask for |
 | [`action-report-location.cs`](actions/reporting/action-report-location.cs) | Report each element's position (point, line endpoints, or bounding-box-center fallback); read-only |
 | [`action-report-bounding-box.cs`](actions/reporting/action-report-bounding-box.cs) | Report each element's bounding box + the combined extents of the set; read-only |

@@ -141,10 +141,17 @@ Func<Element, ElementId> LevelIdOf = e =>
 {
     if (e is Wall wallEl) return wallEl.LevelId;
     if (e.LevelId != ElementId.InvalidElementId) return e.LevelId;
+    // RBS_START_LEVEL_PARAM is the MEP-curve one and MUST stay in this chain:
+    // on a Duct/Pipe/CableTray/Conduit the other four are NOT PRESENT at all
+    // (proved live 2026-08-06 — all four returned "parameter not present",
+    // RBS_START_LEVEL_PARAM returned Level 1). Without it every MEP curve
+    // resolves to InvalidElementId, so a level filter silently matches NOTHING
+    // rather than erroring — the confidently-wrong failure, not a crash.
     var lp = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM)
         ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
         ?? e.get_Parameter(BuiltInParameter.LEVEL_PARAM)
-        ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+        ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM)
+        ?? e.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
     return lp == null ? ElementId.InvalidElementId : lp.AsElementId();
 };
 
