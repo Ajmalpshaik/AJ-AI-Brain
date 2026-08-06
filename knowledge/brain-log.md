@@ -1049,3 +1049,23 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   that posts it. Proved by committing a throwaway duct copy, posting Undo, and confirming in a *later*
   call that the copy was gone while the room, pipe, group, door, link and 6 design options all remained.
   Count **128 (48%)**.
+- 2026-08-06 — **Sixth silent bug, and the level problem has a second half nobody had noticed.**
+  `action-count-by-group.cs` grouped by `"Level"` and answered `None | 3` for ducts that are provably on
+  Level 1. Cause: it did `LookupParameter("Level")`, and **a Duct's parameter is called "Reference
+  Level"** while **a Wall has no level-named parameter at all**. Only an air terminal has a literal
+  `"Level"` — which is exactly why this looked fine whenever anyone tried it. The morning's
+  `RBS_START_LEVEL_PARAM` fix solved the *Id* half of finding an element's level; this is the *name*
+  half. Fixed with the same fallback chain the filters use: ducts, walls, pipes and terminals now all
+  report Level 1, and Family / Family and Type / Category / Comments / Width were re-checked for
+  regressions. Table in [`live-model/core.md`](live-model/core.md).
+- 2026-08-06 — **A verification harness can invent a bug that is not there.** While regression-checking
+  the above, a trimmed copy of `groupKey` reported "Family" as a *type* name and it briefly looked like a
+  second defect. It was not — the trimmed harness had dropped the fragment's own `Family` branch.
+  Re-running the complete code gave `M_Supply Diffuser: 5`, correctly. **When a harness paraphrases the
+  fragment instead of pasting it, a failure is at least as likely to be in the harness — re-run the real
+  thing before reporting a bug.**
+- 2026-08-06 — First three `actions/reporting/` verified by **composing them after a filter**, which is
+  how they are meant to be used: `action-count-and-report` (with the `preferredParamName` reorder the
+  header warns about), `action-count-by-group`, `action-report-location` (all three location branches,
+  and the `maxRows` truncation notice). Two actions were also chained after a single filter with no
+  variable collision. Count **131 (49%)**.

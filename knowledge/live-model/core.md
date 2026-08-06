@@ -310,6 +310,19 @@ chain must end with `RBS_START_LEVEL_PARAM` or every MEP curve silently reports 
 Proved live 2026-08-06 by probing a real Duct — the four parameters normally tried are not merely empty,
 they are **not present on the element**:
 
+**The parameter is not even called the same thing.** Grouping or reporting by a *display name* fails
+separately from the `LevelId` problem — confirmed live 2026-08-06:
+
+| Element | Parameter named "Level"? | Its real name | `element.LevelId` |
+|---|---|---|---|
+| **Duct / Pipe** | no | **"Reference Level"** | `-1` |
+| **Wall** | **no level parameter at all** | — | works |
+| Air Terminal | yes | "Level" | works |
+
+So `LookupParameter("Level")` answers `None` for most of a real model, and only looks correct on air
+terminals. Anything grouping, scheduling or reporting "by level" must use the fallback chain below rather
+than a name lookup — this is what broke `action-count-by-group.cs`.
+
 | Tried on a Duct | Result |
 |---|---|
 | `element.LevelId` | `-1` (InvalidElementId) |
