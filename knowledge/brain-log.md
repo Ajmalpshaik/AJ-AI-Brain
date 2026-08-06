@@ -822,3 +822,22 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   staleness banner is deliberately the smaller, reliable thing: it cannot make you rebuild, it can only
   make forgetting impossible to do quietly. Auto-rebuilding on every file edit was considered and
   rejected — at ~80 s a rebuild, a session touching ten files would spend fifteen minutes re-indexing.
+- 2026-08-06 — **Nine `context/` fragments live-verified** against a real open model (Revit 2020,
+  `Project1`): active-view, project-units, all-warnings, workset-info, model-categories, used-families,
+  design-options, levels-and-grids, linked-models. Proven count 73 → 82. Real finding worth keeping:
+  **`Document.GetWarnings()` returns rows with an EMPTY failing-element list** — system-level warnings
+  such as "flow direction mismatch" and "No Loss Defined" name no element, so never assume every warning
+  row points at something you can select. Four of the nine only exercised their *empty* branch (no
+  worksets, no links, no design options); their README rows say so rather than claiming full proof.
+- 2026-08-06 — New [`site-vocabulary.md`](site-vocabulary.md): a plain table of site word → Revit word,
+  read **live** by the hybrid search (no rebuild needed, so a new row works immediately). It rewrites the
+  question before searching — "out to excel" → "export csv schedule". Measured on the 4 vocabulary
+  failures: 1 fixed outright (the Excel one, now #1), 1 moved to #2, 1 had its *harmful* top hit removed
+  (`create-floor.cs`, the slab creator, no longer answers "add 4 more floor levels"), 1 unchanged. Zero
+  regressions across 6 known-good questions.
+- 2026-08-06 — **Two rules learned building that table, both recorded inside it.** (1) The matched phrase
+  must be REPLACED, not merely supplemented: adding "level" while leaving "floor" in the question still
+  returned the slab creator, because the misleading word goes on misleading. (2) **A row earns its place
+  by being narrow.** `drawing → view sheet` looked reasonable and made things worse — it fires on almost
+  any question, and it buried `filter-by-tag-status.cs` under a view-template fragment. Rejected rows are
+  kept in the file with the reason, so they are not helpfully re-added later.

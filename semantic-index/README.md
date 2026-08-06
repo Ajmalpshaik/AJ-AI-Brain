@@ -92,9 +92,33 @@ improved, 0 regressions). **The rest are vocabulary, and re-ranking cannot fix t
 
 The site word simply is not in the file that answers you, so no amount of re-scoring reaches it.
 
-**So: read the top 3–5, not just #1.** The right file was usually still in that window. If a result looks
-wrong, say the Revit word instead of the site word — `knowledge/glossary.md` is exactly that map, and
-teaching the search to use it automatically is the obvious next build.
+**So: read the top 3–5, not just #1.** The right file was usually still in that window.
+
+### Teaching it your words — `knowledge/site-vocabulary.md`
+
+That file is a plain table of *what you say* → *what the files call it*, and the search rewrites your
+question through it before looking:
+
+```
+"i want to take my door schedule out to excel"
+   ->  out to excel  becomes  export csv schedule
+   ->  action-export-schedule-to-csv.cs now ranks #1 (it was absent from the top 5)
+```
+
+**Add a row whenever a search misses because you used the site word.** It is read live, so a new row works
+**immediately — no rebuild needed.** That is the one part of this system that genuinely does get better
+every time it disappoints you.
+
+Measured honestly on the four vocabulary failures: **1 fixed outright, 1 moved to #2, 1 had its actively
+harmful top hit removed** ("add 4 more floor levels" no longer returns the *slab* creator), **1 unchanged**
+— with zero regressions across six known-good questions. Useful, not magic.
+
+Two rules if you add rows, both learned the hard way and written into the file itself:
+
+- **Map the phrase, not the word.** `floor level` → `level` is right; `floor` → `level` is wrong, because
+  a Floor is a real Revit category.
+- **Narrow rows only.** `drawing` → `view sheet` seemed sensible and made things worse — it fires on
+  nearly every question. Rejected rows are kept in the file with the reason, so nobody re-adds them.
 
 ### One deliberate quirk: `brain-log.md` is held back
 
