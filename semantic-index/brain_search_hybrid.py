@@ -114,6 +114,33 @@ KIND_WEIGHT = {
     "code": 0.35,     # variable names are incidental
 }
 
+# A few files are records of WHAT CHANGED, not answers to HOW DO I. They earn
+# their place when you ask about this Brain's own history, and get in the way
+# otherwise - so their final score is discounted rather than excluded.
+#
+# brain-log.md is the clearest case and the reason this exists. It is by far the
+# largest file here, so it has the most surface area to match by accident, and
+# it describes every problem ever solved - including, verbatim, the test
+# questions those problems were found with. Documenting the diffuser failure
+# honestly promptly made the log itself the #1 answer to "how many diffusers do
+# I need in this room", displacing the skill that actually answers it. A log
+# that outranks the thing it describes is a log that has eaten the search.
+# MEASURED TRADE-OFF, not a tuned sweet spot. RRF scores sit within a few
+# thousandths of each other, so this file falls off a cliff rather than sliding:
+#
+#   weight 1.00  "dated log of changes"  -> brain-log #1 (right)
+#                "how many diffusers"    -> brain-log #1 (wrong)
+#   weight 0.85  "dated log of changes"  -> not in top 4 (wrong)
+#                "how many diffusers"    -> the skill #1 (right)
+#
+# There is no value that gets both. 0.85 is chosen because a real work question
+# is asked constantly and a "show me the changelog" question almost never - and
+# when you do want the log, opening the file beats searching for it. Documented
+# in README.md so the behaviour is not mistaken for a bug later.
+PATH_WEIGHT = {
+    "knowledge/brain-log.md": 0.85,
+}
+
 # Words so common they carry no signal. Kept short on purpose - BM25's rarity
 # weighting already drives "the" and "how" towards zero on its own.
 STOPWORDS = {
@@ -443,6 +470,12 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
         if path in combined:
             combined[path]["score"] += WEIGHT_PROVEN_TOOL / (RRF_K + 1)
             combined[path]["tool"] = sorted(matched)
+
+    # Discount the change-log style files before the final ordering.
+    for path, entry in combined.items():
+        weight = PATH_WEIGHT.get(path)
+        if weight is not None:
+            entry["score"] *= weight
 
     results = []
     for path, entry in sorted(combined.items(), key=lambda kv: -kv[1]["score"]):

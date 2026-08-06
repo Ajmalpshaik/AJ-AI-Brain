@@ -96,6 +96,25 @@ The site word simply is not in the file that answers you, so no amount of re-sco
 wrong, say the Revit word instead of the site word — `knowledge/glossary.md` is exactly that map, and
 teaching the search to use it automatically is the obvious next build.
 
+### One deliberate quirk: `brain-log.md` is held back
+
+The Brain's change log is the largest file here and it describes every problem ever solved — including,
+word for word, the questions those problems were found with. Writing up the diffuser failure promptly made
+the *log* the top answer to "how many diffusers do I need in this room", pushing out the skill that
+actually answers it.
+
+So its score is discounted to 0.85. Measured trade-off, not a tuned sweet spot — the scores sit within
+thousandths of each other, so it falls off a cliff rather than sliding, and **no single value gets both
+cases right**:
+
+| Discount | "the dated log of changes" | "how many diffusers…" |
+|---|---|---|
+| none (1.0) | log ranks #1 ✓ | log ranks #1 ✗ |
+| **0.85 (chosen)** | log misses the top 4 ✗ | the skill ranks #1 ✓ |
+
+Real work questions get asked constantly; "show me the changelog" almost never. **If you want the change
+log, just open `knowledge/brain-log.md`** — don't search for it.
+
 ### Semantic only — the baseline
 
 ```
