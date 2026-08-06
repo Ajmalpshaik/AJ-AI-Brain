@@ -943,3 +943,20 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   code treating `0` as unset silently drops every element on the default workset. Full table in
   [`live-model/core.md`](live-model/core.md). Both of today's gotchas share a lesson: **when a Revit read
   returns null or zero, confirm the parameter's `StorageType` before concluding the model is empty.**
+- 2026-08-06 — Test fixture extended again: a **door** (loaded `M_Door-Single-Flush_Panel_Double-Acting`
+  from the metric library, hosted in wall 918932) and an **RVT link**. For the link a small purpose-made
+  `MEP_TestLink.rvt` was created rather than linking any of the real project files sitting in the same
+  folder — those are 200-300 MB of live work and have no business being pulled into a test fixture.
+  `filter-by-host`, `filter-by-links` and the links branch of `context-linked-models` all verified.
+  Proven count now **99**.
+- 2026-08-06 — **`filter-by-host`'s zero is the good kind, and it is worth copying the shape.** It found
+  1 hosted element on wall 918932 and **0 on a different wall in the same run**. The same code, same
+  model, one wall apart — so the 0 cannot be a broken lookup. Pairing a positive and a negative case in
+  one execution is stronger than any amount of reasoning about why a zero might be trustworthy.
+- 2026-08-06 — **Design Options cannot be created through the Revit 2020 API.** `DesignOption` exposes
+  exactly one static method, `GetActiveDesignOptionId`; there is no `CreateDesignOptionSet` and nothing
+  option-related on `Autodesk.Revit.Creation.Document`. Established by **reflecting over the type and
+  printing its real members** after the call failed to compile — which is the technique to reuse: it
+  separates "this build lacks the method" from "I got the name wrong", definitively. Design Options
+  therefore have to be made by hand in Manage → Design Options before `filter-by-design-option` and
+  `action-set-design-option` can ever be proven.
