@@ -11,6 +11,7 @@ feet↔mm conversion every script needs.
 | If the request is about… | Open |
 |---|---|
 | Running anything through the bridge at all; units (mm↔feet); Revit version differences; reading a raw category ID | [`core.md`](core.md) **← read this for any live-model task** |
+| "Which level / workset / design option is this element on?" — and why each one returns nothing instead of erroring | [`element-identity.md`](element-identity.md) (split out of `core.md` 2026-08-06) |
 | Isolating/hiding elements in a view; creating a section view | [`views.md`](views.md) |
 | "What actually connects to what" — tracing pipe/duct/equipment when names, tags or `IsConnected` can't be trusted | [`mep-trace.md`](mep-trace.md) |
 | "Mistake", "undo", "go back" — reversing something | [`undo.md`](undo.md) |
