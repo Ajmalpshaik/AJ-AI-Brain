@@ -243,6 +243,28 @@ rather than just act on existing ones and don't fit the filter+action shape.
   `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
   just the intended viewports — leaves every other sheet's title style untouched.
 
+### "Which workset is this on?" — the parameter is an INTEGER, and workset Id 0 is real
+
+`ELEM_PARTITION_PARAM` holds the workset, and reading it the obvious way returns nothing. Proved live
+2026-08-06 on a workshared model:
+
+| Read | Returns |
+|---|---|
+| `.StorageType` | `Integer` |
+| `.AsString()` | **`null`** — easy to misread as "this element has no workset" |
+| `.AsInteger()` | `0` — the workset **Id** |
+| `.AsValueString()` | `"Workset1"` — the **name**, and the one you usually want |
+| `element.WorksetId.IntegerValue` | `0` |
+
+**Two traps, not one.** `AsString()` returning null looks exactly like an element with no workset — this
+caught a probe written earlier in the same session. And **`Workset1` genuinely has Id `0`**, so any code
+treating `0` as "unset" or "invalid" silently drops every element on the default workset. Compare against
+a real `Workset.Id`, never against `0`.
+
+Only `WorksetKind.UserWorkset` worksets are the ones a modeller means. On a live check, 136 of 3,221
+non-type elements sat on the 2 user worksets; the rest are on family and view worksets, which is normal
+and not a sign anything is missing.
+
 ### "Which level is this element on?" — MEP curves need a parameter the usual chain does not try
 
 There is no single universal *get this element's level* API, so the library uses a fallback chain. **That
