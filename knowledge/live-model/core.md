@@ -157,6 +157,17 @@ rather than just act on existing ones and don't fit the filter+action shape.
   Where this bites in practice: any numeric parameter with a valid range (0 is usually outside it), and
   **anything that must be unique** — Room Number and Sheet Number refuse a value another element already
   holds, one element at a time, so a renumber can silently leave gaps while claiming a clean sequence.
+- **An MEP size can be accepted AND changed: `Set()` returns true and Revit SNAPS the value to the
+  type's size table.** Verified live 2026-08-07: a pipe asked for **77 mm** returned `true` and came out
+  **80 mm**; asked for 50 mm it came out 50 mm. So honouring the bool is necessary but NOT sufficient —
+  for a size, only reading the value back tells you what the model holds. Ducts and cable trays accepted
+  arbitrary sizes (337 mm went in unchanged) in the same test, so this is per-type behaviour driven by
+  the type's size table, not a fixed rule you can predict.
+  **Read it back after `Document.Regenerate()`, not straight after `Set()`** — immediately after the set
+  the parameter still reports the value you asked for, and the snap only lands at regeneration. That one
+  detail is the difference between a size report that is true and one that merely echoes the request.
+  `create-duct.cs`, `create-pipe.cs`, `create-cable-tray.cs` and `create-conduit.cs` all now report
+  ACTUAL size and flag a REFUSED or SNAPPED value explicitly.
 
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`

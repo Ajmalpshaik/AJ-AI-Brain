@@ -48,26 +48,43 @@ else
             var p2 = new XYZ(mm(endXMm), mm(endYMm), mm(endZMm));
             var duct = Autodesk.Revit.DB.Mechanical.Duct.Create(Document, sysType.Id, ductType.Id, level.Id, p1, p2);
 
+            // SIZE IS NOT WHAT YOU ASKED FOR UNTIL YOU READ IT BACK. Two separate traps, both measured
+            // live 2026-08-07 on this API:
+            //   (a) Set() returns FALSE and changes nothing — e.g. Set(0) on a duct Width.
+            //   (b) Set() returns TRUE and Revit SNAPS the value to the type's size table — a pipe asked
+            //       for 77mm returned true and came out 80mm. A bool check alone would still have lied.
+            // So: honour the bool AND compare the value actually stored. See ../../knowledge/live-model/core.md.
             var skippedSizes = new List<string>();
-            if (widthMm > 0)
+            var sizeNotes = new List<string>();
+            Action<Parameter, string, double> applySize = (p, label, wantMm) =>
             {
-                var pW = duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
-                if (pW != null && !pW.IsReadOnly) pW.Set(mm(widthMm)); else skippedSizes.Add("Width");
-            }
-            if (heightMm > 0)
-            {
-                var pH = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
-                if (pH != null && !pH.IsReadOnly) pH.Set(mm(heightMm)); else skippedSizes.Add("Height");
-            }
-            if (diameterMm > 0)
-            {
-                var pD = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
-                if (pD != null && !pD.IsReadOnly) pD.Set(mm(diameterMm)); else skippedSizes.Add("Diameter");
-            }
+                if (p == null || p.IsReadOnly) { skippedSizes.Add(label); return; }
+                bool ok = p.Set(mm(wantMm));
+                // Regenerate BEFORE reading back: straight after Set() the parameter still reports the
+                // value you asked for, and the snap to the type's size table only happens at
+                // regeneration. Without this the SNAPPED note never fires (measured live 2026-08-07).
+                Document.Regenerate();
+                double gotMm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                if (!ok) sizeNotes.Add($"{label} REFUSED {wantMm}mm — still {gotMm:0.##}mm");
+                else if (Math.Abs(gotMm - wantMm) > 0.5) sizeNotes.Add($"{label} SNAPPED {wantMm}mm -> {gotMm:0.##}mm (nearest size the type allows)");
+            };
+
+            if (widthMm > 0) applySize(duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM), "Width", widthMm);
+            if (heightMm > 0) applySize(duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM), "Height", heightMm);
+            if (diameterMm > 0) applySize(duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM), "Diameter", diameterMm);
 
             elements.Add(duct);
             t.Commit();
-            sb.AppendLine($"Created duct (Id {duct.Id.IntegerValue}) — type '{ductType.Name}', system '{sysType.Name}', {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+
+            // Report the size the MODEL holds, re-read after the commit — never the requested numbers.
+            var wNow = duct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM);
+            var hNow = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
+            var dNow = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
+            string actualSize = (dNow != null && dNow.HasValue && (wNow == null || !wNow.HasValue))
+                ? $"{UnitUtils.ConvertFromInternalUnits(dNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm dia"
+                : $"{(wNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(wNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##}x{(hNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(hNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##} mm";
+            sb.AppendLine($"Created duct (Id {duct.Id.IntegerValue}) — type '{ductType.Name}', system '{sysType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            if (sizeNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", sizeNotes));
             if (skippedSizes.Count > 0) sb.AppendLine($"  Size(s) not applicable to this duct shape, skipped: {string.Join(", ", skippedSizes)}.");
         }
         catch (Exception ex)

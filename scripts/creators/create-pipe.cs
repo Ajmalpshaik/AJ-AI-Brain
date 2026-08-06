@@ -44,16 +44,36 @@ else
             var p2 = new XYZ(mm(endXMm), mm(endYMm), mm(endZMm));
             var pipe = Autodesk.Revit.DB.Plumbing.Pipe.Create(Document, sysType.Id, pipeType.Id, level.Id, p1, p2);
 
+            // THIS FRAGMENT IS THE PROOF CASE for why a size must be read back. Measured live
+            // 2026-08-07: asking a pipe for 77mm returned Set() == TRUE and produced an 80mm pipe —
+            // Revit snapped to the nearest size in the type's table and reported success. The header
+            // already said "read the value back if the exact size matters"; now it does.
+            // See ../../knowledge/live-model/core.md.
+            string diaNote = null;
             if (diameterMm > 0)
             {
                 var pD = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
-                if (pD != null && !pD.IsReadOnly) pD.Set(mm(diameterMm));
+                if (pD != null && !pD.IsReadOnly)
+                {
+                    bool ok = pD.Set(mm(diameterMm));
+                    // Regenerate BEFORE reading back — straight after Set() the parameter still reports
+                    // 77mm; it only becomes 80mm at regeneration. Without this the SNAPPED note, which
+                    // is the entire point of this fragment's fix, never fires.
+                    Document.Regenerate();
+                    double gotMm = UnitUtils.ConvertFromInternalUnits(pD.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                    if (!ok) diaNote = $"Diameter REFUSED {diameterMm}mm — still {gotMm:0.##}mm";
+                    else if (Math.Abs(gotMm - diameterMm) > 0.5) diaNote = $"Diameter SNAPPED {diameterMm}mm -> {gotMm:0.##}mm (nearest size '{pipeType.Name}' allows)";
+                }
                 else sb.AppendLine("  Diameter parameter not settable on this pipe — type default kept.");
             }
 
             elements.Add(pipe);
             t.Commit();
-            sb.AppendLine($"Created pipe (Id {pipe.Id.IntegerValue}) — type '{pipeType.Name}', system '{sysType.Name}', {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+
+            var dFinal = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+            string actualDia = dFinal == null ? "unknown" : $"{UnitUtils.ConvertFromInternalUnits(dFinal.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm";
+            sb.AppendLine($"Created pipe (Id {pipe.Id.IntegerValue}) — type '{pipeType.Name}', system '{sysType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            if (diaNote != null) sb.AppendLine("  " + diaNote);
         }
         catch (Exception ex)
         {

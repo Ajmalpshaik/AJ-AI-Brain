@@ -1177,3 +1177,12 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   - `action-duplicate-views.cs` — **[checked live 2026-08-07]** 1.
   - `action-apply-view-template.cs` — **[checked live 2026-08-07]** 1.
   - `action-remove-view-template.cs` — **[checked live 2026-08-07]** 1.
+- 2026-08-07 — All four MEP creators fixed: an MEP size can be **accepted AND changed**. `Set()` returns
+  true and Revit snaps the value to the type's size table — a pipe asked for 77 mm came out 80 mm — so
+  honouring the bool is necessary but not sufficient; only a read-back tells you what the model holds,
+  and it must come **after `Document.Regenerate()`** because straight after `Set()` the parameter still
+  echoes the request. Filed in `live-model/core.md` beside the `Parameter.Set()` bool note.
+- 2026-08-07 — Housekeeping worth knowing: `brain-status` reads a row's "NOT yet live-verified (date)"
+  clause as authoritative even when a later "verified 2026-08-07" appears in the same row, so four
+  fragments stayed uncounted until the stale clause was removed. **When recording a verification, delete
+  the old not-verified claim rather than appending past it.**
