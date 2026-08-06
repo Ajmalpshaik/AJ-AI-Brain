@@ -1117,3 +1117,9 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   does not exist. All three now verify against the model itself. `action-flip-elements.cs` and
   `action-report-element-ownership.cs` came off the blocked list — the fixture now has a door and is
   workshared, so both positive paths ran for the first time.
+- 2026-08-07 — Second half of the verification pass (visibility, colour-graphics, parameters-naming,
+  structural-changes, prelude). Two more bug classes fixed: `SetCategoryOverrides` silently discards the
+  cut line and surface fill on a non-cuttable category (Ducts/Pipes/Air Terminals), and **`Parameter.Set()`
+  returns a bool that four fragments were throwing away** — Revit refuses a value by returning false, not
+  by throwing, so `Set(0.0)` on a duct's Width reported success and changed nothing. `lib/prelude.cs`
+  finally ran: every helper PASSed via `examples/prelude-smoke-test.cs`, after 3 days unproven.
