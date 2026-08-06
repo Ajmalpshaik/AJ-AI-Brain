@@ -9,6 +9,11 @@
 // SOURCE: technique adapted from github.com/mcp-servers-for-revit/revit-mcp-commandset's
 //         OperateElementEventHandler (SelectionBox case) — a different architecture, only the
 //         technique was taken, not any code.
+// GOTCHA: `UIDocument.ActiveView = targetView` SWITCHES THE VIEW THE USER IS LOOKING AT, and that is a
+//         UI change, not a document one — it does NOT come back when the transaction (or an enclosing
+//         TransactionGroup) is rolled back, and Undo will not restore it either. Confirmed live
+//         2026-08-07. The section box itself does roll back cleanly. If you need to leave the user
+//         where they started, capture `Document.ActiveView.Id` first and set it back yourself.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

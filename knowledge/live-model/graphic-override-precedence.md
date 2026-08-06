@@ -27,6 +27,41 @@ standing "verify, don't trust" rule in this knowledge set. Kept as given, not si
 | 8 | **MEP System Graphic Overrides** (colors set inside the Duct/Pipe/Electrical System's own Properties) | Moderate-high — a real, distinct Revit feature (Properties palette \| Graphic Overrides, set per system instance), commonly understood to sit below Category overrides and above Object Styles | Not yet scripted |
 | 9 | **Object Styles** — project-wide defaults | High — weakest, the fallback baseline everything else overrides | Not yet scripted (`Object Styles` is a document-wide setting, not a per-view/per-element script target) |
 
+## A category override is SILENTLY PART-DISCARDED on a non-cuttable category
+
+Not a precedence question — a "the write half-succeeded and said nothing" question, so it belongs with
+the rest of this file. Measured live 2026-08-07 on Revit 2020.
+
+`SetCategoryOverrides` accepts every setter without complaint, and the in-memory
+`OverrideGraphicSettings` really does hold all of them. Read it back off the view afterwards and some
+are gone. What survives depends on `Category.IsCuttable`:
+
+| Category | `IsCuttable` | Projection line | Cut line | Surface fill |
+|---|---|---|---|---|
+| Walls, Doors | **true** | kept | kept | kept |
+| Mechanical Equipment | false | kept | **discarded** | kept |
+| Ducts, Pipes, Air Terminals | false | kept | **discarded** | **discarded** |
+
+The same setters applied at the **element** level (`SetElementOverrides`) keep all of it on the very
+same ducts — so this is a restriction on category overrides specifically, not on the values.
+
+**The restriction is specific to CATEGORY overrides — the other two routes are unaffected.** Measured in
+the same session, on the same non-cuttable Ducts category:
+
+| Route | Cut line + surface fill on Ducts |
+|---|---|
+| `SetCategoryOverrides` | **discarded** |
+| `SetElementOverrides` (`action-set-color-uniform.cs`) | kept |
+| `SetFilterOverrides` (`action-apply-view-filter.cs`) | kept |
+
+**What this means in practice:** "colour the ducts blue by category" gives you blue *lines* and no fill,
+however solid it looked in the script. If the user wants ducts to read as solid colour in a shaded view,
+use a **View Filter** (best for a rule that should keep applying to new ducts) or a per-**element**
+override — not the category.
+
+`action-set-category-color.cs` now reads the override back after writing it and reports exactly which
+parts Revit discarded, instead of claiming the fill was applied.
+
 ## Practical use
 
 - **"I set a category color but it's not showing on this element"** — check whether that element has a
