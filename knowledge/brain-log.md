@@ -1034,3 +1034,18 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   Scope Box, and no API to create one). Also `filter-by-schedules`' template/`<...>` exclusion branch,
   which never ran because the model had none of either — the fragment is marked verified, but that
   limitation is written into its row.
+- 2026-08-06 — **`brain-status` was under-reporting, and the cause is worth knowing.** `statusOf()` in
+  `tools/fragment-index.mjs` decides "verified" with `/verified 2026/` — a literal, case-sensitive test.
+  `connect-equipment-to-air-terminals.cs` read **"✓ verified live 2026-07-26"**, and the word *live*
+  between "verified" and the year meant it never matched; a genuinely proven recipe has been counted as
+  unproven ever since. `ray-trace-to-ceiling.cs` said "not yet live-verified" in lowercase against a
+  case-sensitive `/NOT yet live-verified/`, so it read as no-status instead of untested. Both rows
+  reworded to the canonical form rather than loosening the regex — **one strict format that is easy to
+  check beats a clever matcher**. When adding a row, write exactly `✓ verified YYYY-MM-DD`, with any
+  qualifier *after* the date.
+- 2026-08-06 — Five `commands/` verified (`clear-selection`, `regenerate`, `zoom-to-fit`, `activate-view`,
+  `unhide-all-active-view`), plus `native-undo` re-verified and finally dated. **`PostCommand` is
+  asynchronous** — it runs after the API context ends, so the undo cannot be checked in the same call
+  that posts it. Proved by committing a throwaway duct copy, posting Undo, and confirming in a *later*
+  call that the copy was gone while the room, pipe, group, door, link and 6 design options all remained.
+  Count **128 (48%)**.
