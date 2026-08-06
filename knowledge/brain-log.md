@@ -1129,3 +1129,51 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   Revit auto-suffixes the copy — **was already written down in `live-model/views.md` on 2026-08-01 and I
   re-derived a worse one before finding it.** Standing lesson, and the reason `ask-brain-hybrid` exists:
   search the Brain before writing C#, including when you are only "fixing" a fragment.
+- 2026-08-07 — **Adversarial code-read of the 40 still-unverified fragments** (11 parallel readers, no
+  bridge access — the bridge takes one connection at a time, so all live runs stayed serial in the main
+  thread). They were given the 6 bug shapes already found this session and asked to find the same shapes
+  by reading. Result: 40 planned, 32 runnable against this fixture, 1 genuinely blocked, and the leads
+  below. **These are code-reading suspicions, NOT confirmed bugs** — three were checked live the same day
+  and one of those (viewport stacking) was real and is now fixed. Treat the rest as a work list, and
+  confirm each against the model before believing it.
+
+  - `create-duct.cs` — BUG SHAPE 2 (Set's bool ignored) — lines 55, 60, 65: 'if (pW != null && !pW.
+  - `create-pipe.cs` — BUG SHAPE 2 — line 50: 'if (pD != null && !pD.
+  - `create-cable-tray.cs` — BUG SHAPE 2 + BUG SHAPE 4, and this is the WORST of the four MEP creators.
+  - `create-conduit.cs` — BUG SHAPE 2, in its reporting form.
+  - `create-mep-system-type.cs` — BUG SHAPE 2 — line 72: 'if (pAbbr != null && !pAbbr.
+  - `create-hvac-zone.cs` — BUG SHAPE 1 and BUG SHAPE 3, both real.
+  - `create-room.cs` — BUG SHAPE 2 and BUG SHAPE 4 together, on one line each.
+  - `create-text-note.cs` — **[checked live 2026-08-07]** 1) Z is hardcoded to model 0 — line 56, `UnitUtils.
+  - `create-view.cs` — 1) Section mode never builds a Transform — lines 65-69 set only `Min`/`Max` on a fresh `BoundingBoxXYZ`, whose Transform is Identity.
+  - `create-callout-view.cs` — 1) Bug shape 2, textbook.
+  - `create-room-elevations.cs` — 1) The Elevation ViewFamilyType is picked by `FirstOrDefault(v => v.
+  - `create-key-schedule.cs` — 1) Bug shape 1.
+  - `create-revision-cloud.cs` — 1) The input contradicts this repo's own knowledge/live-model/revisions.
+  - `action-place-schedule-on-sheet.cs` — **[checked live 2026-08-07]** Shape #1 (call counted as work): line 52-53 `ScheduleSheetInstance.
+  - `action-place-viewport-on-sheet.cs` — **[checked live 2026-08-07]** Shape #1: line 52-53 `Viewport.
+  - `action-duplicate-sheet.cs` — Shape #3 (a write that half-succeeds while the header claims it is clean): lines 51-52 create the sheet BEFORE assigning the number, and the per-sheet catch at line 85-89 does `failed++` and prints the message but never `Document.
+  - `action-manage-sheet-sets.cs` — Shape #1 + #2 (report built from inputs, not a read-back): line 89-91 `target.
+  - `action-remove-tags.cs` — **[checked live 2026-08-07]** Shape #4 (lite): `skipped` is incremented from two places for different reasons — line 21 (not an IndependentTag, no note recorded) and line 30 (delete threw, note recorded) — and line 35's message offers both causes for a single number.
+  - `action-add-aligned-dimensions.cs` — Shape #1 (the API did not throw counted as the work happening): lines 102-104 `var dim = Document.
+  - `action-add-spot-elevations.cs` — Shape #1: line 88-89 `Document.
+  - `create-material.cs` — **[checked live 2026-08-07]** 1) REAL, and it is a composition bug: the catch block does NOT reset `elements`.
+  - `create-grid.cs` — **[checked live 2026-08-07]** 1) HEADLINE, bug shape 1/2: line 37, `try { grid.
+  - `create-levels.cs` — 1) Bug shape 1: `sb.
+  - `create-wall.cs` — 1) Bug shape 1, inverted into a FALSE FAILURE: the report on line 45 runs AFTER `t.
+  - `create-floor.cs` — 1) Bug shape 1, inverted into a FALSE FAILURE: the report on line 71 runs AFTER `t.
+  - `create-point-based-element.cs` — 1) A DOCUMENTED CROSS-REFERENCE THAT IS FALSE.
+  - `load-family.cs` — 1) HEADLINE, and it breaks the fragment's own advertised GOTCHA.
+  - `action-export-ifc.cs` — 1) Bug shape #1 (partial): line 46-50 `bool ok = Document.
+  - `action-export-nwc.cs` — 1) Bug shape #1, the clearest instance in this batch: lines 42-43 — `Document.
+  - `action-export-parameters-to-csv.cs` — 1) Bug shape #4, verbatim: line 36 `if (p == null || !p.
+  - `action-export-sheets-to-pdf.cs` — 1) Bug shape #5, the strongest finding here and NOT flagged in the header: lines 68-77 mutate PrintManager with no transaction and no restore.
+  - `action-export-view-image.cs` — 1) Bug shape #1: lines 45-46 — `Document.
+  - `action-export-views-to-dwg.cs` — 1) Bug shape #1, concrete and quotable — lines 53-54: `Document.
+  - `action-report-view-template-status.cs` — **[checked live 2026-08-07]** 1.
+  - `action-report-schedule-fields.cs` — **[checked live 2026-08-07]** 1.
+  - `action-report-sheet-title-blocks.cs` — **[checked live 2026-08-07]** 1.
+  - `action-duplicate-view-template.cs` — **[checked live 2026-08-07]** 1.
+  - `action-duplicate-views.cs` — **[checked live 2026-08-07]** 1.
+  - `action-apply-view-template.cs` — **[checked live 2026-08-07]** 1.
+  - `action-remove-view-template.cs` — **[checked live 2026-08-07]** 1.
