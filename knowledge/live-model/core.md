@@ -243,6 +243,33 @@ rather than just act on existing ones and don't fit the filter+action shape.
   `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
   just the intended viewports — leaves every other sheet's title style untouched.
 
+### "Which level is this element on?" — MEP curves need a parameter the usual chain does not try
+
+There is no single universal *get this element's level* API, so the library uses a fallback chain. **That
+chain must end with `RBS_START_LEVEL_PARAM` or every MEP curve silently reports no level at all.**
+
+Proved live 2026-08-06 by probing a real Duct — the four parameters normally tried are not merely empty,
+they are **not present on the element**:
+
+| Tried on a Duct | Result |
+|---|---|
+| `element.LevelId` | `-1` (InvalidElementId) |
+| `FAMILY_LEVEL_PARAM` | parameter not present |
+| `SCHEDULE_LEVEL_PARAM` | parameter not present |
+| `LEVEL_PARAM` | parameter not present |
+| `INSTANCE_REFERENCE_LEVEL_PARAM` | parameter not present |
+| **`RBS_START_LEVEL_PARAM`** | **`311` → Level 1** ✓ |
+
+Applies to every MEP curve — Ducts, Pipes, Flex Ducts/Pipes, Cable Trays, Conduits. A `FamilyInstance`
+such as an air terminal is fine on plain `element.LevelId`; it is the *curves* that differ.
+
+**Why this one is nastier than a crash.** A missing level resolves to `InvalidElementId`, which simply
+never equals the level you are filtering for — so "ducts on Level 1" returns **zero** and reports success.
+Nothing looks wrong. Measured side by side on the same model: fixed chain 3 ducts, old chain 0 ducts,
+walls unaffected at 8. Fixed in `lib/prelude.cs`, `filters/by-identity/filter-by-category.cs`,
+`filters/by-location/filter-by-elements-on-level.cs` and `actions/reporting/action-report-parameters.cs`
+— check any new level-resolution code against this list rather than re-deriving the chain.
+
 ### Category ID quick reference (for reading raw output only — never hardcode these in scripts)
 Verified live (2026-07-14) against the real installed RevitAPI.dll — all 27 matched exactly, none wrong:
 

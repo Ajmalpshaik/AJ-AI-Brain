@@ -856,3 +856,26 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   confirming the removed text was gone, and by an incremental index reporting the **same 2,540 chunks as
   a full rebuild**. Generalise: any cache keyed on "what changed" needs a second key for "what the rules
   were", or it will happily serve results built under rules that no longer exist.
+- 2026-08-06 — **Live-verifying `filter-by-category.cs` found a real silent-zero bug in 4 files.** The
+  "which level is this element on?" fallback chain never tried `RBS_START_LEVEL_PARAM`, and on a Duct the
+  other four parameters are **not present on the element at all** — so every MEP curve resolved to
+  `InvalidElementId`, which never equals the level being filtered for. Result: "ducts on Level 1" returned
+  **0 and reported success**. Proved side by side on one model: fixed chain 3 ducts, old chain 0, walls
+  unaffected at 8. Fixed in `lib/prelude.cs` (the shared toolkit, so it propagates),
+  `filters/by-identity/filter-by-category.cs`, `filters/by-location/filter-by-elements-on-level.cs`,
+  `actions/reporting/action-report-parameters.cs`. Full probe table in
+  [`live-model/core.md`](live-model/core.md).
+- 2026-08-06 — **The lesson is about how it failed, not what was wrong.** A missing level resolves to
+  `InvalidElementId`, and a comparison against it is simply false — so the bug could only ever produce an
+  empty result, never an error. That is why it survived a compile check, a 267-fragment compile pass and
+  months of review: nothing looks wrong about "0 elements found". **Any filter that can return zero needs
+  its zero questioned once against real elements you know exist** — running it and seeing "0" is not
+  verification, it is the bug.
+- 2026-08-06 — **Content hashes in this repo must flatten line endings first.** The new incremental index
+  keys off content hashes; committing the indexer flipped its own line endings LF→CRLF (git
+  `core.autocrlf`, this repo is CRLF), every byte-level hash moved without a word changing, and the next
+  rebuild wasted 92 s doing a full pass for nothing. Fixed by normalising `\r\n`→`\n` before hashing, in
+  both the per-file and the build fingerprint. Worth generalising: **on this repo, any "did this change?"
+  check that reads raw bytes will fire spuriously the first time git touches the file** — the same class
+  of trap as the PowerShell UTF-8 round-trip already recorded above, and it also shows up as a diff far
+  larger than the edit actually made.

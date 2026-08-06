@@ -104,10 +104,14 @@ Func<Element, string, string> getValue = (e, name) =>
         ElementId levelId = e.LevelId;
         if (levelId == ElementId.InvalidElementId)
         {
+            // RBS_START_LEVEL_PARAM last: on a Duct/Pipe the other four are
+            // NOT PRESENT (proved live 2026-08-06), so without it every MEP
+            // curve reports its level as blank.
             var levelParam = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM)
                 ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
                 ?? e.get_Parameter(BuiltInParameter.LEVEL_PARAM)
-                ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+                ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
             levelId = levelParam?.AsElementId() ?? ElementId.InvalidElementId;
         }
 

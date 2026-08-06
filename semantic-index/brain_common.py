@@ -229,14 +229,29 @@ def iter_indexed_files():
             yield path, name
 
 
+def _normalised_bytes(path: Path) -> bytes:
+    """
+    File content with line endings flattened to \\n.
+
+    Line endings are normalised before hashing because git rewrites them.
+    This repo is CRLF, `core.autocrlf` converts on checkout, and a freshly
+    written LF file becomes CRLF the moment git touches it — changing every
+    byte-level hash without a single word changing. Observed live 2026-08-06:
+    committing the indexer flipped its own line endings, which moved the build
+    fingerprint, which forced a needless 92-second full rebuild.
+    """
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def fingerprint(path: Path) -> str:
     """
     Short content hash. Content, not modified-date, on purpose: a git checkout
     or a file copy changes the date without changing a word, and a staleness
-    warning that cries wolf is one you learn to ignore.
+    warning that cries wolf is one you learn to ignore. Line endings are
+    flattened first, for exactly the same reason.
     """
     try:
-        return hashlib.sha1(path.read_bytes()).hexdigest()[:16]
+        return hashlib.sha1(_normalised_bytes(path)).hexdigest()[:16]
     except OSError:
         return "unreadable"
 
@@ -264,7 +279,7 @@ def build_fingerprint() -> str:
     for src in (SEMANTIC_ROOT / "brain_common.py",
                 SEMANTIC_ROOT / "brain_index.py"):
         try:
-            parts.append(hashlib.sha1(src.read_bytes()).hexdigest())
+            parts.append(hashlib.sha1(_normalised_bytes(src)).hexdigest())
         except OSError:
             parts.append("unreadable")
     return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]

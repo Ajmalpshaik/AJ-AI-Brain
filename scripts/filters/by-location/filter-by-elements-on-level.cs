@@ -38,10 +38,14 @@ else
         {
             if (e is Wall wall) return wall.LevelId;
             if (e.LevelId != ElementId.InvalidElementId) return e.LevelId;
+            // RBS_START_LEVEL_PARAM last, and it matters: on a Duct/Pipe the
+            // other four are NOT PRESENT (proved live 2026-08-06), so without
+            // it this filter silently returns ZERO MEP curves for any level.
             var p = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM)
                 ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
                 ?? e.get_Parameter(BuiltInParameter.LEVEL_PARAM)
-                ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+                ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
             return p?.AsElementId() ?? ElementId.InvalidElementId;
         };
 

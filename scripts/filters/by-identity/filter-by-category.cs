@@ -22,10 +22,17 @@ Func<Element, ElementId> resolveLevelId = e =>
 {
     if (e is Wall wall) return wall.LevelId;
     if (e.LevelId != ElementId.InvalidElementId) return e.LevelId;
+    // RBS_START_LEVEL_PARAM last, and it is the one that matters for MEP: on a
+    // Duct/Pipe/CableTray/Conduit the other four are NOT PRESENT at all (proved
+    // live 2026-08-06 — all four "parameter not present", this one returned
+    // Level 1). Without it, setting levelIdFilter silently matches ZERO ducts
+    // instead of erroring, which is the confidently-wrong failure this library
+    // exists to prevent.
     var p = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM)
         ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
         ?? e.get_Parameter(BuiltInParameter.LEVEL_PARAM)
-        ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+        ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM)
+        ?? e.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
     return p?.AsElementId() ?? ElementId.InvalidElementId;
 };
 
