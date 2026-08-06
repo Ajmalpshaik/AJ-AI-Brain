@@ -50,8 +50,8 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 | [`filter-by-family.cs`](filters/by-identity/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
 | [`filter-by-family-type.cs`](filters/by-identity/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
 | [`filter-by-grid.cs`](filters/by-identity/filter-by-grid.cs) | Every Grid, optional name substring — feeds `creators/create-dimension.cs` |
-| [`filter-by-id-list.cs`](filters/by-identity/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" |
-| [`filter-by-levels.cs`](filters/by-identity/filter-by-levels.cs) | Every Level ELEMENT itself (not elements sitting on one — that's `filter-by-elements-on-level.cs`), ordered by elevation |
+| [`filter-by-id-list.cs`](filters/by-identity/filter-by-id-list.cs) | A specific list of Element Ids the user already has — "what is this element / what are its parameters" — ✓ verified 2026-08-06 (4 real Ids + 1 bogus: reports found/missing correctly, does not throw on a dead Id; note `e.Name` on a duct returns its TYPE name) |
+| [`filter-by-levels.cs`](filters/by-identity/filter-by-levels.cs) | Every Level ELEMENT itself (not elements sitting on one — that's `filter-by-elements-on-level.cs`), ordered by elevation — ✓ verified 2026-08-06 (case-insensitive match confirmed with a lowercase term, ascending order asserted, and a non-matching term proved a real 0) |
 | [`filter-by-material.cs`](filters/by-identity/filter-by-material.cs) | Elements using a specific Revit Material, category-scoped |
 | [`filter-by-multiple-categories.cs`](filters/by-identity/filter-by-multiple-categories.cs) | Several categories collected as one group, e.g. duct system / pipe system / cable tray system |
 | [`filter-by-types.cs`](filters/by-identity/filter-by-types.cs) | The TYPE elements themselves (FamilySymbol or system-family type), matched by family/type name — reaches a type with zero placed instances, unlike the instance-derived type actions |
@@ -80,7 +80,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 | Fragment | Job |
 |---|---|
 | [`filter-by-assembly.cs`](filters/by-relationship/filter-by-assembly.cs) | Member elements of a specific Revit Assembly (`AssemblyInstance`) — ✓ graceful path only 2026-07-22 (no Assembly fixture) |
-| [`filter-by-connection-status.cs`](filters/by-relationship/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected |
+| [`filter-by-connection-status.cs`](filters/by-relationship/filter-by-connection-status.cs) | Category elements with at least one open connector end, or fully connected — ✓ verified 2026-08-06 (**both branches**, 3 categories; open + fullyConnected + noConnectors summed exactly to the category total each time, and its 9 open-ended elements matched `filter-by-warnings.cs` independently) |
 | [`filter-by-electrical-system.cs`](filters/by-relationship/filter-by-electrical-system.cs) | Elements in a specific Electrical System (circuit), by Circuit Type and/or circuit name — ✓ graceful path only 2026-07-22 (no electrical fixture) |
 | [`filter-by-group.cs`](filters/by-relationship/filter-by-group.cs) | Member elements of a specific Model Group instance |
 | [`filter-by-host.cs`](filters/by-relationship/filter-by-host.cs) | Elements hosted on a specific parent (`FamilyInstance.Host` or insulation/lining `HostElementId`) — ✓ graceful path only 2026-07-22 (no hosted fixture) |
@@ -111,7 +111,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 | [`filter-by-phase.cs`](filters/by-status/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
 | [`filter-by-pin-status.cs`](filters/by-status/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
 | [`filter-by-selection-filter.cs`](filters/by-status/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — live-verified 2026-07-22, both branches |
-| [`filter-by-warnings.cs`](filters/by-status/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set |
+| [`filter-by-warnings.cs`](filters/by-status/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set — ✓ verified 2026-08-06 (9 elements via a description filter, cross-checked against `filter-by-connection-status.cs`; **`errorsOnly` branch still unproven** — this model had 0 Error-severity warnings. Remember 3 of its 20 warnings named NO element, so a warning count and an element count are different numbers) |
 | [`filter-by-workset.cs`](filters/by-status/filter-by-workset.cs) | Elements on one user workset, optional category scope |
 
 ### Actions (consume `elements`)

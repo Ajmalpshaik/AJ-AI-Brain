@@ -879,3 +879,22 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   check that reads raw bytes will fire spuriously the first time git touches the file** — the same class
   of trap as the PowerShell UTF-8 round-trip already recorded above, and it also shows up as a diff far
   larger than the edit actually made.
+- 2026-08-06 — **Filters live-verified against a real model** (`Project1`, Revit 2020): `filter-by-levels`
+  (case-insensitivity confirmed with a lowercase term, ascending order asserted), `filter-by-id-list`
+  (4 real Ids + 1 bogus — reports found/missing, does not throw), `filter-by-warnings` (9 elements via a
+  description filter), `filter-by-connection-status` (**both** branches across 3 categories). Proven count
+  73 → 87 across the session.
+- 2026-08-06 — **The verification method that actually catches things, now used as standard.** Two habits
+  earned their place: (1) **prove a zero is real** — every filter run alongside a deliberately
+  non-matching term, so "0 results" is demonstrated rather than assumed (this is what the
+  `RBS_START_LEVEL_PARAM` bug hid behind); (2) **assert a partition** — for
+  `filter-by-connection-status`, open + fullyConnected + noConnectors had to sum exactly to the category
+  total, which no single-branch test would have shown. Best of all, two unrelated fragments agreed
+  independently: its 9 open-ended elements were exactly the 9 that `filter-by-warnings` found via
+  "open connector". **Two fragments reaching the same physical fact by different routes is worth more
+  than either one returning a plausible number.**
+- 2026-08-06 — Branches only exercised on their empty/absent path are now recorded as such in
+  `scripts/README.md` rather than being marked proven — `filter-by-warnings`'s `errorsOnly` (this model
+  has 0 Error-severity warnings), and the workset/link/design-option branches of the `context/` set.
+  **A half-tested fragment recorded as proven is worse than one recorded as unknown**, because the next
+  session stops checking.
