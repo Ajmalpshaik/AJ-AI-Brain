@@ -30,6 +30,7 @@ else
 {
     var level = Document.GetElement(levelId) as Level;
     int unbounded = 0;
+    var nameNotes = new List<string>();
 
     using (var t = new Transaction(Document, "AJ Tools - Create Rooms"))
     {
@@ -42,13 +43,36 @@ else
                     UnitUtils.ConvertToInternalUnits(xMm, DisplayUnitType.DUT_MILLIMETERS),
                     UnitUtils.ConvertToInternalUnits(yMm, DisplayUnitType.DUT_MILLIMETERS));
                 var room = Document.Create.NewRoom(level, uv);
-                if (!string.IsNullOrEmpty(name)) room.get_Parameter(BuiltInParameter.ROOM_NAME)?.Set(name);
-                if (!string.IsNullOrEmpty(number)) room.get_Parameter(BuiltInParameter.ROOM_NUMBER)?.Set(number);
+
+                // `?.Set(...)` swallowed two different failures at once: the null-conditional made "this
+                // parameter does not exist" look identical to "written", and the discarded bool hid
+                // Revit refusing the value. Room Number is the realistic case — it is refused when
+                // another room already holds it. (On this test model Revit ALLOWED a duplicate number
+                // between two unbounded rooms, so the refusal is conditional, not guaranteed — which is
+                // exactly why it has to be checked rather than assumed. Measured 2026-08-07.)
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var pName = room.get_Parameter(BuiltInParameter.ROOM_NAME);
+                    if (pName == null) nameNotes.Add($"Id {room.Id.IntegerValue}: no ROOM_NAME parameter");
+                    else if (!pName.Set(name)) nameNotes.Add($"Id {room.Id.IntegerValue}: Name '{name}' REFUSED, still '{pName.AsString()}'");
+                }
+                if (!string.IsNullOrEmpty(number))
+                {
+                    var pNum = room.get_Parameter(BuiltInParameter.ROOM_NUMBER);
+                    if (pNum == null) nameNotes.Add($"Id {room.Id.IntegerValue}: no ROOM_NUMBER parameter");
+                    else if (!pNum.Set(number)) nameNotes.Add($"Id {room.Id.IntegerValue}: Number '{number}' REFUSED (already taken?), still '{pNum.AsString()}'");
+                }
+
                 elements.Add(room);
                 if (room.Area <= 0) unbounded++;
             }
             t.Commit();
-            sb.AppendLine($"Created {elements.Count} room(s) on level '{level?.Name}'.");
+            // Report each room's Id and the name/number it ACTUALLY carries, per this README's
+            // "always report the Element ID for specific elements" rule.
+            sb.AppendLine($"Created {elements.Count} room(s) on level '{level?.Name}':");
+            foreach (var madeRoom in elements)
+                sb.AppendLine($"  Id {madeRoom.Id.IntegerValue} — Number '{madeRoom.LookupParameter("Number")?.AsString()}', Name '{madeRoom.LookupParameter("Name")?.AsString()}'");
+            if (nameNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", nameNotes));
             if (unbounded > 0)
             {
                 sb.AppendLine($"WARNING: {unbounded} room(s) came out unbounded (zero area) — no enclosing walls/separation lines found at that point. Check before relying on their Area.");

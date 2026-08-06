@@ -23,11 +23,16 @@ List<double> elevationsMm = useExplicitElevations
     ? explicitElevationsMm
     : Enumerable.Range(0, count).Select(i => startElevationMm + i * spacingMm).ToList();
 
+// CASE-INSENSITIVE on purpose. `.ToHashSet()` uses the default ordinal comparer, so with a lowercase
+// namePrefix the guard does not see the existing "Level 1" and happily names a new level "level 1" —
+// and Revit ACCEPTS it (measured live 2026-08-07), leaving two levels whose names differ only in case.
+// create-material.cs already solves the same duplicate-name problem with OrdinalIgnoreCase; this now
+// matches it.
 var existingNames = new FilteredElementCollector(Document)
     .OfClass(typeof(Level))
     .Cast<Level>()
     .Select(l => l.Name)
-    .ToHashSet();
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
 List<Element> elements = new List<Element>();
 
@@ -51,7 +56,13 @@ using (var t = new Transaction(Document, "AJ Tools - Create Levels"))
             n++;
         }
         t.Commit();
-        sb.AppendLine($"Created {elements.Count} level(s) at elevations (mm): {string.Join(", ", elevationsMm)}.");
+        // Report what the MODEL holds — name, Id and the elevation read back off each Level — not the
+        // requested list. The old line echoed `elevationsMm` and printed no names and no Element Ids, so
+        // a level that landed at the wrong elevation or took a different auto-name was invisible, and it
+        // broke this README's own "always report the Element ID for specific elements" rule.
+        sb.AppendLine($"Created {elements.Count} level(s):");
+        foreach (Level madeLevel in elements.Cast<Level>())
+            sb.AppendLine($"  '{madeLevel.Name}' (Id {madeLevel.Id.IntegerValue}) at {UnitUtils.ConvertFromInternalUnits(madeLevel.Elevation, DisplayUnitType.DUT_MILLIMETERS):0.##} mm");
     }
     catch (Exception ex)
     {
