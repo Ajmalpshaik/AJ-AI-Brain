@@ -1223,3 +1223,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   bullets, and `brain-status.mjs` silently reported NO open items, because it counts `**bold**` headings
   with `1.` numbered entries. Fixed by matching the format. **The status tool's silence is not the same
   as zero** — if a section suddenly reads empty, suspect the format before believing the number.
+- 2026-08-07 — End-of-session sync of every derived layer, after the verification campaign. All three are
+  now current and cross-checked against disk: **semantic index 309/309 content files** (verified live —
+  "why did my move do nothing on grouped elements" returns the new `geometry-and-transforms.md` at #1 by
+  BOTH meaning and words), **graphify graph 937 nodes / 975 edges**, health OK, no dangling or collapsed
+  edges, and **Obsidian vault 1251 notes**. Zero files missing from either index.
+  Two things worth keeping about the graphify `--update`:
+  (1) The merge came out SMALLER than the previous graph (955 -> 937 nodes) and the #479 shrink-guard
+      correctly refused to write. **Diagnose before forcing.** Per-file comparison showed it was
+      re-extraction variance on 4 doc files (`brain-log` 32->29, `core` 24->20, `live-model/README` 12->4,
+      `scripts/README` 39->28), offset by the genuinely new `geometry-and-transforms.md` going 0 -> 7.
+      No file lost its representation, so `force=True` was the right call — but only *after* the diff
+      explained the number. The guard exists to stop an UNdiagnosed shrink.
+  (2) `graphify-out/` is **gitignored**. The graph and vault do NOT travel through git — they travel only
+      when the FOLDER is copied. If the Brain is ever cloned rather than copied, regenerate them with
+      `/graphify . --update` on the new machine.
