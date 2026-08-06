@@ -7,11 +7,18 @@
 //          sheet-placement fragments) — they CAN appear on multiple sheets.
 // ASSUMES: elements (List<Element>) are View objects (from a filter/creator), sb (StringBuilder) exists.
 // NOT STANDALONE — see scripts/README.md for how to compose.
+// FIXED 2026-08-07: the default-point branch used to compute the sheet CENTRE inside the per-element
+//          loop, with no per-element offset — so placing N views put all N viewports on the exact same
+//          point and still reported "Placed N". Measured live: 3 views -> 3 viewports all centred on
+//          (422.5, 296.0) mm, one distinct position out of three. The sheet looked successfully
+//          populated and was unusable. It now lays them out on a grid across the sheet and reports the
+//          position of each. An explicit pointXmm/pointYmm still stacks them, because that is then the
+//          caller's stated intent — but it says so.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string targetSheetNumberText = "A-101";
-double? pointXmm = null, pointYmm = null; // null = center of the sheet's title block outline
+double? pointXmm = null, pointYmm = null; // null = auto-arrange across the sheet; set BOTH to stack every viewport on one point
 // ---- END INPUTS ----
 
 var targetSheet = new FilteredElementCollector(Document).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
@@ -25,19 +32,33 @@ if (targetSheet == null)
 }
 else
 {
+    // Work out the layout BEFORE the loop. Only the views that will actually be placed get a slot, so
+    // a skipped view doesn't leave a hole in the grid.
+    var placeable = elements.Select(el => el as View)
+        .Where(v => v != null && Viewport.CanAddViewToSheet(Document, targetSheet.Id, v.Id))
+        .ToList();
+    skipped = elements.Count - placeable.Count;
+
+    int columns = (int)Math.Ceiling(Math.Sqrt(Math.Max(1, placeable.Count)));
+    int rows = (int)Math.Ceiling(placeable.Count / (double)columns);
+    var sheetOutline = targetSheet.Outline;
+    double usableU = (sheetOutline.Max.U - sheetOutline.Min.U);
+    double usableV = (sheetOutline.Max.V - sheetOutline.Min.V);
+
     using (var t = new Transaction(Document, "AJ Tools - Place Viewport On Sheet"))
     {
         t.Start();
         try
         {
-            foreach (var el in elements)
+            var positions = new List<string>();
+            for (int i = 0; i < placeable.Count; i++)
             {
-                var view = el as View;
-                if (view == null || !Viewport.CanAddViewToSheet(Document, targetSheet.Id, view.Id)) { skipped++; continue; }
+                var view = placeable[i];
 
                 XYZ point;
                 if (pointXmm.HasValue && pointYmm.HasValue)
                 {
+                    // Explicit point: every viewport lands here, stacked. That is the caller's choice.
                     point = new XYZ(
                         UnitUtils.ConvertToInternalUnits(pointXmm.Value, DisplayUnitType.DUT_MILLIMETERS),
                         UnitUtils.ConvertToInternalUnits(pointYmm.Value, DisplayUnitType.DUT_MILLIMETERS),
@@ -45,15 +66,26 @@ else
                 }
                 else
                 {
-                    var outline = targetSheet.Outline;
-                    point = new XYZ((outline.Min.U + outline.Max.U) / 2, (outline.Min.V + outline.Max.V) / 2, 0);
+                    // Grid across the sheet — cell CENTRES, so a single viewport still lands mid-sheet
+                    // exactly as before, and N viewports never share a point.
+                    int col = i % columns;
+                    int row = i / columns;
+                    double u = sheetOutline.Min.U + usableU * (col + 0.5) / columns;
+                    double v = sheetOutline.Max.V - usableV * (row + 0.5) / rows;
+                    point = new XYZ(u, v, 0);
                 }
 
                 Viewport.Create(Document, targetSheet.Id, view.Id, point);
                 placed++;
+                positions.Add($"'{view.Name}' at ({UnitUtils.ConvertFromInternalUnits(point.X, DisplayUnitType.DUT_MILLIMETERS):F0}, {UnitUtils.ConvertFromInternalUnits(point.Y, DisplayUnitType.DUT_MILLIMETERS):F0})mm");
             }
             t.Commit();
             sb.AppendLine($"Placed {placed} viewport(s) on sheet '{targetSheet.SheetNumber} - {targetSheet.Name}', skipped {skipped} (already placed elsewhere, or not a placeable view type).");
+            // Report WHERE, not just how many — a stacked pile and a laid-out sheet both used to print
+            // the same line, which is how the stacking bug survived.
+            if (placed > 0) sb.AppendLine("  " + string.Join("; ", positions));
+            if (placed > 1 && pointXmm.HasValue && pointYmm.HasValue)
+                sb.AppendLine($"  NOTE: an explicit point was given, so all {placed} viewports are stacked on it. Leave pointXmm/pointYmm null to arrange them across the sheet instead.");
         }
         catch (Exception ex)
         {
