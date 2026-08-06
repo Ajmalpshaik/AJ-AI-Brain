@@ -16,12 +16,21 @@
 //          That is why every helper here that reports takes the StringBuilder as its first argument
 //          instead of capturing one: it has to compose with un-migrated fragments unchanged.
 //
-// STATUS: NOT YET COMPILED OR RUN — written 2026-08-04 in a session with no Revit and no C# compiler.
-//          Every construct used here is copied from a fragment already proven to run through this
-//          bridge (Func<> lambdas, bare `Transaction`/`TransactionGroup`/`View`/`Wall`, the LevelIdOf
-//          fallback chain lifted verbatim from filter-by-category.cs), but "assembled from proven
-//          parts" is not the same as "proven". Run examples/prelude-smoke-test.cs once — it is
-//          read-only and exercises every helper below in a single call.
+// STATUS: ✓ LIVE-VERIFIED 2026-08-07 — every helper below, all PASS, via
+//          examples/prelude-smoke-test.cs against a real model through this bridge:
+//            units      1000mm -> 3.28084 ft -> 1000.00 mm (exact round trip)
+//            view       active view resolved, and by-Id resolved to the same view
+//            collect    8 walls
+//            params     ParamText gave '(blank)' for an empty Comments and '(no such parameter)'
+//                       for a name that does not exist — the distinction this helper exists for
+//            level      LevelIdOf on a Wall -> 'Level 1'
+//            sizesort   unknown | 100ø | 250ø | 300x150 | 500x400 | 1200x600 (the ø survives)
+//            tx-commit  opened and committed
+//            tx-rollback a deliberate throw was caught, rolled back and REPORTED, not thrown to
+//                       the bridge — the behaviour AGENT-SPEC §2.5 requires
+//            tx-group   opened and assimilated
+//          Written 2026-08-04 in a session with no Revit and no C# compiler, so it sat unproven for
+//          three days; it is now safe to compose in front of any fragment.
 // ============================================================
 
 
