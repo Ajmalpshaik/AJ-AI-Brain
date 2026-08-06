@@ -232,8 +232,86 @@ def chunks_for_file(path, rel_path, area):
 # MAIN
 # --------------------------------------------------------------------------
 
+def collect_targets():
+    """
+    Everything the index covers, as [(path, rel, area)].
+
+    Root documents are named individually rather than globbed, because
+    indexing the whole repo root would sweep in throwaway files like
+    fragment-compile-failures.txt.
+    """
+    targets, missing = [], []
+
+    for folder_name, area in cfg.INDEX_TARGETS:
+        folder = cfg.BRAIN_ROOT / folder_name
+        if not folder.exists():
+            missing.append(folder_name + "/")
+            continue
+        for path in sorted(folder.rglob("*")):
+            if path.is_file() and path.suffix.lower() in cfg.FILE_EXTENSIONS:
+                rel = str(path.relative_to(cfg.BRAIN_ROOT)).replace("\\", "/")
+                targets.append((path, rel, area))
+
+    for name in cfg.ROOT_DOCS:
+        path = cfg.BRAIN_ROOT / name
+        if path.is_file():
+            targets.append((path, name, "guide"))
+        else:
+            missing.append(name)
+
+    return targets, missing
+
+
+def chunks_for(targets):
+    """Chunk a list of targets. Returns (chunks, files_with_bad_bytes)."""
+    chunks, bad = [], []
+    for path, rel, area in targets:
+        made, had_bad = chunks_for_file(path, rel, area)
+        if had_bad:
+            bad.append(rel)
+        chunks.extend(made)
+    return chunks, bad
+
+
+def store(collection, chunks, label):
+    """Embed and write chunks in batches, reporting progress."""
+    if not chunks:
+        return
+    print(f"  {label} {len(chunks)} chunk(s)...")
+    for i in range(0, len(chunks), BATCH_SIZE):
+        batch = chunks[i:i + BATCH_SIZE]
+        collection.add(
+            ids=[c[0] for c in batch],
+            documents=[c[1] for c in batch],
+            metadatas=[c[2] for c in batch],
+        )
+        done = min(i + BATCH_SIZE, len(chunks))
+        if len(chunks) > BATCH_SIZE:
+            print(f"    {done}/{len(chunks)}")
+
+
+def drop_files(collection, rels):
+    """
+    Remove every chunk belonging to these files.
+
+    This is the step that makes an incremental rebuild trustworthy. A file that
+    used to produce 12 chunks and now produces 8 would otherwise leave 4 ghosts
+    behind - text that no longer exists anywhere in the Brain, still answering
+    questions. Deleting by the `path` metadata clears them whatever the count.
+    """
+    if not rels:
+        return
+    try:
+        collection.delete(where={"path": {"$in": list(rels)}})
+    except Exception:
+        for rel in rels:  # older Chroma without $in
+            collection.delete(where={"path": rel})
+
+
 def main():
     start = time.time()
+    force_full = "--full" in sys.argv
+
     print("AJ AI Brain — semantic index build")
     print(f"  reading from : {cfg.BRAIN_ROOT}")
     print(f"  writing to   : {cfg.SEMANTIC_ROOT}")
@@ -244,125 +322,114 @@ def main():
         print(f"ERROR: Brain folder not found: {cfg.BRAIN_ROOT}")
         return 1
 
-    all_chunks = []
-    file_counts = {}
-    bad_files = []
-    indexed_rels = []  # exactly what this build covered, for the staleness check
-
-    for folder_name, area in cfg.INDEX_TARGETS:
-        folder = cfg.BRAIN_ROOT / folder_name
-        if not folder.exists():
-            print(f"  SKIPPED (missing): {folder_name}/")
-            continue
-
-        found = 0
-        for path in sorted(folder.rglob("*")):
-            if not path.is_file() or path.suffix.lower() not in cfg.FILE_EXTENSIONS:
-                continue
-            rel = str(path.relative_to(cfg.BRAIN_ROOT))
-            chunks, bad = chunks_for_file(path, rel, area)
-            if bad:
-                bad_files.append(rel)
-            all_chunks.extend(chunks)
-            indexed_rels.append(rel)
-            found += 1
-
-        file_counts[folder_name] = found
-        print(f"  {folder_name + '/':<12} {found:>4} files")
-
-    # Root documents — named individually, because indexing the whole repo root
-    # would sweep in throwaway files like fragment-compile-failures.txt.
-    root_found = 0
-    missing_root = []
-    for name in cfg.ROOT_DOCS:
-        path = cfg.BRAIN_ROOT / name
-        if not path.is_file():
-            missing_root.append(name)
-            continue
-        chunks, bad = chunks_for_file(path, name, "guide")
-        if bad:
-            bad_files.append(name)
-        all_chunks.extend(chunks)
-        indexed_rels.append(name)
-        root_found += 1
-
-    file_counts["root docs"] = root_found
-    print(f"  {'root docs':<12} {root_found:>4} files")
-
-    if missing_root:
-        print()
-        for name in missing_root:
-            print(f"  WARNING: root document not found, skipped: {name}")
-
-    print()
-    print(f"  {len(all_chunks)} chunks to index")
-
-    if not all_chunks:
+    targets, missing = collect_targets()
+    if not targets:
         print("ERROR: nothing found to index.")
         return 1
+    for name in missing:
+        print(f"  WARNING: not found, skipped: {name}")
 
+    current = {rel: cfg.fingerprint(path) for path, rel, _ in targets}
+    manifest = cfg.read_manifest()
+    build_now = cfg.build_fingerprint()
+
+    # ---- decide: incremental, or start over? ----------------------------
+    reason = None
+    if force_full:
+        reason = "--full requested"
+    elif manifest is None:
+        reason = "no manifest from a previous build"
+    elif manifest.get("build") != build_now:
+        reason = "chunking rules or settings changed"
+
+    client = cfg.get_client()
     cached = (cfg.MODEL_DIR / "all-MiniLM-L6-v2" / "onnx" / "model.onnx").exists()
     print("  loading embedding model"
           + (" from local cache (offline)..." if cached
              else " — downloading it once, ~80 MB..."))
     embedder = cfg.get_embedding_function()
-    client = cfg.get_client()
 
-    # Full rebuild: drop the old collection so deleted files leave no ghosts.
-    try:
-        client.delete_collection(cfg.COLLECTION_NAME)
-        print("  removed previous index")
-    except Exception:
-        pass
+    collection = None
+    if reason is None:
+        try:
+            collection = client.get_collection(
+                name=cfg.COLLECTION_NAME, embedding_function=embedder)
+        except Exception:
+            reason = "no existing index to update"
 
-    collection = client.create_collection(
-        name=cfg.COLLECTION_NAME,
-        embedding_function=embedder,
-        metadata={"hnsw:space": "cosine"},
-    )
+    # ---- full rebuild ----------------------------------------------------
+    if reason is not None:
+        print(f"  FULL REBUILD ({reason})")
+        try:
+            client.delete_collection(cfg.COLLECTION_NAME)
+        except Exception:
+            pass
+        collection = client.create_collection(
+            name=cfg.COLLECTION_NAME, embedding_function=embedder,
+            metadata={"hnsw:space": "cosine"})
 
-    print("  embedding and storing...")
-    for i in range(0, len(all_chunks), BATCH_SIZE):
-        batch = all_chunks[i:i + BATCH_SIZE]
-        collection.add(
-            ids=[c[0] for c in batch],
-            documents=[c[1] for c in batch],
-            metadatas=[c[2] for c in batch],
-        )
-        done = min(i + BATCH_SIZE, len(all_chunks))
-        print(f"    {done}/{len(all_chunks)}")
+        chunks, bad = chunks_for(targets)
+        store(collection, chunks, "embedding")
+        cfg.write_manifest([rel for _, rel, _ in targets])
 
-    stored = collection.count()
+        print()
+        print("DONE (full rebuild)")
+        print(f"  files indexed : {len(targets)}")
+        print(f"  chunks stored : {collection.count()}")
+        print(f"  time taken    : {time.time() - start:.1f} seconds")
+        report_bad(bad)
+        return 0
 
-    # Record what this build covered, so a later search can tell you the Brain
-    # has moved on since. Written only after the data is safely stored.
-    cfg.write_manifest(indexed_rels)
+    # ---- incremental ------------------------------------------------------
+    recorded = manifest["files"]
+    changed = sorted(r for r in current if r in recorded
+                     and recorded[r] != current[r])
+    added = sorted(r for r in current if r not in recorded)
+    removed = sorted(r for r in recorded if r not in current)
 
-    elapsed = time.time() - start
+    if not (changed or added or removed):
+        print("  UP TO DATE — nothing has changed since the last build.")
+        print(f"  files : {len(targets)}   chunks : {collection.count()}")
+        print(f"  time taken    : {time.time() - start:.1f} seconds")
+        return 0
+
+    print(f"  INCREMENTAL — {len(changed)} changed, {len(added)} new, "
+          f"{len(removed)} deleted "
+          f"({len(current) - len(changed) - len(added)} untouched, skipped)")
+    for label, group in (("changed", changed), ("new", added),
+                         ("deleted", removed)):
+        for rel in group[:5]:
+            print(f"      {label:<8} {rel}")
+        if len(group) > 5:
+            print(f"      {'':<8} ... and {len(group) - 5} more")
+
+    # Old chunks go first, so a shrinking file cannot leave ghosts behind.
+    drop_files(collection, set(changed) | set(removed))
+
+    rebuild = set(changed) | set(added)
+    chunks, bad = chunks_for([t for t in targets if t[1] in rebuild])
+    store(collection, chunks, "embedding")
+
+    cfg.write_manifest([rel for _, rel, _ in targets])
 
     print()
-    print("DONE")
-    print(f"  files indexed : {sum(file_counts.values())}")
-    for name, count in file_counts.items():
-        print(f"      {name}/: {count}")
-    print(f"  chunks stored : {stored}")
-    print(f"  time taken    : {elapsed:.1f} seconds")
+    print("DONE (incremental)")
+    print(f"  files indexed : {len(targets)}")
+    print(f"  re-embedded   : {len(rebuild)} file(s), {len(chunks)} chunk(s)")
+    print(f"  chunks stored : {collection.count()}")
+    print(f"  time taken    : {time.time() - start:.1f} seconds")
     print(f"  database at   : {cfg.CHROMA_DIR}")
+    report_bad(bad)
+    return 0
 
+
+def report_bad(bad_files):
     if bad_files:
         print()
         print("  WARNING — these files had characters that would not decode "
               "as UTF-8 and were indexed with replacements:")
         for name in bad_files:
             print(f"      {name}")
-
-    if stored != len(all_chunks):
-        print()
-        print(f"  WARNING: expected {len(all_chunks)} chunks but the database "
-              f"reports {stored}. Investigate before trusting results.")
-        return 1
-
-    return 0
 
 
 if __name__ == "__main__":

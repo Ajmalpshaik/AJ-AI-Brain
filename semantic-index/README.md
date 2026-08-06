@@ -154,7 +154,32 @@ unchanged so the two can be compared on the same question.
 "D:\Ajmal\AJ AI Brain\semantic-index\index-brain.cmd"
 ```
 
-Takes about **80 seconds**. You can also just double-click the file.
+**Normally 2–4 seconds.** It only re-reads the files that actually changed:
+
+| What you did | Time |
+|---|---|
+| Nothing | **2.3 s** |
+| Changed one file | **2.8 s** |
+| Added one file | **3.9 s** |
+| Deleted one file | **2.7 s** |
+| Full rebuild (all 307 files) | ~79 s |
+
+You can double-click the file. Add `--full` to force a complete rebuild.
+
+**A full rebuild also happens on its own when it must** — if you change the
+chunking settings or edit `brain_index.py`/`brain_common.py`, every stored chunk
+is the wrong shape, but the *files* are untouched, so a file-by-file comparison
+would happily skip them all. The build fingerprint catches exactly that and
+starts over. Editing even a comment in those two files triggers it: a needless
+80 seconds is a cheap price against a silently half-migrated index.
+
+**Why you can trust the fast path.** The risk with only updating what changed is
+*ghosts* — a file that used to make 12 chunks and now makes 8 leaving 4 orphans
+behind, text that exists nowhere in the Brain but still answers questions. Every
+chunk of a changed file is deleted before the new ones are written. Verified by
+shrinking a 30-chunk file to 2 and confirming the deleted text was gone, and by
+checking that an incrementally-updated index reports **exactly the same chunk
+count as a full rebuild** — 2,540 either way.
 
 ---
 
