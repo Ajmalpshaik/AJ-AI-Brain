@@ -46,7 +46,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 |---|---|
 | [`filter-by-category.cs`](filters/by-identity/filter-by-category.cs) | Every instance of one category, optional level scope — ✓ verified 2026-08-06 (**fixed live: the level chain never tried `RBS_START_LEVEL_PARAM`, so setting `levelIdFilter` matched ZERO ducts and reported success** — 3 vs 0 side by side) |
 | [`filter-by-category-and-family.cs`](filters/by-identity/filter-by-category-and-family.cs) | Category narrowed to a family name (VCD-style) |
-| [`filter-by-category-name.cs`](filters/by-identity/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum |
+| [`filter-by-category-name.cs`](filters/by-identity/filter-by-category-name.cs) | Category resolved by plain display name, not the BuiltInCategory enum — ✓ verified 2026-08-06 (name → Id -2008000 → 3 ducts, cross-checked against an independent `BuiltInCategory` baseline; a bogus name proved it takes the explicit "not found" message path rather than returning a silent 0) |
 | [`filter-by-family.cs`](filters/by-identity/filter-by-family.cs) | Family name matched across the WHOLE model, no category picked first |
 | [`filter-by-family-type.cs`](filters/by-identity/filter-by-family-type.cs) | A specific Type inside a Family, matched by name (e.g. one exact fitting size) |
 | [`filter-by-grid.cs`](filters/by-identity/filter-by-grid.cs) | Every Grid, optional name substring — feeds `creators/create-dimension.cs` |
@@ -100,7 +100,7 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 | [`filter-by-scope-box.cs`](filters/by-view-and-sheet/filter-by-scope-box.cs) | Every Scope Box, optional name substring — feeds `action-assign-scope-box-to-view.cs`; delete via `action-delete-elements.cs`, no dedicated fragment needed |
 | [`filter-by-sheets.cs`](filters/by-view-and-sheet/filter-by-sheets.cs) | Every ViewSheet, optional sheet-number substring — live-verified 2026-07-23, zero bugs |
 | [`filter-by-tag-status.cs`](filters/by-view-and-sheet/filter-by-tag-status.cs) | Category elements that ARE or ARE NOT tagged in a given view |
-| [`filter-by-views.cs`](filters/by-view-and-sheet/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter |
+| [`filter-by-views.cs`](filters/by-view-and-sheet/filter-by-views.cs) | Every View (not ViewSheet), optional ViewType + name filter — ✓ verified 2026-08-06 (2 of 35 View-class elements matched; **correctly excluded all 16 view templates and the 1 schedule** — the exclusion is the part worth proving) |
 | [`filter-by-view-templates.cs`](filters/by-view-and-sheet/filter-by-view-templates.cs) | View Templates themselves, optional name filter + usage mode (all/used/unused) — makes templates composable with any action (rename, report, delete, ...) instead of needing a bespoke fragment |
 
 **Project STATE — workset, phase, design option, pin, warnings, selection** — [`filters/by-status/`](filters/by-status/)
@@ -108,8 +108,8 @@ the same job-grouping idea used for `actions/`. Split from one flat 49-file fold
 |---|---|
 | [`filter-by-current-selection.cs`](filters/by-status/filter-by-current-selection.cs) | Whatever's currently selected in Revit |
 | [`filter-by-design-option.cs`](filters/by-status/filter-by-design-option.cs) | Elements in a named Design Option, or the Main Model when left unset — ✓ Main Model path 2026-07-22; named-option path blocked (no Design Option exists, none creatable via API — see action-set-design-option.cs) |
-| [`filter-by-phase.cs`](filters/by-status/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope |
-| [`filter-by-pin-status.cs`](filters/by-status/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned |
+| [`filter-by-phase.cs`](filters/by-status/filter-by-phase.cs) | Elements matching a named Phase Created and/or Phase Demolished, optional category scope — ✓ verified 2026-08-06 (3 ducts on "New Construction"; 2 phases present, and the check compared raw int Ids so it did not share the `ElementId` equality under test) |
+| [`filter-by-pin-status.cs`](filters/by-status/filter-by-pin-status.cs) | Category elements that ARE or ARE NOT pinned — ✓ verified 2026-08-06 (**both branches**: pinned a duct inside a transaction, saw the filter flip to 1 pinned / 2 unpinned, then rolled back — proves it tracks real state, not that everything happened to be unpinned) |
 | [`filter-by-selection-filter.cs`](filters/by-status/filter-by-selection-filter.cs) | Read back the actual elements behind an existing named Selection Filter, or re-evaluate a View Filter's rule in a given view — live-verified 2026-07-22, both branches |
 | [`filter-by-warnings.cs`](filters/by-status/filter-by-warnings.cs) | Elements flagged by a current model warning, as an actionable set — ✓ verified 2026-08-06 (9 elements via a description filter, cross-checked against `filter-by-connection-status.cs`; **`errorsOnly` branch still unproven** — this model had 0 Error-severity warnings. Remember 3 of its 20 warnings named NO element, so a warning count and an element count are different numbers) |
 | [`filter-by-workset.cs`](filters/by-status/filter-by-workset.cs) | Elements on one user workset, optional category scope |
