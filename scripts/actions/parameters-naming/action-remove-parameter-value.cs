@@ -34,7 +34,8 @@ Func<Element, Parameter> resolveWritable = e =>
     return null;
 };
 
-int clearedInstance = 0, clearedType = 0, zeroedNumeric = 0, skipped = 0;
+int clearedInstance = 0, clearedType = 0, zeroedNumeric = 0, skipped = 0, rejected = 0;
+var rejectedIds = new List<int>();
 
 using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
 {
@@ -47,19 +48,28 @@ using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
             if (p == null) { skipped++; continue; }
             bool isType = p.Element is ElementType;
 
+            // Parameter.Set() RETURNS A BOOL, and Revit uses it: a value the parameter will not accept
+            // is refused by returning false, WITHOUT throwing. Discarding it reported "zeroed on 3"
+            // for three ducts whose Width was still 300 mm — a duct cannot be 0 wide, so Set(0.0)
+            // returned false every time (proved live 2026-08-07). Numeric "removal" is exactly where
+            // this bites, because 0 is so often the one value the parameter rejects.
+            bool ok;
             switch (p.StorageType)
             {
-                case StorageType.String: p.Set(""); if (isType) clearedType++; else clearedInstance++; break;
-                case StorageType.ElementId: p.Set(ElementId.InvalidElementId); if (isType) clearedType++; else clearedInstance++; break;
-                case StorageType.Double: p.Set(0.0); zeroedNumeric++; break;
-                case StorageType.Integer: p.Set(0); zeroedNumeric++; break;
-                default: skipped++; break;
+                case StorageType.String: ok = p.Set(""); if (ok) { if (isType) clearedType++; else clearedInstance++; } break;
+                case StorageType.ElementId: ok = p.Set(ElementId.InvalidElementId); if (ok) { if (isType) clearedType++; else clearedInstance++; } break;
+                case StorageType.Double: ok = p.Set(0.0); if (ok) zeroedNumeric++; break;
+                case StorageType.Integer: ok = p.Set(0); if (ok) zeroedNumeric++; break;
+                default: skipped++; continue;
             }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); }
         }
         t.Commit();
         sb.AppendLine($"'{parameterName}': genuinely cleared on {clearedInstance} element(s) at Instance level" +
             (clearedType > 0 ? $", {clearedType} at Type level (applies to every instance sharing that type)" : "") +
             $", zeroed (not truly unset — Double/Integer has no API 'no value' state) on {zeroedNumeric}, skipped {skipped} (missing or read-only).");
+        if (rejected > 0)
+            sb.AppendLine($"  {rejected} REFUSED THE VALUE — Revit's Set() returned false and the old value is still there (a duct cannot be 0 wide, a level cannot be unset, etc.). Unchanged Id(s): {string.Join(", ", rejectedIds)}{(rejected > rejectedIds.Count ? ", ..." : "")}");
     }
     catch (Exception ex)
     {

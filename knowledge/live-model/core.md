@@ -147,6 +147,16 @@ rather than just act on existing ones and don't fit the filter+action shape.
   **Before reporting a blank column as missing data, confirm the name exists on one sample element** — loop
   `element.Parameters` and print the definition names — rather than concluding the value is unset. Applies
   to any name-based parameter read, the native tool and hand-written script alike.
+- **`Parameter.Set()` RETURNS A BOOL, and Revit uses it to refuse a value — it does not throw.** Verified
+  live 2026-08-07: `duct.LookupParameter("Width").Set(0.0)` returned **false** and left the width at
+  300 mm; the same parameter set to 450 mm returned **true** and took. The parameter was neither
+  read-only nor missing, so every "can I write this?" check passed — the value itself was simply not
+  acceptable. **A script that ignores the return value reports a write that never happened**, which is
+  how `action-remove-parameter-value.cs` came to announce "zeroed on 3" for three ducts still 300 mm
+  wide. Always write `bool ok = p.Set(...)` and count only on `ok`.
+  Where this bites in practice: any numeric parameter with a valid range (0 is usually outside it), and
+  **anything that must be unique** — Room Number and Sheet Number refuse a value another element already
+  holds, one element at a time, so a renumber can silently leave gaps while claiming a clean sequence.
 
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`

@@ -35,7 +35,8 @@ Func<Element, (Parameter param, string source)> resolveParam = e =>
     return (null, null);
 };
 
-int updatedInstance = 0, updatedType = 0, skipped = 0;
+int updatedInstance = 0, updatedType = 0, skipped = 0, rejected = 0;
+var rejectedIds = new List<int>();
 
 using (var t = new Transaction(Document, "AJ Tools - Set Parameter Value"))
 {
@@ -47,25 +48,34 @@ using (var t = new Transaction(Document, "AJ Tools - Set Parameter Value"))
             var (p, source) = resolveParam(e);
             if (p == null) { skipped++; continue; }
 
+            // Parameter.Set() RETURNS A BOOL and Revit uses it to refuse a value it will not accept —
+            // no exception, the old value simply stays. Ignoring it means reporting a write that never
+            // happened (proved live 2026-08-07: Set(0.0) on a duct's Width returned false and left it
+            // at 300 mm). Out-of-range numbers and invalid enum/text values fail exactly this way.
+            bool ok;
             if (numericValueMm.HasValue && p.StorageType == StorageType.Double)
             {
-                p.Set(UnitUtils.ConvertToInternalUnits(numericValueMm.Value, DisplayUnitType.DUT_MILLIMETERS));
-                if (source == "Type") updatedType++; else updatedInstance++;
+                ok = p.Set(UnitUtils.ConvertToInternalUnits(numericValueMm.Value, DisplayUnitType.DUT_MILLIMETERS));
+                if (ok) { if (source == "Type") updatedType++; else updatedInstance++; }
             }
             else if (stringValue != null && (p.StorageType == StorageType.String))
             {
-                p.Set(stringValue);
-                if (source == "Type") updatedType++; else updatedInstance++;
+                ok = p.Set(stringValue);
+                if (ok) { if (source == "Type") updatedType++; else updatedInstance++; }
             }
             else
             {
                 skipped++;
+                continue;
             }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); }
         }
         t.Commit();
         sb.AppendLine($"Set '{parameterName}' on {updatedInstance} element(s) at Instance level" +
             (updatedType > 0 ? $", {updatedType} at Type level (applies to every instance sharing that type)" : "") +
             $", skipped {skipped} (read-only, missing, or wrong type).");
+        if (rejected > 0)
+            sb.AppendLine($"  {rejected} REFUSED THE VALUE — Revit's Set() returned false and the old value is still there (out of range, or not valid for this parameter). Unchanged Id(s): {string.Join(", ", rejectedIds)}{(rejected > rejectedIds.Count ? ", ..." : "")}");
     }
     catch (Exception ex)
     {
