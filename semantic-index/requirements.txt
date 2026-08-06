@@ -1,0 +1,19 @@
+# Semantic retrieval layer — Python dependencies.
+#
+# Only one direct dependency. Everything else (onnxruntime, numpy, tokenizers,
+# and about 70 more) is pulled in automatically by chromadb.
+#
+# Installed and verified working on Python 3.11.9, Windows 11, 2026-08-06.
+#
+# To rebuild this environment from scratch on another machine:
+#
+#   python -m venv venv
+#   venv\Scripts\python.exe -m pip install -r requirements.txt
+#
+# IMPORTANT on a company-managed machine: redirect pip's temp folder first, so
+# no package DLLs are unpacked into %TEMP% where antivirus will scan them:
+#
+#   set TEMP=<this folder>\pip-temp
+#   set TMP=<this folder>\pip-temp
+
+chromadb==1.5.9
