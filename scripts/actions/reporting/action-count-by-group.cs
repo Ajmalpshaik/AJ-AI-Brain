@@ -30,6 +30,30 @@ Func<Element, string> groupKey = e =>
     if (string.Equals(groupByParameterName, "Category", StringComparison.OrdinalIgnoreCase))
         return e.Category?.Name ?? "None";
 
+    // "Level" needs the same fallback chain the filters use — there is no single universal way to
+    // ask an element which level it is on, and a plain LookupParameter("Level") answers "None" for
+    // most of a real model. Found live 2026-08-06 grouping 3 ducts that ARE on Level 1:
+    //   Duct          -> the parameter is called "Reference Level", and element.LevelId is -1
+    //   Wall          -> no level-named parameter at all; only element.LevelId works
+    //   Air Terminal  -> "Level" exists, which is why this looked fine on terminals
+    // Without this branch the answer is "None", not an error — the silent-wrong-answer failure.
+    if (string.Equals(groupByParameterName, "Level", StringComparison.OrdinalIgnoreCase))
+    {
+        ElementId lvlId = ElementId.InvalidElementId;
+        if (e is Wall wallEl) lvlId = wallEl.LevelId;
+        if (lvlId == ElementId.InvalidElementId) lvlId = e.LevelId;
+        if (lvlId == ElementId.InvalidElementId)
+        {
+            var lp = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM)
+                ?? e.get_Parameter(BuiltInParameter.RBS_START_LEVEL_PARAM);
+            lvlId = lp?.AsElementId() ?? ElementId.InvalidElementId;
+        }
+        return lvlId == ElementId.InvalidElementId ? "None" : (Document.GetElement(lvlId)?.Name ?? "None");
+    }
+
     Parameter p = e.LookupParameter(groupByParameterName);
     if (p == null || !p.HasValue)
     {
