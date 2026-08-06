@@ -973,3 +973,16 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   default: **match on Id where one is available, and when matching on a name, check how many things
   answer to it before using the first.** Three of today's four bugs were a lookup that could not fail
   loudly — it returned the wrong thing, or nothing, and said success either way.
+- 2026-08-06 — **Elements cannot be moved into a Design Option through the API — all six routes are
+  read-only** (`Element.DesignOption`, `DESIGN_OPTION_ID`, `DESIGN_OPTION_PARAM`, `View.DesignOption`,
+  the view's "Design Option" parameter, and there is no `Document` setter). Established by reflection,
+  same technique as the create-option finding. **The workaround needs exactly one UI action:** an element
+  lands in whatever option is *active when it is created*, and the active option is set from Revit's
+  status bar — so the user picks it there, and the bridge then creates elements straight into it. Moving
+  *existing* elements stays UI-only (Manage → Design Options → Add to Set). Table in
+  [`live-model/core.md`](live-model/core.md).
+- 2026-08-06 — `filter-by-length` verified (all four modes against lengths printed first, plus walls, so
+  three separate zeros are checkable) and `filter-by-tag-status` verified **on both branches by changing
+  the model**: 3 untagged / 0 tagged → create a tag in a transaction → 2 / 1 → roll back → 3 / 0. Proven
+  count **102**. This is the second filter where the "off" branch was only meaningful once the model was
+  changed and put back — worth treating as the default technique rather than a special case.
