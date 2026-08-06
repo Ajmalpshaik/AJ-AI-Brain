@@ -1002,3 +1002,13 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   is stronger than either alone. And `filter-by-parameter-exists` demonstrates its three modes rather
   than describing them: `Width` → has 3 / hasvalue 3 / missing 0, while blank `Comments` → has 3 /
   hasvalue 0 / missing 3. The contrast IS the proof that `has` and `hasvalue` differ.
+- 2026-08-06 — **This morning's `RBS_START_LEVEL_PARAM` fix is now proven end to end.**
+  `filter-by-elements-on-level` returns 3 ducts and 1 pipe on Level 1 — **both were 0 before the fix** —
+  plus 8 walls through the never-broken Wall branch, and 0 on Level 2, which is a proven zero because the
+  same code gives 3 on Level 1. The bug was found, fixed in 4 files, and closed out against a real model
+  in one session. Proven count **114 (43%)**, filters **39 of 49**.
+- 2026-08-06 — `filter-by-linked-model-elements` verified, and the check is worth repeating whenever
+  something claims to read a *different* document: the link reports **1 level while the host has 2**.
+  A matching number would have proved nothing — it is the mismatch that shows it genuinely crossed into
+  the linked document instead of quietly re-reading the host. Also `filter-by-size` (both the Size-text
+  and numeric branches, rectangular and round).
