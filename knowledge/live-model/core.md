@@ -243,6 +243,24 @@ rather than just act on existing ones and don't fit the filter+action shape.
   `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
   just the intended viewports — leaves every other sheet's title style untouched.
 
+### Design Options cannot be created through the API in Revit 2020 — checked, not assumed
+
+`DesignOption` exposes exactly **one** static method in this build (2020, `20220517_1515`):
+
+```
+ElementId GetActiveDesignOptionId(Document document)
+```
+
+No `CreateDesignOptionSet`, no `CreateDesignOption`, and nothing named `*Option*` on
+`Autodesk.Revit.Creation.Document` either. **Design Options must be made by hand** (Manage → Design
+Options), after which the API can read and filter them normally. Verified 2026-08-06 by reflecting over
+the real type rather than trusting documentation, after `DesignOption.CreateDesignOptionSet` failed to
+compile.
+
+Worth reusing as a technique: when an API call will not compile, **reflect over the type and print its
+actual members** before concluding anything. It distinguishes "this build lacks the method" from "I got
+the name wrong", and the answer is definitive rather than a guess.
+
 ### "Which workset is this on?" — the parameter is an INTEGER, and workset Id 0 is real
 
 `ELEM_PARTITION_PARAM` holds the workset, and reading it the obvious way returns nothing. Proved live
