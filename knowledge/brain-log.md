@@ -1123,3 +1123,9 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   returns a bool that four fragments were throwing away** — Revit refuses a value by returning false, not
   by throwing, so `Set(0.0)` on a duct's Width reported success and changed nothing. `lib/prelude.cs`
   finally ran: every helper PASSed via `examples/prelude-smoke-test.cs`, after 3 days unproven.
+- 2026-08-07 — `action-duplicate-view-template.cs` rewritten: it could never have worked (its own
+  `CanViewBeDuplicated` guard returns false for every template, and bypassing it throws). The working
+  technique — `ElementTransformUtils.CopyElements` plus a second transaction for the rename, because
+  Revit auto-suffixes the copy — **was already written down in `live-model/views.md` on 2026-08-01 and I
+  re-derived a worse one before finding it.** Standing lesson, and the reason `ask-brain-hybrid` exists:
+  search the Brain before writing C#, including when you are only "fixing" a fragment.
