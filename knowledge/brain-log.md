@@ -898,3 +898,11 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   has 0 Error-severity warnings), and the workset/link/design-option branches of the `context/` set.
   **A half-tested fragment recorded as proven is worse than one recorded as unknown**, because the next
   session stops checking.
+- 2026-08-06 — Two more filters verified, both worth the depth. `filter-by-category-and-numeric-param`
+  (the "500mm duct" filter the Brain's own worked example is built on) — **all four comparison modes**
+  eq/gte/lte/between, `parameterName` swapped to Width, an absent parameter (Diameter → skipped, no
+  crash), a bogus name (no throw), and the mm→ft conversion (300mm = 0.984252 ft). Every expected count
+  was derived from the ducts' real 300mm size *before* running, so each zero is a proven zero.
+  `filter-by-multiple-categories` — both scopes, and **dedupe proven by listing one category three times
+  and getting 3, not 9**, which is the only way to show a `HashSet<UniqueId>` is actually doing its job.
+  Proven count now 89.
