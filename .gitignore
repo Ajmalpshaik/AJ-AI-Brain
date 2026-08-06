@@ -9,3 +9,15 @@ graphify-out/
 # Output of tools/verify-fragments-compile.ps1 — regenerated on every run, and the
 # summary that matters is recorded in knowledge/brain-log.md instead.
 fragment-compile-failures.txt
+
+# Semantic (natural-language) retrieval layer — additive, sits alongside
+# tools/fragment-index.mjs rather than replacing it. Contains a Python venv, the
+# downloaded embedding model and a Chroma database: all derived, all rebuildable
+# with `brain_index.py`, and all stale the moment knowledge/, scripts/ or skills/
+# is edited — same reasoning as graphify-out/ above. The .py source is small and
+# is un-ignored below so the code itself still travels with the Brain.
+semantic-index/*
+!semantic-index/*.py
+!semantic-index/*.cmd
+!semantic-index/README.md
+!semantic-index/requirements.txt

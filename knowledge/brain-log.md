@@ -755,3 +755,21 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   to paste `lib/prelude.cs` first; the harness now prepends the prelude for that one file, which turns a
   guaranteed false failure into the first real proof that the prelude and its smoke test agree. Lesson:
   when a checker reports failures, confirm the checker is right before touching the code it accuses.
+- 2026-08-06 — New `semantic-index/`: plain-English (semantic) search over `skills/`, `knowledge/`,
+  `scripts/` and the 5 root docs (incl. `CLAUDE.md`) — 306 files, Python + ChromaDB, fully offline after
+  a one-time model download. **Additive** — it sits beside `tools/fragment-index.mjs` (keyword) rather
+  than replacing it; use keyword when you know the word, semantic when you only know the job. Ask with
+  `semantic-index/ask-brain.cmd "question"` (add `--area fragment` for C# — prose files outrank fragments
+  otherwise); rebuild with `semantic-index/index-brain.cmd`, ~80 s.
+- 2026-08-06 — **The semantic index is a snapshot and goes stale silently** — it keeps returning the old
+  text after any edit to `skills/`, `knowledge/` or `scripts/`, with no warning. Rebuilding is part of
+  finishing a Brain edit, the same way updating `scripts/README.md` is. Every run rebuilds from scratch
+  on purpose, so renamed and deleted files leave no ghosts (same reasoning `.gitignore` already applies
+  to `graphify-out/`). Only its `.py`/`.cmd`/`.md`/`.txt` are committed; venv, model and database are
+  ignored.
+- 2026-08-06 — `semantic-index/` deliberately writes **nothing** to `%TEMP%`: the venv, ChromaDB, the
+  embedding model and Python's own temp are all forced inside the folder by `brain_common.py`, and this
+  was verified after the build. Reason: `tools/verify-fragments-compile.ps1` writing ~267 unsigned DLLs
+  into `%TEMP%` is what Sophos flags as `ML/PE-A`. Any future tool added to this repo should assume the
+  same constraint rather than rediscover it — on a company-managed endpoint, a temp folder full of
+  freshly written binaries is the trap, not the specific tool that wrote them.
