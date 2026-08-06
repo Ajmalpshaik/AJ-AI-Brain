@@ -1012,3 +1012,25 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   A matching number would have proved nothing — it is the mismatch that shows it genuinely crossed into
   the linked document instead of quietly re-reading the host. Also `filter-by-size` (both the Size-text
   and numeric branches, rectangular and round).
+- 2026-08-06 — **Filters finished: 46 of 49 proven**, overall count **121 (45%)**, up from 73 at the start
+  of the day. The last seven — `filter-by-material`, `filter-by-schedules`, `filter-by-insulation-type`,
+  `filter-by-region`, `filter-by-element-intersection`, `filter-by-unenclosed-spatial-elements`,
+  `filter-by-assembly` — all needed the model changed and put back, which is now routine rather than
+  notable.
+- 2026-08-06 — **`filter-by-element-intersection` confirms its own header the hard way.** It reports 0 for
+  a door against its host wall, and 0 for ducts joined at a connector — both correct, because hosting
+  *cuts* an opening and connecting *abuts*; neither is volumetric overlap. Proving that required
+  manufacturing a real one: a duct copied 100 mm sideways inside a transaction, each finding the other
+  symmetrically, while a second copy 50 m away was correctly ignored. **A filter that returns 0 on every
+  natural case in a model can only be proven by creating the unnatural one.**
+- 2026-08-06 — Two API details worth keeping. `Document.Create.NewRoom(Phase)` is the unplaced-room call —
+  `NewRoom(null, null)` does not compile (ambiguous between `NewRoom(Room, PlanCircuit)` and
+  `NewRoom(Level, UV)`). And a freshly created `AssemblyInstance` has an **empty `Name`** until its type
+  is named, with `AssemblyTypeName` throwing "No valid type for the assembly instance" — so
+  `filter-by-assembly`'s name path stays unproven while its Id path is verified.
+- 2026-08-06 — **Three filters end the day genuinely unprovable, and they are recorded as such rather
+  than quietly skipped:** `filter-by-electrical-system` (no electrical content of any kind),
+  `filter-by-subcomponents` (needs a family with nested shared components), `filter-by-scope-box` (no
+  Scope Box, and no API to create one). Also `filter-by-schedules`' template/`<...>` exclusion branch,
+  which never ran because the model had none of either — the fragment is marked verified, but that
+  limitation is written into its row.
