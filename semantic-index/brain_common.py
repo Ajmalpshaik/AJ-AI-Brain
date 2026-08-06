@@ -10,6 +10,8 @@ folder. Every path below points inside SEMANTIC_ROOT, and the temp environment
 variables are redirected there too, before chromadb is ever imported.
 """
 
+import hashlib
+import json
 import os
 import re
 import sys
@@ -28,6 +30,10 @@ SEMANTIC_ROOT = BRAIN_ROOT / "semantic-index"
 CHROMA_DIR = SEMANTIC_ROOT / "chroma-db"      # the vector database
 MODEL_DIR = SEMANTIC_ROOT / "model-cache"     # the downloaded embedding model
 RUN_TEMP = SEMANTIC_ROOT / "run-temp"         # scratch space, kept off %TEMP%
+
+# Fingerprints of every file at the moment the index was last built. This is
+# what makes "your index is out of date" detectable instead of silent.
+MANIFEST_PATH = SEMANTIC_ROOT / "index-manifest.json"
 
 COLLECTION_NAME = "aj_brain"
 
@@ -115,6 +121,128 @@ def get_client():
         path=str(CHROMA_DIR),
         settings=Settings(anonymized_telemetry=False, allow_reset=True),
     )
+
+
+# --------------------------------------------------------------------------
+# STALENESS — the index is a snapshot, so make going stale impossible to miss
+# --------------------------------------------------------------------------
+
+def iter_indexed_files():
+    """
+    Every file the index covers, as (path, repo-relative-path).
+
+    Used by the staleness check to see what is on disk RIGHT NOW. The manifest
+    it compares against is written from the list the indexer actually walked,
+    so the two can only disagree if a file appeared or changed - which is
+    exactly what we want to detect.
+    """
+    for folder_name, _area in INDEX_TARGETS:
+        folder = BRAIN_ROOT / folder_name
+        if not folder.exists():
+            continue
+        for path in sorted(folder.rglob("*")):
+            if path.is_file() and path.suffix.lower() in FILE_EXTENSIONS:
+                yield path, str(path.relative_to(BRAIN_ROOT)).replace("\\", "/")
+    for name in ROOT_DOCS:
+        path = BRAIN_ROOT / name
+        if path.is_file():
+            yield path, name
+
+
+def fingerprint(path: Path) -> str:
+    """
+    Short content hash. Content, not modified-date, on purpose: a git checkout
+    or a file copy changes the date without changing a word, and a staleness
+    warning that cries wolf is one you learn to ignore.
+    """
+    try:
+        return hashlib.sha1(path.read_bytes()).hexdigest()[:16]
+    except OSError:
+        return "unreadable"
+
+
+def write_manifest(rel_paths) -> None:
+    """Record what the index was built from. Called after a successful build."""
+    entries = {}
+    for rel in rel_paths:
+        path = BRAIN_ROOT / rel
+        if path.is_file():
+            entries[rel.replace("\\", "/")] = fingerprint(path)
+    MANIFEST_PATH.write_text(
+        json.dumps({"files": entries}, indent=1), encoding="utf-8")
+
+
+def check_staleness():
+    """
+    Compare the Brain on disk against what the index was built from.
+
+    Returns a dict: {"known": bool, "stale": bool, "changed": [], "added": [],
+    "removed": []}. "known" is False when there is no manifest yet - an index
+    built before this check existed, which is unknown rather than stale.
+    """
+    result = {"known": False, "stale": False,
+              "changed": [], "added": [], "removed": []}
+
+    if not MANIFEST_PATH.is_file():
+        return result
+
+    try:
+        recorded = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))["files"]
+    except (OSError, ValueError, KeyError):
+        return result
+
+    result["known"] = True
+    seen = set()
+
+    for path, rel in iter_indexed_files():
+        seen.add(rel)
+        if rel not in recorded:
+            result["added"].append(rel)
+        elif recorded[rel] != fingerprint(path):
+            result["changed"].append(rel)
+
+    result["removed"] = sorted(set(recorded) - seen)
+    result["stale"] = bool(result["changed"] or result["added"]
+                           or result["removed"])
+    return result
+
+
+def staleness_banner():
+    """
+    A short warning to print above search results, or "" when all is well.
+
+    This exists because the index going stale is silent by nature: it keeps
+    answering, just from an older copy of the Brain. Nothing about a wrong
+    answer looks wrong.
+    """
+    state = check_staleness()
+
+    if not state["known"]:
+        return ("NOTE: cannot tell whether this index is current (no manifest "
+                "- built before staleness tracking). Run index-brain.cmd once "
+                "to start tracking.")
+    if not state["stale"]:
+        return ""
+
+    bits = []
+    for label, key in (("changed", "changed"), ("new", "added"),
+                       ("deleted", "removed")):
+        if state[key]:
+            bits.append(f"{len(state[key])} {label}")
+
+    lines = [
+        "!" * 74,
+        "STALE INDEX - these results are from an OLDER copy of the Brain.",
+        f"  {', '.join(bits)} since the last rebuild.",
+    ]
+    for key in ("changed", "added", "removed"):
+        for rel in state[key][:4]:
+            lines.append(f"    {key[:7]:<8} {rel}")
+        if len(state[key]) > 4:
+            lines.append(f"    {'':<8} ... and {len(state[key]) - 4} more")
+    lines.append("  FIX: run  semantic-index\\index-brain.cmd  (~90 s)")
+    lines.append("!" * 74)
+    return "\n".join(lines)
 
 
 # --------------------------------------------------------------------------
