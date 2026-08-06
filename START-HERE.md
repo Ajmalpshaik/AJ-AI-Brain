@@ -54,13 +54,17 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Saving something reusable, splitting a big file, making a new skill, a whole-session "did we save everything" sweep | [`skills/brain-self-maintain/SKILL.md`](skills/brain-self-maintain/SKILL.md) |
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 306 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
 Two habits, always on, regardless of which skill (if any) is handling the actual request:
 
 - **Before starting substantive work**, check whether [`knowledge/INDEX.md`](knowledge/INDEX.md) already
-  answers or shapes the request — don't re-derive something already documented.
+  answers or shapes the request — don't re-derive something already documented. The fastest way to find
+  out is `semantic-index\ask-brain-hybrid.cmd "<the request>"`, which searches every skill, knowledge note
+  and fragment at once instead of routing by hand. **After you add anything below, rebuild it**
+  (`semantic-index\index-brain.cmd`) or the next session searches a stale picture of this Brain.
 - **After finishing**, if something new surfaced (a technique, a gotcha, a reusable script, a recurring
   task pattern worth its own skill), save it in exactly the one place it belongs — see
   [`skills/brain-self-maintain/SKILL.md`](skills/brain-self-maintain/SKILL.md) for the routing rules and

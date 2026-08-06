@@ -773,3 +773,38 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   into `%TEMP%` is what Sophos flags as `ML/PE-A`. Any future tool added to this repo should assume the
   same constraint rather than rediscover it — on a company-managed endpoint, a temp folder full of
   freshly written binaries is the trap, not the specific tool that wrote them.
+- 2026-08-06 — `semantic-index/` got a **hybrid** search (`ask-brain-hybrid.cmd`,
+  `brain_search_hybrid.py`): meaning + exact words merged by Reciprocal Rank Fusion, because closeness
+  (0-100) and BM25 (unbounded) cannot be added meaningfully — each list votes by position instead.
+  `brain_search.py` is deliberately left untouched as the semantic-only baseline to compare against.
+  Routed from `CLAUDE.md` and `START-HERE.md` so a session actually finds it.
+- 2026-08-06 — **What hybrid fixed, and the rule behind it.** Semantic alone answered "how many diffusers
+  do I need in this room" with the *sprinkler* files: the shape of the question ("count devices in a
+  room") outweighed the single word naming the device. Adding exact-word matching weighted by **rarity**
+  put `ajtools-hvac-terminal-layout` first — "diffuser" is in 12 files, "room" in 57, so diffuser earns
+  ~2x the weight. Generalise: when two jobs share a shape, the discriminating word is rare, so rarity is
+  the signal to trust, not similarity.
+- 2026-08-06 — **`tools/fragment-index.mjs` only reads `scripts/*.cs`** — it can never surface a skill or
+  a knowledge note. Any ranking signal built on it therefore promotes fragments *only*, and must be gated
+  to genuinely rare words. Ungated it buried the answering skill under `create-rooms-in-enclosed-regions.cs`
+  for the diffuser question. Two separate bugs in the gate were also worth recording: stripping plurals
+  *before* removing stopwords let "this" survive as "thi" and match inside "within"/"something"; and a
+  threshold derived from per-FILE counts (room = 19%) was applied to per-CHUNK counts (room = 8%) and let
+  it through. Fixed with a self-tuning rule — only the rarest words in a given question qualify.
+- 2026-08-06 — **Hybrid search measured by independent testers, not by its author: 24 questions written
+  in a modeller's own words → 13 good, 3 acceptable, 8 wrong.** Tuning a retrieval tool on the questions
+  you invented while building it proves nothing; this is the number that counts. Three mechanical causes
+  were found and fixed — a bare number in the question matched a fragment's default value (`near 40 rooms`
+  → `maxSegmentsPerRoom = 40`), a word matched an input FIELD NAME (`duplicate option` → `duplicateOption`),
+  and an ordinary English verb matched a fragment path (`copy` → `action-copy-elements.cs`). Fix: score a
+  match by WHERE it landed (`PURPOSE`/prose full weight, `INPUTS` 0.45, code body 0.35), drop bare numbers,
+  and match the fragment-index signal against PURPOSE only. Re-tested: 2 failures fixed, 1 borderline
+  improved to correct, **0 regressions** across 6 known-good questions.
+- 2026-08-06 — **The remaining failures are vocabulary, not ranking, and reranking cannot fix them.**
+  "add 4 more floor levels" → `create-floor.cs` (the slab creator, actively wrong); "how many light
+  fitting" → matched "light hazard"; "take my door schedule out to excel" → missed
+  `action-export-schedule-to-csv.cs`. In each case the site word the user typed simply is not in the file
+  that answers them, so no amount of re-scoring reaches it. The fix already exists in this Brain unused:
+  [`glossary.md`](glossary.md) IS the user's-terms → Revit-terms map. Expanding a query through it before
+  searching is the obvious next build. Until then the honest instruction is **read the top 3-5, not just
+  #1** — the right file was usually still in that window.
