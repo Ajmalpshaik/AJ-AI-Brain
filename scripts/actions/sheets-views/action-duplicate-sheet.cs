@@ -8,7 +8,14 @@
 //          filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Produces `newSheetIds` for chaining.
 // GOTCHA: sheet numbers must be unique — the new number is old number + numberSuffix; a collision fails
-//         that one sheet cleanly (reported), the rest continue.
+//         that one sheet (reported), the part-built sheet is deleted, and the rest continue.
+//         FIXED 2026-08-07 — this used to be a false promise. The sheet is created before its number is
+//         assigned, so a collision threw AFTER creation and the per-sheet catch just counted it as
+//         failed: the sheet stayed, committed, carrying Revit's own auto-number. Measured live —
+//         duplicating 'A-101' into an already-taken 'A-101-COPY' reported "Duplicated 0 of 1 sheet(s),
+//         1 failed" while the sheet count went 2 -> 3 and an orphan 'A-103' remained.
+// NEEDS allowDestructive: true on the bridge call — only to delete its own half-built sheet on failure,
+//         but the bridge's guard matches on the text `Document.Delete` regardless of the target.
 // GOTCHA: what carries over: title block, duplicated views at same positions, schedules. What does NOT:
 //         loose annotations drawn directly on the sheet, guide grids, revisions on the sheet.
 // NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest).
@@ -42,13 +49,21 @@ else
             int done = 0, failed = 0;
             foreach (var sheet in sheets)
             {
+                // Declared OUTSIDE the try so the catch can clean it up. The sheet is created BEFORE its
+                // number is assigned, and assigning a colliding number throws — which used to leave the
+                // freshly-created sheet behind, committed, carrying Revit's own auto-number. Measured
+                // live 2026-08-07: duplicating 'A-101' into an already-taken 'A-101-COPY' reported
+                // "Duplicated 0 of 1 sheet(s), 1 failed" while the sheet count went 2 -> 3 and an orphan
+                // 'A-103' stayed in the model. The header's promise that a collision "fails that one
+                // sheet cleanly" was simply not true.
+                ViewSheet newSheet = null;
                 try
                 {
                     // same title block type as the source sheet (first title block instance on it)
                     var tb = new FilteredElementCollector(Document, sheet.Id)
                         .OfCategory(BuiltInCategory.OST_TitleBlocks).OfClass(typeof(FamilyInstance))
                         .Cast<FamilyInstance>().FirstOrDefault();
-                    var newSheet = ViewSheet.Create(Document, tb != null ? tb.GetTypeId() : ElementId.InvalidElementId);
+                    newSheet = ViewSheet.Create(Document, tb != null ? tb.GetTypeId() : ElementId.InvalidElementId);
                     newSheet.SheetNumber = sheet.SheetNumber + numberSuffix; // throws on collision -> caught per sheet
                     newSheet.Name = namePrefix + sheet.Name;
 
@@ -85,7 +100,15 @@ else
                 catch (Exception exOne)
                 {
                     failed++;
-                    sb.AppendLine($"  - '{sheet.SheetNumber}' FAILED: {exOne.Message}");
+                    // Remove the half-built sheet, so "failed" really does mean nothing was left behind.
+                    // Anything already placed on it (duplicated views, schedule instances) goes with it.
+                    string cleanup = "";
+                    if (newSheet != null)
+                    {
+                        try { Document.Delete(newSheet.Id); cleanup = " (the part-built sheet was removed)"; }
+                        catch (Exception exDel) { cleanup = $" (WARNING: could not remove the part-built sheet Id {newSheet.Id.IntegerValue} — {exDel.Message})"; }
+                    }
+                    sb.AppendLine($"  - '{sheet.SheetNumber}' FAILED: {exOne.Message}{cleanup}");
                 }
             }
             t.Commit();
