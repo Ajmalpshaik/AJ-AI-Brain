@@ -34,7 +34,8 @@ Func<Element, string, Parameter> resolveAny = (e, name) =>
     return null;
 };
 
-int updatedInstance = 0, updatedType = 0, skipped = 0;
+int updatedInstance = 0, updatedType = 0, skipped = 0, rejected = 0;
+var rejectedIds = new List<int>();
 
 using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
 {
@@ -58,20 +59,28 @@ using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
 
             bool dstIsType = dst.Element is ElementType;
 
+            // Parameter.Set() RETURNS A BOOL — Revit refuses a value it will not accept by returning
+            // false, without throwing (proved live 2026-08-07). Matching storage types is not enough:
+            // the target can still reject the source's actual value (out of range, wrong ElementId
+            // kind). Only count a copy that Revit accepted.
+            bool ok;
             switch (src.StorageType)
             {
-                case StorageType.String: dst.Set(src.AsString()); break;
-                case StorageType.Double: dst.Set(src.AsDouble()); break;
-                case StorageType.Integer: dst.Set(src.AsInteger()); break;
-                case StorageType.ElementId: dst.Set(src.AsElementId()); break;
+                case StorageType.String: ok = dst.Set(src.AsString()); break;
+                case StorageType.Double: ok = dst.Set(src.AsDouble()); break;
+                case StorageType.Integer: ok = dst.Set(src.AsInteger()); break;
+                case StorageType.ElementId: ok = dst.Set(src.AsElementId()); break;
                 default: skipped++; continue;
             }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); continue; }
             if (dstIsType) updatedType++; else updatedInstance++;
         }
         t.Commit();
         sb.AppendLine($"Copied '{sourceParameterName}' -> '{targetParameterName}' on {updatedInstance} element(s) at Instance level" +
             (updatedType > 0 ? $", {updatedType} at Type level (applies to every instance sharing that type)" : "") +
             $", skipped {skipped} (missing, read-only, type mismatch, or already had a value).");
+        if (rejected > 0)
+            sb.AppendLine($"  {rejected} REFUSED THE VALUE — the target parameter's Set() returned false and its old value is still there. Unchanged Id(s): {string.Join(", ", rejectedIds)}{(rejected > rejectedIds.Count ? ", ..." : "")}");
     }
     catch (Exception ex)
     {

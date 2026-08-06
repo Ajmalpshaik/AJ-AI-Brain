@@ -41,7 +41,8 @@ else if (sortMode == "position_y") ordered = elements.OrderByDescending(e => get
 else ordered = elements.OrderBy(e => e.LookupParameter(targetParameterName)?.AsValueString() ?? e.Name ?? "");
 
 var orderedList = ordered.ToList();
-int updated = 0, skipped = 0;
+int updated = 0, skipped = 0, rejected = 0;
+var rejectedIds = new List<string>();
 
 using (var t = new Transaction(Document, "AJ Tools - Renumber Sequential"))
 {
@@ -55,12 +56,20 @@ using (var t = new Transaction(Document, "AJ Tools - Renumber Sequential"))
             if (p == null || p.IsReadOnly || p.StorageType != StorageType.String) { skipped++; n += increment; continue; }
 
             string numberText = padWidth > 0 ? n.ToString().PadLeft(padWidth, '0') : n.ToString();
-            p.Set($"{prefix}{numberText}{suffix}");
-            updated++;
+            // Parameter.Set() RETURNS A BOOL — Revit refuses a value it will not accept by returning
+            // false, without throwing (proved live 2026-08-07). It matters more here than anywhere
+            // else in this group: Room Number and Sheet Number must be UNIQUE, so renumbering into a
+            // number another element already holds is refused one element at a time. Counting those
+            // as renumbered would report a clean 101..105 sequence that the model does not have.
+            bool ok = p.Set($"{prefix}{numberText}{suffix}");
+            if (ok) updated++;
+            else { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add($"{e.Id.IntegerValue} wanted '{prefix}{numberText}{suffix}'"); }
             n += increment;
         }
         t.Commit();
         sb.AppendLine($"Renumbered {updated} element(s) on '{targetParameterName}', sorted by {sortMode}, starting at {startNumber} (skipped {skipped}).");
+        if (rejected > 0)
+            sb.AppendLine($"  {rejected} REFUSED THE NUMBER — Set() returned false and the old value is still there; on Room/Sheet Number this normally means the value is already taken by another element, so the sequence has GAPS. Unchanged: {string.Join("; ", rejectedIds)}{(rejected > rejectedIds.Count ? "; ..." : "")}");
     }
     catch (Exception ex)
     {
