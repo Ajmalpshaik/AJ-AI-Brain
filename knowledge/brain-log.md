@@ -841,3 +841,18 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   by being narrow.** `drawing → view sheet` looked reasonable and made things worse — it fires on almost
   any question, and it buried `filter-by-tag-status.cs` under a view-template fragment. Rejected rows are
   kept in the file with the reason, so they are not helpfully re-added later.
+- 2026-08-06 — **Rebuilding the semantic index is now 2-4 s instead of 80 s.** `index-brain.cmd` re-reads
+  only the files whose content hash moved (nothing changed 2.3 s · one changed 2.8 s · one added 3.9 s ·
+  one deleted 2.7 s · full 79 s). `--full` forces a complete rebuild. This is what makes rebuilding cheap
+  enough to do every single time, which was the whole objection to it being a manual step.
+- 2026-08-06 — **Two safeguards make the fast path trustworthy, and both are the interesting part.**
+  (1) *Ghosts*: a file that made 12 chunks and now makes 8 would leave 4 orphans — text existing nowhere
+  in the Brain, still answering questions. Every chunk of a changed file is deleted (by its `path`
+  metadata, so the old count does not matter) before new ones are written. (2) *Wrong-shaped chunks*: if
+  the chunking rules change, every stored chunk is stale but the FILES are untouched, so a file-by-file
+  comparison would skip all of them. A build fingerprint over the settings plus the source of
+  `brain_index.py`/`brain_common.py` catches this and forces a full rebuild — deliberately blunt, since a
+  needless 80 s beats a silently half-migrated index. Proven by shrinking a 30-chunk file to 2 and
+  confirming the removed text was gone, and by an incremental index reporting the **same 2,540 chunks as
+  a full rebuild**. Generalise: any cache keyed on "what changed" needs a second key for "what the rules
+  were", or it will happily serve results built under rules that no longer exist.

@@ -241,6 +241,46 @@ def fingerprint(path: Path) -> str:
         return "unreadable"
 
 
+def build_fingerprint() -> str:
+    """
+    A hash of everything that decides HOW a file becomes chunks.
+
+    This is what makes an incremental rebuild safe. Re-embedding only the files
+    that changed is correct ONLY while the chunking rules stay identical -
+    change CHUNK_TARGET, add a ROOT_DOC, alter the splitter, and every chunk
+    already stored is the wrong shape, but their files are untouched so a
+    file-by-file comparison would happily skip all of them.
+
+    Hashing the two source files is deliberately blunt: editing even a comment
+    forces one full rebuild. That is the right trade - a needless 80-second
+    rebuild costs a minute, while a silently half-migrated index is the kind of
+    fault you only discover through months of quietly worse answers.
+    """
+    parts = [
+        str(CHUNK_TARGET), str(CHUNK_MAX), str(CHUNK_OVERLAP),
+        repr(sorted(FILE_EXTENSIONS)), repr(INDEX_TARGETS), repr(ROOT_DOCS),
+        "all-MiniLM-L6-v2",
+    ]
+    for src in (SEMANTIC_ROOT / "brain_common.py",
+                SEMANTIC_ROOT / "brain_index.py"):
+        try:
+            parts.append(hashlib.sha1(src.read_bytes()).hexdigest())
+        except OSError:
+            parts.append("unreadable")
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def read_manifest():
+    """The last build's record, or None if absent/unreadable."""
+    if not MANIFEST_PATH.is_file():
+        return None
+    try:
+        data = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data.get("files"), dict) else None
+
+
 def write_manifest(rel_paths) -> None:
     """Record what the index was built from. Called after a successful build."""
     entries = {}
@@ -249,7 +289,8 @@ def write_manifest(rel_paths) -> None:
         if path.is_file():
             entries[rel.replace("\\", "/")] = fingerprint(path)
     MANIFEST_PATH.write_text(
-        json.dumps({"files": entries}, indent=1), encoding="utf-8")
+        json.dumps({"build": build_fingerprint(), "files": entries}, indent=1),
+        encoding="utf-8")
 
 
 def check_staleness():
@@ -263,14 +304,11 @@ def check_staleness():
     result = {"known": False, "stale": False,
               "changed": [], "added": [], "removed": []}
 
-    if not MANIFEST_PATH.is_file():
+    manifest = read_manifest()
+    if manifest is None:
         return result
 
-    try:
-        recorded = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))["files"]
-    except (OSError, ValueError, KeyError):
-        return result
-
+    recorded = manifest["files"]
     result["known"] = True
     seen = set()
 

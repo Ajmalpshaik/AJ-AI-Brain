@@ -38,7 +38,8 @@ the correct file was usually still in the top 3. It fails on **site vocabulary t
 site-word → Revit-word map; when a search looks off, say the Revit word and re-run.
 
 > **It is a snapshot, not a live index.** After adding or changing anything in `skills/`, `knowledge/`,
-> `scripts/` or the root docs, run `semantic-index\index-brain.cmd` (~80 s). Treat this like updating
+> `scripts/` or the root docs, run `semantic-index\index-brain.cmd` — **2–4 s**, since it only re-reads
+> what changed (a full ~80 s rebuild triggers itself when the chunking rules change). Treat this like updating
 > `scripts/README.md`: part of finishing the edit, not a separate chore. **If a search prints a
 > `STALE INDEX` banner, rebuild before trusting the results** — it is comparing file contents against
 > what the index was built from, so it is telling you the Brain has moved on since. It warns rather than
