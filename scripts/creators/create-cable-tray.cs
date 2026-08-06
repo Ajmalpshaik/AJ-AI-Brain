@@ -39,20 +39,38 @@ else
             var p2 = new XYZ(mm(endXMm), mm(endYMm), mm(endZMm));
             var tray = Autodesk.Revit.DB.Electrical.CableTray.Create(Document, trayType.Id, p1, p2, level.Id);
 
-            if (widthMm > 0)
+            // The old version had NO else branch at all, so a missing parameter, a read-only one and a
+            // refused value were all identical silence — and the summary then printed the REQUESTED
+            // widthMm x heightMm as though they had landed. Sizes must be read back: Set() can return
+            // false and change nothing, or return true and snap to the type's size table (measured live
+            // 2026-08-07 — a pipe asked for 77mm returned true and came out 80mm).
+            // See ../../knowledge/live-model/core.md.
+            var skippedSizes = new List<string>();
+            var sizeNotes = new List<string>();
+            Action<Parameter, string, double> applySize = (p, label, wantMm) =>
             {
-                var pW = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_WIDTH_PARAM);
-                if (pW != null && !pW.IsReadOnly) pW.Set(mm(widthMm));
-            }
-            if (heightMm > 0)
-            {
-                var pH = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_HEIGHT_PARAM);
-                if (pH != null && !pH.IsReadOnly) pH.Set(mm(heightMm));
-            }
+                if (p == null || p.IsReadOnly) { skippedSizes.Add(label); return; }
+                bool ok = p.Set(mm(wantMm));
+                // Regenerate BEFORE reading back — straight after Set() the parameter still reports the
+                // requested value; the snap to the type's size table happens at regeneration.
+                Document.Regenerate();
+                double gotMm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                if (!ok) sizeNotes.Add($"{label} REFUSED {wantMm}mm — still {gotMm:0.##}mm");
+                else if (Math.Abs(gotMm - wantMm) > 0.5) sizeNotes.Add($"{label} SNAPPED {wantMm}mm -> {gotMm:0.##}mm (nearest size the type allows)");
+            };
+
+            if (widthMm > 0) applySize(tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_WIDTH_PARAM), "Width", widthMm);
+            if (heightMm > 0) applySize(tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_HEIGHT_PARAM), "Height", heightMm);
 
             elements.Add(tray);
             t.Commit();
-            sb.AppendLine($"Created cable tray (Id {tray.Id.IntegerValue}) — type '{trayType.Name}', {widthMm}x{heightMm} mm, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+
+            var wNow = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_WIDTH_PARAM);
+            var hNow = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_HEIGHT_PARAM);
+            string actualSize = $"{(wNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(wNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##}x{(hNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(hNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##} mm";
+            sb.AppendLine($"Created cable tray (Id {tray.Id.IntegerValue}) — type '{trayType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            if (sizeNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", sizeNotes));
+            if (skippedSizes.Count > 0) sb.AppendLine($"  Size(s) not settable on this tray type, skipped: {string.Join(", ", skippedSizes)}.");
         }
         catch (Exception ex)
         {

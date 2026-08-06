@@ -39,16 +39,35 @@ else
             var p2 = new XYZ(mm(endXMm), mm(endYMm), mm(endZMm));
             var conduit = Autodesk.Revit.DB.Electrical.Conduit.Create(Document, condType.Id, p1, p2, level.Id);
 
+            // The old summary printed `dia {diameterMm} mm` from the INPUT, so a refused or snapped
+            // diameter was reported as though it had landed — and this file's own header already warned
+            // that the size snaps to the type's size table. Read it back instead. Measured live
+            // 2026-08-07: a pipe asked for 77mm returned Set() == true and came out 80mm.
+            // See ../../knowledge/live-model/core.md.
+            string diaNote = null;
             if (diameterMm > 0)
             {
                 var pD = conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM);
-                if (pD != null && !pD.IsReadOnly) pD.Set(mm(diameterMm));
+                if (pD != null && !pD.IsReadOnly)
+                {
+                    bool ok = pD.Set(mm(diameterMm));
+                    // Regenerate BEFORE reading back — straight after Set() the parameter still reports
+                    // the requested value; the snap to the type's size table happens at regeneration.
+                    Document.Regenerate();
+                    double gotMm = UnitUtils.ConvertFromInternalUnits(pD.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                    if (!ok) diaNote = $"Diameter REFUSED {diameterMm}mm — still {gotMm:0.##}mm";
+                    else if (Math.Abs(gotMm - diameterMm) > 0.5) diaNote = $"Diameter SNAPPED {diameterMm}mm -> {gotMm:0.##}mm (nearest size '{condType.Name}' allows)";
+                }
                 else sb.AppendLine("  Diameter parameter not settable — type default kept.");
             }
 
             elements.Add(conduit);
             t.Commit();
-            sb.AppendLine($"Created conduit (Id {conduit.Id.IntegerValue}) — type '{condType.Name}', dia {diameterMm} mm, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+
+            var dFinal = conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM);
+            string actualDia = dFinal == null ? "unknown" : $"{UnitUtils.ConvertFromInternalUnits(dFinal.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm";
+            sb.AppendLine($"Created conduit (Id {conduit.Id.IntegerValue}) — type '{condType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            if (diaNote != null) sb.AppendLine("  " + diaNote);
         }
         catch (Exception ex)
         {
