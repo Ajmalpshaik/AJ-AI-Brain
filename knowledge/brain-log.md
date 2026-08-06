@@ -19,12 +19,15 @@ and "already done" together and so always read as unfinished.
 **Doable in any session (no Revit):** none right now.
 
 **Needs Ajmal's machine, but NOT a bridge or an open model** — only Revit *installed*, for its DLLs:
-1. **DONE 2026-08-04 — all 267 fragments now compile against Revit 2020** (VS 2022 Roslyn `csc.exe`).
-   Nothing outstanding here. Re-run `tools\verify-fragments-compile.ps1` after any fragment edit; it
-   takes about a minute. **Heads-up:** it writes ~267 unsigned `out.dll` files into `%TEMP%` in quick
-   succession, and Sophos flags that heuristically as `ML/PE-A`. It is the compiler's output, not
-   malware, and the folder is deleted at the end — but on a company-managed endpoint the detection is
-   reported to IT, so tell them before running it rather than after.
+none outstanding. (The 267-fragment compile pass was completed 2026-08-04 and is a *standing task*, not
+an open item — re-run `tools\verify-fragments-compile.ps1` after any fragment edit; ~1 minute. It was
+listed as item 1 with the word DONE inside it, which made `brain-status` count a finished job as open
+for two days. **Heads-up before re-running:** it writes ~267 unsigned `out.dll` files into `%TEMP%` in
+quick succession and Sophos flags that heuristically as `ML/PE-A` — compiler output, not malware, and
+the folder is deleted at the end, but on a company-managed endpoint the detection reaches IT, so tell
+them before rather than after. **Worth re-running now**: 7 fragments were edited on 2026-08-06
+— `lib/prelude.cs`, `filter-by-category.cs`, `filter-by-elements-on-level.cs`,
+`action-report-parameters.cs`, `action-count-by-group.cs`, `filter-by-design-option.cs`.)
 
 **Needs a live bridge — ANY model will do:**
 1. Run `tools/invoke-bridge.ps1 -Ping` once — a 2026-07-23 session found it sent a UTF-8 BOM the Node
@@ -38,9 +41,17 @@ and "already done" together and so always read as unfinished.
 
 **Needs a live bridge AND a model that actually contains the fixture** — this is the real blocker, not
 effort. An empty scratch model cannot move any of these:
-3. The fixture-blocked positive paths (worksharing, Assembly, Design Option, insulation, electrical,
-   links, Ceilings, a flip-capable family, a sleeve family, a CAD import, the PDF print go-ahead) — each
-   listed with its exact blocker in `scripts/README.md`'s per-fragment notes.
+3. The fixture-blocked positive paths — **most of these were unblocked on 2026-08-06** by building the
+   fixture rather than waiting for a project model. `Project1_ajmal.al.rvt` is now a saved workshared
+   local containing a Room, Pipe, Group, Door, RVT link and 6 Design Options in 3 sets.
+   - **CLEARED**: worksharing (2 worksets), RVT link, Design Options, Room, hosted element (door).
+   - **CLEARED by create-then-rollback** rather than by fixture: insulation, lining, Assembly, tags,
+     pinning, unplaced rooms, element overlap. That technique makes a fixture unnecessary for anything
+     the API can create — see the entries below.
+   - **STILL BLOCKED, genuinely**: Ceilings, electrical content, a CAD import, a flip-capable family, a
+     sleeve family, a nested shared family (for `filter-by-subcomponents`), a Scope Box (no API), and
+     the PDF print go-ahead (needs a real printer decision, not a fixture).
+   Per-fragment blockers stay in `scripts/README.md`'s notes.
 4. The 2026-07-23 transaction/null-check safety fixes to `create-parametric-box-family-with-duct-
    connector.cs`, `place-fcu.cs`, `place-terminals-checkerboard.cs`, `set-space-airflow.cs`,
    `draw-main-duct-with-cap.cs`, `split-duct-near-equipment.cs` — code-reviewed only, none live-executed.
@@ -1069,3 +1080,22 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   header warns about), `action-count-by-group`, `action-report-location` (all three location branches,
   and the `maxRows` truncation notice). Two actions were also chained after a single filter with no
   variable collision. Count **131 (49%)**.
+- 2026-08-06 — **The Open items list had gone stale in two ways, and one of them was a counting bug.**
+  Item 1 under "needs Ajmal's machine" *began with the word DONE* and said "nothing outstanding here" —
+  but `brain-status` counts list entries, not their contents, so a finished job was reported as open for
+  two days. Rewritten as a standing task outside the numbered list; that bucket now reads 0. **A list
+  whose items are counted must not contain finished items, however clearly they are labelled.**
+- 2026-08-06 — The other staleness: the fixture-blocked bucket still named worksharing, Design Options,
+  links and insulation as blockers **after they had been cleared the same day**. Most were unblocked by
+  *building the fixture* rather than waiting for a project model, and the rest by create-then-rollback,
+  which makes a fixture unnecessary for anything the API can create. Genuinely still blocked: Ceilings,
+  electrical, a CAD import, flip-capable and sleeve families, a nested shared family, a Scope Box (no
+  API), and the PDF print go-ahead. **The lesson is the general one this repo keeps relearning: a
+  blocker list is only useful if it is edited on the day the blocker clears**, otherwise it quietly
+  argues against work that is already possible.
+- 2026-08-06 — Also refreshed today: the knowledge graph (`graphify-out/`, 849 → **955 nodes**, 1,085
+  edges) and its Obsidian vault (1,145 → **1,257 notes**), both of which had been stale since
+  2026-08-04. Worth noting for anyone rebuilding: graphify's `--update` needs `build_merge` to fold the
+  new extraction into the existing graph — building from the changed subset alone produced 307 nodes and
+  its shrink-guard correctly refused to overwrite 849. **The guard caught an operator error, which is
+  exactly what it is for.**
