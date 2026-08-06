@@ -65,15 +65,28 @@ else
             {
                 try { callout.Name = newName; } catch { } // name collision — keeps the generated name
             }
+            // SCALE: on Revit 2020 a fresh callout's VIEW_SCALE parameter is READ-ONLY (measured live
+            // 2026-08-07 — so is VIEW_SCALE_PULLDOWN_METRIC), because the callout inherits its parent's
+            // scale. The old code guarded with `!pScale.IsReadOnly`, so the Set was SKIPPED ENTIRELY,
+            // and the summary then printed "scale 1:20" from the INPUT — a claim with no API call
+            // behind it at all. Report the scale the view actually has, and say plainly when the
+            // requested one could not be applied.
+            string scaleNote = null;
             if (scaleDenominator > 0)
             {
                 var pScale = callout.get_Parameter(BuiltInParameter.VIEW_SCALE);
-                if (pScale != null && !pScale.IsReadOnly) pScale.Set(scaleDenominator);
+                if (pScale == null || pScale.IsReadOnly)
+                    scaleNote = $"scale 1:{scaleDenominator} NOT applied — a callout's scale parameter is read-only on this Revit version; it follows the parent view. Change it in the Revit UI, or change the parent's scale.";
+                else if (!pScale.Set(scaleDenominator))
+                    scaleNote = $"scale 1:{scaleDenominator} REFUSED by Revit — left at 1:{callout.Scale}.";
             }
 
             elements.Add(callout);
             t.Commit();
-            sb.AppendLine($"Created callout '{callout.Name}' (Id {callout.Id.IntegerValue}) in parent view '{parent.Name}', covering {maxXMm - minXMm}x{maxYMm - minYMm} mm{(scaleDenominator > 0 ? $", scale 1:{scaleDenominator}" : ", scale inherited")}.");
+
+            // Read the scale back off the view rather than echoing the request.
+            sb.AppendLine($"Created callout '{callout.Name}' (Id {callout.Id.IntegerValue}) in parent view '{parent.Name}', covering {maxXMm - minXMm}x{maxYMm - minYMm} mm, ACTUAL scale 1:{callout.Scale}{(scaleDenominator > 0 ? "" : " (inherited)")}.");
+            if (scaleNote != null) sb.AppendLine("  " + scaleNote);
         }
         catch (Exception ex)
         {
