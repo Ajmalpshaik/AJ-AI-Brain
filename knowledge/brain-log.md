@@ -808,3 +808,17 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   [`glossary.md`](glossary.md) IS the user's-terms → Revit-terms map. Expanding a query through it before
   searching is the obvious next build. Until then the honest instruction is **read the top 3-5, not just
   #1** — the right file was usually still in that window.
+- 2026-08-06 — **The semantic index now tells you when it has gone stale**, instead of answering
+  confidently from an older copy of the Brain. `brain_index.py` writes `index-manifest.json` (a content
+  hash per indexed file) after every successful build, and every hybrid search compares the Brain on disk
+  against it, printing a `STALE INDEX` banner naming what changed/appeared/vanished. It hashes CONTENT,
+  not modified-dates: a git checkout or a folder copy changes dates without changing a word, and a
+  warning that cries wolf is one you learn to ignore. It warns rather than blocks — the results still
+  print, they are just from the old picture. Verified by adding a file, changing a file, and confirming
+  silence when current.
+- 2026-08-06 — **Worth being clear about what is NOT automatic here.** Nothing in this Brain rebuilds
+  itself on a timer, and no mechanism decides that a finished job was "worth saving" — that judgement is
+  the standing discipline in `START-HERE.md`, carried out by whoever is working, not by machinery. The
+  staleness banner is deliberately the smaller, reliable thing: it cannot make you rebuild, it can only
+  make forgetting impossible to do quietly. Auto-rebuilding on every file edit was considered and
+  rejected — at ~80 s a rebuild, a session touching ten files would spend fifteen minutes re-indexing.

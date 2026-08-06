@@ -144,6 +144,24 @@ search will keep returning the *old* text until you rebuild. So:
 > **After you add or change anything in `skills/`, `knowledge/`, `scripts/`, or
 > the five top-level guides, run `index-brain.cmd`.**
 
+**You will be told when you forget.** Every search compares the Brain on disk
+against what the index was built from, and shouts if they differ:
+
+```
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+STALE INDEX - these results are from an OLDER copy of the Brain.
+  1 changed, 2 new since the last rebuild.
+    changed  knowledge/live-model/hvac-ducts.md
+    added    scripts/actions/action-new-thing.cs
+  FIX: run  semantic-index\index-brain.cmd  (~90 s)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```
+
+It compares file **contents**, not modified-dates — copying the folder or
+checking out a git branch changes dates without changing a word, and a warning
+that cries wolf is one you learn to ignore. The results still print underneath;
+you are being warned, not blocked.
+
 You do not need to remember what changed. Every run throws the whole index away
 and builds it fresh from whatever is on disk right now. That is deliberate — a
 partial update would leave ghost entries behind for files you deleted or

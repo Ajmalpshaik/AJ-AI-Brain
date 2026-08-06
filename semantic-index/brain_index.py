@@ -247,6 +247,7 @@ def main():
     all_chunks = []
     file_counts = {}
     bad_files = []
+    indexed_rels = []  # exactly what this build covered, for the staleness check
 
     for folder_name, area in cfg.INDEX_TARGETS:
         folder = cfg.BRAIN_ROOT / folder_name
@@ -263,6 +264,7 @@ def main():
             if bad:
                 bad_files.append(rel)
             all_chunks.extend(chunks)
+            indexed_rels.append(rel)
             found += 1
 
         file_counts[folder_name] = found
@@ -281,6 +283,7 @@ def main():
         if bad:
             bad_files.append(name)
         all_chunks.extend(chunks)
+        indexed_rels.append(name)
         root_found += 1
 
     file_counts["root docs"] = root_found
@@ -330,6 +333,11 @@ def main():
         print(f"    {done}/{len(all_chunks)}")
 
     stored = collection.count()
+
+    # Record what this build covered, so a later search can tell you the Brain
+    # has moved on since. Written only after the data is safely stored.
+    cfg.write_manifest(indexed_rels)
+
     elapsed = time.time() - start
 
     print()

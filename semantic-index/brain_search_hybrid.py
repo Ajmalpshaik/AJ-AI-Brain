@@ -531,6 +531,13 @@ def main():
               "index-brain.cmd first.")
         return 1
 
+    # Loudly, before the results - a stale index answers confidently from an
+    # older copy of the Brain, and nothing about the answer looks wrong.
+    banner = cfg.staleness_banner()
+    if banner:
+        print()
+        print(banner)
+
     print()
     print(f'QUESTION: "{query}"   [hybrid: meaning + words]')
     if args.area:
