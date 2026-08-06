@@ -11,6 +11,7 @@ that one file — don't read the whole folder.**
 | "What actions are available" / a plain-language menu of universal Revit actions | [`universal-actions-reference.md`](universal-actions-reference.md) |
 | Fire sprinkler spacing rules — head count, spacing, distance to walls, area per head, hazard class, obstructions | [`nfpa13-sprinkler-spacing.md`](nfpa13-sprinkler-spacing.md) (the workflow is [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../skills/ajtools-fire-sprinkler-layout/SKILL.md)) |
 | An ambiguous or misheard term in a request | [`glossary.md`](glossary.md) |
+| A search missed because the site word isn't the Revit word ("floor levels", "light fitting", "out to excel") — **add a row, it works immediately, no rebuild** | [`site-vocabulary.md`](site-vocabulary.md) (data, read live by `semantic-index\ask-brain-hybrid.cmd`) |
 | A request phrased in Dynamo node names (`Element.GetParameterValueByName`, `List.FilterByBoolMask`, ...) | [`dynamo-vocabulary-map.md`](dynamo-vocabulary-map.md) |
 | How to format a reply (counts, tables, the Final Report) | [`reply-style.md`](reply-style.md) |
 | A change to the Brain itself (new skill, split file, retired script) — recording it, not making it | [`brain-log.md`](brain-log.md) |

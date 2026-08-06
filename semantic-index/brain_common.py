@@ -35,6 +35,10 @@ RUN_TEMP = SEMANTIC_ROOT / "run-temp"         # scratch space, kept off %TEMP%
 # what makes "your index is out of date" detectable instead of silent.
 MANIFEST_PATH = SEMANTIC_ROOT / "index-manifest.json"
 
+# The site-word -> Revit-word table, read live at search time (NOT baked into
+# the index), so adding a row works immediately without a rebuild.
+VOCABULARY_PATH = BRAIN_ROOT / "knowledge" / "site-vocabulary.md"
+
 COLLECTION_NAME = "aj_brain"
 
 # Folders inside the Brain that get indexed, and the label each one carries.
@@ -121,6 +125,82 @@ def get_client():
         path=str(CHROMA_DIR),
         settings=Settings(anonymized_telemetry=False, allow_reset=True),
     )
+
+
+# --------------------------------------------------------------------------
+# SITE VOCABULARY — say it your way, search it Revit's way
+# --------------------------------------------------------------------------
+
+def load_vocabulary():
+    """
+    Read knowledge/site-vocabulary.md into [(phrase, [extra words])].
+
+    Sorted longest phrase first, so "floor level" is matched and consumed
+    before a bare "floor" ever gets a chance. That ordering is the whole
+    safety property: mapping "floor" to "level" would be wrong (a floor is a
+    real Revit category - a slab), which is precisely the bug this fixes.
+
+    Returns [] if the file is missing or unreadable. A missing vocabulary makes
+    search slightly worse, never broken.
+    """
+    if not VOCABULARY_PATH.is_file():
+        return []
+
+    try:
+        text, _ = read_text(VOCABULARY_PATH)
+    except OSError:
+        return []
+
+    entries = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line.startswith("|") or line.startswith("|---"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        phrase, expansion = cells[0].lower(), cells[1].lower()
+        # Skip the header row and any row with an empty side.
+        if not phrase or not expansion or phrase.startswith("you say"):
+            continue
+        words = re.findall(r"[a-z0-9]+", expansion)
+        if words:
+            entries.append((phrase, words))
+
+    entries.sort(key=lambda e: -len(e[0]))
+    return entries
+
+
+def expand_query(query: str):
+    """
+    Swap any site phrase in the question for the Revit words that mean it.
+
+    Returns (rewritten_text, [(phrase, [words]) that fired]).
+
+    The matched phrase is REPLACED, not merely supplemented. Adding alone was
+    measured and was not enough: "add 4 more floor levels" kept the word
+    "floor", which went on dragging the result to create-floor.cs - the slab
+    creator - no matter how much weight "level" got. When a row exists it is
+    because that site word actively misleads, so leaving it in place defeats
+    the row's whole purpose.
+
+    Everything not matched is left exactly as typed, and a phrase is consumed
+    once matched, so a longer phrase blocks its own shorter substring
+    ("floor level" is taken before a bare "floor" is ever considered).
+    """
+    lowered = " " + re.sub(r"[^a-z0-9]+", " ", query.lower()) + " "
+    added, fired = [], []
+
+    for phrase, words in load_vocabulary():
+        padded = " " + re.sub(r"[^a-z0-9]+", " ", phrase).strip() + " "
+        if padded in lowered:
+            lowered = lowered.replace(padded, " ")
+            fired.append((phrase, words))
+            added.extend(words)
+
+    if not added:
+        return query, []
+    return (lowered.strip() + " " + " ".join(added)).strip(), fired
 
 
 # --------------------------------------------------------------------------

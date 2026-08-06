@@ -350,7 +350,18 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
     area, the combined score, the rank it held in each list, and a snippet.
     """
     notes = []
-    terms = query_terms(query)
+
+    # Site vocabulary: add the Revit words for any site phrase used. Applied to
+    # the WORDS side only - the meaning side keeps the question exactly as
+    # asked, because appending synonyms shifts the sentence's own meaning
+    # vector and the semantic layer already handles paraphrase well. Widening
+    # the exact-word search is where "floor level" -> "level" actually pays.
+    expanded, fired = cfg.expand_query(query)
+    if fired:
+        shown = "; ".join(f"{p} -> {' '.join(w)}" for p, w in fired)
+        notes.append(f"site vocabulary applied: {shown}")
+
+    terms = query_terms(expanded)
 
     collection = cfg.get_client().get_collection(
         name=cfg.COLLECTION_NAME,
@@ -360,7 +371,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
 
     # --- signal 1: meaning ------------------------------------------------
     raw = collection.query(
-        query_texts=[query],
+        query_texts=[expanded],
         n_results=min(CANDIDATES, max(collection.count(), 1)),
         where=where,
     )
@@ -413,7 +424,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
     if bm25 is not None:
         limit = bm25.n * DISTINCTIVE_MAX_SHARE
         candidates = []
-        for word in query_words_raw(query):
+        for word in query_words_raw(expanded):
             df = bm25.doc_freq.get(_stem(word), 0)
             if 0 < df <= limit:
                 candidates.append((bm25.idf(_stem(word)), word))
