@@ -19,6 +19,7 @@ feet↔mm conversion every script needs.
 | Drawing duct between points; branch duct (riser + elbow + takeoff); connecting to an existing open end; drawing FROM a connector | [`hvac-ducts.md`](hvac-ducts.md) |
 | Slicing a trunk into progressively smaller segments for duct sizing; why the trunk gets split; recovering an orphaned branch | [`hvac-duct-sizing.md`](hvac-duct-sizing.md) |
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
+| Moving/copying/rotating elements — and why a transform can silently do NOTHING while reporting success (pinned elements, group members) | [`geometry-and-transforms.md`](geometry-and-transforms.md) |
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |
 | Turning a color STYLE word ("pastel", "neon", "muted") into real RGB; guaranteeing distinct colors across several groups | [`color-vocabulary.md`](color-vocabulary.md) |
 | A color/override change isn't showing — which graphic mechanism beats which (Linework, per-element, Filters, Category, Object Styles, ...) | [`graphic-override-precedence.md`](graphic-override-precedence.md) |
