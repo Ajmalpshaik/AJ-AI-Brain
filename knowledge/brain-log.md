@@ -932,3 +932,14 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
 - 2026-08-06 — Placing that Room also re-confirmed the MEP level finding from earlier today: the new Pipe
   reports its level through `RBS_START_LEVEL_PARAM` (= 311), exactly as the fixed fallback chain now
   expects. Ducts and pipes behave the same way here.
+- 2026-08-06 — **The test model became a workshared local file** (`Project1_ajmal.al.rvt`, 2 user
+  worksets), which unlocked the last branch of `context-workset-info` and all of `filter-by-workset` —
+  both now verified. `filter-by-workset` passed a semantic check, not just a count: "Shared Levels and
+  Grids" returned exactly the 4 grids and 2 levels, which is precisely what that workset is for.
+- 2026-08-06 — **Second API gotcha of the day, same shape as the level one: `ELEM_PARTITION_PARAM` is an
+  INTEGER.** `.AsString()` returns `null`, which reads exactly like "this element has no workset" —
+  a probe written earlier in this very session fell for it. Use `.AsValueString()` for the name,
+  `.AsInteger()`/`WorksetId` for the Id. **And workset Id `0` is a real workset** (`Workset1`), so any
+  code treating `0` as unset silently drops every element on the default workset. Full table in
+  [`live-model/core.md`](live-model/core.md). Both of today's gotchas share a lesson: **when a Revit read
+  returns null or zero, confirm the parameter's `StorageType` before concluding the model is empty.**
