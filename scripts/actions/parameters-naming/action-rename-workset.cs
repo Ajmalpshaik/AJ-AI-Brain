@@ -7,8 +7,12 @@
 // GOTCHA: workset DELETE is CONFIRMED IMPOSSIBLE on Revit 2020 — WorksetTable.DeleteWorkset only exists
 //         from Revit 2022 (UI-only before that: Collaborate > Worksets > Delete). mode="delete" reports
 //         this instead of throwing, same convention as create-scope-box.cs.
-// BLOCKED (model isn't workshared) — graceful path only; rename path NOT YET LIVE-VERIFIED
-//          (created 2026-07-26 from the round-2 suggestions).
+// ✓ LIVE-VERIFIED 2026-08-07 — the 2026-07-26 "BLOCKED (model isn't workshared)" note is RETIRED; the
+//          test model is a workshared local now. Every path ran: `delete` mode returns the honest
+//          Revit-2020-impossible message with the manual UI steps; an unknown workset name lists the real
+//          ones ('Workset1', 'Shared Levels and Grids'); an empty newWorksetName is refused; and the real
+//          rename took 'Workset1' -> 'MEP_VerifyWorkset', confirmed by re-reading the workset table, then
+//          rolled back.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
