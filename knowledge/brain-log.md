@@ -986,3 +986,19 @@ read-only), workset delete (API is 2022+), Scope Box creation, and view-title ex
   the model**: 3 untagged / 0 tagged → create a tag in a transaction → 2 / 1 → roll back → 3 / 0. Proven
   count **102**. This is the second filter where the "off" branch was only meaningful once the model was
   changed and put back — worth treating as the default technique rather than a special case.
+- 2026-08-06 — Nine more filters verified in one pass, taking the count to **111 (42%)** and filters
+  specifically to **36 of 49**: `filter-by-family`, `filter-by-types`, `filter-by-family-type`,
+  `filter-by-grid`, `filter-by-view-templates`, `filter-by-current-selection`,
+  `filter-by-category-and-family`, `filter-by-parameter-exists`, `filter-by-insulation-status`.
+- 2026-08-06 — **The change-it-then-roll-it-back technique is now the house style, used three times
+  today.** `filter-by-pin-status`, `filter-by-tag-status` and `filter-by-insulation-status` all read
+  "everything is off" on a fresh model — which is *exactly* what a filter that never matches also
+  reports. Each was proven by making the state true inside a `Transaction` (pin a duct / tag a duct /
+  wrap 25 mm of Duct Wrap on a duct), confirming the counts flipped, then `RollBack()`. The model is left
+  byte-identical every time. **Any boolean filter whose "off" state is the model's default needs this**;
+  reading the default and calling it proof is not a test.
+- 2026-08-06 — Two other checks worth copying. `filter-by-category-and-family` has a LINQ name path and a
+  `FamilyInstanceFilter` path — **running both and getting the same 5 elements by different mechanisms**
+  is stronger than either alone. And `filter-by-parameter-exists` demonstrates its three modes rather
+  than describing them: `Width` → has 3 / hasvalue 3 / missing 0, while blank `Comments` → has 3 /
+  hasvalue 0 / missing 3. The contrast IS the proof that `has` and `hasvalue` differ.
