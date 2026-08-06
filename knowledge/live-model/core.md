@@ -243,6 +243,25 @@ rather than just act on existing ones and don't fit the filter+action shape.
   `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
   just the intended viewports — leaves every other sheet's title style untouched.
 
+### Elements cannot be MOVED into a Design Option through the API either — every route is read-only
+
+Checked by reflection 2026-08-06, not assumed:
+
+| Route | Writable? |
+|---|---|
+| `Element.DesignOption` property | **No** (`CanWrite = false`) |
+| `BuiltInParameter.DESIGN_OPTION_ID` | **read-only** |
+| `BuiltInParameter.DESIGN_OPTION_PARAM` | **read-only** |
+| `View.DesignOption` property | **No** |
+| The active view's `"Design Option"` parameter | **read-only** |
+| Any `Document` method to set the active option | **none exist** |
+
+**But there is a working route that needs one UI action.** An element lands in whichever Design Option is
+*active at the moment it is created*, and the active option is set from Revit's status bar (bottom-right).
+So: ask the user to pick the option there, confirm with `DesignOption.GetActiveDesignOptionId(Document)`
+(returns `-1` for Main Model), then create elements normally — they arrive in that option. Moving
+*existing* elements is UI-only: Manage → Design Options → Add to Set.
+
 ### Design Options cannot be created through the API in Revit 2020 — checked, not assumed
 
 `DesignOption` exposes exactly **one** static method in this build (2020, `20220517_1515`):
