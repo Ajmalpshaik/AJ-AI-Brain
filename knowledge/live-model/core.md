@@ -168,6 +168,22 @@ rather than just act on existing ones and don't fit the filter+action shape.
   detail is the difference between a size report that is true and one that merely echoes the request.
   `create-duct.cs`, `create-pipe.cs`, `create-cable-tray.cs` and `create-conduit.cs` all now report
   ACTUAL size and flag a REFUSED or SNAPPED value explicitly.
+- **A script that throws AFTER its transaction committed still rolls back COMPLETELY — the bridge wraps
+  the whole script, so a late exception undoes even committed work.** Verified live 2026-08-09: a wall
+  trim committed its Transaction, then a stray `Document.Regenerate()` AFTER the commit threw
+  ("Modification of the document is forbidden" — Regenerate needs an open transaction), and the read-back
+  showed the wall untouched. Two rules fall out: (1) never call `Regenerate()` outside a transaction —
+  `Commit()` already regenerates, so a post-commit Regenerate is both illegal and pointless; (2) this
+  rollback is protective, not a bug — a bridge script either fully lands or fully doesn't, so after ANY
+  script error re-read the model instead of assuming the pre-error lines stuck.
+- **A script that throws AFTER its transaction committed still rolls back COMPLETELY — the bridge wraps
+  the whole script, so a late exception undoes even committed work.** Verified live 2026-08-09: a wall
+  trim committed its Transaction, then a stray `Document.Regenerate()` AFTER the commit threw
+  ("Modification of the document is forbidden" — Regenerate needs an open transaction), and the read-back
+  showed the wall untouched. Two rules fall out: (1) never call `Regenerate()` outside a transaction —
+  `Commit()` already regenerates, so a post-commit Regenerate is both illegal and pointless; (2) this
+  rollback is protective, not a bug — a bridge script either fully lands or fully doesn't, so after ANY
+  script error re-read the model instead of assuming the pre-error lines stuck.
 
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`
