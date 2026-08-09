@@ -49,21 +49,29 @@ INDEX_TARGETS = [
     ("skills", "skill"),
 ]
 
-# Individual files at the repo root, indexed under the label "guide".
-# These are the read-me-first documents, so a plain-English question can land
-# on the operating manual rather than only on a fragment or a technique note.
+# Individual files indexed under the label "guide".
+# The first five are the read-me-first documents at the repo root, so a
+# plain-English question can land on the operating manual rather than only on
+# a fragment or a technique note.
 #
 # CLAUDE.md sits here too, under the same "guide" label rather than a category
 # of its own. It is the auto-loaded session rules, and START-HERE.md — which it
 # pulls in with @START-HERE.md — is already a guide doing the same job. A label
 # used by exactly one file adds a choice to every search without adding an
-# answer, so these five are kept together as "the documents you read first".
+# answer, so these are kept together as "the documents you read first".
+#
+# mcp-server/tools/README.md is the one non-root entry: the reference table of
+# the bridge's native MCP tools. Without it, "how do I count elements without
+# writing C#" can only ever land on a C# fragment — the index had no way to
+# say "there is a native tool for that". It is a single named file on purpose:
+# indexing the mcp-server/ FOLDER would drag in every node_modules README.
 ROOT_DOCS = [
     "AGENT-SPEC.md",
     "START-HERE.md",
     "README.md",
     "SETUP.md",
     "CLAUDE.md",
+    "mcp-server/tools/README.md",
 ]
 
 FILE_EXTENSIONS = {".md", ".cs"}

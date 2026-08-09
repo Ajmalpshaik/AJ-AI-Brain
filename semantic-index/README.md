@@ -13,10 +13,11 @@ it does not replace it, and it never modifies it. Three ways to look things up:
 | `ask-brain` | Semantic only. Kept as the baseline, to compare against. |
 | `node tools/fragment-index.mjs --find color` | C# fragments only, exact word, with PROVEN status |
 
-Nothing here touches Revit, the AJ AI Bridge, `mcp-server/`, or the compile
-checker. It only reads `skills/`, `knowledge/`, `scripts/`, and the five
-top-level guides (`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`,
-`CLAUDE.md`).
+Nothing here touches Revit, the AJ AI Bridge, or the compile checker. It only
+reads `skills/`, `knowledge/`, `scripts/`, the five top-level guides
+(`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`, `CLAUDE.md`), and
+one named file from `mcp-server/`: `tools/README.md`, the reference table of
+the bridge's 17 native tools — the doc, never the bridge's JS code.
 
 ---
 
@@ -190,8 +191,9 @@ The index is a **snapshot**. It does not notice when you edit the Brain.
 Add a new fragment, write a new knowledge note, or change a skill, and the
 search will keep returning the *old* text until you rebuild. So:
 
-> **After you add or change anything in `skills/`, `knowledge/`, `scripts/`, or
-> the five top-level guides, run `index-brain.cmd`.**
+> **After you add or change anything in `skills/`, `knowledge/`, `scripts/`,
+> the five top-level guides, or `mcp-server/tools/README.md`, run
+> `index-brain.cmd`.**
 
 **You will be told when you forget.** Every search compares the Brain on disk
 against what the index was built from, and shouts if they differ:

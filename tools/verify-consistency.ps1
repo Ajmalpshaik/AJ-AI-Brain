@@ -25,6 +25,10 @@
       7. Every relative .md reference inside a scripts/**/*.cs fragment resolves - the
          "// SOURCE: ../../knowledge/..." headers that link a fragment to its reasoning.
          These are plain C# comments, not markdown links, so check 2 never saw them.
+      8. Every "searches all N files" claim in CLAUDE.md/START-HERE.md/README.md matches
+         the number of files the semantic index actually covers (scripts/knowledge/skills
+         .md+.cs, the five root docs, and mcp-server/tools/README.md) - it drifted
+         306-vs-309 for two days before this check existed.
 
     Checks 4-6 were added 2026-08-04 after an audit found the fire sprinkler skill missing
     from README/SETUP/plugin.json, AGENT-SPEC 58 fragments out of date, and a corrupted
@@ -284,6 +288,36 @@ foreach ($frag in Get-ChildItem -Path $scriptsDir -Filter "*.cs" -Recurse -Error
     }
 }
 Write-Host ("Checked {0} cross-reference(s) inside script fragments." -f $fragRefCount)
+
+Write-Host "`n=== 8. Semantic index coverage claims ===" -ForegroundColor Cyan
+# CLAUDE.md, START-HERE.md and README.md each state how many files ask-brain-hybrid searches
+# ("searches all N files"). That number drifted 306-vs-309 for two days before anyone noticed -
+# three knowledge notes were added and no doc moved. The rules below mirror what the indexer
+# actually includes (semantic-index/brain_common.py: INDEX_TARGETS + ROOT_DOCS + FILE_EXTENSIONS);
+# if you change the covered set there, change this count AND the three docs in the same turn.
+$indexable = 0
+foreach ($folder in @("scripts", "knowledge", "skills")) {
+    $folderPath = Join-Path $brainRoot $folder
+    $indexable += (Get-ChildItem -Path $folderPath -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Extension -eq ".md" -or $_.Extension -eq ".cs" }).Count
+}
+foreach ($rel in @("AGENT-SPEC.md", "START-HERE.md", "README.md", "SETUP.md", "CLAUDE.md",
+                   "mcp-server\tools\README.md")) {
+    if (Test-Path (Join-Path $brainRoot $rel)) { $indexable++ }
+}
+$claimCount = 0
+foreach ($file in @("CLAUDE.md", "START-HERE.md", "README.md")) {
+    $p = Join-Path $brainRoot $file
+    if (-not (Test-Path $p)) { continue }
+    $content = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8)
+    foreach ($m in [regex]::Matches($content, 'searches all (\d+) files')) {
+        $claimCount++
+        if ([int]$m.Groups[1].Value -ne $indexable) {
+            $issues.Add("INDEX COUNT DRIFT in " + $file + ": says `"" + $m.Value + "`" but the indexable set on disk holds " + $indexable + " files")
+        }
+    }
+}
+Write-Host ("Checked {0} 'searches all N files' claim(s) against {1} indexable file(s) on disk." -f $claimCount, $indexable)
 
 Write-Host "`n=== Result ===" -ForegroundColor Cyan
 if ($issues.Count -eq 0) {

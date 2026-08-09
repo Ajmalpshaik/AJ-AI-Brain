@@ -2,7 +2,7 @@
 // Portable (cross-platform, no PowerShell needed) equivalent of verify-consistency.ps1 — for sessions
 // running on Linux/macOS/Claude Code on the web, where `pwsh`/Windows PowerShell isn't available.
 //
-// Same seven checks, same job: catch drift in this Brain's cross-references before it goes stale.
+// Same eight checks, same job: catch drift in this Brain's cross-references before it goes stale.
 // Kept in sync by hand with verify-consistency.ps1 — if you change what one checks, change both.
 //
 // Usage: node tools/verify-consistency.mjs
@@ -286,6 +286,35 @@ for (const f of walk(scriptsDir, (n) => n.endsWith(".cs"))) {
   }
 }
 console.log(`Checked ${fragRefCount} cross-reference(s) inside script fragments.`);
+
+// === 8. Semantic index coverage claims ===
+// CLAUDE.md, START-HERE.md and README.md each state how many files ask-brain-hybrid searches
+// ("searches all N files"). That number drifted 306-vs-309 for two days before anyone noticed —
+// three knowledge notes were added and no doc moved. The rules below mirror what the indexer
+// actually includes (semantic-index/brain_common.py: INDEX_TARGETS + ROOT_DOCS + FILE_EXTENSIONS);
+// if you change the covered set there, change this count AND the three docs in the same turn.
+console.log("\n=== 8. Semantic index coverage claims ===");
+let indexable = 0;
+for (const folder of ["scripts", "knowledge", "skills"]) {
+  indexable += walk(path.join(brainRoot, folder), (n) => n.endsWith(".md") || n.endsWith(".cs")).length;
+}
+for (const rel of ["AGENT-SPEC.md", "START-HERE.md", "README.md", "SETUP.md", "CLAUDE.md",
+                   path.join("mcp-server", "tools", "README.md")]) {
+  if (fs.existsSync(path.join(brainRoot, rel))) indexable++;
+}
+let claimCount = 0;
+for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
+  const p = path.join(brainRoot, file);
+  if (!fs.existsSync(p)) continue;
+  const content = fs.readFileSync(p, "utf8");
+  for (const m of content.matchAll(/searches all (\d+) files/g)) {
+    claimCount++;
+    if (Number(m[1]) !== indexable) {
+      issues.push(`INDEX COUNT DRIFT in ${file}: says "${m[0]}" but the indexable set on disk holds ${indexable} files`);
+    }
+  }
+}
+console.log(`Checked ${claimCount} "searches all N files" claim(s) against ${indexable} indexable file(s) on disk.`);
 
 // === Result ===
 console.log("\n=== Result ===");

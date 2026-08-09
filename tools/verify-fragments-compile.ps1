@@ -265,6 +265,16 @@ if ($fail -gt 0) {
     Write-Host ("Full errors written to {0}" -f $reportPath) -ForegroundColor Yellow
     Write-Host "Fix the fragment, not the harness - unless the error names a type the harness failed to" -ForegroundColor Yellow
     Write-Host "supply, in which case add the missing using/field above and say so in brain-log.md." -ForegroundColor Yellow
+} elseif ($Filter -eq "*") {
+    # A clean FULL run means every failure in an old report is fixed - delete it, or the stale file
+    # sits at the repo root describing failures that no longer exist. (Found the hard way: the
+    # 2026-08-04 fix run never cleared the pre-fix report, and it read as a live failure for days.)
+    # A filtered run leaves the report alone: it only proved a subset.
+    $reportPath = Join-Path $brainRoot "fragment-compile-failures.txt"
+    if (Test-Path $reportPath) {
+        Remove-Item $reportPath -Force
+        Write-Host "Stale fragment-compile-failures.txt removed - this clean full run supersedes it." -ForegroundColor Green
+    }
 }
 if (-not $KeepWrappers) { Remove-Item -Recurse -Force $workDir -ErrorAction SilentlyContinue }
 exit $(if ($fail -gt 0) { 1 } else { 0 })

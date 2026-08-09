@@ -22,8 +22,8 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 306 files
-(`skills/`, `knowledge/`, `scripts/`, and the root docs) by *meaning* as well as by exact words, and
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 310 files
+(`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
 know the keyword. Use whichever fits: keyword when you know the term, this when you only know the job.
@@ -50,11 +50,11 @@ site-word → Revit-word map; when a search looks off, say the Revit word and re
 - Every file edit in this repo triggers a PostToolUse hook ([`.claude/settings.json`](.claude/settings.json)
   → [`tools/verify-consistency-hook.mjs`](tools/verify-consistency-hook.mjs)) that runs the full
   consistency check — skill frontmatter, markdown link targets, scripts README sync, skill coverage in
-  the entry docs, AGENT-SPEC's fragment counts, text encoding, and the `// SOURCE:` cross-references
-  inside script fragments. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  the entry docs, AGENT-SPEC's fragment counts, text encoding, the `// SOURCE:` cross-references
+  inside script fragments, and the "searches all N files" semantic-index coverage claims. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
-  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same seven checks.
+  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same eight checks.
 - Log structural changes (new skill, split file, new/retired script) in
   [`knowledge/brain-log.md`](knowledge/brain-log.md), 1–3 lines each.
 - **Never bulk-edit files here with PowerShell `Get-Content`/`Set-Content`.** Windows PowerShell 5.1 reads
