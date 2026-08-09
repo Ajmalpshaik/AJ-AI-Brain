@@ -1238,3 +1238,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (2) `graphify-out/` is **gitignored**. The graph and vault do NOT travel through git — they travel only
       when the FOLDER is copied. If the Brain is ever cloned rather than copied, regenerate them with
       `/graphify . --update` on the new machine.
+- 2026-08-09 — Whole-Brain health check, three fixes out of it. (1) **The semantic index now covers
+  `mcp-server/tools/README.md`** (310 files, 2,777 chunks) — before this, "how do I count elements
+  without writing C#" could only ever land on a C# fragment, because the one doc naming the 17 native
+  tools was outside the index; verified live, it now returns at #1 by BOTH meaning and words. (2) The
+  "searches all N files" claim in CLAUDE.md/START-HERE.md/README.md had silently drifted 306-vs-309 —
+  the doc-drift failure mode again, so it is now **check 8 in both verify-consistency checkers**: the
+  claimed number is recomputed from disk on every run. (3) `fragment-compile-failures.txt` at the root
+  was STALE — written 23:27 on 2026-08-04, four minutes before the commit that fixed its one failure.
+  Re-ran the compile check filtered to `examples/prelude-smoke-test.cs` (with `-RevitPath` pointed at
+  the real `Revit 2020` folder — auto-detect grabs `Revit Model Review 2020` first): PASS, so the file
+  described a failure that no longer existed. Removed it, and the checker now deletes a stale report
+  itself after any clean FULL run (a filtered run leaves it alone — it only proved a subset). Also
+  re-synced every derived layer after the doc edits: graph 947 nodes / 985 edges, health OK; vault
+  1,265 notes; knowledge routing audited — every knowledge file is reachable from INDEX.md or the
+  live-model sub-index.
