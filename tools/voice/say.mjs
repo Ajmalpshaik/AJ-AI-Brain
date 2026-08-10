@@ -96,9 +96,25 @@ function ensureDrainer(text, profileName) {
   if (queueDepth() >= STUCK_QUEUE_THRESHOLD) return false;
 
   try {
+    // Give the child REAL output handles pointed at a log file, rather than stdio:"ignore".
+    // Two reasons, both learned the hard way on 2026-08-11:
+    //   1. A venv python.exe is a launcher shim that re-executes the base interpreter, and handing it
+    //      no std handles is exactly the shape of launch that failed here - it would report a pid and
+    //      then do nothing at all.
+    //   2. With "ignore", a Python-level crash goes to a null device and the only symptom is a voice
+    //      that never speaks again. Pointed at a file, every future failure explains itself.
+    let childStdio = "ignore";
+    try {
+      fs.mkdirSync(runtimeDir, { recursive: true });
+      const logFd = fs.openSync(path.join(runtimeDir, "drainer-startup.log"), "a");
+      childStdio = ["ignore", logFd, logFd];
+    } catch {
+      /* Fall back to no handles rather than not starting at all. */
+    }
+
     const child = spawn(findPython(), [path.join(voiceDir, "drainer.py")], {
       detached: true,
-      stdio: "ignore",
+      stdio: childStdio,
       windowsHide: true,
       cwd: voiceDir,
     });
