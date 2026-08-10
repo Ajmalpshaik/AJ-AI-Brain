@@ -233,3 +233,224 @@ drives geometry** — removing and re-adding creates a new parameter with a new 
 any dimension label or association built in earlier steps. No verified-safe technique for changing an
 already-geometry-linked parameter's group was found this session. If this comes up again: test on a
 throwaway/duplicate family first, and re-verify the geometry's bounding box afterward before trusting it.
+
+### Fourth build (2026-08-10, Condair EL 20 steam humidifier from a manufacturer datasheet) — pipe + electrical connectors proven
+
+Built a Mechanical Equipment family from a PDF datasheet: 530×406×780 cabinet, five connectors (steam,
+supply water, drain, condensate, 3-phase power), a toggleable clearance zone, and 63 parameters. Recipe:
+[`create-equipment-family-from-datasheet.cs`](../../scripts/recipes/create-equipment-family-from-datasheet.cs).
+Everything below is live-verified in this build unless it says otherwise.
+
+**Reflection beats the deliberate-compile-error technique for discovering an unknown signature.** The
+three-step compile-error method documented in the first build above still works, but
+`typeof(ConnectorElement).GetMethods(BindingFlags.Public | BindingFlags.Static)` printed every overload's
+real parameter names and types in ONE read-only call — no transaction, no failed calls, no guessing.
+Same trick enumerates enum values (`Enum.GetNames(typeof(PipeSystemType))`) and confirms whether a
+`BuiltInParameter`/`ParameterType`/`DisplayUnitType` member exists on this Revit version before writing
+code that names it. Reach for reflection first; keep the compile-error method for things reflection
+can't answer (which overload Revit actually resolves, what a null argument does at runtime).
+
+**`ConnectorElement.CreatePipeConnector` and `CreateElectricalConnector` are PROVEN, same shape as the
+duct one.** Signatures (Revit 2020, read by reflection, then run):
+`CreatePipeConnector(Document, Plumbing.PipeSystemType, Reference planarFace)` and
+`CreateElectricalConnector(Document, Electrical.ElectricalSystemType, Reference planarFace)`; each also
+has a 4-arg overload taking a trailing `Edge`. Both need a `Reference` to a planar face on the family's
+own solid, both must run in a `Transaction`, and both put the connector at the face centre with the face
+normal as its direction — exactly like `CreateDuctConnector`. **Revit has no Steam pipe system type** —
+`PipeSystemType.OtherPipe` is the correct choice for steam. `ElectricalSystemType.PowerBalanced` is the
+one for a balanced 3-phase load.
+
+**Pipe connectors have the SAME "size is not inherited from the face" bug as duct connectors** — a
+connector created on a 45 mm circular face came back `Radius` 304.8 mm / `Diameter` 609.6 mm (1 ft and
+2 ft, generic placeholders). Unlike `Connector.Width`/`.Height`, both `CONNECTOR_RADIUS` and
+`CONNECTOR_DIAMETER` are directly writable here and stay linked to each other. Since manufacturer
+datasheets quote OD, **associate `CONNECTOR_DIAMETER` to an OD family parameter** via
+`AssociateElementParameterToFamilyParameter` — no half-value helper parameter needed. Proven by driving
+the family parameter to 80 mm and reading the connector back at 80 mm. `RBS_PIPE_DIAMETER_PARAM` and
+`CONNECTOR_PROFILE_TYPE` are **null** on a pipe connector — don't reach for them. Flow direction is
+`RBS_PIPE_FLOW_DIRECTION_PARAM`, an int taking `FlowDirectionType` (Bidirectional=0, In=1, Out=2).
+There is no `BuiltInParameter.CONNECTOR_DESCRIPTION`; the field is reached with
+`LookupParameter("Connector Description")`.
+
+**Electrical connector load data**: `RBS_ELEC_NUMBER_OF_POLES` (int), `RBS_ELEC_VOLTAGE`,
+`RBS_ELEC_APPARENT_LOAD` (`DUT_VOLT_AMPERES` exists and converts), plus `Power Factor` by name. Set the
+apparent load from the datasheet's own current rather than its kW figure — `sqrt(3) x 400 V x 21.7 A` =
+15034 VA reproduces the quoted 21.7 A MCA exactly, where a rounded 15000 W would not.
+
+**Family TYPE names reject `\ : { } [ ] | ; < > ? ` ~` — parameter names accept `/`.** A type named
+after the datasheet model `"EL 20-400V/3~"` throws `ArgumentException: The name cannot contain these
+prohibited chars` on the tilde (the slash is fine). Parameter names, tested separately, DO accept `/`,
+so `"Nominal Capacity (kg/h)"` is legal — worth knowing because hyphenated workarounds look wrong on a
+manufacturer schedule. Element *values* are unrestricted (`G 3/4"` stored fine).
+
+**`NewExtrusion` accepts a NEGATIVE end value and extrudes downward** — no need to create upward and
+then juggle `EXTRUSION_START_PARAM`. Four stubs built with `NewExtrusion(true, arr, sp, -length)` landed
+at Z −60…0 first time. `EXTRUSION_START_PARAM` is separately writable and takes a negative too.
+
+**A Length family parameter accepts a NEGATIVE formula result and can drive an extrusion's start.**
+`SetFormula(p, "-Floor Clearance")` resolved to −600 mm and associated cleanly to
+`EXTRUSION_START_PARAM`, making the underside of a clearance box parametric. This was expected to be
+rejected (Revit refuses negative lengths typed into many UI fields) and was written with a fallback —
+the fallback was not needed.
+
+**Unconstrained extrusions sketched on the shared horizontal plane get auto-constrained by Revit and
+track the nearest body face on resize.** Four stubs were placed at absolute coordinates with no
+`NewAlignment` and no labelled dimension. Changing Width 530→700 and Depth 406→500 moved them: each kept
+its original 105 mm offset from the nearest side face and 106 mm from the front face, and every one
+returned to its exact original coordinate on reset. Revit's own sketch dimensions did this (the finished
+family reports 48 `Dimension` elements against 6 created explicitly). **Useful, but implicit** — if a
+stub's position genuinely matters, dimension it on purpose rather than relying on this.
+
+**Clearance-zone pattern that works**: `Document.Settings.Categories.NewSubcategory(mechCategory,
+"Clearance")` → `Material.Create` + `material.Transparency = 80` → `subcategory.Material = m` →
+`extrusion.Subcategory = sub` → `AssociateElementParameterToFamilyParameter(
+extrusion.get_Parameter(BuiltInParameter.IS_VISIBLE_PARAM), yesNoInstanceParam)` for the on/off toggle.
+Formula-driven parameters CAN be used as a `Dimension.FamilyLabel`, so an asymmetric box
+(`Width / 2 + Left Clearance` one side, `Width / 2 + Right Clearance` the other) stays fully parametric.
+
+**Where the numbers come from matters as much as the API.** This build was done twice: first from a
+screenshot of one data-sheet page, then corrected against the full 107-page submittal. The data sheet
+gives connection SIZES; only the **shop drawing** gives their positions, how many there are, and which
+face they are on — the first pass put four connections on the wrong face at invented coordinates and
+missed a second port and a second electrical supply entirely. Full lesson, plus the PDF tool chain that
+works on this machine and a silent `pdftotext` row-offset trap, in
+[`../reading-manufacturer-datasheets.md`](../reading-manufacturer-datasheets.md). Two API facts from the
+correction pass: **unit suffixes are legal in formulas** (`"Height + 60 mm"` resolves fine, so a stub can
+track the body without a separate offset parameter), and `EXTRUSION_START_PARAM` + `EXTRUSION_END_PARAM`
+can BOTH be associated to family parameters, which is how a top-face stub keeps a 5 mm overlap into the
+body through a resize instead of being extruded from Z=0 through the whole cabinet.
+
+**`SketchPlane.Create(doc, plane.GetPlane())` silently produces an UNHOSTED work plane — the element's
+"Work Plane" property reads `<not associated>`.** `GetPlane()` hands back a bare geometric `Plane`, so
+Revit makes an anonymous sketch plane with no link to the reference-plane *element*. Use the datum
+overload instead: **`SketchPlane.Create(Document, ElementId datumId)`**, passing the ReferencePlane's
+`.Id`. The three overloads are `Create(Document, ElementId datumId)`, `Create(Document, Reference
+planarFaceReference)` and `Create(Document, Plane)` — only the first two host. **This cannot be repaired
+after the fact**: `Sketch.SketchPlane` has no setter (`CanWrite == false`) and `SKETCH_PLANE_PARAM` is a
+read-only string, so a wrongly-hosted extrusion has to be deleted and rebuilt. Get it right at creation.
+
+**Unused `SketchPlane` elements are auto-purged between `run_csharp` calls.** A sketch plane created in
+one call and not yet consumed by geometry is gone by the next call — `doc.GetElement(thatId)` returns
+null and `NewExtrusion` throws `"Value cannot be null. Parameter name: sketchPlane"`. **Create the sketch
+plane inside the same transaction as the extrusion that uses it**, from the datum's `ElementId`.
+
+**Dimensions that reference only reference planes SURVIVE deleting all the geometry.** A `Width`
+dimension between `Unit Left` and `Unit Right` touches no solid, so a "delete every extrusion and
+rebuild" pass leaves it behind — and the rebuild then adds a second one, giving two labelled dimensions
+driving the same parameter. Harmless until something moves, then it is a constraint fight. **After
+clearing geometry for a rebuild, list `Dimension` elements with a non-null `FamilyLabel` and delete the
+stale ones explicitly** (alignments die with the geometry; plane-to-plane dimensions do not).
+
+**A horizontal reference plane's normal direction follows the endpoint order — swap `bubbleEnd`/
+`freeEnd` to flip it.** `NewReferencePlane(new XYZ(-3,0,z), new XYZ(3,0,z), XYZ.BasisY, elevation)` came
+out normal `(0,0,-1)`; swapping the two endpoints gave `(0,0,+1)`. This matters because
+`EXTRUSION_START_PARAM`/`END_PARAM` are measured along the host plane's normal — on a down-facing plane
+a positive end value extrudes downward. Always read `GetPlane().Normal` back and flip before building.
+
+**A single full circle is accepted but Revit normalises it to two arcs anyway.**
+`Arc.Create(centre, r, 0, 2*Math.PI, XYZ.BasisX, XYZ.BasisY)` returns a valid unbound curve
+(`IsBound == false`, length `2*pi*r`) and `NewExtrusion` takes it — but the resulting
+`Sketch.Profile` reports **2 curves** and the solid has **2 cylindrical faces**, exactly as if two
+half-arcs had been passed. So the two-arc idiom is not a workaround for a missing feature; it is what
+Revit stores either way. Passing one closed circle is still the clearer expression — prefer it.
+
+**DO NOT put a `NewDiameterDimension` on an extruded cylinder's face and label it — it does not drive
+the sketch, and it plants a delayed "Constraints are not satisfied" error.** Tried on all seven round
+stubs: every call succeeded, `FamilyLabel` accepted the OD parameter, and the dimension read the right
+value — but changing that parameter left the circle at its original size (parameter and connector both
+moved to 90 mm, geometry stayed 45 mm), and the *next* regeneration threw a modal
+`Constraints are not satisfied` error that cannot be ignored. The parameters were NOT flagged reporting
+(`IsReporting == false`), so this is not the reporting-parameter trap — the dimension simply attaches to
+the derived solid face, not the sketch curve that would have to move. **In Revit 2020 there is no API
+route to dimension a sketch curve after the sketch is created** (`SketchEditScope` arrives in 2022).
+Net: for an API-built round stub, let the OD parameter drive the **connector**
+(`CONNECTOR_DIAMETER` association — proven, and it survives) and accept that the visible cylinder is
+fixed. If the drawn circle must resize too, that dimension has to be added by hand in the Family
+Editor, inside sketch-edit mode, where it binds to the curve.
+
+**`FamilyManager.MakeType(param)` / `MakeInstance(param)` flip a parameter's scope safely — use these,
+NOT `ReplaceParameter`.** The third-build entry above documents `ReplaceParameter`/`RenameParameter`
+corrupting a document. That whole trap is avoidable for a scope change: `MakeType` and `MakeInstance`
+are single-argument methods that do exactly this job. Converted three instance parameters to type in one
+transaction with no corruption and **no loss of value or association** — including one that was driving
+`IS_VISIBLE_PARAM` on the clearance solid, which kept working. Only reach for `ReplaceParameter` when the
+parameter GROUP has to change too, and re-read the third-build warning first.
+
+**A HORIZONTAL reference plane has to be created in an ELEVATION view, and its cut vector is
+`XYZ.BasisY`, not `BasisZ`.** For a top-of-unit plane at Z=780:
+`NewReferencePlane(new XYZ(-3,0,LFt(780)), new XYZ(3,0,LFt(780)), XYZ.BasisY, frontElevationView)` —
+the line runs along X, and normal = lineDirection x cutVec = (1,0,0) x (0,1,0) = (0,0,1). Passing
+`BasisZ` (which is right for the vertical side planes) would be degenerate here. **The matching
+`NewAlignment` (top face to that plane) and the vertical `NewDimension` labelled `Height` also need the
+elevation view** — a `ViewPlan` cannot host either, because in plan a horizontal plane and a horizontal
+face are edge-on. The family template ships `Front`/`Back`/`Left`/`Right` elevations; any of them works.
+
+**Driving Height by an aligned top plane and a labelled dimension is an ALTERNATIVE to associating
+`EXTRUSION_END_PARAM` — do one or the other, never both.** Aligning the body's top face to a "Unit Top"
+reference plane and then dimensioning `Reference Plane` -> `Unit Top` with `FamilyLabel = Height` drives
+the extrusion just as well, and it gives the modeller a real plane to snap and dimension to in the
+Family Editor. Adding the parameter association on top of that alignment would over-constrain it.
+
+**EQ-centre BOTH plan axes unless there is a reason not to.** The first pass pinned the back face to
+`Center (Front/Back)` and dimensioned only forward, so the family was symmetric left/right but one-sided
+front/back — the insertion point sat on the back face. That is defensible for wall-mounted kit (it snaps
+to a wall), but a modeller reasonably expects the origin at the centre of the box, and the asymmetry is
+invisible until someone places one. Build the second axis the same way as the first: a 3-reference EQ
+dimension (`Unit Front`, `Center (Front/Back)`, `Unit Back`, `AreSegmentsEqual = true`) plus a
+2-reference dimension labelled `Depth`. Verified centred through two non-square resizes and a reset.
+
+**Give every extrusion its own subcategory.** `extrusion.Subcategory = someSubcategory` costs one line
+and makes the family readable — each part can be switched off, coloured, and identified in the Family
+Editor and in the project. Cheap at build time, painful to retrofit once geometry is dimension-locked.
+
+**Unlock formula-locked driving dimensions before rebuilding geometry that they constrain.**
+`SetFormula(p, null)` restores the last value and makes the parameter editable; re-apply the constant
+formula after the geometry is back. Building new dimensions against a locked parameter risks the
+constraint solver fighting a value it cannot change.
+
+**Locking a manufacturer family to its real product size: give the driving dimensions a constant
+formula.** `SetFormula(widthParam, "530 mm")` greys the parameter out in the UI, so nobody can drag the
+cabinet to a size the manufacturer doesn't make — which would silently misrepresent a purchased unit in
+a coordination model. **A formula-locked parameter still works as a `Dimension.FamilyLabel` and still
+works as the target of `AssociateElementParameterToFamilyParameter`** (verified: after locking
+Width/Depth/Height on the humidifier, the body stayed 530×406×780, all nine dependent formulas —
+`Width / 2 + Left Clearance`, `Height + 60 mm`, etc. — still resolved, and all six connectors held
+position). Do this once the family is a specific product; leave the parameters free only while the
+geometry is still being proved by resize tests. Reversing it is one `SetFormula(p, null)`.
+
+**Saving: blocked for the document open in Revit's UI, but WORKS for a document the API created itself.**
+Two different situations, and the 2026-08-10 note that said "saving is blocked, full stop" was too broad —
+corrected 2026-08-11.
+
+- **The active/UI document**: `Document.SaveAs(...)` throws `"Operation is not permitted when there is
+  any open transaction phase started by API client."` even though `Document.IsModifiable` reads **False**
+  at the time — the bridge holds a `TransactionGroup`, not a `Transaction`, so `IsModifiable` is not a
+  reliable way to test for it. `Document.Save()` is blocked by the **same** error once the document has
+  a path (tested 2026-08-11 on an already-saved family); before it has one it fails earlier with
+  `"File path must be already set"`. So there is no way in — hand the user the folder and filename and
+  ask for File → Save As, or Ctrl+S if the file already exists.
+- **A document created by `Application.NewFamilyDocument(templatePath)`**: `SaveAs` **succeeds**, and so
+  does `Save` afterwards. This is the route to building a family end-to-end with no user interaction.
+
+**Full pattern for authoring a family from scratch through the bridge** (proven 2026-08-11, built the
+Condair EL 8 this way — 68 parameters, 2 types, 9 extrusions, 6 connectors, saved, 40/40 verification):
+
+1. `var nd = app.NewFamilyDocument(@"C:\ProgramData\Autodesk\RVT 2020\Family Templates\English\Metric Mechanical Equipment.rft");`
+2. `nd.SaveAs(path, new SaveAsOptions{ OverwriteExistingFile = false });` — do this FIRST, so the file
+   exists and later `Save()` calls are cheap.
+3. Build into `nd`, **never the ambient `Document` global** — that still points at whatever is open in
+   the UI. Re-find it each call with
+   `app.Documents.Cast<Document>().First(d => d.Title == "<name>")` and guard with
+   `if (doc.Title == Document.Title) return "refusing to write into the active document";`
+4. `nd.Save(new SaveOptions{ Compact = true })` at the end.
+
+**`nd.ActiveView` is null — the new document has no UI window**, so the user cannot see it while it is
+being built and could not have saved it by hand. That is exactly why step 2 matters: the file lands on
+disk regardless, and the user just opens it afterwards. Views inside it (`Ref. Level`, `Front`, …) are
+all present and work fine for `NewAlignment`/`NewDimension` via a `FilteredElementCollector` on `nd`.
+
+**`FamilyManager.CurrentType = someType` is a document modification — it needs an open `Transaction`.**
+Outside one it throws `"A sub-transaction can only be active inside an open Transaction."`. To *read*
+another type's values without switching, use `familyType.AsDouble(param)` / `.AsString(param)` /
+`.AsInteger(param)` directly — no transaction, no side effects. Only switch `CurrentType` when you
+actually need to write.

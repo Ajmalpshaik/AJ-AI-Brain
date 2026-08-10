@@ -14,7 +14,7 @@ original full text.)
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
 Rewritten 2026-08-07 at the end of the big verification campaign so the next session can resume without
-re-deriving anything. **223 of 267 fragments are verified against a real Revit model (84%).** The 44
+re-deriving anything. **223 of 268 fragments are verified against a real Revit model (83%).** The 45
 below are everything left, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
 nothing about whether you can act. Headings are bold and items numbered on purpose: `tools/brain-status.mjs`
 counts them that way.
@@ -42,8 +42,11 @@ counts them that way.
    `SelectNewPrintDriver` and overwrites the current ViewSheetSet OUTSIDE any transaction, so it
    permanently changes the document's printer with nothing to undo. Do not run casually.
 2. `actions/structural-changes/action-purge-unused.cs` — deletes unused types project-wide.
-3. `commands/command-compact-save.cs` — saves the file.
-4. `examples/purge-unused-view-templates.cs` — deletes view templates.
+3. `examples/purge-unused-view-templates.cs` — deletes view templates.
+
+(`commands/command-compact-save.cs` was item 3 here until 2026-08-10 — now closed as **blocked**, not
+pending: saving of any kind is impossible through the bridge's transaction group. See the Log entry and
+the fragment's own header.)
 
 **Needs a file, a printer, or content only Ajmal can supply:**
 1. `creators/load-family.cs` — an `.rfa` on disk. KNOWN BUG found by reading, fixable blind: its
@@ -1253,3 +1256,146 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   re-synced every derived layer after the doc edits: graph 947 nodes / 985 edges, health OK; vault
   1,265 notes; knowledge routing audited — every knowledge file is reachable from INDEX.md or the
   live-model sub-index.
+- 2026-08-10 — New standing habit, stated by the user directly: *"from now if I say something you have to
+  remember okkey this is my normal work and you have to remember the words am using."* Routed per
+  `brain-self-maintain` Step 1 as a habit that applies to **every** task, so it went to `START-HERE.md`
+  § "This Brain improves itself" (fourth bullet) rather than into a skill, and `glossary.md`'s remit was
+  widened in the same turn: it now records his working vocabulary **as he says it**, instead of only
+  terms that already caused a misunderstanding. The two are the same rule seen from both ends — the habit
+  says *capture the words*, the glossary is *where they go*. Also fixed the stale "Two habits" lead-in in
+  START-HERE.md, which had said two while listing three.
+- 2026-08-10 — "Grayout for MEP" started being taught, and its first two steps are recorded in
+  `glossary.md` (marked candidate until he confirms the numbering). Step 1: all model categories ON,
+  Structural Rebar + Rebar Couplers OFF. Step 2: every model category to RGB 150,150,150 on projection
+  line, cut line, surface pattern and cut pattern, pattern `<Solid fill>`. Both run live on view
+  "1 - Mech". **The real find is in `live-model/graphic-override-precedence.md`**: sweeping one category
+  override across all 85 controllable model categories and reading every one back gave 24 fully applied
+  and 61 partial, which both extends and *corrects* the 2026-08-07 note there. `IsCuttable == false` does
+  predict the cut half being dropped — but nothing predicts the fill being dropped, because Railings and
+  five structural-reinforcement categories are `IsCuttable == true` and still lose both fills. Also
+  recorded: MEP greys as **lines only** by category override, and five categories (Rooms, Areas, Spaces,
+  Raster Images, Point Clouds) take no category override at all. Worth having because it means a whole-view
+  grey-out cannot be reported as "all grey with solid fill" without lying about the services.
+- 2026-08-10 — **Pipe and electrical connectors proven in the Family Editor; new recipe
+  `recipes/create-equipment-family-from-datasheet.cs`** (268 fragments, 21 recipes). Built the Condair
+  EL 20-400V/3~ steam humidifier live from a PDF datasheet — 530×406×780 cabinet, five connectors
+  (steam / supply water / drain / condensate / 400 V 3-phase), a toggleable clearance zone on its own
+  subcategory, 63 parameters — resize-tested at 700×500×1000 and reset clean. Six new facts in
+  `live-model/families.md` § Fourth build: `CreatePipeConnector`/`CreateElectricalConnector` work exactly
+  like the duct one; pipe connectors have the **same** size-not-inherited-from-the-face bug (default 2 ft
+  diameter) and the fix is to associate `CONNECTOR_DIAMETER` to an OD parameter; `NewExtrusion` takes a
+  **negative** end and extrudes downward; a Length parameter accepts a **negative formula result** and can
+  drive `EXTRUSION_START_PARAM`; family *type* names reject `~` (parameter names accept `/`); and
+  reflection over `typeof(...).GetMethods()` is a faster, read-only replacement for the deliberate-
+  compile-error signature hunt.
+- 2026-08-10 — **`Document.SaveAs`/`Save` are BLOCKED through the bridge**, so
+  `commands/command-compact-save.cs` is blocked rather than merely unverified. SaveAs throws *"not
+  permitted when there is any open transaction phase started by API client"* while
+  `Document.IsModifiable` reads **False** — the bridge holds a `TransactionGroup`, not a `Transaction`,
+  so `IsModifiable` is not a valid test for it. A family build ends by handing the user the exact folder
+  and filename for File → Save As.
+- 2026-08-10 — `glossary.md`: loadable families in the office library use the **`TRG_`** prefix
+  (`TRG_<TYPE>_<Description>_<Model>.rfa`); the standing "office prefix is `MEP_`, never TRG" rule covers
+  **line styles only**. Two namespaces, not a contradiction. Standing habit: list the destination folder
+  before naming a family — the house convention beats the generic ISO 19650 element name.
+- 2026-08-11 — **Corrected the Condair humidifier family against the full 107-page submittal; new
+  knowledge file [`reading-manufacturer-datasheets.md`](reading-manufacturer-datasheets.md).** The
+  family had been built from a screenshot of one data-sheet page. The shop drawings showed four of the
+  five connections were on the wrong face at invented coordinates, that there are **two** ø8 condensate
+  ports (on the TOP, not the bottom), and that the unit has **two** electrical supplies (heating
+  400V/3~ and a control 230V/1~ that appears only in the project schedule, never on the manufacturer
+  page). Standing rule now recorded: **the data sheet gives connection SIZES, the shop drawing gives
+  POSITIONS** — if you only have the data sheet, say the positions are unknown and ask. Also recorded:
+  manufacturers group a range into a few housings (Condair EL: S = EL 5/8/10/15, M = EL 20/24/30/35/40/45)
+  which share a cabinet AND connection positions, so the right structure is **one family per housing,
+  types per capacity** — not one stretched parametric family.
+- 2026-08-11 — PDF tool chain for this machine, since poppler/`pdftoppm` is absent and the Read tool
+  cannot render PDFs: `pdftotext` ships inside Git for Windows (`mingw64\bin`, already on PATH in Bash),
+  and `uv run --with pymupdf` renders pages/crops with nothing installed system-wide. Shop drawings are
+  raster, so `page.get_drawings()` returns 0 — dimensions have to be read off a high-DPI crop, not
+  measured programmatically. **`pdftotext -layout` silently shifted the left column of a two-column spec
+  table up by one row** (each value belonged to the label on the NEXT line) while leaving the right
+  column correct — sanity-check extracted spec tables against a rendered image before trusting them.
+- 2026-08-11 — Two more Family Editor API facts in `live-model/families.md` § Fourth build: unit
+  suffixes are legal inside formulas (`"Height + 60 mm"`), and `EXTRUSION_START_PARAM` and
+  `EXTRUSION_END_PARAM` can both be associated to family parameters, so a stub keeps a fixed overlap
+  into the body through a resize. `create-equipment-family-from-datasheet.cs` updated to match, and its
+  INPUTS block now carries the real dimensioned Condair values instead of the guessed ones.
+- 2026-08-11 — **Locking a manufacturer family to its product size**: `SetFormula(p, "530 mm")` on the
+  driving dimensions greys them out in the UI so nobody can resize a purchased unit off-product. Verified
+  it is safe to do late: a formula-locked parameter still works as a `Dimension.FamilyLabel` AND as an
+  `AssociateElementParameterToFamilyParameter` target — after locking Width/Depth/Height the body stayed
+  530x406x780, all nine dependent formulas resolved, all six connectors held. Recorded in
+  `live-model/families.md` § Fourth build; `create-equipment-family-from-datasheet.cs` gained a
+  `lockToProductSize` input. Reverse with `SetFormula(p, null)`.
+- 2026-08-11 — **Family rebuilt to Ajmal's four structural corrections** (his words: *"the back and
+  front you make side one side only, you did not make it equal"* / *"each extruction you can make the
+  sub categroy"* / *"make all the sides referance lines ... but top is not there"* / *"make all the
+  parameters ane type parameters not isntand"*). Four new API facts in `live-model/families.md`
+  § Fourth build: **`FamilyManager.MakeType`/`MakeInstance` flip a parameter's scope safely** — the whole
+  `ReplaceParameter` corruption trap from the third build is avoidable for a scope change, and an
+  association to `IS_VISIBLE_PARAM` survived the flip; a **horizontal reference plane needs cut vector
+  `XYZ.BasisY` and must be created in an ELEVATION view**, as must its `NewAlignment` and the vertical
+  `Height` dimension; **aligning the top face to a "Unit Top" plane + a labelled dimension is an
+  alternative to associating `EXTRUSION_END_PARAM`, never both**; and **unlock formula-locked driving
+  dimensions before rebuilding geometry they constrain**. Standing preferences recorded: EQ-centre both
+  plan axes by default, and give every extrusion its own subcategory.
+- 2026-08-11 — `create-equipment-family-from-datasheet.cs`: `backAtOrigin` now defaults to **false**
+  (EQ both axes), and the header carries a TODO for the two things the hand-rebuild added that the
+  recipe still lacks — the top reference plane and per-part subcategories.
+- 2026-08-11 — **Work planes: `SketchPlane.Create(doc, plane)` was producing `<not associated>` on every
+  extrusion.** Ajmal spotted it in the properties palette. Root cause and six new facts now in
+  `live-model/families.md` § Fourth build: the `Plane` overload never hosts — use
+  `SketchPlane.Create(Document, ElementId datumId)`; it **cannot** be fixed afterwards (`Sketch.SketchPlane`
+  has no setter, `SKETCH_PLANE_PARAM` is read-only) so the geometry must be rebuilt; unused SketchPlanes
+  are auto-purged between `run_csharp` calls, so create them in the same transaction as their extrusion;
+  plane-to-plane labelled dimensions SURVIVE deleting all geometry and silently duplicate on a rebuild;
+  a horizontal reference plane's normal follows endpoint order (swap to flip); and a single full circle
+  is accepted but Revit normalises it to two arcs regardless.
+- 2026-08-11 — **NEGATIVE RESULT: `NewDiameterDimension` on an extruded cylinder does NOT make the
+  circle parametric, and plants a modal "Constraints are not satisfied" error.** All seven calls
+  succeeded and accepted a `FamilyLabel`, but changing the parameter moved the connector and left the
+  geometry at its old size, then errored on regeneration. Parameters were not reporting
+  (`IsReporting == false`) — the dimension binds to the derived solid face, not the sketch curve. Revit
+  2020 has no API route to dimension a sketch curve post-creation (`SketchEditScope` is 2022+). All seven
+  removed. For API-built round stubs: drive the CONNECTOR from the OD parameter and leave the drawn
+  cylinder fixed, or add the diameter dimension by hand in the Family Editor.
+- 2026-08-11 — **CORRECTION to yesterday's "saving is blocked through the bridge".** It is blocked only
+  for the document open in Revit's UI. `Application.NewFamilyDocument(template)` returns a document whose
+  `SaveAs` **succeeds** — so a family can now be authored end-to-end with no user interaction. Proven by
+  building the Condair EL 8-400V/3~ family (housing S, 420x370x670) from an empty template to a saved
+  .rfa in six scripted steps: 68 parameters, 2 types, 7 subcategories, 13 reference planes, 9 extrusions,
+  6 connectors, clearance zone — 40/40 verification, 0 Revit warnings. `command-compact-save.cs`,
+  `scripts/README.md` and `families.md` all corrected; the fragment stays blocked for its own use case
+  (the UI document) but is no longer a dead end for the general problem.
+- 2026-08-11 — Two more Family Editor facts: **`nd.ActiveView` is null on an API-created document** (no
+  UI window, so the user cannot see or hand-save it — save it from script first, then they open the
+  file); and **`FamilyManager.CurrentType = ft` is a document modification needing an open Transaction** —
+  to read another type's values use `familyType.AsDouble(param)` directly, no switching and no
+  transaction.
+- 2026-08-11 — Clearance zones restructured in both humidifier families on Ajmal's instruction
+  (*"for the clearance you can make the separate refarance line i think that is better"*): each clearance
+  face now has its own named reference plane (Left/Right/Front/Ceiling/Floor) dimensioned **directly off
+  the matching cabinet plane** with the datasheet parameter as the label, instead of centre-based
+  `Width / 2 + Left Clearance` formulas. Five derived formula parameters deleted as dead weight. Checked
+  against the submittal: it carries no clearance figure at all, so the five data-sheet numbers are the
+  only source and left/right follows the standard "as you face the unit" convention — unconfirmed either
+  way, flagged to Ajmal.
+- 2026-08-11 — **New voice layer, `tools/voice/`** (Ajmal: *"i need also one jarvis or some voice mode
+  also need to come that what is the ai is doing in short reply in voice"*). Speaks a short line for
+  every action, in two British neural voices split by role: Ryan (Claude Code side) says the intent
+  before acting, Sonia (the AJ Tools add-in, new `AiVoiceService.cs`) says the result Revit returned.
+  Both write into one shared queue in `%LOCALAPPDATA%\AJTools\voice\` — outside this repo, so generated
+  audio never travels with the Brain and neither side needs to know where the other is installed — and a
+  single warm `drainer.py` speaks them strictly in order, which is what stops the voices overlapping.
+  Falls back to the built-in Windows voice with no internet and no Python package. Four hooks added to
+  `.claude/settings.json`; `voice.cmd off` silences it. Wording is regression-tested without sound by
+  `node tools/voice/test-narration.mjs`.
+- 2026-08-11 — **Claude Code's Bash and PowerShell tools are sandboxed, and this makes filesystem
+  results untrustworthy.** A process they spawn writes into a throwaway overlay: Python reported a file
+  written and `os.path.exists` returned True, while the same shell session's `ls` could not see it, and
+  the real disk had nothing. Hours went into "debugging" a voice drainer that was working — the evidence
+  was fake. **Verify anything filesystem-dependent from a real terminal**, or through an MCP tool that
+  runs outside the sandbox; treat a sandboxed tool's file listing as unproven. Same session:
+  `tools/verify-consistency.mjs` now survives a file vanishing between listing and reading, which is a
+  real race for any transient file, not just the one that exposed it.

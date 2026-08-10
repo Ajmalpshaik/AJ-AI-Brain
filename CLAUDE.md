@@ -16,13 +16,13 @@ that's what you're doing. It is never a reason to refuse the job. Run
 `node tools/brain-status.mjs --capabilities` when you need what this Brain can actually do.
 
 **Before writing any new C#, look for an existing fragment first** —
-`node tools/fragment-index.mjs --find <word>` searches all 267 by purpose and input field and shows each
+`node tools/fragment-index.mjs --find <word>` searches all 268 by purpose and input field and shows each
 one's proven status; `--show <path>` prints what a given fragment needs filled in. That is one lookup
 instead of reading `scripts/README.md` end to end, which is the read that gets skipped when it feels
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 310 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 312 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already

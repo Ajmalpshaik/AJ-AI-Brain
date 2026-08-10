@@ -17,3 +17,9 @@
 #   set TMP=<this folder>\pip-temp
 
 chromadb==1.5.9
+
+# The voice layer (tools/voice/) shares this same venv rather than creating a second one, so its
+# dependency is listed here and a machine rebuilt from this file gets the good voice automatically.
+# It is optional, not required: without it the voice still speaks, using the built-in Windows voice.
+# `tools\voice\voice.cmd setup` installs just this one on demand.
+edge-tts==7.2.8

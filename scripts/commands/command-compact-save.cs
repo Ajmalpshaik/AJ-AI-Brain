@@ -7,8 +7,19 @@
 //         not a hang.
 // GOTCHA: on a WORKSHARED local this saves the local file only — syncing to central is a different job
 //         (command-sync-with-central.cs).
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog. Saving writes the file on disk;
-//          get the user's go-ahead before the first run, same as any outward write.
+// BLOCKED for the document open in Revit's UI — which is what this fragment targets. NOT blocked in
+//          general: corrected 2026-08-11, `SaveAs`/`Save` DO work on a document the API created itself
+//          via `Application.NewFamilyDocument(...)`, because that one is not the UI document. See
+//          ../../knowledge/live-model/families.md § Fourth build for the full author-and-save pattern.
+//          For the active document, everything below still holds. Proven 2026-08-10:
+//          `Document.SaveAs(...)` throws "Operation is not permitted when there is any open transaction
+//          phase started by API client", and `Document.Save(...)` hits the same wall on a document that
+//          already has a path. The bridge holds a TransactionGroup around every `run_csharp` call —
+//          note that `Document.IsModifiable` reads **False** at the time, so it is NOT a valid way to
+//          test for this. There is no in-script workaround; committing the bridge's own group would
+//          break the bridge. Ask the user to do File -> Save (or Save As) in Revit instead, and hand
+//          them the exact folder and filename. Keep this fragment as the documented dead end so a
+//          future session doesn't re-derive it. Created 2026-07-26 from the tool-gap backlog.
 // ============================================================
 
 var sb = new System.Text.StringBuilder();

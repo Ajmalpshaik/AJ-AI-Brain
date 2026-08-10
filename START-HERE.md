@@ -54,11 +54,12 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Saving something reusable, splitting a big file, making a new skill, a whole-session "did we save everything" sweep | [`skills/brain-self-maintain/SKILL.md`](skills/brain-self-maintain/SKILL.md) |
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 310 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 312 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
-Two habits, always on, regardless of which skill (if any) is handling the actual request:
+These habits are always on, regardless of which skill (if any) is handling the actual request:
 
 - **Before starting substantive work**, check whether [`knowledge/INDEX.md`](knowledge/INDEX.md) already
   answers or shapes the request — don't re-derive something already documented. The fastest way to find
@@ -71,6 +72,13 @@ Two habits, always on, regardless of which skill (if any) is handling the actual
   the size/splitting rules. Create-then-report: save it, then tell the user what was saved and why in the
   same reply — don't ask permission first, but always say what happened. Deleting or replacing something
   that already exists still needs the user's explicit OK.
+- **Write down the user's own words, not only the conclusion** (the user's rule, 2026-08-10: *"this is
+  my normal work and you have to remember the words am using"*). When they name something in their own
+  phrasing — a term, an abbreviation, a dictated near-miss, the way they describe a whole job — record it
+  in [`knowledge/glossary.md`](knowledge/glossary.md) as *their words → the Revit meaning*, in the same
+  turn, **without waiting for it to cause confusion first**. Their sentence is what a future session has
+  to route from, and the measured weak spot of the search layer is exactly the site vocabulary that
+  appears in no file.
 - **The Brain is the only portable memory** (the user's rule, 2026-07-26). An AI assistant's own local
   memory (machine- or account-specific) is a cache, not the record — anything worth remembering (methods
   the user teaches, gotchas, standards, working preferences) must ALSO be written into Brain files
