@@ -62,6 +62,51 @@ override — not the category.
 `action-set-category-color.cs` now reads the override back after writing it and reports exactly which
 parts Revit discarded, instead of claiming the fill was applied.
 
+### The full-view sweep — `IsCuttable` predicts the CUT half, not the fill (measured 2026-08-10)
+
+One grey category override (RGB 150,150,150 lines + `<Solid fill>` on surface and cut) written to **all 51
+non-MEP model categories** of one Revit 2020 floor plan, then every one read back off the view:
+
+- **24 kept the whole override.** Spot-verified individually: Walls, Floors, Ceilings, Roofs, Doors,
+  Windows, Columns, Structural Columns, Structural Framing, Casework, Generic Models, Stairs, Topography,
+  Curtain Panels, Mass — all four slots read back `150,150,150`.
+- **27 came back partial, in four distinct shapes:**
+
+| What Revit silently discarded | Categories | What survived |
+|---|---|---|
+| **everything** | Areas, Point Clouds, Raster Images, Rooms, Spaces | nothing |
+| cut line + cut fill | Detail Items, Entourage, Furniture, Furniture Systems, Parking, Planting, Shaft Openings, Specialty Equipment, Structural Rebar Couplers | projection line + surface fill |
+| cut line + surface fill + cut fill | Imports in Families, Lines, MEP Fabrication Containment / Ductwork / Hangers / Pipework, Structural Beam Systems, Structural Trusses | projection line only |
+| surface fill + cut fill — **despite `IsCuttable == true`** | Railings, Structural Area Reinforcement, Structural Fabric Areas, Structural Fabric Reinforcement, Structural Path Reinforcement, Structural Stiffeners | both lines |
+
+**That last row corrects the table above.** "Walls, Doors, `IsCuttable == true` → kept, kept, kept" is
+accurate but does not generalise: Railings is cuttable and still loses both fills. So `IsCuttable == false`
+reliably predicts the *cut* half being dropped, but **nothing predicts the *fill* being dropped** — read the
+override back off the view, never infer it from the flag.
+
+Widening the same sweep to **all 85** controllable model categories (MEP included) in the same view gave
+**24 fully applied, 61 partial** — and the extra 34 MEP categories land almost entirely in the
+"projection line only" shape:
+
+| MEP category | What survived |
+|---|---|
+| Ducts, Duct Fittings/Accessories/Insulations/Linings/Placeholders, Flex Ducts, Air Terminals, Pipes, Pipe Fittings/Accessories/Insulations/Placeholders, Flex Pipes, Sprinklers, Cable Trays + Fittings, Conduits + Fittings, Wires, and most electrical device categories | **projection line only** |
+| Mechanical Equipment, Plumbing Fixtures, Electrical Equipment/Fixtures, Lighting Fixtures | projection line + surface fill |
+| Spaces | **nothing** |
+
+**Practical consequence for a whole-view grey-out** (the "grayout for MEP" job, see
+[`../glossary.md`](../glossary.md)):
+
+- The **architectural and structural background greys completely** — lines and solid fill, in projection
+  and cut. That half of the job genuinely works by category override.
+- **MEP greys as lines only.** Asking for "everything grey with solid fill" and running it by category
+  override gives grey *linework* on the services with their fill untouched — not a failure of the script,
+  a Revit restriction. If MEP must read as solid grey too, it has to go through a **View Filter** or a
+  per-**element** override (both keep the fill, per the route table above), not the category.
+- **Five categories take nothing at all**: Rooms, Areas and Spaces take their fill from a **Colour Scheme**
+  (or their own Interior Fill sub-category) rather than a V/G category override, and Raster Images /
+  Point Clouds are raster content with no line-and-fill model to override.
+
 ## Practical use
 
 - **"I set a category color but it's not showing on this element"** — check whether that element has a

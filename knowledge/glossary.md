@@ -1,10 +1,17 @@
 # Glossary — the user's terms → Revit terms
 
 Maps how the user actually says things (often dictated, sometimes garbled) to the exact Revit API
-meaning. Read this when a request uses ambiguous or misheard terms. Update it whenever a new term
-causes confusion — that's the whole point of this file. Entries here are the durable *shape* of a
-confusion (a term that's genuinely ambiguous, a dictation quirk); replace any project-specific example
-values with your own project's real ones as you go.
+meaning. Read this when a request uses ambiguous or misheard terms. Entries here are the durable *shape*
+of a confusion (a term that's genuinely ambiguous, a dictation quirk); replace any project-specific
+example values with your own project's real ones as you go.
+
+**Write the user's own words down as they use them — don't wait for a term to cause confusion first**
+(the user's rule, 2026-08-10: *"this is my normal work and you have to remember the words am using"*).
+This file is a record of their working vocabulary, not only a log of misunderstandings. The reason is
+measured, not stylistic: the semantic index's weakest spot is site vocabulary that appears nowhere in
+these files, so a word only exists to a future session if it was written here. Record it in **their**
+phrasing on the left, the Revit meaning on the right — a term that read as obvious the day it was said
+is exactly the one a fresh session cannot route.
 
 - **Element ID (Revit)** → a unique number Revit assigns to every single element in a project — walls,
   doors, pipes, rooms, views, sheets, everything. No two elements share the same ID in one model. Used to
@@ -104,10 +111,65 @@ values with your own project's real ones as you go.
   the numerics are right for comparing, filtering or sorting. Pick deliberately — they answer different
   questions, and only the numerics can be compared across round and rectangular.
 
+- **"Grayout" / "gray out" / "grey out" (the user's word, MEP work)** → **his name for a defined,
+  multi-step MEP procedure — NOT a one-off graphic tweak, and NOT yet documented here.** He named it on
+  2026-08-10 and said he would teach the steps one at a time: *"if I say the grayout for the MEP work it
+  means you need to do some work, the work one by one I will tell you."*
+  **Until the step list below is filled in, do not guess what it means and do not start doing anything.**
+  In particular, do not assume it is simply halftoning or greying the non-MEP elements in a view — that is
+  only the most obvious reading of the English word, and he has explicitly said it is a sequence of work,
+  so acting on the obvious reading risks doing the wrong job to a real model. If he says "grayout" and the
+  steps are still missing here, ask him for the next step rather than improvising one.
+  **Trigger phrasings (his, 2026-08-10):** "do the grayout", **and** "do the grayout for MEP" — he
+  corrected this explicitly, so treat both as the same instruction; do not require the "for MEP" half.
+  **Steps as taught:**
+  1. *(candidate — asked, NOT yet confirmed by him as step 1)* In the active view's Visibility/Graphics,
+     turn **every model category ON**, then turn **OFF only Structural Rebar (`OST_Rebar`) and Structural
+     Rebar Couplers (`OST_Coupler`)**. Parent categories only — leave sub-categories (centre lines, Interior
+     Fill, Reference) at whatever they were, since Revit's defaults have most of those off deliberately.
+     Done live on 2026-08-10 in view "1 - Mech": 20 turned on, 63 already on, 33 not controllable, 2 off.
+  2. *(candidate — 2026-08-10)* Set the **line and pattern for projection and cut**. Colour is
+     **two different greys, and getting them the same way round matters:** lines are the darker
+     **RGB 150,150,150** (projection line + cut line), patterns are the lighter **RGB 200,200,200**
+     (surface pattern + cut pattern), pattern set to **`<Solid fill>`**. He corrected this mid-run —
+     *"sorry patens color i need 200,200,200"* — so a single 150 grey for everything is the wrong answer.
+     **Applies to EVERY model category — MEP included, no exceptions.**
+     *(He was asked first whether MEP should stay at its normal Revit colours and said keep-MEP-normal;
+     then corrected it mid-run — "no all make it we will change that after and you can change all to
+     150,150,150". So: grey the lot in this step; the services get their real colours back in a later step,
+     not by being skipped here. Do not re-ask this.)*
+     Done live in view "1 - Mech": 85 categories written, 33 not controllable. Read back:
+     **80 hold the 150 line, 38 hold the 200 surface fill, 24 hold the 200 cut fill, 5 hold nothing.**
+     **Expect most to come back partial** — Revit silently discards parts of a category override,
+     measured in detail in
+     [`live-model/graphic-override-precedence.md`](live-model/graphic-override-precedence.md). The
+     architectural/structural background greys completely; **MEP greys as lines only** (its fill is
+     discarded); and Rooms, Areas, Spaces, Raster Images and Point Clouds take nothing at all.
+  When the full sequence exists, it stops being a glossary entry and becomes a skill or a recipe — route it
+  with [`skills/brain-self-maintain/SKILL.md`](../skills/brain-self-maintain/SKILL.md) Step 1 and leave a
+  pointer here.
+
+- **Family filename prefix — `TRG_`, and this does NOT contradict the `MEP_` line-style rule.** The
+  office family library at `D:\Ajmal\BIM Resources\BIM Resources\NEW` is uniformly
+  `TRG_<TYPE>_<Description>_<Model>.rfa` — e.g. `TRG_CRAC_Close Control Air Conditioning_NRG1103.rfa`,
+  `TRG_EDH_T001_ElectricalDuctHeater.rfa`, `TRG_FAN_RooftopCentrifugalExhaust_RTC-300D6-0.18-EX.rfa`.
+  The standing "office prefix is `MEP_`, never AJ or TRG" rule is about **line styles / drafting
+  standards only** (see `create-mep-line-standards.cs`) — applying it to a family filename would make
+  that family the odd one out in its own library. **Two different namespaces: `MEP_` for annotation and
+  line standards, `TRG_` for loadable families.** Confirmed 2026-08-10 by listing the folder before
+  saving a new humidifier family; the user chose `TRG_` over the generic ISO 19650 element name
+  (`[System]_[ElementType]_[Size/Spec]`) precisely so it matched the library. **Look at the destination
+  folder before naming a family** — the house convention beats the generic standard, and it is one
+  directory listing away.
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one
   rather than assuming.
+- 2026-08-10 — remit widened. This file now records the user's working vocabulary as he says it, not
+  only terms that already caused a misunderstanding. His instruction, verbatim: *"from now if I say
+  something you have to remember okkey this is my normal work and you have to remember the words am
+  using."* Nothing was removed — the existing confusion entries stand; the bar for adding one dropped.
 - 2026-08-04 — "the maximum duct size" has no single right answer: round carries Diameter, rectangular
   carries Width × Height, and the breakdown table's last row is the largest FIRST dimension, not the
   largest duct. Found by walking that exact question through the routing to see what a fresh session

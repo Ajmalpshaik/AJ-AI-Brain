@@ -1,0 +1,274 @@
+#!/usr/bin/env node
+// Turns one Claude Code hook event into one short spoken English sentence.
+//
+// WHY THIS FILE IS THE WHOLE POINT: the banner already in Revit
+// (src/AiShell/Services/AiTaskWarningBarService.cs) says "AJ AI is working / Processing your Revit
+// task..." for every job, whether it is counting diffusers or deleting walls. It is an on/off light,
+// not information. What makes a voice worth listening to is that it says the actual thing.
+//
+// So this reads what each tool call genuinely carries and speaks that: the category name on a count,
+// the file name on a read, the plain-English `description` field that every Bash call already
+// includes. You hear "Counting air terminals", not "running command".
+//
+// WHAT IT DELIBERATELY WILL NOT DO: read out paths, code, IDs or anything else that is unpleasant to
+// listen to. Everything is reduced to words a person would actually say out loud, then cut short -
+// Ajmal asked for a SHORT reply in voice, and a narrator that reads file paths aloud gets muted on
+// day one.
+//
+// Wired to four events in .claude/settings.json:
+//   PreToolUse   - narrate each action as it starts   (this is the "every single action" setting)
+//   Notification - say when Claude is waiting on Ajmal, so he knows to look at the screen
+//   Stop         - speak the one-line summary of what just got done
+//   SessionStart - a short greeting so he knows the voice is alive
+//
+// Reads the hook payload as JSON on stdin. Always exits 0: a hook that fails must never interrupt
+// the work it is only describing.
+
+import fs from "node:fs";
+import { say } from "./say.mjs";
+
+const VOICE_PROFILE = "jarvis"; // The Claude Code side. The Revit add-in speaks as "revit".
+
+// --------------------------------------------------------------------------------------------------
+// Making text sayable
+// --------------------------------------------------------------------------------------------------
+
+/** Strip anything that sounds bad read aloud, and collapse to a single clean line. */
+function sayable(value, maxWords = 12) {
+  let text = String(value ?? "")
+    .replace(/```[\s\S]*?```/g, " ")           // fenced code
+    .replace(/`[^`]*`/g, " ")                  // inline code
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")   // markdown links -> just the words
+    .replace(/[*_#>|]/g, " ")                  // markdown furniture
+    .replace(/https?:\/\/\S+/g, " ")           // URLs
+    .replace(/[A-Za-z]:\\\S+|\/\S+\//g, " ")   // file paths
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = text.split(" ").filter(Boolean);
+  if (words.length > maxWords) text = words.slice(0, maxWords).join(" ").replace(/[,;:]$/, "");
+  return text;
+}
+
+/** "create-floor.cs" -> "create floor";  "families.md" -> "families". A name, not a path. */
+function prettyFileName(filePath) {
+  const base = String(filePath ?? "").split(/[\\/]/).pop() ?? "";
+  return base.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+}
+
+/** "OST_DuctCurves" -> "duct curves";  "Air Terminals" -> "air terminals". */
+function prettyCategory(category) {
+  return String(category ?? "")
+    .replace(/^OST_/, "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]+/g, " ")
+    .toLowerCase()
+    .trim();
+}
+
+/** A run_csharp payload sometimes opens with a comment saying what it does. Prefer that over guessing. */
+function intentFromCode(code) {
+  const firstLine = String(code ?? "").split("\n").find((line) => line.trim().startsWith("//"));
+  if (!firstLine) return "";
+  const text = sayable(firstLine.replace(/^\s*\/\/+/, ""), 10);
+  return text.length > 3 ? text : "";
+}
+
+// --------------------------------------------------------------------------------------------------
+// Tool -> sentence
+// --------------------------------------------------------------------------------------------------
+
+/** The live-Revit tools. These are the ones worth hearing, so they get the most specific wording. */
+function narrateRevitTool(shortName, input) {
+  const category = prettyCategory(input.category ?? input.categoryName ?? "");
+  const withCategory = (verb, fallbackNoun) => `${verb} ${category || fallbackNoun}.`;
+
+  switch (shortName) {
+    case "ping":                     return "Checking the Revit bridge.";
+    case "model_summary":            return "Reading the model summary.";
+    case "count_elements":           return withCategory("Counting", "elements");
+    case "list_elements":            return withCategory("Listing", "elements");
+    case "report_parameters":        return withCategory("Reading parameters on", "elements");
+    case "select_elements":          return withCategory("Selecting", "elements");
+    case "isolate_elements":         return withCategory("Isolating", "elements");
+    case "reset_isolation":          return "Resetting the view.";
+    case "hide_elements":            return withCategory("Hiding", "elements");
+    case "unhide_elements":          return withCategory("Unhiding", "elements");
+    case "set_color":                return "Changing colour.";
+    case "set_transparency":         return "Setting transparency.";
+    case "reset_graphic_overrides":  return "Clearing the graphic overrides.";
+    case "move_elements":            return withCategory("Moving", "elements");
+    // Said deliberately plainly and without hedging - this is the one Ajmal most needs to catch by ear.
+    case "delete_elements":          return withCategory("Deleting", "elements");
+    case "set_parameter_value": {
+      const parameter = sayable(input.parameterName ?? input.parameter ?? input.name ?? "", 5);
+      return parameter ? `Setting ${parameter}.` : "Setting a parameter.";
+    }
+    case "run_csharp": {
+      const intent = intentFromCode(input.code ?? input.script ?? "");
+      return intent ? `${intent}.` : "Running a script in Revit.";
+    }
+    default:
+      return `Revit: ${shortName.replace(/_/g, " ")}.`;
+  }
+}
+
+/** Everything else - the Brain's own files, searches, agents, the web. */
+function narrateTool(toolName, input) {
+  if (toolName.startsWith("mcp__aj-tools-aj-ai__")) {
+    return narrateRevitTool(toolName.replace("mcp__aj-tools-aj-ai__", ""), input);
+  }
+
+  switch (toolName) {
+    case "Read": {
+      const name = prettyFileName(input.file_path);
+      return name ? `Reading ${name}.` : "Reading a file.";
+    }
+    case "Write": {
+      const name = prettyFileName(input.file_path);
+      return name ? `Writing ${name}.` : "Writing a file.";
+    }
+    case "Edit":
+    case "NotebookEdit": {
+      const name = prettyFileName(input.file_path ?? input.notebook_path);
+      return name ? `Editing ${name}.` : "Editing a file.";
+    }
+    case "Bash":
+    case "PowerShell": {
+      // Every Bash call already carries a plain-English description written for a human. Use it.
+      const described = sayable(input.description, 12);
+      return described ? `${described}.` : "Running a command.";
+    }
+    case "Grep": {
+      const pattern = sayable(input.pattern, 5);
+      return pattern ? `Searching for ${pattern}.` : "Searching the files.";
+    }
+    case "Glob":
+      return "Looking for files.";
+    case "Skill": {
+      // Skill ids are hyphenated slugs ("ajtools-hvac-duct-routing"). Spoken with the hyphens intact
+      // they come out as one unreadable run-on word, so they get spaced back into English first.
+      const skill = sayable(String(input.skill ?? "").replace(/^ajtools-/, "").replace(/[-:_]+/g, " "), 5);
+      return skill ? `Loading the ${skill} skill.` : "Loading a skill.";
+    }
+    case "Agent":
+    case "Task": {
+      const described = sayable(input.description, 8);
+      return described ? `Sending an agent to ${described}.` : "Sending out an agent.";
+    }
+    case "WebSearch": {
+      const query = sayable(input.query, 8);
+      return query ? `Searching the web for ${query}.` : "Searching the web.";
+    }
+    case "WebFetch":
+      return "Reading a web page.";
+    case "AskUserQuestion":
+      return "I need your answer.";
+    case "Artifact":
+      return "Publishing a page.";
+    case "Workflow":
+      return "Starting a workflow.";
+    default:
+      return `${toolName.replace(/^mcp__[^_]+__/, "").replace(/[-_]/g, " ")}.`;
+  }
+}
+
+// --------------------------------------------------------------------------------------------------
+// The final summary, read back out of the transcript
+// --------------------------------------------------------------------------------------------------
+
+/**
+ * On Stop, speak the first sentence of what was just said on screen. This is the line that actually
+ * answers "what did the AI do" - and it costs nothing extra, because the model already wrote it.
+ * The transcript is JSONL, one message per line, so the last assistant text is the last match.
+ */
+function finalSummary(transcriptPath) {
+  try {
+    if (!transcriptPath || !fs.existsSync(transcriptPath)) return "";
+    const lines = fs.readFileSync(transcriptPath, "utf8").split("\n").filter(Boolean);
+
+    for (let index = lines.length - 1; index >= 0; index--) {
+      let entry;
+      try {
+        entry = JSON.parse(lines[index]);
+      } catch {
+        continue;
+      }
+      if (entry?.type !== "assistant") continue;
+
+      const content = entry?.message?.content;
+      const blocks = Array.isArray(content) ? content : [];
+      const text = blocks.filter((b) => b?.type === "text").map((b) => b.text).join(" ").trim();
+      if (!text) continue;
+
+      // First real sentence only. A spoken paragraph is a paragraph nobody listens to.
+      const cleaned = sayable(text, 200);
+      const sentence = cleaned.split(/(?<=[.!?])\s/)[0] ?? cleaned;
+      return sayable(sentence, 16);
+    }
+  } catch {
+    /* No summary is fine - the per-action narration already covered the work. */
+  }
+  return "";
+}
+
+// --------------------------------------------------------------------------------------------------
+
+function readStdin() {
+  try {
+    return fs.readFileSync(0, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function main() {
+  let payload;
+  try {
+    payload = JSON.parse(readStdin() || "{}");
+  } catch {
+    return;
+  }
+
+  const event = payload.hook_event_name ?? "";
+
+  if (event === "SessionStart") {
+    say("A J A I Brain online.", VOICE_PROFILE);
+    return;
+  }
+
+  if (event === "Notification") {
+    const message = sayable(payload.message, 12);
+    say(message ? `${message.replace(/[.!?]$/, "")}.` : "Waiting for you.", VOICE_PROFILE);
+    return;
+  }
+
+  if (event === "Stop") {
+    const summary = finalSummary(payload.transcript_path);
+    if (summary) say(summary, VOICE_PROFILE);
+    return;
+  }
+
+  if (event === "PreToolUse") {
+    const toolName = payload.tool_name ?? "";
+    const input = payload.tool_input ?? {};
+
+    let config = {};
+    try {
+      config = JSON.parse(fs.readFileSync(new URL("./voice-config.json", import.meta.url), "utf8"));
+    } catch {
+      /* Defaults are fine. */
+    }
+    if ((config.mute ?? []).includes(toolName)) return;
+
+    // Never narrate the voice system operating on itself - it is noise, and on a Bash call that
+    // touches these files it would describe its own plumbing instead of Ajmal's work.
+    const raw = JSON.stringify(input);
+    if (/voice[\\/](say|drainer|narrate-hook|voice-config)/i.test(raw)) return;
+
+    const line = narrateTool(toolName, input);
+    if (line) say(line, VOICE_PROFILE);
+  }
+}
+
+main();

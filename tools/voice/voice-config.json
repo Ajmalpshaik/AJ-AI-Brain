@@ -1,0 +1,40 @@
+{
+  "enabled": true,
+
+  "_comment_profiles": "Two speakers, deliberately different voices so you can tell WHO is talking without looking. 'jarvis' is the Claude Code side narrating what it is ABOUT to do; 'revit' is the AJ Tools add-in confirming what Revit actually RETURNED. neural = an edge-tts voice (free, needs internet); fallback = a Windows SAPI voice that always exists offline. Run `voice list` to see every neural voice available.",
+  "profiles": {
+    "jarvis": {
+      "neural": "en-GB-RyanNeural",
+      "neuralRate": "+18%",
+      "fallback": "Microsoft David Desktop",
+      "fallbackRate": 2
+    },
+    "revit": {
+      "neural": "en-GB-SoniaNeural",
+      "neuralRate": "+18%",
+      "fallback": "Microsoft Zira Desktop",
+      "fallbackRate": 2
+    }
+  },
+
+  "_comment_maxWords": "Ajmal asked for a SHORT reply in voice. Lines are trimmed to this many words before speaking, so a long summary never turns into a monologue you have to sit through.",
+  "maxWords": 14,
+
+  "_comment_idleExitSeconds": "How long the speaking process stays warm after the queue empties. Importing the neural library costs ~1.4s, so staying warm is the difference between 1.1s and 2.7s per line. It exits on its own after this, so nothing is left running when you stop working.",
+  "idleExitSeconds": 45,
+
+  "_comment_neuralCooldownSeconds": "When the neural voice fails (no internet), stop retrying it for this long and go straight to the offline Windows voice. Without this, every single line would sit waiting for a network timeout before falling back.",
+  "neuralCooldownSeconds": 60,
+
+  "_comment_mute": "Tool names that are never narrated. These are the bookkeeping calls that would otherwise talk over the actual work.",
+  "mute": [
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskList",
+    "TaskGet",
+    "TodoWrite",
+    "ToolSearch",
+    "mcp__ccd_session__mark_chapter",
+    "mcp__ccd_session__read_widget_context"
+  ]
+}

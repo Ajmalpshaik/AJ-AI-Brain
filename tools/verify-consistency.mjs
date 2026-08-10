@@ -252,7 +252,17 @@ function walkAll(dir, results = []) {
 
 const textFiles = walkAll(brainRoot);
 for (const f of textFiles) {
-  const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+  // Listing and reading are separate moments, so a file can legitimately vanish in between and this
+  // whole checker would die on it — which is exactly what happened on 2026-08-11, when the voice
+  // queue still lived in the repo and its files were deleted milliseconds after being written.
+  // A file that is gone is nothing to report: by definition it is not part of the Brain any more.
+  let lines;
+  try {
+    lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+  } catch (error) {
+    if (error.code === "ENOENT") continue;
+    throw error;
+  }
   lines.forEach((line, i) => {
     for (const seq of MOJIBAKE) {
       if (line.includes(seq)) {
