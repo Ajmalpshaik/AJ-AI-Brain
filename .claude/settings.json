@@ -6,6 +6,41 @@
           {
             "type": "command",
             "command": "node \"tools/brain-status.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "node \"tools/voice/narrate-hook.mjs\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/voice/narrate-hook.mjs\""
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/voice/narrate-hook.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/voice/narrate-hook.mjs\""
           }
         ]
       }
