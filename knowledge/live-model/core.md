@@ -147,6 +147,18 @@ rather than just act on existing ones and don't fit the filter+action shape.
   **Before reporting a blank column as missing data, confirm the name exists on one sample element** — loop
   `element.Parameters` and print the definition names — rather than concluding the value is unset. Applies
   to any name-based parameter read, the native tool and hand-written script alike.
+  - **A blank column has a THIRD cause: the name is right, but the parameter lives on the TYPE and the
+    native `report_parameters` tool reads the INSTANCE only.** Verified live 2026-08-11 on `Doors` in an
+    imperial model: the native tool asked for `Width` and `Height` returned an empty cell on all 4 rows,
+    while `Door-Single-Panel : 30" x 80"` plainly had both. The same display names resolved immediately via
+    `Document.GetElement(e.GetTypeId()).LookupParameter("Width")` → 762 mm / 2032 mm. So the name was never
+    wrong and the value was never unset — the native tool simply doesn't fall back to the type.
+    [`action-report-parameters.cs`](../../scripts/actions/reporting/action-report-parameters.cs) **does**
+    fall back (its `includeTypeParameters` input), so when the native tool gives you a blank size column,
+    re-run through that fragment before believing the model is missing data. Door/window sizes are type
+    parameters on most standard families, so this is the common case, not an edge case.
+  - **Never read a size off the TYPE NAME** — `30" x 80"` is a label a human typed and can disagree with the
+    real parameter values. Read the parameters and let the name agree with them, not the reverse.
 - **`Parameter.Set()` RETURNS A BOOL, and Revit uses it to refuse a value — it does not throw.** Verified
   live 2026-08-07: `duct.LookupParameter("Width").Set(0.0)` returned **false** and left the width at
   300 mm; the same parameter set to 450 mm returned **true** and took. The parameter was neither
