@@ -1391,11 +1391,88 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Falls back to the built-in Windows voice with no internet and no Python package. Four hooks added to
   `.claude/settings.json`; `voice.cmd off` silences it. Wording is regression-tested without sound by
   `node tools/voice/test-narration.mjs`.
+- 2026-08-11 — **The second voice was DELETED the same day it started working** (Ajmal: *"totally remove
+  that female voice feature, only men voice … remove everything, even the code also related to this"*).
+  The two-voice design assumed they carried different news — intent versus result — but the assistant
+  already announces the job and reads the answer at the end, so the add-in's voice was a second person
+  confirming something you had just been told. **A second voice earns its place only when it says
+  something the first cannot.** Gone from both repos: `AiVoiceService.cs` deleted, `McpBridgeService`
+  v1.10.0 no longer calls it, AJ Tools suite bumped to v1.42.0; on this side the `revit` profile, the
+  dual-queue read, the add-in lock publishing and the `revitvoice` command are all removed. **One rebuild
+  of the add-in is still needed before Revit actually stops speaking** — the deleted code is inside the
+  currently loaded DLL. Accepted trade-off: no per-action result mid-job, only the plan and the total.
+  **Two lessons, both paid for the hard way:**
+  1. **A toggle was built first and it was the wrong answer.** An off-by-default switch shipped an hour
+     before he asked for outright removal. *A feature nobody wants is not improved by making it
+     optional* — it leaves dead code, a switch to document, and one more thing that can break. When the
+     ask is "I don't want this", offer removal first.
+  2. **The first mute passed its own unit test and silenced nothing.** It dropped the add-in's lines out
+     of the shared queue — but the add-in only queues when it can see a live speaker and otherwise speaks
+     straight through Windows, and the test never covered that fallback. Ajmal reporting "still the female
+     voice is there" is what caught it. *Verify a cross-component switch against the fallback path, not
+     the happy path — the fallback is where an "off" switch goes to die.*
+- 2026-08-11 — **The assistant's voice was structurally impossible, and the sandbox is why.** Ajmal
+  reported hearing the Revit voice but never the assistant's. Cause: the spoken-line queue lived in
+  `%LOCALAPPDATA%\AJTools\voice\`, and **Claude Code writes any path outside the project folder into a
+  throwaway overlay** — so every line the hooks ever queued went into a folder that does not exist.
+  Proven with one probe written to both places in the same call: the `%LOCALAPPDATA%` copy was reported
+  written and was absent from the real disk; the copy inside `D:\Ajmal\AJ AI Brain\` survived. The Revit
+  add-in was heard because it is a real process on the real disk. **Fix:** the Brain's queue, cache and
+  log moved to a gitignored `.voice-runtime/` inside the repo, and `drainer.py` now reads **both**
+  queues (the add-in's stays in `%LOCALAPPDATA%`, since moving it means recompiling and closing the
+  model). Order survives the split because filenames carry a millisecond timestamp. The drainer also
+  publishes its lock into the add-in's folder so `AiVoiceService` stops falling back to the robotic
+  Windows voice. **Verified end to end the same day: first cached MP3 ever produced on this machine
+  (21,600 bytes).** Lesson: *the portability argument for putting runtime state outside the repo was
+  right in principle and fatal in practice — a location a component cannot actually write to is not a
+  location.*
+- 2026-08-11 — **An MCP shell is NOT a safe way around the sandbox — it gave the same false filesystem
+  view.** Chasing the voice bug, a Windows-MCP PowerShell reported `voice.log` absent and the audio cache
+  empty, while a Python process launched from that same shell, running as the same user with the identical
+  `LOCALAPPDATA`, opened that log and read twelve lines out of it. Claude Code's own `Glob` agreed with
+  PowerShell and was equally wrong. Both were reading a redirected copy of
+  `%LOCALAPPDATA%\AJTools\voice`. Two hours of this session went into "the drainer never runs" — a
+  conclusion built entirely on a directory listing that was fiction; the drainer had been running the
+  whole time. **The only readings that proved true came from the program that actually does the work.**
+  So: when a filesystem answer decides what you do next, get it from inside the process that owns the
+  file, or from Ajmal's own terminal — and do not treat an MCP shell as the escape hatch. The note under
+  the original sandbox entry below has been corrected accordingly.
+- 2026-08-11 — **A black console window appeared over Revit, and it was the voice.** `say.mjs` launched
+  `python.exe` (the console interpreter) with `detached: true`; on Windows a detached child is handed its
+  own console, and `windowsHide` does not reliably suppress it for a venv launcher shim, which
+  re-executes the base interpreter as a second process that never saw the flag. Switched to the venv's
+  `pythonw.exe`. **The comment in the file justifying python.exe was wrong** — it claimed the venv's
+  pythonw "silently refuses to execute a script"; retested, it runs `-c` code, runs `drainer.py`, and
+  writes files. A misdiagnosis recorded as settled fact cost the thing it was written to protect: a
+  console covering the model defeats the entire purpose of a voice you use so you can watch the model.
+- 2026-08-11 — **The voice had never spoken once, and the guard meant to protect it was the reason.**
+  `say.mjs` read "queue deeper than 8 lines with no drainer holding the lock" as proof that starting the
+  speaker was futile, and stopped trying. It is the opposite: it means the speaker is **dead**. Since the
+  queue only empties when a drainer runs, and a drainer was only started when the queue was shallow, once
+  it passed eight lines nothing could ever start again — a deadlock that had held for 15 hours and 139
+  unspoken lines. It survived every restart (the jam is a folder on disk, not a process) and emitted no
+  error anywhere, because failing to speak is indistinguishable from having nothing to say. Fixed: a deep
+  queue with no lock now drops the stale backlog and starts the speaker, and a **30-second cooldown** —
+  not the queue depth — is what stops an impossible spawn from retrying on every line. **Lesson worth
+  more than the fix: a guard whose trigger condition can only be cleared by the thing it blocks is a
+  deadlock, not a safety net.**
+- 2026-08-11 — **The voice now speaks only what touches the model** (Ajmal: *"no too much reply, main
+  things only like caveman"*). Counted on one real session, the old every-tool narration spoke 22 lines
+  and **not one was about the model** — it read out file names, grep patterns, and at one point its own
+  narration. New `speakOnly: "revit"` in `voice-config.json` draws the line at the bridge; `"all"` restores
+  the old behaviour. Wording is caveman (filler stripped, capped at `maxWords`), with two deliberate
+  exceptions: delete/move speak the element count when the call names exact Ids, and the closing summary
+  gets 16 words because it carries the answer. **The filler-stripping went into `drainer.py`, the one
+  process both voices pass through — which shortened the Revit add-in's voice with no C# change and no
+  Revit restart.** Regression-tested without sound: `node tools/voice/test-narration.mjs` now checks the
+  speak/stay-silent decision as well as the wording, across both stages.
 - 2026-08-11 — **Claude Code's Bash and PowerShell tools are sandboxed, and this makes filesystem
   results untrustworthy.** A process they spawn writes into a throwaway overlay: Python reported a file
   written and `os.path.exists` returned True, while the same shell session's `ls` could not see it, and
   the real disk had nothing. Hours went into "debugging" a voice drainer that was working — the evidence
-  was fake. **Verify anything filesystem-dependent from a real terminal**, or through an MCP tool that
-  runs outside the sandbox; treat a sandboxed tool's file listing as unproven. Same session:
+  was fake. **Verify anything filesystem-dependent from a real terminal**; treat a sandboxed tool's file
+  listing as unproven. (**Corrected 2026-08-11:** this originally also offered "or through an MCP tool
+  that runs outside the sandbox" as a safe alternative. It is not — see the entry below; an MCP shell
+  was caught giving the same false view of the same folder.) Same session:
   `tools/verify-consistency.mjs` now survives a file vanishing between listing and reading, which is a
   real race for any transient file, not just the one that exposed it.

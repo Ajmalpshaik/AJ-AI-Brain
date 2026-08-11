@@ -1,24 +1,27 @@
 {
   "enabled": true,
 
-  "_comment_profiles": "Two speakers, deliberately different voices so you can tell WHO is talking without looking. 'jarvis' is the Claude Code side narrating what it is ABOUT to do; 'revit' is the AJ Tools add-in confirming what Revit actually RETURNED. neural = an edge-tts voice (free, needs internet); fallback = a Windows SAPI voice that always exists offline. Run `voice list` to see every neural voice available.",
+  "_comment_profiles": "ONE speaker. 'jarvis' is the assistant narrating what it is about to do and reading the answer at the end. A second voice (the AJ Tools add-in confirming what Revit returned) existed on 2026-08-11 and was deleted the same day at Ajmal's request - it was a second speaker confirming news he had just been given. The profile mechanism is kept because it costs nothing and any unknown profile name falls back to this one. neural = an edge-tts voice (free, needs internet); fallback = a Windows SAPI voice that always exists offline. Run `voice list` to see every neural voice available.",
   "profiles": {
     "jarvis": {
       "neural": "en-GB-RyanNeural",
       "neuralRate": "+18%",
       "fallback": "Microsoft David Desktop",
       "fallbackRate": 2
-    },
-    "revit": {
-      "neural": "en-GB-SoniaNeural",
-      "neuralRate": "+18%",
-      "fallback": "Microsoft Zira Desktop",
-      "fallbackRate": 2
     }
   },
 
-  "_comment_maxWords": "Ajmal asked for a SHORT reply in voice. Lines are trimmed to this many words before speaking, so a long summary never turns into a monologue you have to sit through.",
-  "maxWords": 14,
+  "_comment_speakOnly": "WHICH actions are worth hearing - the single biggest control over how much this thing talks. 'revit' = only what touches the model (count, list, isolate, move, delete, run a script), plus the final answer and any point where the assistant is stuck waiting on you. Everything else - reading files, searching, loading skills, editing the Brain's own notes - stays silent, because that is the assistant THINKING and you asked to hear the DOING. Measured on one real session: 22 spoken lines drops to 3, and all 3 are your model. 'all' restores the original behaviour of narrating every single tool call.",
+  "speakOnly": "revit",
+
+  "_comment_maxWords": "Ajmal asked for a SHORT reply in voice, caveman style - 'no too much reply, main things only'. Lines are trimmed to this many words before speaking. Deliberately not lower than this: the closing summary is the one line that carries the actual answer, and cutting it to four words loses the number he asked for. That summary is allowed past this cap - see SUMMARY_MAX_WORDS in narrate-hook.mjs.",
+  "maxWords": 8,
+
+  "_comment_caveman": "Strip filler words (a/an/the/just/really/basically/actually/simply) before speaking. Negatives (no/not/never/only), numbers and units are never stripped: flipping the meaning of a spoken warning costs far more than a saved word. Set false to hear lines exactly as they were written.",
+  "caveman": true,
+
+  "_comment_greetOnStart": "The 'A J A I Brain online' greeting at session start. Off by default - it is the assistant talking about itself, which is exactly the category Ajmal asked to lose.",
+  "greetOnStart": false,
 
   "_comment_idleExitSeconds": "How long the speaking process stays warm after the queue empties. Importing the neural library costs ~1.4s, so staying warm is the difference between 1.1s and 2.7s per line. It exits on its own after this, so nothing is left running when you stop working.",
   "idleExitSeconds": 45,
@@ -26,7 +29,7 @@
   "_comment_neuralCooldownSeconds": "When the neural voice fails (no internet), stop retrying it for this long and go straight to the offline Windows voice. Without this, every single line would sit waiting for a network timeout before falling back.",
   "neuralCooldownSeconds": 60,
 
-  "_comment_mute": "Tool names that are never narrated. These are the bookkeeping calls that would otherwise talk over the actual work.",
+  "_comment_mute": "Tool names that are never narrated, even when they would otherwise qualify. These are the bookkeeping calls that would talk over the actual work. `ping` is in here because it is a bridge health check, not a job - it touches Revit but tells you nothing about your model.",
   "mute": [
     "TaskCreate",
     "TaskUpdate",
@@ -34,6 +37,7 @@
     "TaskGet",
     "TodoWrite",
     "ToolSearch",
+    "mcp__aj-tools-aj-ai__ping",
     "mcp__ccd_session__mark_chapter",
     "mcp__ccd_session__read_widget_context"
   ]

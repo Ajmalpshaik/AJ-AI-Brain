@@ -162,6 +162,18 @@ is exactly the one a fresh session cannot route.
   folder before naming a family** — the house convention beats the generic standard, and it is one
   directory listing away.
 
+- **"voice mode to Revit and from Revit" / "Claude will talk to Revit and Revit will talk to Claude"**
+  → the user's words for the **whole two-way channel between the assistant and Revit**, not the spoken
+  narration. Said 2026-08-11. **This reads like a microphone request and is not one** — a fresh session
+  hearing "voice" reaches for speech-to-text, and that is the wrong half. He means the MCP bridge:
+  Claude sends, Revit answers. When he says "voice" about the *bridge*, "talk" means **send a message**,
+  not make a sound. Ask which layer he means before designing anything; the two are separate systems
+  that never touch (see [`../tools/voice/README.md`](../tools/voice/README.md) for the sound layer, and
+  the add-in's `McpBridgeService.cs` for the message layer).
+  **The distinction that actually matters to him:** Revit can only ever *answer* — it cannot start a
+  sentence. Nothing in the bridge lets Revit send anything unasked, so "Revit will talk to Claude" is
+  half-built, not built.
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one

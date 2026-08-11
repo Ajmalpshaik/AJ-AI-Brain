@@ -27,7 +27,21 @@
 import fs from "node:fs";
 import { say } from "./say.mjs";
 
-const VOICE_PROFILE = "jarvis"; // The Claude Code side. The Revit add-in speaks as "revit".
+const VOICE_PROFILE = "jarvis"; // The only voice. See voice-config.json.
+
+/** Tool-name prefix for everything that reaches the live model through the AJ AI bridge. */
+const REVIT_TOOL_PREFIX = "mcp__aj-tools-aj-ai__";
+
+/** Word budget for the closing summary only - the per-action lines stay on the tight global cap. */
+const SUMMARY_MAX_WORDS = 16;
+
+function readConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(new URL("./voice-config.json", import.meta.url), "utf8"));
+  } catch {
+    return {}; // Defaults are fine - a missing config must not silence the voice.
+  }
+}
 
 // --------------------------------------------------------------------------------------------------
 // Making text sayable
@@ -78,35 +92,51 @@ function intentFromCode(code) {
 // Tool -> sentence
 // --------------------------------------------------------------------------------------------------
 
-/** The live-Revit tools. These are the ones worth hearing, so they get the most specific wording. */
+/**
+ * The live-Revit tools. These are the ones worth hearing, so they get the most specific wording.
+ *
+ * CAVEMAN WORDING, per Ajmal 2026-08-11: "no too much reply, main things only like caveman". Articles
+ * and filler are dropped ("Resetting the view" -> "Reset view", "Running a script in Revit" ->
+ * "Running script"), because a narrator you listen to all day is judged on how little it makes you
+ * sit through. What is never dropped: the category name and the count - those are the information.
+ */
 function narrateRevitTool(shortName, input) {
   const category = prettyCategory(input.category ?? input.categoryName ?? "");
-  const withCategory = (verb, fallbackNoun) => `${verb} ${category || fallbackNoun}.`;
+  const noun = category || "elements";
+  const withCategory = (verb) => `${verb} ${noun}.`;
+
+  // Every element-targeting tool accepts EITHER exact Element Ids OR a category filter
+  // (mcp-server/shared/element-filter.js). When the Ids are given the count is known BEFORE Revit
+  // runs - which is the only chance to hear "twelve" ahead of a delete instead of after it.
+  const idCount = Array.isArray(input.elementIds) ? input.elementIds.length : 0;
+  const withCount = (verb) => (idCount ? `${verb} ${idCount} ${noun}.` : `${verb} ${noun}.`);
 
   switch (shortName) {
-    case "ping":                     return "Checking the Revit bridge.";
-    case "model_summary":            return "Reading the model summary.";
-    case "count_elements":           return withCategory("Counting", "elements");
-    case "list_elements":            return withCategory("Listing", "elements");
-    case "report_parameters":        return withCategory("Reading parameters on", "elements");
-    case "select_elements":          return withCategory("Selecting", "elements");
-    case "isolate_elements":         return withCategory("Isolating", "elements");
-    case "reset_isolation":          return "Resetting the view.";
-    case "hide_elements":            return withCategory("Hiding", "elements");
-    case "unhide_elements":          return withCategory("Unhiding", "elements");
-    case "set_color":                return "Changing colour.";
-    case "set_transparency":         return "Setting transparency.";
-    case "reset_graphic_overrides":  return "Clearing the graphic overrides.";
-    case "move_elements":            return withCategory("Moving", "elements");
-    // Said deliberately plainly and without hedging - this is the one Ajmal most needs to catch by ear.
-    case "delete_elements":          return withCategory("Deleting", "elements");
+    case "ping":                     return ""; // A bridge health check says nothing about the model.
+    case "model_summary":            return "Model summary.";
+    case "count_elements":           return withCategory("Counting");
+    case "list_elements":            return withCategory("Listing");
+    case "report_parameters":        return withCategory("Parameters on");
+    case "select_elements":          return withCategory("Selecting");
+    case "isolate_elements":         return withCategory("Isolating");
+    case "reset_isolation":          return "Reset view.";
+    case "hide_elements":            return withCategory("Hiding");
+    case "unhide_elements":          return withCategory("Unhiding");
+    case "set_color":                return withCategory("Colouring");
+    case "set_transparency":         return withCategory("Transparency on");
+    case "reset_graphic_overrides":  return "Clearing overrides.";
+    // The two that change the model get the count spoken. Deliberately louder, not quieter: this is
+    // the one line Ajmal most needs to catch by ear, and "Deleting elements" with no number is a
+    // warning that arrives too late to be worth anything.
+    case "move_elements":            return withCount("Moving");
+    case "delete_elements":          return withCount("Deleting");
     case "set_parameter_value": {
       const parameter = sayable(input.parameterName ?? input.parameter ?? input.name ?? "", 5);
-      return parameter ? `Setting ${parameter}.` : "Setting a parameter.";
+      return parameter ? `Setting ${parameter}.` : "Setting parameter.";
     }
     case "run_csharp": {
       const intent = intentFromCode(input.code ?? input.script ?? "");
-      return intent ? `${intent}.` : "Running a script in Revit.";
+      return intent ? `${intent}.` : "Running script.";
     }
     default:
       return `Revit: ${shortName.replace(/_/g, " ")}.`;
@@ -233,7 +263,9 @@ function main() {
   const event = payload.hook_event_name ?? "";
 
   if (event === "SessionStart") {
-    say("A J A I Brain online.", VOICE_PROFILE);
+    // Off by default: the greeting is the assistant talking about itself, which is exactly the
+    // category Ajmal asked to lose. Set greetOnStart in voice-config.json to bring it back.
+    if (readConfig().greetOnStart) say("A J A I Brain online.", VOICE_PROFILE);
     return;
   }
 
@@ -244,8 +276,10 @@ function main() {
   }
 
   if (event === "Stop") {
+    // The one line allowed to run past the caveman cap. Everything else is a label for an action
+    // Ajmal can see happening in Revit; this is the answer, and half an answer is worse than none.
     const summary = finalSummary(payload.transcript_path);
-    if (summary) say(summary, VOICE_PROFILE);
+    if (summary) say(summary, VOICE_PROFILE, SUMMARY_MAX_WORDS);
     return;
   }
 
@@ -253,13 +287,21 @@ function main() {
     const toolName = payload.tool_name ?? "";
     const input = payload.tool_input ?? {};
 
-    let config = {};
-    try {
-      config = JSON.parse(fs.readFileSync(new URL("./voice-config.json", import.meta.url), "utf8"));
-    } catch {
-      /* Defaults are fine. */
-    }
+    const config = readConfig();
     if ((config.mute ?? []).includes(toolName)) return;
+
+    // THE QUIET RULE - hear the DOING, not the THINKING.
+    //
+    // The first version narrated every tool call, which sounds thorough and is not: counted on one
+    // real session, 22 lines were spoken and NOT ONE of them was about the model. Ajmal heard
+    // "Reading glossary", "Searching for class void Task<", "Looking for files" - the assistant
+    // reading its own notes - while the only calls that touched Revit were health checks. Worse, it
+    // narrated its own narration ("Searching for glossary Bridge Service Editing Searching").
+    //
+    // So the line is drawn at the bridge: if it reaches the live model you hear it, otherwise it is
+    // the assistant thinking and it stays silent. Set speakOnly to "all" to restore the old
+    // everything-out-loud behaviour.
+    if ((config.speakOnly ?? "revit") === "revit" && !toolName.startsWith(REVIT_TOOL_PREFIX)) return;
 
     // Never narrate the voice system operating on itself - it is noise, and on a Bash call that
     // touches these files it would describe its own plumbing instead of Ajmal's work.

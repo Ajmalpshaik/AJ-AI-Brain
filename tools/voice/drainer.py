@@ -38,14 +38,15 @@ import sys
 import time
 
 VOICE_DIR = os.path.dirname(os.path.abspath(__file__))
+BRAIN_ROOT = os.path.dirname(os.path.dirname(VOICE_DIR))
 CONFIG_PATH = os.path.join(VOICE_DIR, "voice-config.json")
 
-# Runtime state lives outside the Brain, in the folder the AJ Tools add-in also writes to. It is the
-# meeting point for the two voices (see say.mjs for the full reasoning), and it keeps generated audio
-# out of a repo whose whole purpose is to be copied between machines.
-RUNTIME_DIR = os.path.join(
-    os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "AJTools", "voice"
-)
+# THE QUEUE MUST LIVE INSIDE THE BRAIN. Claude Code writes any path outside the project folder into a
+# throwaway overlay - the writing process is told the file exists and the real disk never receives it.
+# A queue in %LOCALAPPDATA% therefore received nothing the hooks ever wrote, and the voice could not
+# work at all. See say.mjs for the probe that proved it; this is the single most important fact about
+# this whole layer.
+RUNTIME_DIR = os.path.join(BRAIN_ROOT, ".voice-runtime")
 QUEUE_DIR = os.path.join(RUNTIME_DIR, "queue")
 CACHE_DIR = os.path.join(RUNTIME_DIR, "cache")
 LOCK_PATH = os.path.join(QUEUE_DIR, ".drainer.lock")
@@ -103,6 +104,28 @@ def trim(text, max_words):
     if max_words and len(words) > max_words:
         return " ".join(words[:max_words]).rstrip(",;:") + "."
     return " ".join(words)
+
+
+# Words that carry nothing when heard out loud. Note what is NOT in here: no/not/never/only, and
+# nothing that could be a Revit category, a number or a unit. Dropping a negative flips the meaning of
+# a spoken warning, which costs far more than any word ever saved.
+FILLER_WORDS = frozenset({"a", "an", "the", "just", "really", "basically", "actually", "simply"})
+
+
+def caveman(text):
+    """Strip filler before the length trim, so the words that survive are the ones that matter.
+
+    Ajmal, 2026-08-11: "no too much reply, main things only like caveman".
+
+    Applied here, in the one process that actually speaks, rather than at each place a line is
+    written - so the rule holds for every line however it was queued, and changing it is one edit.
+    """
+    words = str(text).split()
+    kept = [word for word in words if word.strip(".,;:!?").lower() not in FILLER_WORDS]
+    if not kept:
+        return " ".join(words)  # All filler. Say it as it came rather than say nothing at all.
+    kept[0] = kept[0][:1].upper() + kept[0][1:]
+    return " ".join(kept)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -235,12 +258,18 @@ def speak_fallback(text, voice_name, rate):
     )
 
 
-def speak(text, profile_name, config):
-    """Neural if it can, Windows built-in if it must, and never an exception to the caller."""
+def speak(text, profile_name, config, max_words=None):
+    """Neural if it can, Windows built-in if it must, and never an exception to the caller.
+
+    max_words comes off the queued line itself and overrides the global cap for that one line - see
+    say.mjs. The closing summary uses it so the tight per-action cap cannot cut the answer in half.
+    """
     global _neural_cold_until
 
     profile = profile_for(config, profile_name)
-    text = trim(text, config.get("maxWords", 14))
+    if config.get("caveman", True):
+        text = caveman(text)
+    text = trim(text, max_words if max_words else config.get("maxWords", 14))
     if not text:
         return
 
@@ -378,7 +407,7 @@ def main():
                 if not config.get("enabled", True):
                     continue  # Muted: drop the backlog rather than say it all at once when unmuted.
 
-                speak(item.get("text", ""), item.get("profile", "jarvis"), config)
+                speak(item.get("text", ""), item.get("profile", "jarvis"), config, item.get("maxWords"))
                 last_spoke = time.time()
                 idle_limit = config.get("idleExitSeconds", 45)
     except Exception as error:

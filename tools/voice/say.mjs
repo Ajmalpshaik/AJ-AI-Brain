@@ -6,14 +6,13 @@
 // in a few milliseconds. All the slow work (synthesis, playback) happens in drainer.py, which is a
 // separate process that nothing waits on. If speaking breaks, the Revit job still runs.
 //
-// THE QUEUE IS JUST A FOLDER OF FILES on purpose. Node writes to it from the Claude Code hooks and
-// C# writes to it from the AJ Tools add-in (AiVoiceService.cs), and neither has to know the other
-// exists or share a library. Files are named with a millisecond timestamp, so sorting by filename is
-// sorting by time, which is what keeps the two voices from interleaving mid-sentence.
+// THE QUEUE IS JUST A FOLDER OF FILES on purpose: files named with a millisecond timestamp, so
+// sorting by filename is sorting by time. That ordering is what stops parallel tool calls from
+// talking over each other, and it needs no index, no database and no shared library - anything that
+// can write a file can enqueue.
 //
 // Usage:
-//   node tools/voice/say.mjs "Counting air terminals."            speaks as JARVIS (default)
-//   node tools/voice/say.mjs "Forty two found." revit             speaks as the Revit voice
+//   node tools/voice/say.mjs "Counting air terminals."
 
 import fs from "node:fs";
 import path from "node:path";
@@ -24,19 +23,24 @@ const voiceDir = path.dirname(fileURLToPath(import.meta.url));
 const brainRoot = path.dirname(path.dirname(voiceDir));
 const configPath = path.join(voiceDir, "voice-config.json");
 
-// The queue and the audio cache live OUTSIDE the Brain, in the same machine-local folder the AJ Tools
-// add-in already uses. Two reasons, both load-bearing:
-//   1. The Brain is a portable knowledge package - "moving to another system means copying this
-//      folder only" (START-HERE.md). Megabytes of generated MP3 and files that exist for 200ms are
-//      not knowledge and have no business travelling with it.
-//   2. It is the meeting point. The Revit add-in (AiVoiceService.cs) writes to this same folder
-//      without needing to know where the Brain is checked out - which is what stops the two voices
-//      from talking over each other.
-export const runtimeDir = path.join(
-  process.env.LOCALAPPDATA || process.env.HOME || voiceDir,
-  "AJTools",
-  "voice",
-);
+// THE QUEUE LIVES INSIDE THE BRAIN, AND IT HAS TO. This is not a preference - it is the difference
+// between this voice working and not existing at all.
+//
+// It used to live in %LOCALAPPDATA%\AJTools\voice\, which reads better and was wrong. Claude Code's
+// hooks and shell tools write into a THROWAWAY OVERLAY for any path outside the project folder: the
+// writing process is told the file exists, and the real disk never receives it. Proven 2026-08-11
+// with one probe written to both locations at once -
+//
+//     %LOCALAPPDATA%\AJTools\voice\  ->  writer saw it, real disk had nothing
+//     D:\Ajmal\AJ AI Brain\          ->  survived
+//
+// - so every line this file has ever queued went into a folder that does not exist, and Ajmal never
+// once heard it speak. A whole day was spent debugging a drainer that was fine; the queue it was
+// draining was the fiction.
+//
+// The portability argument that put it outside still stands, so `.voice-runtime/` is gitignored: it
+// stays out of the copied package without having to be off the project drive.
+export const runtimeDir = path.join(brainRoot, ".voice-runtime");
 const queueDir = path.join(runtimeDir, "queue");
 const lockPath = path.join(queueDir, ".drainer.lock");
 
@@ -49,19 +53,30 @@ export function readConfig() {
 }
 
 /**
- * Prefer the Brain's own venv - it is where edge-tts gets installed.
+ * Prefer the Brain's own venv - it is where edge-tts gets installed - and inside it prefer
+ * pythonw.exe, the interpreter that has no console.
  *
- * Deliberately python.exe and NOT pythonw.exe. pythonw looks like the obvious choice for a background
- * process, but the venv's pythonw stub would run `--version` and then silently refuse to execute an
- * actual script - no error, no exit code, nothing to find (2026-08-11). The console window it was
- * chosen to avoid is already suppressed by windowsHide below, so it bought nothing and cost a
- * silently dead voice.
+ * WHY pythonw AFTER ALL. An earlier version chose python.exe on purpose, believing the venv's pythonw
+ * "would run --version and then silently refuse to execute an actual script". That was a
+ * misdiagnosis. Retested 2026-08-11: the venv's pythonw runs `-c` code, runs drainer.py, and writes
+ * files - it works. What python.exe actually cost was the very thing pythonw exists to prevent:
+ * Ajmal got a black console window sitting on top of his Revit model. A `detached` child on Windows
+ * is handed its own console, and windowsHide does not reliably suppress it for a venv launcher shim
+ * (which re-executes the base interpreter as a second process that never saw the flag).
+ *
+ * That window is not a cosmetic problem. The entire point of a spoken narrator is to let him keep his
+ * eyes on the model instead of on a screen - so covering the model with a console defeats the layer.
  */
 function findPython() {
-  const venvPython = path.join(brainRoot, "semantic-index", "venv", "Scripts", "python.exe");
-  if (fs.existsSync(venvPython)) return venvPython;
+  const scripts = path.join(brainRoot, "semantic-index", "venv", "Scripts");
+  const windowless = path.join(scripts, "pythonw.exe");
+  if (fs.existsSync(windowless)) return windowless;
+
+  const withConsole = path.join(scripts, "python.exe");
+  if (fs.existsSync(withConsole)) return withConsole;
+
   // Not verified to exist - spawn failures fall through to the PowerShell path in the caller.
-  return process.platform === "win32" ? "python" : "python3";
+  return process.platform === "win32" ? "pythonw" : "python3";
 }
 
 function drainerRunning() {
@@ -78,6 +93,13 @@ function drainerRunning() {
 /** How many unspoken lines can pile up before we conclude nothing is draining them. */
 const STUCK_QUEUE_THRESHOLD = 8;
 
+/**
+ * Longest a failing spawn is left alone before trying again. This - NOT the queue depth - is what
+ * stops a machine that genuinely cannot start Python from retrying on every single line.
+ */
+const SPAWN_RETRY_COOLDOWN_MS = 30_000;
+const cooldownPath = path.join(runtimeDir, ".spawn-cooldown");
+
 function queueDepth() {
   try {
     return fs.readdirSync(queueDir).filter((name) => name.endsWith(".json")).length;
@@ -86,14 +108,62 @@ function queueDepth() {
   }
 }
 
-function ensureDrainer(text, profileName) {
+function spawnOnCooldown() {
+  try {
+    const until = Number(fs.readFileSync(cooldownPath, "utf8").trim());
+    return Number.isFinite(until) && Date.now() < until;
+  } catch {
+    return false;
+  }
+}
+
+function startSpawnCooldown() {
+  try {
+    fs.mkdirSync(runtimeDir, { recursive: true });
+    fs.writeFileSync(cooldownPath, String(Date.now() + SPAWN_RETRY_COOLDOWN_MS), "utf8");
+  } catch {
+    /* A cooldown we cannot record just means we retry sooner. Harmless. */
+  }
+}
+
+/**
+ * Throw away a backlog nobody is ever going to want to hear, keeping only the line being said now.
+ *
+ * Same principle drainer.py already applies when muted: a queue that went unspoken is stale, and
+ * playing fifteen hours of it back in one burst is worse than losing it.
+ */
+function dropStaleQueue(keepPath) {
+  try {
+    for (const name of fs.readdirSync(queueDir)) {
+      if (!name.endsWith(".json")) continue;
+      const full = path.join(queueDir, name);
+      if (full === keepPath) continue;
+      try {
+        fs.unlinkSync(full);
+      } catch {
+        /* Another process may have taken it. Fine either way. */
+      }
+    }
+  } catch {
+    /* Nothing to clear. */
+  }
+}
+
+function ensureDrainer(text, profileName, currentPath) {
   if (drainerRunning()) return true;
 
-  // A queue this deep with no drainer holding the lock is proof that previous spawns are failing -
-  // no Python, a broken venv, a machine where it cannot start. Left alone this is SILENT: lines pile
-  // up forever and the assistant simply never speaks again, with nothing on screen to explain why.
-  // So stop trying and take the path that always works.
-  if (queueDepth() >= STUCK_QUEUE_THRESHOLD) return false;
+  // A deep queue with NO drainer holding the lock does NOT mean spawning is futile - it means the
+  // speaker is DEAD. The first version read it the other way round and simply gave up, which
+  // deadlocked the whole voice on 2026-08-11: the queue only empties if a drainer runs, a drainer was
+  // only started if the queue was shallow, so once it passed eight lines nothing could ever start
+  // again. It stayed stuck for 15 hours and 139 lines, survived every restart (the jam is a folder on
+  // disk, not a process), and left no error anywhere because failing to speak looks exactly like
+  // having nothing to say. So: clear the dead backlog and START, and let the cooldown below - not the
+  // depth - be the thing that stops a genuinely impossible spawn from retrying forever.
+  if (queueDepth() >= STUCK_QUEUE_THRESHOLD) dropStaleQueue(currentPath);
+
+  if (spawnOnCooldown()) return false;
+  startSpawnCooldown();
 
   try {
     // Give the child REAL output handles pointed at a log file, rather than stdio:"ignore".
@@ -160,8 +230,15 @@ function speakWithoutQueue(text, profileName) {
 
 let sequence = 0;
 
-/** Enqueue one spoken line. Returns quietly whether or not it worked - never throws. */
-export function say(text, profileName = "jarvis") {
+/**
+ * Enqueue one spoken line. Returns quietly whether or not it worked - never throws.
+ *
+ * maxWords overrides the global cap for THIS line only. It exists for the closing summary: the
+ * per-action cap is deliberately tight (eight words, caveman), and applying it to the one line that
+ * carries the actual answer produced "Found forty two air terminals across whole of." - cut
+ * mid-phrase, with the result thrown away. A short narrator is the point; a truncated answer is not.
+ */
+export function say(text, profileName = "jarvis", maxWords) {
   const line = String(text || "").trim();
   if (!line) return;
 
@@ -192,10 +269,12 @@ export function say(text, profileName = "jarvis") {
     const tempPath = path.join(queueDir, `${unique}.tmp`);
 
     // Write then rename in: the drainer must never read a half-written line.
-    fs.writeFileSync(tempPath, JSON.stringify({ text: line, profile: profileName }), "utf8");
+    const payload = { text: line, profile: profileName };
+    if (Number.isFinite(maxWords)) payload.maxWords = maxWords;
+    fs.writeFileSync(tempPath, JSON.stringify(payload), "utf8");
     fs.renameSync(tempPath, finalPath);
 
-    if (!ensureDrainer(line, profileName)) speakWithoutQueue(line, profileName);
+    if (!ensureDrainer(line, profileName, finalPath)) speakWithoutQueue(line, profileName);
   } catch {
     speakWithoutQueue(line, profileName);
   }

@@ -25,3 +25,10 @@ semantic-index/*
 
 # Python bytecode from tools/voice/drainer.py.
 __pycache__/
+
+# Voice runtime - the spoken-line queue, the generated-audio cache and the speaker's log.
+# It sits INSIDE the repo rather than in %LOCALAPPDATA% for one hard reason: Claude Code writes any
+# path outside the project folder into a throwaway overlay, so a queue kept outside received nothing
+# the assistant ever queued and the assistant's voice never once played (proven 2026-08-11, see
+# tools/voice/say.mjs). Ignored here so megabytes of generated MP3 still never travel with the Brain.
+.voice-runtime/
