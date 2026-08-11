@@ -9,11 +9,11 @@
 // Usage (from the Brain folder):
 //   tools\voice\voice.cmd off              silence it
 //   tools\voice\voice.cmd on               bring it back
-//   tools\voice\voice.cmd test             hear both voices, check your speakers
+//   tools\voice\voice.cmd test             hear one line, check your speakers
 //   tools\voice\voice.cmd status           is it on, is it warm, is the good voice available
 //   tools\voice\voice.cmd list             every neural voice you could switch to
 //   tools\voice\voice.cmd setup            install the neural voice into the Brain's venv
-//   tools\voice\voice.cmd say "some words" [jarvis|revit]
+//   tools\voice\voice.cmd say "some words"
 
 import fs from "node:fs";
 import path from "node:path";
@@ -77,9 +77,8 @@ switch (command) {
       console.log("Run: tools\\voice\\voice.cmd on");
       break;
     }
-    console.log("Speaking as JARVIS (Claude Code side), then as AJ AI (the Revit side)...");
-    say("This is the Claude Code voice. I narrate what I am about to do.", "jarvis");
-    say("This is the Revit voice. I confirm what the model returned.", "revit");
+    console.log("Speaking one line. You should hear ONE voice - there is only one.");
+    say("Voice test. If you can hear this, the voice is working.", "jarvis");
     console.log("If you heard nothing, check your speakers, then run: tools\\voice\\voice.cmd status");
     break;
   }
@@ -92,8 +91,7 @@ switch (command) {
     console.log(`  Voice          ${config.enabled ? "ON" : "OFF"}`);
     console.log(`  Speaker        ${drainerRunning() ? "warm (fast)" : "cold - next line costs about 1 extra second"}`);
     console.log(`  Good voice     ${neural ? "available" : "NOT installed - run: tools\\voice\\voice.cmd setup"}`);
-    console.log(`  JARVIS         ${config.profiles?.jarvis?.neural} (offline: ${config.profiles?.jarvis?.fallback})`);
-    console.log(`  Revit          ${config.profiles?.revit?.neural} (offline: ${config.profiles?.revit?.fallback})`);
+    console.log(`  Voice used     ${config.profiles?.jarvis?.neural} (offline: ${config.profiles?.jarvis?.fallback})`);
     console.log(`  Cached lines   ${cached} (these play instantly and work with no internet)`);
     break;
   }
@@ -197,5 +195,5 @@ switch (command) {
   }
 
   default:
-    console.log("Usage: voice.cmd  on | off | test | status | doctor | list | setup | say \"text\" [jarvis|revit]");
+    console.log("Usage: voice.cmd  on | off | test | status | doctor | list | setup | say \"text\"");
 }
