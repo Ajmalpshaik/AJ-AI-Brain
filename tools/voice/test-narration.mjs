@@ -34,6 +34,14 @@ const cases = [
   ["delete by filter (no count)", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__delete_elements", tool_input: { category: "Ducts" } }],
   ["move by id", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__move_elements", tool_input: { elementIds: [7, 8], category: "Air Terminals" } }],
   ["script with a comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "// Place air terminals across the ceiling grid\nvar doc = ..." } }],
+  // No comment on top - the wording has to come out of the code, or Ajmal hears "Running script" and
+  // learns nothing. This is the case he reported on 2026-08-11 asking for a colour change.
+  ["colour, no comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "var ogs = new OverrideGraphicSettings();\nogs.SetProjectionLineColor(new Color(255,0,0));\nview.SetElementOverrides(id, ogs);" } }],
+  ["delete, no comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "using (var t = new Transaction(Document, \"x\")) { t.Start(); Document.Delete(ids); t.Commit(); }" } }],
+  ["draw duct, no comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "var d = Duct.Create(Document, systemTypeId, ductTypeId, levelId, p1, p2);" } }],
+  ["read-only, no comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "var n = new FilteredElementCollector(Document).OfClass(typeof(Wall)).GetElementCount();" } }],
+  // A separator line on top must not be read out as if it were a sentence.
+  ["script with a separator", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "// ============================\nvar ogs = new OverrideGraphicSettings();" } }],
   ["script with no comment", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__run_csharp", tool_input: { code: "var doc = uidoc.Document;" } }],
   ["set a parameter", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__set_parameter_value", tool_input: { parameterName: "Flow" } }],
   ["isolate", "speak", { hook_event_name: "PreToolUse", tool_name: "mcp__aj-tools-aj-ai__isolate_elements", tool_input: { category: "Ducts" } }],

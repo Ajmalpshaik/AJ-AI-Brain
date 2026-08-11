@@ -485,6 +485,30 @@ one before running — the pre-filled values exist so there's one obvious place 
 they're safe to reuse blindly.
 
 
+## Open every `run_csharp` call with a one-line `//` comment saying what it does
+
+The first comment line is what the voice reads out loud before the script runs, so it is the only
+warning the user gets about work that is about to change the model.
+
+Ajmal, 2026-08-11, after asking for a colour change: *"its telling the voice only 'running the script'
+— is that possible the shortly what is going to do with this scripting?"* He was right to ask. Native
+tools announce themselves properly ("Counting air terminals", "Deleting 3 ducts") because the tool name
+carries the meaning; a script does not, so without a comment every scripted job sounded identical.
+
+```csharp
+// Colour the supply ducts blue in this view      <- spoken as "Colour supply ducts blue in this view."
+var ogs = new OverrideGraphicSettings();
+```
+
+Write it in **plain English, under ten words, as a person would say it** — not `// step 3` and not a
+row of `====` (both are ignored). Only the first four lines are looked at, so it must be at the top.
+
+`narrate-hook.mjs` now falls back to reading the API calls (`OverrideGraphicSettings` → "Changing
+colour", `Document.Delete` → "Deleting elements", `Duct.Create` → "Drawing duct"), so a missing comment
+is no longer silence — **but the fallback names the operation, not the intent.** "Changing colour" is
+not "Colour the supply ducts blue". Write the comment.
+
+
 ## How to compose two or more fragments into one script
 
 1. Pick the filter fragment that matches the request; open it and read its `INPUTS` block.

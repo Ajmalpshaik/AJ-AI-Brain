@@ -1391,6 +1391,19 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Falls back to the built-in Windows voice with no internet and no Python package. Four hooks added to
   `.claude/settings.json`; `voice.cmd off` silences it. Wording is regression-tested without sound by
   `node tools/voice/test-narration.mjs`.
+- 2026-08-11 — **"Running script" told Ajmal nothing, so the voice now works the job out of the code.**
+  He asked for a colour change and heard only *"Running script"* — because native tools carry their meaning
+  in the tool name (`count_elements` → "Counting air terminals") while a `run_csharp` call carries nothing
+  unless someone wrote a comment. Two fixes, deliberately both: `narrate-hook.mjs` now infers the action
+  from the API calls in the script (`OverrideGraphicSettings` → "Changing colour", `Document.Delete` →
+  "Deleting elements", `Duct.Create` → "Drawing duct"), ordered most-specific-first so the
+  `FilteredElementCollector` that appears in almost every script cannot win and describe nothing; and
+  `scripts/README.md` now requires a plain-English `//` line at the top of every `run_csharp` call, which is
+  what the voice prefers when present. **The fallback names the operation, the comment names the intent —
+  "Changing colour" is not "Colour the supply ducts blue", so the comment is still the job.** Also fixed:
+  the old reader searched the whole script for any `//` line and would announce a note from the middle of a
+  fifty-line script as if it were the purpose; it now reads only the first four lines and ignores `====`
+  separators. Six new cases in `test-narration.mjs` cover the no-comment paths.
 - 2026-08-11 — **The second voice was DELETED the same day it started working** (Ajmal: *"totally remove
   that female voice feature, only men voice … remove everything, even the code also related to this"*).
   The two-voice design assumed they carried different news — intent versus result — but the assistant

@@ -45,6 +45,13 @@ are gone. What survives depends on `Category.IsCuttable`:
 The same setters applied at the **element** level (`SetElementOverrides`) keep all of it on the very
 same ducts — so this is a restriction on category overrides specifically, not on the values.
 
+**It applies to line WEIGHT too, not just colour and fill** (measured 2026-08-10). Writing
+`SetCutLineWeight(1)` to all 84 controllable parent categories in one view: **projection weight held on 79,
+cut weight held on only 29.** Every non-cuttable category — all of Ducts, Pipes, Air Terminals, Mechanical
+Equipment, Sprinklers and the electrical families — read back `-1` (still "By View") in the cut slot while
+accepting the projection slot. So "set the MEP line weight" can only ever mean the *projection* weight
+by category override; there is no cut weight to set on things Revit never cuts.
+
 **The restriction is specific to CATEGORY overrides — the other two routes are unaffected.** Measured in
 the same session, on the same non-cuttable Ducts category:
 
@@ -106,6 +113,81 @@ Widening the same sweep to **all 85** controllable model categories (MEP include
 - **Five categories take nothing at all**: Rooms, Areas and Spaces take their fill from a **Colour Scheme**
   (or their own Interior Fill sub-category) rather than a V/G category override, and Raster Images /
   Point Clouds are raster content with no line-and-fill model to override.
+
+### A SUB-category override holds the line colour and almost nothing else (measured 2026-08-10)
+
+Expanding a category's `+` in Visibility/Graphics exposes its sub-categories — Doors opens to Glass, Panel,
+Frame/Mullion, Trim, Plan Swing, Ironmongery, Architrave, Opening, Structural Opening, Hidden Lines,
+Elevation Swing, Moulding/Architrave — and each gets its own override row. Writing the *same* full override
+(line colour + `<Solid fill>` foreground pattern + transparency) to all **255** controllable sub-categories
+of one Revit 2020 floor plan, then reading every one back:
+
+| Slot written | Actually held |
+|---|---|
+| Projection line colour | **225 of 255** |
+| Surface foreground pattern | **22 of 255** |
+| Transparency | **0 of 255** |
+
+- **30 sub-categories refuse even the line colour.** They are the ones describing a graphic *layer* rather
+  than geometry — `Walls > Common Edges`, `Walls > Surface Pattern`, `Walls > Cut Pattern`.
+- **Transparency never sticks on a sub-category** — not once in 255 attempts. It has to go on the parent.
+- **The V/G dialog says the same thing.** On the expanded Doors rows the Patterns and Transparency columns
+  are **greyed out** while the Lines columns stay editable. So this is not the API failing silently; it is
+  the API matching a restriction the UI already shows. Worth checking the dialog before assuming a bug.
+
+**Line weight splits the same way** (measured 2026-08-10, setting Walls projection + cut to pen 2). The
+geometry sub-categories took both — `Wall Sweep - Cornice` and `Hidden Lines` read back 2/2. The graphic-
+layer ones did not: `Surface Pattern` and `Cut Pattern` refused **both** slots, and `Common Edges` took the
+cut weight but refused the projection weight. Same three sub-categories that refused a line colour, so
+"describes a graphic layer rather than geometry" is the reliable predictor for both properties.
+
+**Practical rule:** put **fill and transparency on the parent category**, and use sub-categories only to
+carry the **line colour and line weight**. Attempting fill/transparency at sub-category level is wasted
+work that reads back as success in the in-memory object and as nothing on the view.
+
+## Line weights — the project table is NOT reachable from the API (checked 2026-08-10)
+
+Two different things get called "line weight settings", and only one is scriptable:
+
+| | Where | Scope | API |
+|---|---|---|---|
+| **The pen table** | Manage → Additional Settings → **Line Weights** (tabs: Model / Perspective / Annotation, pens 1–16, one column per view scale) | **Whole project, every view and sheet** | **Not exposed.** A long-standing known gap (Autodesk ref CF-3772) with an open request to surface it to the API and Dynamo. Do not go looking for a class — there isn't one. Ask the user to screenshot the dialog instead; that worked well for V/G. |
+| **Which pen a category uses** | Object Styles, and the Weight column in V/G | project-wide (Object Styles) / per view (V/G) | Readable and writable: `Category.GetLineWeight(GraphicsStyleType.Projection\|Cut)`, and `OverrideGraphicSettings.SetProjectionLineWeight()` / `SetCutLineWeight()`. `-1` on a V/G override means "By View" — no override set. |
+
+**ISO 128-2:2020 defines nine line weights** — 0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1.0, 1.4, 2.0 mm. A first
+pass at this note said Revit's metric table "maps pens 1–9 to exactly those"; **a real table, read off the
+dialog on 2026-08-10, shows that is too neat.** The mapping *slides with the scale column* — the same pen
+is a different weight at 1:50 and 1:100, and the ISO ladder starts at a different pen in each column:
+
+| Pen | 1:10 | 1:20 | 1:50 | 1:100 | 1:200 | 1:500 |
+|---|---|---|---|---|---|---|
+| 1 | 0.18 | 0.18 | 0.18 | **0.10** | **0.10** | **0.10** |
+| 2 | 0.25 | 0.25 | 0.25 | 0.18 | **0.10** | **0.10** |
+| 3 | 0.35 | 0.35 | 0.35 | 0.25 | 0.18 | **0.10** |
+| 4 | **0.70** | 0.50 | 0.50 | 0.35 | 0.25 | 0.18 |
+| 5 | 1.00 | 0.70 | 0.70 | 0.50 | 0.35 | 0.25 |
+| 6–9 | 1.40 / 2.00 / 2.80 / 4.00 | 1.00 / 1.40 / 2.00 / 2.80 | 1.00 / 1.40 / 2.00 / 2.80 | 0.70 / 1.00 / 1.40 / 2.00 | 0.50 / 0.70 / 1.00 / 1.40 | 0.35 / 0.50 / 0.70 / 1.00 |
+
+What that table actually says, and what to check on any project's own copy:
+
+- **The ladder is genuinely ISO.** At 1:100, pens 2–9 are 0.18 / 0.25 / 0.35 / 0.5 / 0.7 / 1.0 / 1.4 / 2.0 —
+  the ISO series exactly. Only **pen 1 is 0.10, below ISO's 0.13 minimum**, deliberately reserved as
+  "thinnest possible". Cross-checked against published Revit defaults at pen 5 / 1:100 = 0.50 mm: matches,
+  so this looks like the untouched metric default rather than an office edit.
+- **Duplicate cells silently collapse pens at small scales.** At 1:200 pens 1–2 are both 0.10; at 1:500 pens
+  1–3 are all 0.10. Three "different" weights plot identically — and that is exactly the thin end a
+  greyed background lives at, so a grey-out that reads well at 1:100 can flatten at 1:500.
+- **1:20 and 1:50 are identical columns**, and the **1:10 column skips 0.50** (pen 3 = 0.35 → pen 4 = 0.70).
+- Editing the table is a **whole-project, every-sheet, every-scale** decision, never a per-drawing tweak —
+  and there is no API to put it back (see above), so it is a hand-edit with no undo path from a script.
+
+**For a grey-out specifically, the pen table is the wrong lever** — thinning the background there thins it
+on the architectural sheets too. Use the **V/G per-category weight override**, which is per view and
+reversible, and then save the whole thing as a **View Template** so it is repeatable rather than re-run by
+hand. Measured on the test project at 1:100: MEP already outweighs the background out of the box (Ducts
+and Pipes on pen 5, Air Terminals and Mechanical Equipment on 4, Cable Trays 3) against Walls 1/3,
+Floors 1/4, Doors 1/2, Windows 1/3, Furniture 1 — so a grey-out mostly needs the background pushed *down*,
+not the services pushed up.
 
 ## Practical use
 
