@@ -80,12 +80,65 @@ function prettyCategory(category) {
     .trim();
 }
 
-/** A run_csharp payload sometimes opens with a comment saying what it does. Prefer that over guessing. */
+/**
+ * A run_csharp payload should open with a comment saying what it does. Prefer that over guessing.
+ *
+ * Only the opening few lines are considered. The first version searched the WHOLE script for any line
+ * starting with "//", which happily read out an explanatory note from the middle of a fifty-line
+ * script - a sentence about one detail, announced as if it were the job.
+ */
 function intentFromCode(code) {
-  const firstLine = String(code ?? "").split("\n").find((line) => line.trim().startsWith("//"));
-  if (!firstLine) return "";
-  const text = sayable(firstLine.replace(/^\s*\/\/+/, ""), 10);
-  return text.length > 3 ? text : "";
+  const header = String(code ?? "").split("\n").slice(0, 4);
+  for (const line of header) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("//")) continue;
+    // Separator rules ("// =====", "// -----") are decoration, not a sentence.
+    const body = trimmed.replace(/^\/+/, "").replace(/^[\s=\-*]+|[\s=\-*]+$/g, "");
+    const text = sayable(body, 10);
+    if (text.length > 3) return text;
+  }
+  return "";
+}
+
+/**
+ * What the script DOES, worked out from the Revit API calls in it.
+ *
+ * Ajmal, 2026-08-11: asked to change a colour, and all the voice said was "Running script" - because
+ * the work went through run_csharp with no comment on top. A narrator that says "running script" for
+ * every scripted job is the banner problem again: an on/off light, not information. Writing the
+ * comment is the real fix (see scripts/README.md), but a narrator must not depend on the caller
+ * remembering something, so this reads the code instead.
+ *
+ * ORDER MATTERS - most specific first. Nearly every script contains a FilteredElementCollector, so
+ * "Reading the model" has to be last or it would win every time and describe nothing.
+ */
+const CODE_INTENT_HINTS = [
+  [/SetSurfaceTransparency/, "Setting transparency"],
+  [/SetProjectionLineColor|SetSurfaceForegroundPatternColor|SetCutLineColor|OverrideGraphicSettings/, "Changing colour"],
+  [/\bDuct\.Create/, "Drawing duct"],
+  [/\bPipe\.Create/, "Drawing pipe"],
+  [/\bWall\.Create/, "Drawing walls"],
+  [/\bFloor\.Create/, "Creating floor"],
+  [/NewRoom|\bSpace\b.*Create|NewSpace/, "Creating rooms"],
+  [/ViewSchedule\.Create/, "Creating a schedule"],
+  [/NewFamilyInstance/, "Placing families"],
+  [/ElementTransformUtils\.CopyElement/, "Copying elements"],
+  [/ElementTransformUtils\.RotateElement/, "Rotating elements"],
+  [/ElementTransformUtils\.MoveElement/, "Moving elements"],
+  [/Document\.Delete|doc\.Delete/, "Deleting elements"],
+  [/IsolateElementsTemporary|IsolateElementTemporary/, "Isolating elements"],
+  [/\.HideElements|\.UnhideElements/, "Changing what is visible"],
+  [/LookupParameter\([^)]*\)\s*\.\s*Set|\.Set\(/, "Setting parameters"],
+  [/new Transaction/, "Changing the model"],
+  [/FilteredElementCollector/, "Reading the model"],
+];
+
+function guessFromCode(code) {
+  const text = String(code ?? "");
+  for (const [pattern, phrase] of CODE_INTENT_HINTS) {
+    if (pattern.test(text)) return phrase;
+  }
+  return "";
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -135,7 +188,10 @@ function narrateRevitTool(shortName, input) {
       return parameter ? `Setting ${parameter}.` : "Setting parameter.";
     }
     case "run_csharp": {
-      const intent = intentFromCode(input.code ?? input.script ?? "");
+      // Comment first (the author said what they meant), code second (worked out), "Running script"
+      // only when neither can tell you anything - which should now be almost never.
+      const code = input.code ?? input.script ?? "";
+      const intent = intentFromCode(code) || guessFromCode(code);
       return intent ? `${intent}.` : "Running script.";
     }
     default:

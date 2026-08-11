@@ -145,6 +145,81 @@ is exactly the one a fresh session cannot route.
      [`live-model/graphic-override-precedence.md`](live-model/graphic-override-precedence.md). The
      architectural/structural background greys completely; **MEP greys as lines only** (its fill is
      discarded); and Rooms, Areas, Spaces, Raster Images and Point Clouds take nothing at all.
+  3. *(candidate — 2026-08-10)* **Doors and Windows** both get **surface transparency 100%** and keep the
+     200,200,200 fill — but they take **different line colours, and that difference is the whole point**:
+     - **Doors → lines 200,200,200.** A door breaks the wall with its opening and swing, so a light line
+       still reads against the wall.
+     - **Windows → lines 150,150,150.** A window sits *inside* the wall, and the wall's fill is already
+       200 — so a 200 window line on a 200 wall fill disappears. His words when he caught it:
+       *"for the door is okkey 200 is okkey but window is issue we cant see becose windows will come inside
+       the wall so the color of the fill also 200 so its not visible."*
+     **The reusable lesson, not just the value:** anything that sits *inside* a greyed host cannot take the
+     host's fill colour as its line colour, or it vanishes. Check every "lighter" category against what it
+     is drawn on top of before setting it. Read back: Doors line 200 / fill 200 / transp 100; Windows line
+     150 / fill 200 / transp 100; Walls line 150 / fill 200.
+     **Caveat**: the test view "1 - Mech" runs the **Hidden Line (HLR)** display style, and Revit applies a
+     surface-transparency override only in the shaded-family styles (Shaded / Consistent Colours /
+     Realistic) — so the 100% is stored correctly but is not expected to change anything on screen there.
+     Not proven visually, because the test model had no doors or windows in it.
+  4. *(candidate — 2026-08-10)* **The sub-categories too, matching their parent.** His words, with a
+     screenshot of the expanded Doors row: *"if we chek the door in there there is + so if we open you can
+     see the sreen shhot can you chek that in this also we need to set and remaning all same like this."*
+     So each sub-category matches **its own parent**: Door sub-categories take the 200,200,200 line;
+     Window sub-categories take 150,150,150 (10 of them — Glass, Frame/Mullion, Muntin, Sill/Head, Trim,
+     Opening, Moulding, Plan Swing, Elevation Swing, Hidden Lines); every other category's sub-categories
+     take 150,150,150. Done live: 255 sub-categories across 66 parents, 35 not controllable.
+     **Only the line colour survives at sub-category level** — 225 held the line, 22 held a fill, and
+     transparency held on exactly none of the 255, which is why steps 2–3 must stay on the parents. Both
+     the API read-back and his own screenshot agree (the Patterns/Transparency columns are greyed out on
+     the sub-rows). Detail in
+     [`live-model/graphic-override-precedence.md`](live-model/graphic-override-precedence.md).
+  5. *(candidate — 2026-08-10)* **Walls take a V/G line-weight override of pen 2 on BOTH projection and
+     cut** (plus their sub-categories, 5 set / 8 not controllable). This is a **V/G per-view override, not
+     the project Line Weights table** — he asked for it "in the visiblity grafics", and the pen table is
+     not API-reachable anyway. Net effect at 1:100 on this project's table: wall projection goes 0.10 mm →
+     **0.18 mm (thicker)** and wall cut goes 0.25 mm → **0.18 mm (thinner)**, so walls end up one uniform
+     weight rather than a light-projection / heavy-cut pair. Worth saying out loud when reporting it —
+     "set weight 2" sounds like one direction and is actually two.
+  6. *(candidate — 2026-08-10)* **Everything else drops to line weight 1**, projection and cut, Walls
+     excepted (they stay on 2 from step 5). His words: *"now remaning all the keep 1 all duct and pipe
+     eveyting we will edit after this"* — **ducts and pipes included on purpose**, because the plan is to
+     flatten the whole view first and build the services back up afterwards. Do not "helpfully" leave MEP
+     heavy here; that is the next step's job, not this one. Done live: 84 parents + 250 sub-categories.
+     Read back: projection weight 1 held on 79 of 84, **cut weight 1 held on only 29** — the non-cuttable
+     categories refuse a cut weight exactly as they refuse a cut colour.
+     **State after this step:** the whole view is 0.10 mm except Walls at 0.18 mm, so the grey-out is being
+     carried **entirely by colour, not weight**. That is the intended mid-point, not a mistake.
+  7. *(candidate — 2026-08-10)* **Floors go lighter than everything else: RGB 240,240,240 on lines AND
+     pattern, `<Solid fill>` kept.** His words: *"for the floor keep 240,240,240 and for the paten also and
+     keep the solid."* Floors are the largest surface in a plan, so dropping them to near-white puts them
+     behind the walls (fill 200) instead of competing with them. Weight stays 1 from step 6. Sub-categories
+     followed: Interior Edges, Slab Edges and Hidden Lines took 240; Common Edges, Surface Pattern and Cut
+     Pattern refused, as they have for every property all session.
+     **Note the deliberate side effect:** floor line = floor fill = 240, so a slab edge drawn on top of its
+     own floor does not read. That is the same trap he caught on windows in step 3 — but here it is wanted,
+     because the aim is a flat light field rather than outlined slabs. If a slab edge ever *must* show, the
+     line has to go darker than the fill; do not "fix" it silently.
+  8. *(candidate — 2026-08-10)* **Ducts get surface transparency 80%, Duct Insulations 100%.** His words:
+     *"now for the duct transparancy keep 80 and insulation 100"* — so the insulation goes fully invisible
+     as a surface while the duct itself stays faintly solid. He first named only those two, was told which
+     sibling categories that left sitting at 0%, and immediately extended it — *"all of this make it 80"* —
+     so the settled rule is **the whole duct family at 80%, insulation alone at 100%**: Ducts, Duct
+     Fittings, Flex Ducts, Duct Accessories and Duct Linings all 80; Duct Insulations 100.
+     **The pipe side then got the identical rule** — *"yes pipe also same 80 but insulation need 100"*:
+     Pipes, Pipe Fittings, Pipe Accessories and Flex Pipes at 80, Pipe Insulations at 100. (There is no
+     Pipe Linings category in Revit; Duct Linings has no pipe equivalent.) So the rule generalises to
+     **carrier + fittings + accessories + flex at 80, insulation at 100, on both sides.**
+     Still at 0% and left alone unless he says otherwise: **Duct Placeholders, Pipe Placeholders**, and all
+     the equipment-type MEP categories — Air Terminals, Mechanical Equipment, Sprinklers, Plumbing
+     Fixtures, Cable Trays, Conduits. Transparency so far is only on the *distribution* categories, not on
+     equipment; that is a coherent line and probably deliberate, but it has not been confirmed with him.
+     **The reusable habit, not just the values:** naming the sibling categories he had *not* covered is what
+     closed the gap in one turn, instead of it surfacing later as 80% straights meeting 0% elbows. Whenever
+     a category-level setting lands on only part of a system, list the untouched neighbours in the reply.
+     **All the transparency in steps 3 and 8 is invisible in the view it was set in** — "1 - Mech" runs the
+     Hidden Line (HLR) display style and Revit applies surface transparency only in Shaded / Consistent
+     Colours / Realistic. Worth flagging to him each time transparency comes up, rather than reporting
+     success on something that cannot be seen where he is looking.
   When the full sequence exists, it stops being a glossary entry and becomes a skill or a recipe — route it
   with [`skills/brain-self-maintain/SKILL.md`](../skills/brain-self-maintain/SKILL.md) Step 1 and leave a
   pointer here.
