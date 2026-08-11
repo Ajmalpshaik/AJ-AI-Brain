@@ -1476,3 +1476,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   was caught giving the same false view of the same folder.) Same session:
   `tools/verify-consistency.mjs` now survives a file vanishing between listing and reading, which is a
   real race for any transient file, not just the one that exposed it.
+- 2026-08-11 — **Third cause of a blank parameter column, recorded in `knowledge/live-model/core.md`:**
+  the native `report_parameters` tool reads the INSTANCE only, so a correctly-named parameter that lives
+  on the TYPE (door/window `Width` and `Height` on standard families) prints blank. Caught live asking
+  for door sizes; `action-report-parameters.cs` with `includeTypeParameters` returned them immediately.
+  Logged alongside it: never read a size off the type NAME (`30" x 80"`), which is human-typed and can
+  disagree with the real values.
