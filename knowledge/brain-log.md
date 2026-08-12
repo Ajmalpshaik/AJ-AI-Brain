@@ -1276,6 +1276,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   recorded: MEP greys as **lines only** by category override, and five categories (Rooms, Areas, Spaces,
   Raster Images, Point Clouds) take no category override at all. Worth having because it means a whole-view
   grey-out cannot be reported as "all grey with solid fill" without lying about the services.
+- 2026-08-10 — **"Grayout for MEP" finished being taught and became the tenth skill.** He dictated it over
+  eleven turns against a live view, correcting me four times (windows must not take the wall's fill colour
+  as their line; grey *everything* first including MEP, not just the background; patterns are 200 while
+  lines are 150; insulation must not outdraw the duct it wraps), then said to keep it permanently —
+  *"if i need to do in anothor model i will tell you only that grayout for mep so the all same work need
+  todo."* Captured as [`skills/ajtools-mep-grayout/SKILL.md`](../skills/ajtools-mep-grayout/SKILL.md) plus
+  [`scripts/recipes/mep-grayout.cs`](../scripts/recipes/mep-grayout.cs), built from a **read-back of the
+  finished view** rather than from my notes of the conversation, so it reproduces what is actually on the
+  model. The glossary entry had grown to 163 lines carrying the whole spec — now an 11-line pointer, which
+  also brought `glossary.md` from 307 back to 163 and under the split rule. Two things deliberately left
+  open in the skill rather than decided for him: Duct Linings (asked twice, unanswered) and whether service
+  *sub-categories* should follow their parent to black — they are still background grey because the black
+  pass ran after the sub-category pass, and the recipe reproduces that faithfully behind a toggle rather
+  than silently "fixing" it. The consistency hook caught all eleven drift points from adding a skill and a
+  recipe (README tables, three "9 skills" counts, AGENT-SPEC's 268/21, three index-count claims) — exactly
+  the doc-drift failure mode this repo keeps hitting, caught mechanically this time instead of by reading.
 - 2026-08-10 — **Pipe and electrical connectors proven in the Family Editor; new recipe
   `recipes/create-equipment-family-from-datasheet.cs`** (268 fragments, 21 recipes). Built the Condair
   EL 20-400V/3~ steam humidifier live from a PDF datasheet — 530×406×780 cabinet, five connectors
