@@ -189,6 +189,42 @@ and Pipes on pen 5, Air Terminals and Mechanical Equipment on 4, Cable Trays 3) 
 Floors 1/4, Doors 1/2, Windows 1/3, Furniture 1 — so a grey-out mostly needs the background pushed *down*,
 not the services pushed up.
 
+## A line STYLE cannot be assigned in V/G — unpack it into its three ingredients (2026-08-10)
+
+When the user names something like **`MEP_Hidden_Short_Black`**, that is a **Line Style** — a sub-category
+of `OST_Lines`, listed under Manage → Additional Settings → Line Styles, carrying **colour + weight +
+line pattern** as a bundle. The **Pattern** field in a V/G category override takes a **`LinePatternElement`
+only**. There is no API (and no UI) route to point a category override at a line style, and a search of the
+document's `LinePatternElement`s for that name returns nothing — the pattern is called something else.
+
+**The fix is to unpack the style and set its three parts as the override:**
+
+```csharp
+// find the style among the sub-categories of OST_Lines
+var linesCat = Document.Settings.Categories.get_Item(BuiltInCategory.OST_Lines);
+Category style = null;
+foreach (Category sc in linesCat.SubCategories) if (sc.Name == "MEP_Hidden_Short_Black") style = sc;
+
+var colour    = style.LineColor;                                   // 0,0,0
+var weight    = style.GetLineWeight(GraphicsStyleType.Projection);  // 3
+var patternId = style.GetLinePatternId(GraphicsStyleType.Projection); // -> 'MEP_Hidden_Short_Dash'
+```
+
+Worked example from the user's own standard — note the names do **not** match, which is exactly the trap:
+
+| He said | What it is | Unpacks to |
+|---|---|---|
+| `MEP_Hidden_Short_Black` | Line **Style** | colour `0,0,0` · weight `3` · pattern **`MEP_Hidden_Short_Dash`** |
+
+His office library follows this shape throughout: one pattern (`MEP_Hidden_Short_Dash`) is shared by five
+styles that differ only in colour — `..._Black`, `_Blue`, `_Green`, `_Red`, `_Orange`, all weight 3. So
+**a colour word at the end of the name is the signal that it is a style, not a pattern.** Do not report
+"pattern not found" and stop; look in the line styles before concluding anything is missing.
+
+**The cut slot still refuses**, same non-cuttable rule as everywhere else on this page: applying this to
+Duct/Pipe Insulations, the projection pattern and weight held and the cut pattern and weight both read back
+empty.
+
 ## Practical use
 
 - **"I set a category color but it's not showing on this element"** — check whether that element has a
