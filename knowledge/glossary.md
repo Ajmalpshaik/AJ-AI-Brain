@@ -190,3 +190,10 @@ is exactly the one a fresh session cannot route.
   carries Width × Height, and the breakdown table's last row is the largest FIRST dimension, not the
   largest duct. Found by walking that exact question through the routing to see what a fresh session
   would do with it.
+- 2026-08-13 — **"the bigger counts" = the most NUMEROUS group, not the largest size.** Said live, as
+  *"all the vcds that bigger counts... i thing 200X200 size"* — and he was right, 200×200 was the most
+  common at 11 of 66. The trap is that "bigger" reads as size, and the same conversation had just asked
+  for the *biggest width*, which was a genuinely different element (950×800, one only). **So "biggest"
+  and "bigger counts" are two different questions one message apart.** If a request could mean either,
+  say which one you are answering — or ask. Related: the 2026-08-04 entry above, where "maximum duct
+  size" had the same shape of ambiguity.
