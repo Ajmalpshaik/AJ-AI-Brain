@@ -51,6 +51,7 @@ quality measure once there are 20+ rows written by a person.
 | how many light fitting | scripts/actions/reporting/action-count-by-group.cs |
 | take my door schedule out to excel | scripts/actions/sheets-views/action-export-schedule-to-csv.cs |
 | what does duck mean | knowledge/glossary.md |
+| can you tell me the how meny vcd is there and tell me the size | scripts/actions/reporting/action-count-and-report.cs |
 
 ## Where each seeded row came from
 
@@ -60,6 +61,7 @@ quality measure once there are 20+ rows written by a person.
 | add 4 more floor levels | **Wrong** — returned `create-floor.cs`, the slab creator. Actively misleading. | `knowledge/brain-log.md` |
 | how many light fitting | **Wrong** — matched "light hazard" in the sprinkler files. | `knowledge/brain-log.md` |
 | take my door schedule out to excel | **Wrong** — the right file was absent from the top 5 entirely. | `knowledge/brain-log.md` |
+| can you tell me the how meny vcd is there and tell me the size | **Ajmal's own, asked live 2026-08-13**, kept with his spelling. **Fails badly:** `action-count-and-report.cs` — PROVEN, and literally described as "bare count, or a size-breakdown table when asked" — is *absent from the entire candidate pool*, along with `action-count-by-group.cs` and `filter-by-category.cs`. Site vocabulary fired correctly (`vcd → volume control damper duct accessory`); ranking is what failed. **Expected answer chosen by the assistant — Ajmal to confirm or correct.** | asked live |
 | what does duck mean | **Guard row, not a quality measure.** Added by the assistant on 2026-08-13, and labelled as such because assistant-written questions must never be counted as evidence the search is good. Its only job is to stop one specific fix overshooting: discounting `glossary.md` to stop it displacing the terminal-layout skill also sinks the glossary on questions it genuinely answers. At 0.85 this returned `nfpa13-sprinkler-spacing.md` at #1. | this file |
 
 The three failures are all **vocabulary**, not ranking: the site word simply is not in the
