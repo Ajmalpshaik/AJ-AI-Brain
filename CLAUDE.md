@@ -2,6 +2,17 @@
 
 @START-HERE.md
 
+## Where the open work is
+
+**If [`docs/HANDOVER.md`](docs/HANDOVER.md) exists, read it before starting.** It carries what the last
+session did and what is still outstanding — the one thing a fresh session cannot work out from disk,
+because the repo shows its *state* but not its *direction*. It lives in `docs/`, which is deliberately
+outside the search index, so nothing will surface it for you: this line is how you find it.
+
+Treat it the way you treat any dated note here — the SessionStart hook's numbers are computed live and
+win over anything written in a file. If the handover is finished, say so and delete it rather than
+leaving a stale to-do list that reads as current.
+
 ## Know the real state before acting
 
 A SessionStart hook runs [`tools/brain-status.mjs`](tools/brain-status.mjs) and prints the Brain's true
