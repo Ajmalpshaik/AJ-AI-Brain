@@ -1710,3 +1710,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   misled by it, in opposite directions, on the same five questions.** Untunable at this sample size, so
   shipping it on would have been exactly the blind change the score card exists to prevent. The 89 MB
   model is git-ignored, so `rerank.py --download` exists rather than living in someone's memory.
+- 2026-08-13 — **Housekeeping pass: the ~300-line warning is clear for the first time since it appeared.**
+  `core.md` went 328 → **262** lines by moving the Revit 2020 viewport and view-title limits into
+  [`live-model/views.md`](live-model/views.md), where they belong on *subject* and not merely on size —
+  none of that material was about units or bridge basics, and `views.md` was only 96 lines. A pointer
+  section stays behind, matching the `element-identity.md` split of 2026-08-06. **`families.md` (456
+  lines) was reviewed and deliberately KEPT WHOLE**, marked with `split-review: kept whole` so
+  `brain-status.mjs` stops flagging it: it is not four topics but one method plus a chronological record of
+  four builds, each written as what the previous one got wrong — split by build and the corrections lose
+  what they correct; split method from builds and the method loses its evidence. Re-open only if a fifth
+  build adds a section that stands alone. Also in the same pass: the knowledge graph was rebuilt
+  (`graphify update .` — AST only, no LLM and no subagents: **1,214 nodes, 1,296 edges, 344 communities**)
+  and the Obsidian vault regenerated to **1,558 notes with 308 stale ones pruned**. Both had last run
+  2026-08-09 and were four days behind. **Still outstanding there:** graphify's *semantic* pass over the
+  markdown needs either a `GEMINI_API_KEY` or subagents, so doc-level entities are as of 2026-08-09 while
+  code-level ones are current — a real, and currently invisible, split-brain in that graph.

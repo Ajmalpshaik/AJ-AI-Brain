@@ -218,79 +218,14 @@ rather than just act on existing ones and don't fit the filter+action shape.
   'Autodesk.Revit.DB.BuiltInParameter'" — because this Revit version's `ElementId` only has an `(int)` and
   a legacy `(BuiltInParameter)` constructor, no `(long)` overload; `long` doesn't implicitly narrow to
   `int` so the compiler falls through to the wrong overload. Cast explicitly: `new ElementId((int)someLong)`.
-- **View title EXTENSION LINE length has no API lever at all on Revit 2020 — confirmed from an external
-  library's own source, not assumed.** A Viewport's title-line length (the line under the view title on a
-  sheet, distinct from the label text) is not exposed as a Viewport Type parameter (checked every
-  parameter live, project 4355: only `Show Title`/`Show Extension Line` on/off exist, no numeric length)
-  nor as a parameter on the title family itself (checked `M_View Title`'s own type params too — none).
-  Confirmed why: the Rhythm-for-Dynamo package's own `Viewport.SetViewTitleLength` source throws `"This
-  node only works in Revit 2022 as that is when this API was added"` — the underlying Revit API for this
-  didn't exist before 2022. On 2020, the only working lever is the on/off `Show Extension Line` toggle
-  (type-level — duplicate the viewport type before touching it if only some sheets should change, per the
-  blast-radius check below). A true "auto-fit line to text width" needs either Revit 2022+, or a from-scratch
-  parametric rebuild of the title family (formula-driven dimension tied to the label width) — not a script.
-- **View title POSITION is also unsettable on 2020 — but the offsets can still be CALCULATED for the user
-  to drag.** Reflection on Revit 2020's `Viewport` (checked live, not from memory) shows no `LabelOffset`
-  property and no title-moving method at all — only the read-only `GetLabelOutline()`. So "center all the
-  view titles" cannot be scripted here. What *is* possible, and turned out to be the useful deliverable:
-  compute each title's exact centering offset so the manual drag is a known number instead of eyeballing.
-  `vp.GetBoxOutline()` = the view content area on the sheet, `vp.GetLabelOutline()` = the title assembly
-  (text + extension line). Both are sheet-space `Outline`s in feet:
-  ```csharp
-  double boxCenterX = (box.MinimumPoint.X + box.MaximumPoint.X) / 2.0;
-  double lblCenterX = (lbl.MinimumPoint.X + lbl.MaximumPoint.X) / 2.0;
-  double deltaX = boxCenterX - lblCenterX;   // + = drag right, - = drag left
-  double titleAboveBoxBottom = lbl.MaximumPoint.Y - box.MinimumPoint.Y;  // vertical consistency check
-  ```
-  Note `GetLabelOutline()` spans text AND extension line, so this centers the whole assembly — centering
-  only the text would need a different measure. The vertical figure is worth reporting alongside: it
-  exposes titles sitting at inconsistent heights across sheets, which is invisible when eyeballing one
-  sheet at a time. Legends have no label outline — skip `ViewType.Legend` or guard the call.
-- **Measuring a hypothetical state without changing the model: mutate inside a Transaction, then
-  `RollBack()`.** `GetLabelOutline()` includes the extension line, so it can't directly tell you the text
-  width — but toggling `VIEWPORT_ATTR_SHOW_EXTENSION_LINE` off, calling `doc.Regenerate()`, re-measuring,
-  then rolling back yields the text-only extents with zero persistent change. The width delta between the
-  two states IS the line's horizontal overhang past the text — i.e. exactly how far the user must drag the
-  grip to make the line fit the text, which is otherwise pure guesswork on a 2020 model:
-  ```csharp
-  var withLine = vp.GetLabelOutline();
-  using (var t = new Transaction(doc, "measure only")) {
-      t.Start();
-      vpType.get_Parameter(BuiltInParameter.VIEWPORT_ATTR_SHOW_EXTENSION_LINE).Set(0);
-      doc.Regenerate();                       // REQUIRED - outline is stale without it
-      var textOnly = vp.GetLabelOutline();
-      // overhang = withLine.width - textOnly.width
-      t.RollBack();                            // nothing persists
-  }
-  ```
-  Verified live 2026-08-01 (project 4355): read back `SHOW_EXTENSION_LINE == 1` after rollback, confirming
-  no change leaked. Generalises to any "what would this look like if…" question — safer than change-then-undo,
-  because it never enters the user's undo stack at all. Note this still needs the type-level blast-radius
-  check below when reading which viewports share the type, even though nothing is committed.
-  **Caveat found the same day: not every property refreshes mid-transaction.** `GetLabelOutline()` DID
-  update after `Regenerate()` when toggling the extension line, but `GetBoxOutline()` did NOT update after
-  a `view.CropBox` change (crop verifiably halved, reported box width unchanged). So a rollback-measure
-  test must assert that the INPUT actually changed AND that some output moved — otherwise "no change"
-  reads as a real finding when it's really a stale read. Always print both, and label the test inconclusive
-  rather than concluding from an unrefreshed value.
-- **A viewport placed BY SCRIPT gets its view-title line defaulted to the full viewport width** — measured
-  exactly `boxWidth + 6.4mm`, identical across 5 script-placed viewports (project 4355, 2026-08-01), versus
-  a hand-set constant 92.6mm on the hand-tidied originals regardless of their differing box widths. Since
-  Revit 2020 has no API to set that length (see above), **script-placed viewports on a sheet will always
-  need a manual line-drag afterwards if the project's convention is line-fits-text** — deleting and
-  re-placing just reproduces the same default. Worth telling the user up front when bulk-placing viewports,
-  rather than letting it surface as "why are all these lines too long?" later.
-  Related: a viewport's sheet box width is driven by ANNOTATION extents, not the crop region — two views
-  with an identical 158.4mm crop had 202.1mm and 215.7mm box widths. Don't expect tightening a crop to
-  shrink the viewport's footprint or its title line.
-- **A Viewport's "type" (title-block-with-scale, etc.) is a `Show Extension Line`/`Show Title`-level
-  ElementType, and it can be SHARED by dozens of viewports across the whole document, not just the sheet
-  you're looking at.** Before changing any Viewport Type parameter, count
-  `new FilteredElementCollector(doc).OfClass(typeof(Viewport)).Cast<Viewport>().Count(v => v.GetTypeId() ==
-  typeId)` — found live (project 4355): one viewport type was shared by 77 viewports across the entire
-  document, including the formal issued sheet set, when the user only wanted 3 new sheets changed. Fix:
-  `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
-  just the intended viewports — leaves every other sheet's title style untouched.
+### Viewports and view titles on a sheet — see views.md
+
+Those Revit 2020 viewport limits were split out on 2026-08-13, the second time this file passed the
+~300-line rule: [`views.md`](views.md) — why view-title length and position cannot be set at all before
+Revit 2022, how to CALCULATE the centering offset so the manual drag is a known number, the
+mutate-then-`RollBack()` trick for measuring a hypothetical state without touching the model (and the
+stale-read caveat that makes it lie), and the type-level blast-radius check before editing any Viewport
+Type — one type was shared by 77 viewports across a whole document.
 
 ### Reading an element's level, workset or design option — see element-identity.md
 
