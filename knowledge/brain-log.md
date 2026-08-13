@@ -1667,3 +1667,28 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   it as a knowledge note in his own words, having read it** — higher signal than 600 unchecked chunks,
   and it cannot quietly quote a superseded version, which was a live risk here since two editions of the
   Buildings manual sit side by side. `pypdf` was uninstalled so the venv matches `requirements.txt`.
+- 2026-08-13 — **Retrieval now re-scores itself whenever something that can change ranking changes.**
+  `tools/score-check.mjs` (Stop hook) fingerprints five files — `brain_search_hybrid.py`,
+  `brain_common.py`, `brain_index.py`, `test-questions.md`, `site-vocabulary.md` — and re-runs
+  `score_brain.py` when any of them differs, comparing against the previous history entry and shouting
+  if fewer questions now return the right answer first. It **reports, never blocks**: sometimes a drop is
+  the accepted cost of a fix, and that is Ajmal's call, not a hook's. It also refuses to compare across
+  different question counts, so adding a question is not mistaken for a regression. **Why it was needed:
+  the score card existed all day and nothing ever ran it.** It caught three real problems on 2026-08-13,
+  and every one was caught only because a person happened to type the command. Proven by deliberately
+  crushing the glossary weight to 0.10 and watching it report `3/5 -> 2/5`, then reverting.
+- 2026-08-13 — **Tuned path weights drift as content changes — the cliff moves.** Found while testing the
+  above. This morning a sweep put the safe window for `glossary.md` at 0.90–0.96, with 0.85 measurably
+  breaking "what does duck mean" (`nfpa13-sprinkler-spacing.md` took #1). By the same evening, 0.85 no
+  longer broke it — the index had changed underneath, through this log growing and a full rebuild, and
+  the competing file no longer outranked the glossary. **Nothing was wrong with the earlier measurement;
+  it simply expired.** So a hand-tuned weight is a measurement of one moment, not a constant, and the
+  only defence is re-measuring automatically — which is exactly what the hook above now does. 0.93 was
+  kept: it sat in the middle of the window then and remains safe now, which is the whole argument for
+  choosing a window's centre over its edge.
+- 2026-08-13 — **The injected context block now carries an explicit "say so" guardrail.** Retrieval is
+  right at #1 on 3 of 5 questions, so roughly two in five put a wrong file at the top — and the silent
+  failure mode is the dangerous one: an answer from general Revit knowledge, delivered with the
+  confidence of one drawn from Ajmal's own proven files. `brain_context.py` now ends every block with an
+  instruction to say plainly when none of the hits actually answer the question. **"The Brain does not
+  cover this" is a correct answer; quietly inventing one is not.**

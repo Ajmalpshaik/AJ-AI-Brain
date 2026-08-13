@@ -99,6 +99,15 @@ def main(argv):
         "  (top 3-5, not just #1 - open the file before answering; "
         "high in BOTH meaning and words is the strong signal)"
     )
+    # The guardrail. Measured 2026-08-13: retrieval is right at #1 on 3 of 5 test questions, so
+    # roughly two questions in five get a wrong file at the top. Without this line the failure
+    # mode is silent and worse than no search at all - an answer from general Revit knowledge,
+    # delivered with the confidence of one that came from Ajmal's own proven files. Saying "the
+    # Brain does not cover this" is a correct answer; quietly inventing one is not.
+    lines.append(
+        "  (if none of these actually answer it, SAY SO - do not answer from general "
+        "Revit knowledge while appearing to quote this Brain)"
+    )
 
     # A stale index means these hits describe an older copy of the Brain. Say so inline: the
     # whole point of injecting this is that nobody has to go looking for a warning.
