@@ -63,6 +63,10 @@
           {
             "type": "command",
             "command": "node \"tools/test-row-nudge.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "node \"tools/fragment-nudge.mjs\""
           }
         ]
       }
