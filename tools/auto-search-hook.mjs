@@ -76,7 +76,10 @@ if (!python) process.exit(0); // silent: a missing venv must not spam every mess
 
 const result = spawnSync(
   python,
-  [path.join(semanticRoot, "brain_context.py"), "--top", "5", prompt],
+  // --log records the question and its hits in job-log/questions.jsonl. Over months that
+  // answers "which of the 269 fragments actually get used", which nothing else can, and
+  // builds the question -> file pairs a fine-tune would need.
+  [path.join(semanticRoot, "brain_context.py"), "--top", "5", "--log", prompt],
   { encoding: "utf8", cwd: semanticRoot, maxBuffer: 4 * 1024 * 1024, timeout: 60000 }
 );
 
