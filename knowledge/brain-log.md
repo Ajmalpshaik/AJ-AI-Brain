@@ -1774,3 +1774,31 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   node. **Where they are stored is worth writing down**: not `graph.community_labels` and not
   `node.community_label`, but **`community_name` on each node** — two wrong guesses were made before
   checking, and a "0 labels stored" reading nearly got reported as a failure when the labels were fine.
+- 2026-08-13 — **NEAR MISS: `npm test` in `mcp-server/` will DELETE MODEL CONTENT if the bridge is
+  connected. Now gated.** The suite invokes every handler with `SAMPLE_ARGS`, and those include
+  **`delete_elements: { category: "Ducts", confirm: true }`** plus `move_elements`,
+  `set_parameter_value` and the hide/colour tools. Its own header says "no live Revit/bridge connection
+  needed" — **and nothing ever checked that.** The premise silently stops being true the moment Revit is
+  open with the bridge on, which is precisely when someone runs the tests. It was run during a live
+  session today and survived **only by luck**: the active document happened to be an unrelated blank
+  `Project1` with zero ducts, so every destructive call matched nothing. Had the real model been active
+  it would have deleted **354 ducts, with `confirm: true` already supplied**, and the first sign would
+  have been a test *passing*. **Fixed by enforcing the premise instead of assuming it:** a read-only
+  `ping` now decides, and the handler-invocation test SKIPS with a loud reason when the bridge is live.
+  **The transferable lesson: a test whose safety depends on an environment assumption must CHECK that
+  assumption, not state it in a comment.** Two lines of prose at the top of the file were doing the work
+  of a guard for months. Also worth noting how it surfaced — the failure looked like an ordinary broken
+  assertion (`expected isError`), and the real meaning was the opposite of what it appeared to say.
+- 2026-08-13 — **`search_graph`: the knowledge graph is finally reachable from retrieval.** The Brain had
+  a 1,192-node graph with 328 named communities and **nothing could query it** — every search went through
+  the vector index only, so a fully-built asset sat unused. Studying the public RAG-technique catalogues
+  Ajmal collected (NirDiamant/RAG_Techniques, athina-ai/rag-cookbooks) confirmed most of their list is
+  already here or does not apply at 3,000 chunks — hybrid dense+BM25+RRF, query transformation, explainable
+  retrieval, pre-filtering, reranking, evaluation — but **GraphRAG was the one real, already-paid-for gap.**
+  It is not a second opinion; it answers a different SHAPE of question. Measured on "how do I stop ducts
+  overlapping the ceiling": the vector search returned `filter-by-element-intersection.cs` / `tagging.md` /
+  `brain-log.md`, while the graph returned `create-ceiling.cs` and **`ray-trace-to-ceiling.cs`** — a file
+  the vector index never surfaced at any depth, found by matching the question's ENTITIES and walking to
+  their neighbours. Modes: `query`, `explain`, `path`. **Honest limitation recorded in the tool itself:
+  the graph does not rebuild itself**, so `search_graph` can be older than `search_brain` in a way that is
+  invisible from its output.

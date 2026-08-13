@@ -81,3 +81,33 @@ A tool call works everywhere Node runs.
 `../brain-tools/`, and give it **its own test** in `../test/smoke.test.js` rather than adding it to the
 two lists there. Those lists assert exactly 17 registrations and that every handler fails with a bridge
 error; a tool that does neither would break a guard worth keeping.
+
+## Not a Revit tool: `search_graph`
+
+`../brain-tools/search-graph.js` registers **`search_graph`** — it asks the Brain's knowledge **graph**
+(`graphify-out/graph.json`) rather than its vector index. Reads only; works with Revit closed.
+
+| Input | Meaning |
+|---|---|
+| `question` | The question (mode `query`), or a node label (mode `explain`) |
+| `mode` | `query` (default) walks out from the question's entities · `explain` describes one node · `path` finds the shortest path between `nodeA` and `nodeB` |
+| `nodeA` / `nodeB` | Endpoints, mode `path` only |
+| `budget` | Token cap, default 1500. Raise it if the output says `TRUNCATED`. |
+
+**It is not a second opinion — it answers a different shape of question.** Measured on
+*"how do I stop ducts overlapping the ceiling"*:
+
+| | Top hits |
+|---|---|
+| `search_brain` (vector) | `filter-by-element-intersection.cs`, `tagging.md`, `brain-log.md` |
+| `search_graph` (graph) | `create-ceiling.cs`, **`ray-trace-to-ceiling.cs`**, `hvac-ducts.md` |
+
+`ray-trace-to-ceiling.cs` never appeared in the vector results at any depth, because the graph matched
+the *entities* in the question and walked to their neighbours instead of comparing embeddings. Use
+`search_graph` for "what depends on X", "what else touches this", "how do these two relate"; use
+`search_brain` for "how do I do X".
+
+**Honest limitation: the graph does not rebuild itself.** The semantic index does (Stop hook), but the
+graph needs `graphify update .` for code and a subagent pass for markdown — so `search_graph` can be
+older than `search_brain` in a way that is invisible from its output. Check `knowledge/brain-log.md`
+for the last rebuild before trusting it on something written today.
