@@ -1836,3 +1836,31 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the STALE INDEX banner compare content and not dates. Found while building it: the hook first reached for
   `semantic-index/venv`, which does **not** contain graphify — it lives in whichever interpreter
   `graphify` was installed into, recorded by graphify itself in `graphify-out/.graphify_python`.
+- 2026-08-14 — **Fixtures can be BUILT, so "fixture-blocked" was never the blocker it looked like.**
+  `action-add-remove-insulation.cs` had sat unproven since 2026-07-26 marked *"BLOCKED — no insulation
+  fixture in this model"*. It took one `Duct.Create` call to make five ducts in a blank scratch project
+  and the fragment then verified **all three branches**: add put 25 mm on 5 of 5 (read back as five real
+  insulation elements, not trusted from the report), re-add correctly added 0 and skipped 5, remove
+  deleted all 5 and left the ducts intact. **The lesson generalises to the whole "fixture-blocked"
+  category: the question is not "does this model contain X" but "can X be created by API".**
+- 2026-08-14 — **`action-place-accessory-on-run.cs` DISPROVED live, then rewritten. Three separate causes,
+  each of which alone looks like the whole answer.** The original called
+  `NewFamilyInstance(point, symbol, run, StructuralType)` and assumed Revit breaks the run automatically
+  the way the UI command does. **It does not, and it does not error** — duct count unchanged, `fi.Host`
+  null, accessory sitting loose with 0 of 2 connectors joined, and the fragment reported success. Its own
+  2026-07-26 static review had flagged exactly this and named the two suspects; the live run settled it as
+  the overload, not the family. **(1)** `BreakCurve` must be called explicitly — and it confirmed two
+  existing notes: the ORIGINAL id keeps the SECOND half, and the halves are not auto-connected. **(2) A
+  newly placed accessory takes its FAMILY DEFAULT size, not the run's.** On a 300x300 duct that default
+  was 300x300 and looked like Revit had matched it — a coincidence that hid the bug until a 200x200 duct
+  produced the same 300x300 accessory. Only `Duct Width`/`Duct Height` are writable; every other size
+  parameter is read-only and derived. **(3) THE ONE THAT COSTS AN HOUR: joining both halves inside a
+  single transaction makes Revit raise, at COMMIT, a modal "Error — cannot be ignored: The family is
+  connected in a network and can no longer keep the connectivity."** A bridge script cannot answer a modal
+  dialog, so the call does not fail — **it HANGS**, and Stop must be pressed in the AJ AI pane. Ajmal
+  screenshotted the dialog, which is what identified it; from the script side it was indistinguishable
+  from a frozen Revit. Committing each join separately gives 2/2 silently. **Also re-learned the hard way:
+  `Document.Regenerate()` after `Commit()` throws "Modification of the document is forbidden" — already
+  documented in `live-model/core.md` and still walked into.** Status recorded honestly: the METHOD is
+  proven (2/2 joined, both halves 1/1), the rewritten file as one uninterrupted run is NOT — a re-test
+  threw a null reference and rolled back cleanly, and the null was not isolated before the session ended.
