@@ -1,5 +1,15 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/auto-search-hook.mjs\""
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
