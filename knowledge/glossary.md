@@ -35,6 +35,31 @@ is exactly the one a fresh session cannot route.
   Could mean **Duct Fitting** (`OST_DuctFitting`) or **Pipe Fitting** (`OST_PipeFitting`). Check the
   surrounding context (is the conversation about ducts or pipes?) before picking one. If unclear, ask.
 - **"Debt accessories" (dictation)** → Duct Accessories (`OST_DuctAccessory`).
+- **"Duck" (dictation)** → **duct** (`OST_DuctCurves`). Said 2026-08-13 as the two-word command
+  **"duck hide"** — meaning *hide the ducts in the current view*. Two things to carry forward, not one:
+  1. **"Duck" is always "duct".** There is no Revit category, family or parameter called "duck", so a
+     bare "duck" never needs a clarifying question — just read it as duct and say which reading you took.
+  2. **He gives terse commands as `<noun> <verb>`, not `<verb> the <noun>`.** "duck hide" = hide the
+     ducts; expect the same shape for others ("pipe isolate", "wall hide"). Read the noun as the target
+     and the trailing word as the action — don't stall on the word order.
+  **Scope: the bare noun means that category only.** "duck hide" hid the 3 elements in **Ducts** and left
+  Duct Fittings visible — correct for what he said, but the fittings then float unattached on screen, so
+  say what is still showing and offer to hide them too rather than assuming either way.
+- **"Hired" (dictation)** → **hidden**. Said 2026-08-13: *"The remaining everything need to be hired."*
+  Nothing in Revit is "hired", so read it as hidden every time.
+- **"Deduct fittings" (dictation)** → **Duct Fittings** (`OST_DuctFitting`). Same swallowed-consonant
+  pattern as "debt accessories" → Duct Accessories, above. Note this one names the category outright, so
+  the "fitting"/"hitting" duct-vs-pipe ambiguity further up does **not** apply — "deduct fittings" is
+  unambiguously the duct side.
+- **"See only the X" / "the remaining everything need to be hidden"** → **isolate X**, not hide X — and
+  the two are opposites, so getting it backwards blanks exactly the wrong half of the view. Use
+  `isolate_elements` (it resets any prior temporary hide/isolate itself, so no separate reset call is
+  needed); `reset_isolation` is Revit's Reset Temporary Hide/Isolate and puts everything back.
+  **The trap this came from (2026-08-13):** he first said **"duck hide"**, which is hide-the-ducts, then
+  immediately corrected to **"see only the duct"**, which is the exact inverse. The two phrasings sit one
+  word apart in speech and one `isolate`/`hide` call apart in the model. When a follow-up message
+  re-states the same noun with a different verb, assume he is **correcting the direction**, not adding a
+  second action on top — re-read which half he wants left on screen before running anything.
 - **"HVAC plants" (dictation)** → HVAC / Mechanical **floor plan views** (e.g. "1 - Mech"), not physical
   plant equipment.
 - **Sub-Discipline** → a project parameter on views (separate from the built-in `Discipline` parameter)
@@ -156,6 +181,11 @@ is exactly the one a fresh session cannot route.
   only terms that already caused a misunderstanding. His instruction, verbatim: *"from now if I say
   something you have to remember okkey this is my normal work and you have to remember the words am
   using."* Nothing was removed — the existing confusion entries stand; the bar for adding one dropped.
+- 2026-08-13 — "duck" = duct, and the `<noun> <verb>` command shape ("duck hide" = hide the ducts).
+  Recorded on first use, before it caused any confusion, per the 2026-08-10 rule above.
+- 2026-08-13 — "hired" = hidden, and "see only the X" = isolate X. Both from the same exchange, where
+  "duck hide" was corrected to "see only the duct" one message later — logged with the hide/isolate
+  inversion trap that near-miss exposes.
 - 2026-08-04 — "the maximum duct size" has no single right answer: round carries Diameter, rectangular
   carries Width × Height, and the breakdown table's last row is the largest FIRST dimension, not the
   largest duct. Found by walking that exact question through the routing to see what a fresh session
