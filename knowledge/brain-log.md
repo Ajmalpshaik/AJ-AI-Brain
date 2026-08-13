@@ -1883,3 +1883,16 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   project to make one — a 12 m trunk in 3 pieces with 4 real takeoffs, each producing the
   `ConnectorType.Curve` connector the recipe counts. **"Fixture-blocked" should always be challenged with
   "can this be created by API?" before it is accepted.**
+- 2026-08-14 — **`examples/color-isolate-select-by-size.cs` verified live — all three chained actions.**
+  Run verbatim on its own default input (Height eq 500 mm) against a deliberately adversarial fixture: 17
+  ducts, only 2 at height 500, and 15 negatives at 400/300/250/200 with **different widths on the two
+  targets**, so passing required filtering on Height alone rather than on size generally. Every result was
+  confirmed from a SEPARATE bridge call rather than from the script's own report: 2/2 coloured red with
+  **0 wrongly coloured**, exactly those two visible under temporary isolate, exactly those two selected.
+  **One anomaly, written down precisely because it was not explained:** on the first run the selection read
+  back as **0** in the following call while the script had printed "Selected 2". It never reproduced.
+  `UIDocument.Selection.SetElementIds` was then shown to work, to survive across bridge calls, and to
+  survive an isolate-then-select in the same script — the exact order the example uses. So no bug is
+  claimed. **The practical rule: if a selection looks empty after this example, re-read it before
+  concluding the script failed** — three silent-success bugs in two days makes an unexplained zero worth
+  a second look rather than a fourth bug report.
