@@ -381,7 +381,8 @@ def staleness_banner():
             lines.append(f"    {key[:7]:<8} {rel}")
         if len(state[key]) > 4:
             lines.append(f"    {'':<8} ... and {len(state[key]) - 4} more")
-    lines.append("  FIX: run  semantic-index\\index-brain.cmd  (~90 s)")
+    lines.append("  FIX: edits made inside a session re-index themselves when the turn ends.")
+    lines.append("       If this keeps showing, run  semantic-index\\index-brain.cmd  (2-4 s).")
     lines.append("!" * 74)
     return "\n".join(lines)
 

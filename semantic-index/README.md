@@ -205,7 +205,8 @@ STALE INDEX - these results are from an OLDER copy of the Brain.
   1 changed, 2 new since the last rebuild.
     changed  knowledge/live-model/hvac-ducts.md
     added    scripts/actions/action-new-thing.cs
-  FIX: run  semantic-index\index-brain.cmd  (~90 s)
+  FIX: edits made inside a session re-index themselves when the turn ends.
+       If this keeps showing, run  semantic-index\index-brain.cmd  (2-4 s).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ```
 
