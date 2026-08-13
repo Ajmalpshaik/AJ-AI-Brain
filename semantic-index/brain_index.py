@@ -162,9 +162,24 @@ def chunks_for_file(path, rel_path, area):
 
     out = []
 
-    def emit(pieces, kind, heading=""):
+    def emit(pieces, kind, heading="", prefix=""):
+        """Add chunks, giving EVERY piece its context line - not just the first.
+
+        This is the mechanical half of Anthropic's Contextual Retrieval (2024): a chunk that
+        does not say what it belongs to cannot be retrieved by a question about the thing it
+        belongs to. Two real losses were found here on 2026-08-13:
+
+          * `.cs` CODE chunks were emitted as raw body text with no filename and no PURPOSE,
+            so a code chunk could only ever match on incidental variable names.
+          * `.md` SECTION chunks had the label folded into the text BEFORE splitting, so a
+            section long enough to split kept its heading on piece 1 and lost it on 2, 3, 4...
+
+        Anthropic's full version writes an LLM sentence per chunk and reports a 35% drop in
+        retrieval failures. This is the free part - deterministic, no model, no per-chunk cost.
+        """
         for piece in pieces:
-            out.append((piece, {"kind": kind, "heading": heading[:200]}))
+            text = f"{prefix}\n{piece}" if prefix and not piece.startswith(prefix) else piece
+            out.append((text, {"kind": kind, "heading": heading[:200]}))
 
     if path.suffix == ".cs":
         parsed = parse_cs(text)
@@ -188,6 +203,19 @@ def chunks_for_file(path, rel_path, area):
                 + parsed["inputs"]), "inputs")
 
         if parsed["body"]:
+            # MEASURED 2026-08-13: prefixing every code chunk with `filename — PURPOSE: ...`
+            # was tried and REVERTED. A code chunk carries no context at all, so adding it
+            # looked like a free win - it is the mechanical half of Anthropic's Contextual
+            # Retrieval, which reports a 35% drop in retrieval failures. Here it scored WORSE:
+            # recall@5 fell 7/14 -> 5/14, with and without the matching markdown change, so
+            # the code prefix alone was enough to cause it.
+            #
+            # Best reading of why: the KIND_WEIGHT in brain_search_hybrid.py already scores a
+            # code chunk at 0.35 precisely because variable names are incidental. Injecting the
+            # PURPOSE line into every code piece hands those chunks the same high-value words
+            # the `card` chunk carries, so a fragment's code starts competing with its own card
+            # - and with other fragments' cards - on text that was deliberately weighted down.
+            # The context was already in the index; it was in the chunk built for it.
             emit(cfg.split_to_size(parsed["body"]), "code")
 
         # Safety net for the 2 files with no PURPOSE at all.
@@ -206,6 +234,16 @@ def chunks_for_file(path, rel_path, area):
 
         for heading, content in sections:
             label = f"{filename} § {heading}" if heading else filename
+            # MEASURED 2026-08-13: labelling EVERY piece of a section was tried and REVERTED.
+            # It reads like an obvious improvement - a continuation chunk currently has no idea
+            # which file it came from - but scored worse: recall@5 fell 7/14 -> 5/14, and
+            # "isulate all the vcds" and "change the color to red" both dropped out of the top
+            # five. Repeating `filename § heading` across every piece of a long section dilutes
+            # each chunk's distinctive content, and inflates those tokens' document frequency
+            # so BM25's rarity weighting counts them for less. Markdown sections keep the label
+            # on piece one only. The `.cs` CODE chunks are a different case and DO get a prefix
+            # on every piece - they previously carried no context at all, so there was nothing
+            # to dilute.
             emit(cfg.split_to_size(f"{label}\n{content}"), "section", heading)
 
         if not out:

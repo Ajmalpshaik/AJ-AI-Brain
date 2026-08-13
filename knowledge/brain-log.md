@@ -1802,3 +1802,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   their neighbours. Modes: `query`, `explain`, `path`. **Honest limitation recorded in the tool itself:
   the graph does not rebuild itself**, so `search_graph` can be older than `search_brain` in a way that is
   invisible from its output.
+- 2026-08-13 — **REVERTED: contextual chunk headers made retrieval WORSE here — 7/14 → 5/14 at top-5.**
+  This is **Anthropic's own published Contextual Retrieval**, which reports a 35% drop in retrieval
+  failures, and reading our own chunker showed the gap was real: `.cs` **code** chunks were emitted as raw
+  body text with *no filename and no PURPOSE*, and `.md` section labels were folded in **before** splitting,
+  so any section long enough to split kept its heading on piece one and lost it on every piece after. Both
+  look like free wins. Both scored worse, and the code prefix alone was enough to cause it — measured
+  separately. Restored the baseline and re-scored to prove the revert was complete: **4/14 #1 and 7/14
+  top-5 came back exactly.** Best reading of why it does not transfer: **the context was already indexed,
+  in the chunk built for it.** Every fragment has a `card` chunk carrying filename + PURPOSE, and
+  `KIND_WEIGHT` scores code at **0.35** *precisely because* variable names are incidental. Injecting
+  PURPOSE into every code piece hands those chunks the same high-value words the card carries, so a
+  fragment's code competes with its own card — on text the ranking deliberately weighted down. For
+  markdown, repeating `filename § heading` across every piece also inflates those tokens' document
+  frequency, so BM25's rarity weighting counts them for less. **The transferable lesson: a technique with
+  a published effect size was measured against someone else's corpus and someone else's chunker. This one
+  is already structure-aware and kind-weighted, and the same idea double-counts instead of adding.** Fifth
+  time today that measuring beat reasoning — and the first where the reasoning was a published paper's.

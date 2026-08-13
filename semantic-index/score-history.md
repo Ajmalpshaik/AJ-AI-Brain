@@ -27,3 +27,6 @@ One line per `score-brain` run, oldest first. Written automatically.
 - 4/7 at #1, 4/7 in top 3, 4/7 in top 5
 - 4/14 at #1, 4/14 in top 3, 7/14 in top 5
 - 4/14 at #1, 4/14 in top 3, 7/14 in top 5
+- 4/14 at #1, 4/14 in top 3, 5/14 in top 5
+- 4/14 at #1, 4/14 in top 3, 5/14 in top 5
+- 4/14 at #1, 4/14 in top 3, 7/14 in top 5
