@@ -197,3 +197,10 @@ is exactly the one a fresh session cannot route.
   and "bigger counts" are two different questions one message apart.** If a request could mean either,
   say which one you are answering — or ask. Related: the 2026-08-04 entry above, where "maximum duct
   size" had the same shape of ambiguity.
+- 2026-08-14 — **"nocia tab" / "nocia tab ai connector" = NonicaTab** (Nonica, `nonica.io`) and its
+  **A.I. Connector for Revit** — the bought, off-the-shelf alternative to this Brain's AJ AI Bridge: an
+  MCP add-in giving Claude/ChatGPT/Cursor a fixed menu of ~37 read-only tools free, 50+ read-write on
+  PRO. Written down on first use, per the 2026-08-10 rule; the spelling matters because "nocia" returns
+  nothing in a search and "Nonica" returns everything. Full comparison:
+  [`tool-landscape-nonicatab.md`](tool-landscape-nonicatab.md). Related dictation shape: he drops the
+  **n** in the middle of a brand name, the same way "duck" loses the **t** of duct.
