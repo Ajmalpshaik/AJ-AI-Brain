@@ -1511,3 +1511,25 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   for door sizes; `action-report-parameters.cs` with `includeTypeParameters` returned them immediately.
   Logged alongside it: never read a size off the type NAME (`30" x 80"`), which is human-typed and can
   disagree with the real values.
+- 2026-08-13 — **Retrieval quality is measurable again: `semantic-index/score-brain.cmd`.** The
+  2026-08-06 run — 24 questions, 13 right at #1 — recorded the *score* and threw the *questions* away,
+  so the most useful measurement this Brain ever made could not be repeated, and every later change to
+  the embedding model, the chunking or the files would have been made blind. Four questions were
+  recoverable from this log and `semantic-index/README.md` and are seeded in
+  `semantic-index/test-questions.md`; the rest are Ajmal's to write, because questions written by
+  whoever is tuning the search get unconsciously shaped into ones it can already answer. The seed set is
+  deliberately unrepresentative — three of the four are the documented *failures* — so its score is a
+  regression guard, not a quality verdict, and is not comparable to 13/24. Found while building it:
+  **a new `.md` file inside `semantic-index/` was silently gitignored** (`semantic-index/*` with
+  `README.md` un-ignored by name only), so the test questions would have been written, used, and then
+  lost the day the Brain was copied to another machine. `.gitignore` now un-ignores `*.md` there.
+- 2026-08-13 — **[`glossary.md`](glossary.md) now displaces the answering skill, exactly as
+  `brain-log.md` once did — and it is not discounted.** On its very first run the score card caught
+  *"how many diffusers do I need in this room"* returning `glossary.md` at #1 and
+  `ajtools-hvac-terminal-layout` at #2. `semantic-index/README.md` still claims that question ranks #1,
+  written when it did — documentation quietly getting ahead of reality again. The cause is structural
+  and already known: a file that maps the user's words to meanings **matches more questions the bigger
+  it gets**, which is precisely why `brain-log.md`'s score was discounted to 0.85 on 2026-08-06. The
+  glossary has the same property and never got the same treatment. Deliberately NOT fixed in the same
+  turn: the fix changes ranking, and it now has a test that will prove whether it worked. Left as the
+  first target for the accuracy pass, with the README's stale claim to be corrected alongside it.
