@@ -17,6 +17,22 @@
   the user that "Reset Temporary Hide/Isolate" clears it, in case they want it made permanent instead
   (`view.SetCategoryHidden(catId, true)` per category, inside a transaction, if they ever ask for that).
 
+**The native `isolate_elements`/`hide_elements` MCP tools take ONE category — there is no multi-category
+form.** Its `category` field is a single string, so "show only the ducts, the fittings and the walls"
+cannot be one native call. Two working routes, confirmed live 2026-08-13:
+1. **`list_elements` per category, then one `isolate_elements` with the combined `elementIds`.** Best
+   when the user is building the set up conversationally one category at a time ("also the wall") and the
+   counts are small — each addition is one list call plus one re-isolate, and `elementIds` takes priority
+   over `category` when both are given.
+2. **Compose [`filter-by-multiple-categories.cs`](../../scripts/filters/by-identity/filter-by-multiple-categories.cs)
+   + [`action-isolate-elements.cs`](../../scripts/actions/visibility/action-isolate-elements.cs)** and run
+   it as one `run_csharp` call. Best when the category list is known up front or large enough that
+   round-tripping IDs is wasteful — and it survives the model changing between calls, which a captured
+   ID list does not.
+**Re-isolating replaces, it does not accumulate.** Each `isolate_elements` call resets the prior
+temporary state first, so when the user adds a category you must pass the *whole* set again, not just the
+new one — passing only the addition silently drops everything they already had on screen.
+
 **Don't assume view state from an earlier turn is still there — verify, don't recall.** Isolation and
 per-element color overrides (`SetElementOverrides`) can be cleared between messages — by the user resetting
 Temporary Hide/Isolate themselves, using Revit's Undo, or editing Visibility/Graphics directly. Confirmed
