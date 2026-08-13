@@ -16,6 +16,7 @@ that one file — don't read the whole folder.**
 | A request phrased in Dynamo node names (`Element.GetParameterValueByName`, `List.FilterByBoolMask`, ...) | [`dynamo-vocabulary-map.md`](dynamo-vocabulary-map.md) |
 | How to format a reply (counts, tables, the Final Report) | [`reply-style.md`](reply-style.md) |
 | A change to the Brain itself (new skill, split file, retired script) — recording it, not making it | [`brain-log.md`](brain-log.md) |
+| How this Brain's bridge compares to the bought alternative (an external tool A.I. Connector) — what it costs, what they have that we don't, which to reach for | [`tool-landscape-removed.md`](tool-landscape-removed.md) |
 
 ## Adding new knowledge
 
