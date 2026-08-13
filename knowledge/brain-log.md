@@ -1725,3 +1725,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   2026-08-09 and were four days behind. **Still outstanding there:** graphify's *semantic* pass over the
   markdown needs either a `GEMINI_API_KEY` or subagents, so doc-level entities are as of 2026-08-09 while
   code-level ones are current — a real, and currently invisible, split-brain in that graph.
+- 2026-08-13 — **The graphify split-brain is closed: the markdown side was extracted with subagents, on
+  Ajmal's explicit go-ahead.** 58 documents detected, 28 already cached, **30 needing extraction** — exactly
+  the files touched since 2026-08-09. Final graph: **1,184 nodes, 1,356 edges, 336 communities**, from 689
+  AST nodes plus 496 semantic (197 cached + **300 newly extracted**). Four things worth keeping, three of
+  them problems. **(1) One subagent died mid-run to an API connection error and wrote nothing.** The other
+  two survived. Retried it as *two* smaller chunks rather than one — the failed chunk had all the big root
+  docs (`AGENT-SPEC.md`, `README.md`, `START-HERE.md`, `CLAUDE.md`, `SETUP.md`) in a single batch — and both
+  halves then completed. **Chunk by size, not just by count.** **(2) The shrink guard fired and had to be
+  overridden:** 1,184 new against 1,214 existing. Verified legitimate before forcing — the old graph held
+  semantic nodes from the *2026-08-09* versions of 30 changed files, including the viewport text that has
+  since moved from `core.md` to `views.md`, and this extraction was deliberately instructed to be more
+  conservative (no node per fragment row, no node per log entry). Fewer, better nodes is a *smaller* graph,
+  which is exactly the shape the guard is built to stop — so a guard like that needs a human reason, not a
+  flag. **(3) UNRESOLVED — the health check reports 203 dangling-endpoint edges (~15% of 1,356)**, plus 16
+  collapsed same-endpoint edges. That is the AST-vs-LLM node-ID mismatch the graphify spec warns about:
+  subagent edges pointing at IDs the AST names differently. The graph is usable and this is recorded rather
+  than hidden, but it is a real integrity gap and nobody has chased it. **(4) Communities are unlabelled** —
+  `graphify label` found no LLM backend, so all 336 keep `Community N` placeholders. Fixable any time with
+  `GOOGLE_API_KEY` set and a re-run. Obsidian vault regenerated to 1,503 notes, 325 stale pruned.
