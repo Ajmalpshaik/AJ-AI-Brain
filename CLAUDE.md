@@ -37,13 +37,16 @@ the correct file was usually still in the top 3. It fails on **site vocabulary t
 "how many light fitting" matches "light hazard". [`knowledge/glossary.md`](knowledge/glossary.md) is the
 site-word → Revit-word map; when a search looks off, say the Revit word and re-run.
 
-> **It is a snapshot, not a live index.** After adding or changing anything in `skills/`, `knowledge/`,
-> `scripts/` or the root docs, run `semantic-index\index-brain.cmd` — **2–4 s**, since it only re-reads
-> what changed (a full ~80 s rebuild triggers itself when the chunking rules change). Treat this like updating
-> `scripts/README.md`: part of finishing the edit, not a separate chore. **If a search prints a
-> `STALE INDEX` banner, rebuild before trusting the results** — it is comparing file contents against
-> what the index was built from, so it is telling you the Brain has moved on since. It warns rather than
-> blocks, so the results underneath are still the old picture.
+> **It rebuilds itself — but only for edits made inside a session** (2026-08-13).
+> [`tools/reindex-mark.mjs`](tools/reindex-mark.mjs) flags any file edit and
+> [`tools/reindex-run.mjs`](tools/reindex-run.mjs) does one rebuild at the end of the turn, so editing
+> the Brain here no longer needs a separate step. **Edits made outside a session still go unnoticed** —
+> a git checkout, a branch switch, a file changed in an editor — so `semantic-index\index-brain.cmd`
+> stays for exactly those: **2–4 s**, since it only re-reads what changed (a full ~80 s rebuild triggers
+> itself when the chunking rules change). **If a search prints a `STALE INDEX` banner, rebuild before
+> trusting the results** — it compares file contents against what the index was built from, so it is
+> telling you the Brain has moved on since. It warns rather than blocks, so the results underneath are
+> still the old picture.
 
 ## Maintaining this repo (the Brain itself)
 
