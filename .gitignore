@@ -19,7 +19,7 @@ fragment-compile-failures.txt
 semantic-index/*
 !semantic-index/*.py
 !semantic-index/*.cmd
-!semantic-index/README.md
+!semantic-index/*.md
 !semantic-index/requirements.txt
 
 

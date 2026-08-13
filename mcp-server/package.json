@@ -1,6 +1,6 @@
 {
   "name": "aj-tools-aj-ai-mcp",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "private": true,
   "description": "MCP server that lets an AI agent run C# against a live Revit document through the AJ Tools AJ AI bridge, for automated tool testing/debugging. v1.3.0 adds 14 typed, schema-validated native tools (list/count/hide/isolate/unhide/reset-isolation/set-color/reset-overrides/transparency/select/set-parameter/report-parameters/move/delete) alongside the original run_csharp/ping/model_summary. v1.3.1 adds the npm-test smoke suite, set_parameter_value input validation, and discovery-file error hardening.",
   "type": "module",

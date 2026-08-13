@@ -3,6 +3,9 @@
 One file per tool. Read this table, open the one file you need — don't read the whole folder. Every
 tool is registered from `../index.js`; nothing here runs on its own.
 
+> **This folder is the Revit tools only.** There is one more registered tool, `search_brain`, which
+> lives in `../brain-tools/` because it never touches Revit — see the last section of this file.
+
 ## Original tools (flexible, always available)
 | Tool | File | Job |
 |---|---|---|
@@ -50,3 +53,31 @@ connection is needed or used: every call is expected to reach the "AJ AI Bridge 
 proving each handler's own C#-generation code runs to completion first. It does NOT replace live
 verification against a real Revit session for actual Revit-API behavior — it only proves the JS side
 never throws before reaching the bridge.
+
+## Not a Revit tool: `search_brain`
+
+`../brain-tools/search-brain.js` registers one more tool, **`search_brain`** — ask the AJ AI Brain a
+question in plain English and get back the skills, knowledge notes and C# fragments that answer it,
+matched by meaning as well as exact words. It reads only, never opens the bridge, and **works with
+Revit closed**.
+
+| Input | Meaning |
+|---|---|
+| `query` | The question in plain English, in the user's own words, site terms and all |
+| `top` | How many results (1–20, default 5) |
+| `area` | Restrict to `fragment`, `knowledge`, `skill` or `guide`. Omit to search everything |
+
+**Why it is not in this folder.** `tools/brain-status.mjs` counts every `.js` file here and reports the
+total as *native tools*, meaning Revit bridge tools. Putting a non-Revit tool in with them would quietly
+turn a true number into a false one — the documentation-ahead-of-reality failure this repo keeps having.
+Different kind of tool, different folder, both counts stay honest.
+
+**Why it exists.** `semantic-index\ask-brain-hybrid.cmd` is a Windows batch file. On Claude Code for web,
+or any Linux/macOS container, it does not fail — it *silently does nothing*. That is exactly how a whole
+session of edits went through unchecked on 2026-08-04, when a `.ps1` hook wrapper had the same problem.
+A tool call works everywhere Node runs.
+
+**Adding another non-Revit tool** follows the same steps as above with two changes: put it in
+`../brain-tools/`, and give it **its own test** in `../test/smoke.test.js` rather than adding it to the
+two lists there. Those lists assert exactly 17 registrations and that every handler fails with a bridge
+error; a tool that does neither would break a guard worth keeping.

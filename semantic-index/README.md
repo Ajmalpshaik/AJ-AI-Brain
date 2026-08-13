@@ -186,14 +186,15 @@ count as a full rebuild** — 2,540 either way.
 
 ## When to rebuild — this is the important bit
 
-The index is a **snapshot**. It does not notice when you edit the Brain.
+**Since 2026-08-13 you usually don't have to.** `tools/reindex-mark.mjs` (a PostToolUse
+hook) flags any file edit made inside a session, and `tools/reindex-run.mjs` (a Stop
+hook) does **one** rebuild at the end of that turn — not one per edited file. Editing
+the Brain through an AI session now refreshes the index by itself.
 
-Add a new fragment, write a new knowledge note, or change a skill, and the
-search will keep returning the *old* text until you rebuild. So:
+**What still goes unnoticed** is any edit the session never saw:
 
-> **After you add or change anything in `skills/`, `knowledge/`, `scripts/`,
-> the five top-level guides, or `mcp-server/tools/README.md`, run
-> `index-brain.cmd`.**
+> **A git checkout or branch switch, a file changed in an editor, a folder copied in —
+> none of those fire a hook. After any of those, run `index-brain.cmd` yourself.**
 
 **You will be told when you forget.** Every search compares the Brain on disk
 against what the index was built from, and shouts if they differ:
@@ -204,7 +205,8 @@ STALE INDEX - these results are from an OLDER copy of the Brain.
   1 changed, 2 new since the last rebuild.
     changed  knowledge/live-model/hvac-ducts.md
     added    scripts/actions/action-new-thing.cs
-  FIX: run  semantic-index\index-brain.cmd  (~90 s)
+  FIX: edits made inside a session re-index themselves when the turn ends.
+       If this keeps showing, run  semantic-index\index-brain.cmd  (2-4 s).
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ```
 
@@ -213,13 +215,20 @@ checking out a git branch changes dates without changing a word, and a warning
 that cries wolf is one you learn to ignore. The results still print underneath;
 you are being warned, not blocked.
 
-You do not need to remember what changed. Every run throws the whole index away
-and builds it fresh from whatever is on disk right now. That is deliberate — a
-partial update would leave ghost entries behind for files you deleted or
-renamed, and a stale index is worse than no index. (The same reasoning the
-repo's `.gitignore` already applies to `graphify-out/`.)
+You do not need to remember what changed — it works that out itself by comparing
+file contents, and re-reads only what actually moved. Ghost entries are prevented
+not by rebuilding everything but by deleting *every* chunk of a changed file before
+writing its new ones; that was verified by shrinking a 30-chunk file to 2 and
+confirming the removed text was gone, and by checking an incrementally-updated index
+reports the same chunk count as a full rebuild.
 
-Running it more often than needed costs nothing but the 80 seconds.
+Running it more often than needed costs nothing — a rebuild with nothing changed is
+about 2 seconds.
+
+*(This paragraph used to claim every run threw the whole index away and cost 80
+seconds. That stopped being true when the incremental path landed on 2026-08-06 and
+was corrected on 2026-08-13 — it had been contradicting the timing table further up
+this same file.)*
 
 ---
 

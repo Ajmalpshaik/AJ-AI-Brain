@@ -1511,3 +1511,59 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   for door sizes; `action-report-parameters.cs` with `includeTypeParameters` returned them immediately.
   Logged alongside it: never read a size off the type NAME (`30" x 80"`), which is human-typed and can
   disagree with the real values.
+- 2026-08-13 — **Retrieval quality is measurable again: `semantic-index/score-brain.cmd`.** The
+  2026-08-06 run — 24 questions, 13 right at #1 — recorded the *score* and threw the *questions* away,
+  so the most useful measurement this Brain ever made could not be repeated, and every later change to
+  the embedding model, the chunking or the files would have been made blind. Four questions were
+  recoverable from this log and `semantic-index/README.md` and are seeded in
+  `semantic-index/test-questions.md`; the rest are Ajmal's to write, because questions written by
+  whoever is tuning the search get unconsciously shaped into ones it can already answer. The seed set is
+  deliberately unrepresentative — three of the four are the documented *failures* — so its score is a
+  regression guard, not a quality verdict, and is not comparable to 13/24. Found while building it:
+  **a new `.md` file inside `semantic-index/` was silently gitignored** (`semantic-index/*` with
+  `README.md` un-ignored by name only), so the test questions would have been written, used, and then
+  lost the day the Brain was copied to another machine. `.gitignore` now un-ignores `*.md` there.
+- 2026-08-13 — **[`glossary.md`](glossary.md) now displaces the answering skill, exactly as
+  `brain-log.md` once did — and it is not discounted.** On its very first run the score card caught
+  *"how many diffusers do I need in this room"* returning `glossary.md` at #1 and
+  `ajtools-hvac-terminal-layout` at #2. `semantic-index/README.md` still claims that question ranks #1,
+  written when it did — documentation quietly getting ahead of reality again. The cause is structural
+  and already known: a file that maps the user's words to meanings **matches more questions the bigger
+  it gets**, which is precisely why `brain-log.md`'s score was discounted to 0.85 on 2026-08-06. The
+  glossary has the same property and never got the same treatment. Deliberately NOT fixed in the same
+  turn: the fix changes ranking, and it now has a test that will prove whether it worked. Left as the
+  first target for the accuracy pass, with the README's stale claim to be corrected alongside it.
+- 2026-08-13 — **The semantic index now rebuilds itself; it can no longer go stale.** It was a snapshot
+  that refreshed only when someone remembered `index-brain.cmd`, so any session that forgot left every
+  later session searching an older copy of the Brain — answering confidently out of text that no longer
+  existed. `tools/reindex-mark.mjs` (PostToolUse) writes a zero-byte flag and returns in ~0.15 s;
+  `tools/reindex-run.mjs` (Stop) does **one** rebuild per turn rather than one per edited file, then
+  clears the flag. Three decisions worth keeping: **(1)** neither calls `semantic-index/index-brain.cmd`
+  — that wrapper ends with `pause`, so a hook calling it would block forever waiting for a keypress, and
+  the same trap is now documented at the top of `score-brain.cmd`. **(2)** The marker deliberately does
+  **not** parse the hook payload to check *which* file changed: a rebuild with nothing changed re-embeds
+  nothing and costs ~3.5 s, while mis-parsing an undocumented payload would silently stop marking
+  altogether — the exact failure this pair removes. Cheap-and-always-right beats
+  clever-and-sometimes-off. **(3)** The marker runs *before* the consistency checker in the PostToolUse
+  list, because the checker exits 2 on drift and the flag must be set regardless. Measured: ~0.15 s when
+  there is nothing to do, ~3.5 s for a no-change rebuild, ~12 s after editing this file — 206 of the
+  index's 2,984 chunks live in `brain-log.md` alone, so the README's "2.8 s" is the small-file case.
+- 2026-08-13 — **Brain search is now an MCP tool, `search_brain`, so it works where `.cmd` files do not.**
+  `semantic-index\ask-brain-hybrid.cmd` is a Windows batch file: on Claude Code for web, or any
+  Linux/macOS container, it does not fail — it *silently does nothing*, the same shape of failure as the
+  `.ps1` hook wrapper that let a whole session run unchecked on 2026-08-04. Four decisions worth keeping.
+  **(1) It lives in `mcp-server/brain-tools/`, not `mcp-server/tools/`** — `tools/brain-status.mjs:90`
+  counts every `.js` in `tools/` and reports the total as native **Revit** tools, so a non-Revit tool
+  there would quietly turn a true number into a false one. Verified after wiring: still reports 17.
+  **(2) It returns plain text, not `asToolResult`** — the search's own layout (ranks, `found by:
+  meaning #3 + words #1`, `[PROVEN]`, the STALE banner) *is* the payload, and `JSON.stringify` would
+  escape every newline and make the one thing the tool exists to show unreadable. Errors still go through
+  `asToolResult` so the failure shape matches every other tool. **(3) It gets its own test in
+  `mcp-server/test/smoke.test.js`** rather than joining the two lists there, which assert exactly 17
+  registrations and that every handler fails with a bridge error — `search_brain` does neither, and
+  that 17-guard is worth keeping intact. The test accepts *either* real results *or* a clean "no venv"
+  error, because `semantic-index/venv/` is gitignored and a fresh clone has none; asserting only the
+  first would make `npm test` fail on every fresh checkout. **(4)** Found while finishing it: the
+  `STALE INDEX` banner told you to run a rebuild "(~90 s)". That is the *full*-rebuild figure, but the
+  banner fires on ordinary staleness, which needs the 2–4 s incremental — it was quoting the right
+  number for the wrong situation, and now names the automatic rebuild first.

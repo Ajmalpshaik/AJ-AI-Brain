@@ -29,6 +29,12 @@ import { register as registerReportParameters } from "../tools/report-parameters
 import { register as registerMoveElements } from "../tools/move-elements.js";
 import { register as registerDeleteElements } from "../tools/delete-elements.js";
 
+// Not a Revit tool, and deliberately NOT added to the lists below: the two tests there assert
+// exactly 17 registrations and that every handler fails with a bridge error. search_brain never
+// touches the bridge, so it gets its own test at the bottom of this file and the 17-tool guard
+// stays meaningful.
+import { register as registerSearchBrain } from "../brain-tools/search-brain.js";
+
 // One representative, schema-valid argument object per tool — enough to exercise every branch in each
 // handler's own C#-building code (category resolution, optional fields, view targeting, etc.).
 const SAMPLE_ARGS = {
@@ -134,5 +140,46 @@ test("set_parameter_value rejects both or neither of stringValue/numericValueMm 
     const result = await handler(badArgs);
     assert.equal(result.isError, true, `expected a validation error for ${JSON.stringify(badArgs)}`);
     assert.match(result.content[0].text, /exactly one of/i);
+  }
+});
+
+test("search_brain registers well-formed and returns without a bridge", async () => {
+  const server = createFakeServer();
+  registerSearchBrain(server);
+
+  assert.equal(server.registrations.length, 1, "search-brain.js must register exactly one tool");
+
+  const { name, description, schema, handler } = server.registrations[0];
+  assert.equal(name, "search_brain");
+  assert.ok(description && description.length > 10, "description missing or too short");
+  assert.deepEqual(Object.keys(schema).sort(), ["area", "query", "top"]);
+  assert.equal(typeof handler, "function");
+
+  // The real invocation. Slower than the rest of this file (~10 s, it loads the embedding model),
+  // but it is the only thing that proves the Python hand-off actually works end to end.
+  //
+  // Two outcomes are both correct, because semantic-index/venv/ is gitignored: on a machine that
+  // has it, real results come back; on a fresh clone it has not been created yet and the handler
+  // must say so cleanly rather than throw. Asserting only one of these would make `npm test` fail
+  // on any fresh checkout, which is a worse bug than the one it would be guarding against.
+  const result = await handler({ query: "how do I undo a mistake", top: 2 });
+
+  assert.ok(
+    result && Array.isArray(result.content) && result.content[0]?.type === "text",
+    "malformed tool result shape"
+  );
+
+  if (result.isError) {
+    assert.match(
+      result.content[0].text,
+      /python|venv/i,
+      `the only acceptable failure here is a missing venv, got: ${result.content[0].text}`
+    );
+  } else {
+    assert.match(
+      result.content[0].text,
+      /QUESTION:/,
+      "expected the search's own output header in the results"
+    );
   }
 });
