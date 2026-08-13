@@ -1548,3 +1548,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   list, because the checker exits 2 on drift and the flag must be set regardless. Measured: ~0.15 s when
   there is nothing to do, ~3.5 s for a no-change rebuild, ~12 s after editing this file — 206 of the
   index's 2,984 chunks live in `brain-log.md` alone, so the README's "2.8 s" is the small-file case.
+- 2026-08-13 — **Brain search is now an MCP tool, `search_brain`, so it works where `.cmd` files do not.**
+  `semantic-index\ask-brain-hybrid.cmd` is a Windows batch file: on Claude Code for web, or any
+  Linux/macOS container, it does not fail — it *silently does nothing*, the same shape of failure as the
+  `.ps1` hook wrapper that let a whole session run unchecked on 2026-08-04. Four decisions worth keeping.
+  **(1) It lives in `mcp-server/brain-tools/`, not `mcp-server/tools/`** — `tools/brain-status.mjs:90`
+  counts every `.js` in `tools/` and reports the total as native **Revit** tools, so a non-Revit tool
+  there would quietly turn a true number into a false one. Verified after wiring: still reports 17.
+  **(2) It returns plain text, not `asToolResult`** — the search's own layout (ranks, `found by:
+  meaning #3 + words #1`, `[PROVEN]`, the STALE banner) *is* the payload, and `JSON.stringify` would
+  escape every newline and make the one thing the tool exists to show unreadable. Errors still go through
+  `asToolResult` so the failure shape matches every other tool. **(3) It gets its own test in
+  `mcp-server/test/smoke.test.js`** rather than joining the two lists there, which assert exactly 17
+  registrations and that every handler fails with a bridge error — `search_brain` does neither, and
+  that 17-guard is worth keeping intact. The test accepts *either* real results *or* a clean "no venv"
+  error, because `semantic-index/venv/` is gitignored and a fresh clone has none; asserting only the
+  first would make `npm test` fail on every fresh checkout. **(4)** Found while finishing it: the
+  `STALE INDEX` banner told you to run a rebuild "(~90 s)". That is the *full*-rebuild figure, but the
+  banner fires on ordinary staleness, which needs the 2–4 s incremental — it was quoting the right
+  number for the wrong situation, and now names the automatic rebuild first.
