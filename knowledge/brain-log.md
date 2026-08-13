@@ -1567,3 +1567,29 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `STALE INDEX` banner told you to run a rebuild "(~90 s)". That is the *full*-rebuild figure, but the
   banner fires on ordinary staleness, which needs the 2–4 s incremental — it was quoting the right
   number for the wrong situation, and now names the automatic rebuild first.
+- 2026-08-13 — **Every real question now searches this Brain before the assistant answers it.**
+  `tools/auto-search-hook.mjs` (UserPromptSubmit) runs the search on what Ajmal typed and puts the top
+  five hits into context *before* the message is read. Retrieval had been optional: nothing forced a
+  search, so whether the Brain was consulted depended on remembering to run a command, and when it was
+  forgotten the answer came from general Revit knowledge instead of 269 proven fragments. Two decisions.
+  **(1) Gated, not sped up.** A search costs ~3.5 s because it loads the 166 MB model — nothing on a
+  real question, pure waste on "ok". Short confirmations, slash commands and anything under four words
+  are skipped; a warm search service was deliberately NOT built, because gating is the cheap fix and the
+  expensive one should only be built if the delay is ever actually felt. **(2) A compact block, not the
+  search output.** `semantic-index/brain_context.py` prints seven lines — path, area or PROVEN status,
+  and `meaning#N words#N` — because the normal output carries a long snippet per hit and would bloat
+  every message in the session. The `STALE INDEX` warning is carried inline, since the point of
+  injecting this is that nobody has to go looking for a warning.
+- 2026-08-13 — **First agent: `brain-librarian`, and one shared rules file.** `.claude/agents/` did not
+  exist before today. The Librarian files what a session learned — checks it is not already written,
+  routes it per `brain-self-maintain`, records Ajmal's own words in `glossary.md`, logs it here, and
+  runs the consistency checker. It is given `Read/Write/Edit/Glob/Grep/Bash` and **no Revit tools at
+  all**: there is one bridge and one open session, and an agent running a script while Ajmal works in
+  the same model is two transactions fighting over his work. The boundary is enforced by what it is
+  given, not by asking it nicely. `.claude/agents/brain-agent-rules.md` holds the rules every future
+  agent must follow and deliberately **points at** `CLAUDE.md` / `START-HERE.md` rather than copying
+  them — a second copy of a rule drifts from the original, which is this repo's recurring failure. Two
+  agents from the first draft were dropped for being the wrong tool: a "capture" agent (writing one line
+  to a file is a single tool call) and a "health check" agent (`brain-status.mjs` already does it and
+  never forgets). The rule that produced both cuts: **if the job has no judgment in it, it is a hook or
+  a script, never an agent.**
