@@ -32,3 +32,10 @@ __pycache__/
 # the assistant ever queued and the assistant's voice never once played (proven 2026-08-11, see
 # tools/voice/say.mjs). Ignored here so megabytes of generated MP3 still never travel with the Brain.
 .voice-runtime/
+
+# Job log DATA - machine-written, appended on every turn (tools/job-log-revit.mjs and
+# brain_context.py --log). Committing it was tried on 2026-08-13 and reverted the same hour:
+# a file that changes every turn leaves the working tree permanently dirty and blocks every
+# checkout and merge. The data still travels with the Brain, because the Brain travels as a
+# FOLDER - see job-log/README.md. Only the README is tracked.
+job-log/*.jsonl

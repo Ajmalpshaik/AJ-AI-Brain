@@ -5,23 +5,68 @@ person reading the answer, far too heavy to prepend to every message someone typ
 prints only what is needed to decide which file to open: the path, what kind of file it
 is, how it was found, and whether a fragment is proven.
 
-Reads only. Never changes the Brain, never touches Revit.
+Never touches Revit, and never changes the Brain. With --log it appends one line to
+job-log/questions.jsonl, which is data ABOUT the Brain's use, not part of the Brain -
+it sits outside every indexed folder so it can never compete in search results.
 
     brain_context.py "how do I stop ducts overlapping the ceiling"
     brain_context.py --top 3 "sprinkler spacing"
+    brain_context.py --log "..."          also record the question and what came back
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+JOB_LOG = HERE.parent / "job-log" / "questions.jsonl"
+
+
+def log_question(query, results):
+    """Append one line to job-log/questions.jsonl. Never raises.
+
+    Two jobs, both of which need months of real use before they pay off, which is why this
+    starts recording as early as possible:
+
+      1. Which files actually answer real questions - and therefore which of the 269 fragments
+         are doing the work and which have never once been the answer.
+      2. A question -> correct-file pair set. That is the shape of data needed to fine-tune an
+         embedding model on Ajmal's own site vocabulary, which is this Brain's measured weak
+         spot and cannot be fixed by re-ranking.
+
+    Deliberately no timestamp precision beyond the date: this is a usage record, not an audit
+    trail, and a coarse date keeps the file readable and its git diffs small.
+    """
+    try:
+        from datetime import date
+
+        JOB_LOG.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            "date": date.today().isoformat(),
+            "question": query,
+            "hits": [
+                {
+                    "path": str(r.get("path", "")).replace("\\", "/"),
+                    "meaning": r.get("meaning_rank"),
+                    "words": r.get("word_rank"),
+                }
+                for r in results
+            ],
+        }
+        with JOB_LOG.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        # A log that fails must never break the search it is only recording.
+        pass
 
 
 def main(argv):
     parser = argparse.ArgumentParser(description="Compact Brain search block for context.")
     parser.add_argument("query", nargs="+")
     parser.add_argument("--top", type=int, default=5)
+    parser.add_argument("--log", action="store_true",
+                        help="append the question and its hits to job-log/questions.jsonl")
     args = parser.parse_args(argv)
 
     query = " ".join(args.query).strip()
@@ -59,6 +104,9 @@ def main(argv):
     # whole point of injecting this is that nobody has to go looking for a warning.
     if notes and "stale" in repr(notes).lower():
         lines.append("  (WARNING: index is STALE - these paths may be out of date)")
+
+    if args.log:
+        log_question(query, results)
 
     print("\n".join(lines))
     return 0
