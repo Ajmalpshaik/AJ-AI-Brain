@@ -3,7 +3,7 @@
 Paste the block below as your first message in a fresh session. Everything above the line is context;
 everything under **"What I want you to do"** is the actual work.
 
-Last updated: 2026-08-14, end of the fixture-and-verification session.
+Last updated: 2026-08-14, end of the second verification session.
 
 ---
 
@@ -28,98 +28,145 @@ retrieval and self-maintenance machinery around them.
 A SessionStart hook prints the true state on every start. **Trust that, not this file** — this file is a
 snapshot and snapshots go stale, which is the failure mode this whole repo is built against.
 
-## 2. State as of 2026-08-14
+## 2. State as of 2026-08-14 (end of session 2)
 
 | | |
 |---|---|
-| Skills / fragments / native tools | 10 · 270 · 17 |
-| Proven against a real model | 223 (83%) · 16 flagged untested · 13 blocked · 18 no status |
-| Retrieval score | **4/14 at #1, 7/14 in top 5** — honest, not flattering |
-| Knowledge graph | 1,192 nodes · 0 dangling · 328 named communities |
-| Git | `main` in sync, one branch, tag `v2026.08.14` |
+| Skills / fragments / native tools | **11** · 270 · 17 (`ajtools-visual-report` added 2026-08-14) |
+| Proven against a real model | **234 (87%)** · 12 flagged untested · 12 blocked · 12 no status |
+| Retrieval score | 4/14 at #1, 7/14 in top 5 — honest, not flattering |
+| Git | `main`, one branch |
 
-## 3. What the last session did — the short version
+Verified count moved 223 → 234 this session. Nine of those eleven were **already verified and being
+miscounted** — see §4.
 
-Turned the Brain from "a RAG you had to remember to use" into one that maintains itself, then started
-proving the unproven fragment library against a live model.
+## 3. THE THING THAT WILL BITE YOU FIRST
 
-**Six reflexes now run on hooks, so nothing depends on anyone remembering:**
-semantic index rebuild · retrieval re-score · knowledge-graph rebuild · uncaptured-test-question nudge ·
-un-composed-C# nudge · voice.
-
-**Built:** score card (`score-brain.cmd`), `search_brain` and `search_graph` MCP tools, `job-log/`,
-four agent definitions, a cross-encoder re-ranker (measured neutral, **shipped OFF**).
-
-**Five times, measuring overturned reasoning** — including Anthropic's own published Contextual
-Retrieval, which measured *worse* here (7/14 → 5/14) and was reverted. All five are in
-`knowledge/brain-log.md` so nobody re-derives them.
-
-## 4. THE THING THAT WILL BITE YOU FIRST
-
-**The Revit model `Project1` is UNSAVED.** Every fixture built for verification lives only in memory:
+**The Revit model `Project1` is STILL UNSAVED.** Everything lives only in memory:
 
 ```
-17 ducts  ·  1 accessory-in-run  ·  7 duct fittings  ·  4 walls
-1 room (43.2 m²)  ·  1 MEP space  ·  2 HVAC zones  ·  1 floor  ·  3 sheets
+17 ducts · 7 duct fittings · 1 accessory · 4 walls · 1 room · 1 MEP space · 2 HVAC zones
+1 floor · 3 sheets · 3 air terminals · 1 dimension · 1 spot elevation
+2 insulated ducts · 2 electrical equipment · 2 electrical fixtures · 1 power circuit
 ```
 
-Including a **12 m trunk in 6 pieces with 4 takeoffs and 3 union fittings** that took real work to build.
+**Ask Ajmal to save it before doing anything else.** Everything above is rebuildable by API (all proven
+live — `Duct.Create`, `Wall.Create`, `NewRoom`, `NewSpace`, `NewFloor`, `ViewSheet.Create`,
+`NewFamilyInstance`, `DuctInsulation.Create`, `ElectricalSystem.Create`), but rebuilding costs a session.
 
-**Ask Ajmal to save it before doing anything else.** If it is gone, rebuild with `Duct.Create`,
-`Document.Create.NewTakeoffFitting`, `Wall.Create`, `NewRoom`, `NewSpace`, `NewFloor`,
-`ViewSheet.Create` — all proven live on 2026-08-14, see `knowledge/brain-log.md`.
+The insulation and electrical fixtures were **deliberately left in place** so the fragments that depend on
+them stay re-runnable.
+
+## 4. What the last session did
+
+**Closed 8 open items.** The three annotation/sheet-set fragments (aligned dimensions, spot elevations,
+sheet sets), the insulation action, both insulation filters, `load-family.cs`, and
+`filter-by-electrical-system.cs`.
+
+**Found a fourth silent-success bug** — `action-add-spot-elevations.cs` annotated the soffit at −300 mm on
+a 300 mm floor while reporting "1 placed, 0 skipped". Fixed.
+
+**The headline lesson, and it cost real bugs to learn: a CHECK written by reading code is a hypothesis,
+not a finding.** Of five predictions tested against the live model this session, **three were wrong**:
+
+- The spot-elevation guard `Math.Abs(FaceNormal.Z) > 0.9` would have passed the very face that was
+  wrong (−1.00). The real test is `> 0.9` **positive**.
+- `action-manage-sheet-sets.cs`'s header claimed selecting an existing set as `CurrentViewSheetSet` was
+  not viable on 2020. Reflection: it is plainly settable. The workaround it justified actually failed.
+- `load-family.cs`'s "KNOWN BUG" does not occur — already-loaded returns `ok=False` **and** `fam=NULL`.
+
+**"Fixture-blocked" was wrong three more times.** Insulation (the fragment *creates* insulation — it only
+needed a TYPE, and the template ships six), and electrical (the stock library ships **166 electrical
+.rfa**, which also cleared `load-family.cs`). **Ask "can this build its own fixture, or can the API build
+one" before accepting any blocked item.**
+
+**`tools/brain-status.mjs` was undercounting.** It matched `/verified 2026/`, so nine rows written
+"verified **live** 2026-08-14" were reported as unproven — the drift-detector had drifted. Widened.
+Real figure moved 223 → 232 before any new work.
 
 ## 5. What I want you to do
 
-### A. Finish the last 3 of the 9 live-bridge fragments — fixtures already exist
+### A. Ajmal's own job — do not do this for him
 
-1. `actions/annotation/action-add-aligned-dimensions.cs` — dimension the 4 walls
-2. `actions/annotation/action-add-spot-elevations.cs` — the floor gives the planar face
-3. `actions/sheet-dates-revisions/action-manage-sheet-sets.cs` — sheets M-901/902/903 exist
+`semantic-index/test-questions.md` has **14 rows and needs 20+**. They must be *his* words. The nudge tool
+(`node tools/test-row-nudge.mjs --all`) lists 32 captured messages, but most are session chatter —
+**only three are real Revit questions not yet rows**, and they are waiting for him to confirm:
 
-For each: read the fragment, run it verbatim with real inputs, then **verify from a SEPARATE bridge
-call** — never from the script's own report. Update its row in `scripts/README.md` and add a dated
-entry to `knowledge/brain-log.md`. Two silent-success bugs were found exactly this way.
+| His words | Proposed expected file (HIS call, not yours) |
+|---|---|
+| `no am talking bout the biggest space how mey airterminal is there` | `skills/ajtools-live-model/SKILL.md` |
+| `not all the assessory isulate only vcd` | `skills/ajtools-live-model/SKILL.md` |
+| `can you tell me how meny vcd is there in the model` | `scripts/actions/reporting/action-count-and-report.cs` |
 
-### B. Re-examine the 13 "blocked / fixture-blocked" items
+At 20+, the **embedding-model swap** unlocks — the largest accuracy gain still available.
 
-**Twice in two days, "fixture-blocked" turned out to mean "nobody tried to create it."** The insulation
-fragment had been blocked since July; one `Duct.Create` call cleared it. The slice-trunk recipe said
-"no matching multi-branch trunk fixture available"; two API calls built one.
+**The nudge tool needs tuning**: it captures every message, so real questions are buried in chatter.
+Worth a filter.
 
-**Challenge every blocked item with "can this be created by API?" before accepting it.**
+### B. Still open, and genuinely so
 
-### C. Ajmal's own job — do not do this for him
+- `action-place-accessory-on-run.cs` — METHOD proven, but the file as one uninterrupted run threw an
+  unisolated null reference. Read its STATUS block. Suspect: an element handle reused across a
+  transaction boundary after `BreakCurve`.
+- `recipes/ray-trace-to-ceiling.cs` — **an ASK, not a wait.** `Ceiling.Create` has 0 overloads before
+  2022 (re-confirmed by reflection). Ask Ajmal to draw ONE ceiling by hand; ten seconds, then it runs.
+- A nested shared family, and a sleeve family — the last two genuine fixture blocks. Both could be
+  authored via `Application.NewFamilyDocument` (proven to work), which is the next thing to challenge.
+- Graph markdown half needs a subagent pass or `GEMINI_API_KEY`.
 
-`semantic-index/test-questions.md` has **14 questions and needs 20+**. They must be *his* words, not
-yours: questions written by whoever is tuning the search prove nothing. They capture themselves as he
-works — `tools/test-row-nudge.mjs` lists any he asked that are not yet rows. **Surface them; let him
-confirm the expected answer.**
+### C. Tomorrow's build — the Desktop → Claude Code handoff (agreed 2026-08-14)
 
-At 20+, the **embedding-model swap** unlocks — the largest accuracy gain still available, deliberately
-not attempted because with 14 questions there is no honest way to tell improvement from damage.
+Ajmal wants to work in **Claude Desktop** for normal Revit jobs and be told to switch to **Claude Code**
+whenever the job is Brain maintenance — new skill, new script, updating, checking, anything that edits
+this repo. Desktop cannot do that work: no file access of its own, no hooks, no shell, so no
+session-status, no consistency check, no re-index.
 
-### D. Open, lower priority
+**Build it in `mcp-server/`, not as a written rule** — a rule depends on the agent remembering; the relay
+cannot forget. `@modelcontextprotocol/sdk` 1.29.0 is installed and exposes `getClientVersion()`
+(verified 2026-08-14 in `server/index.d.ts`), so the relay can tell which app connected.
 
-- `action-place-accessory-on-run.cs` — rewritten, its METHOD proven, but the file as one uninterrupted
-  run threw an unisolated null reference. Read its STATUS block. Suspect: an element handle reused
-  across a transaction boundary after `BreakCurve`.
-- Graph markdown half needs a subagent pass or `GEMINI_API_KEY` (code half is automatic).
-- 328 communities are named; new ones fall back to their hub name.
+Shape:
+1. Detect the client at startup. Claude Desktop → maintenance work is refused with an explanation, not
+   attempted.
+2. **ASK FIRST, then write** — his explicit instruction: *"first it will ask that can i give the
+   handover.md like that and after that it will give."* Never write the handover silently.
+3. On a yes, append the job to `docs/HANDOVER.md`, which every Claude Code session already reads first
+   (`CLAUDE.md` §"Where the open work is"). So he opens Claude Code and it already knows — no pasting.
+
+Independent of the MCP Apps question below; this works whether or not clickable UI ever renders.
+
+### D. Also open — the clickable report (MCP Apps), untested
+
+Nonica shipped an interactive Revit report in Claude: click a bar → Revit selects, edit a cell →
+parameter changes, **no tokens**, because the widget calls tools directly instead of going through the
+model. Mechanism, verified 2026-08-14: a `ui://` resource + `_meta.ui.resourceUri`, host renders it in a
+sandboxed iframe, iframe calls tools back over postMessage.
+
+**The Revit half already exists here** — `select_elements`, `set_parameter_value`, `report_parameters`.
+Missing: the UI layer. `mcp-server/` registers tools only, no resources.
+
+**Do not promise this works — test it.** MCP Apps hosts confirmed: Claude Desktop, VS Code Copilot, M365
+Copilot, Goose, Postman, MCPJam, Archestra. **Claude Code is not on the list**, there is an open spec
+issue about how CLI hosts should support it at all (ext-apps #689), and an open bug that widgets are not
+rendering in Claude's own surfaces (ext-apps #671). Build one small proof — a duct report whose bars
+select in Revit — and try it in both apps. Full write-up: `knowledge/tool-landscape-nonicatab.md`.
 
 ## 6. How to work here — the rules that actually bite
 
-- **Read back after every change.** Three "silent success" bugs in two days: scripts that reported
-  success while doing nothing. The script's own report is not evidence.
-- **One step per script.** Break, place, connect as one script hung Revit behind a modal dialog. Split
-  and commit between steps.
+- **Read back after every change, from a SEPARATE bridge call.** Four "silent success" bugs in three
+  days. The script's own report is not evidence.
+- **Add a negative control.** A filter that returns "all" looks correct until it matters — prove it
+  *excludes* something too.
+- **One step per script.** Break, place, connect as one script hung Revit behind a modal dialog.
 - **A modal dialog HANGS the bridge, it does not fail.** If a call never returns, ask Ajmal to look at
-  Revit — there is probably a dialog waiting. Ask him to press Cancel, then re-read state.
-- **Never `Document.Regenerate()` after `Commit()`** — illegal, and surfaces as a hang.
+  Revit and press Cancel.
+- **One connection at a time — parallel bridge calls are unreliable.** And if Ajmal says "don't go to
+  Revit", make **no** call at all, not even a ping: it preempts his other session rather than queueing.
+- **Never `Document.Regenerate()` after `Commit()`** — illegal, surfaces as a hang.
 - **Every number is a per-request input.** State the ones you choose.
 - **He speaks mm. The API is feet.** Convert both ways, explicitly.
-- **`npm test` in `mcp-server/` is gated now** — it invokes `delete_elements` with `confirm:true`. If
-  the bridge is live it skips. Do not remove that gate.
+- **`npm test` in `mcp-server/` is gated** — it invokes `delete_elements` with `confirm:true`. Do not
+  remove that gate.
 - Fix any consistency drift **in the same turn** the hook reports it.
 
 ## 7. Where to look things up

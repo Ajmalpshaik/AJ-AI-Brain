@@ -13,10 +13,20 @@
 //         elements are skipped and REPORTED, and if fewer than 2 survive no dimension is created.
 // GOTCHA: axis "x" dimensions horizontal spacing, "y" vertical-in-plan; elements are sorted along that
 //         axis first so the chain reads left-to-right / bottom-to-top like a drafter would place it.
-// FLAGGED 2026-07-26 (static review): which reference types a given family exposes varies by how the
-//         family was authored. If whole categories come back "no usable reference", that's family
-//         authoring, not this fragment — dimension to grids instead (create-dimension.cs).
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// GOTCHA: this is FamilyInstance-only — `elements` that are Walls, Floors, Ducts or any system family
+//         yield `fi == null` and are all skipped. To dimension walls, use create-dimension.cs (grids/levels)
+//         or dimension to their faces; do not point this fragment at them expecting a result.
+// LIVE-VERIFIED 2026-08-14 — 3x M_Supply Diffuser at X 21500/24000/26500 mm, axis "x", offset 1000 mm, in a
+//         FloorPlan view. Created dimension id 918995 with 3 references and 2 segments reading 2500.0 mm
+//         each — the correct spacing. Confirmed from a SEPARATE bridge call: the element survived commit,
+//         so the degenerate-dimension-deleted-at-commit risk did not fire on this fixture.
+// MEASURED 2026-08-14, which reference types real content actually exposes — the header guess below was
+//         right, and the numbers are worth keeping:
+//           M_Supply Diffuser (stock Revit content) -> CenterLeftRight 1, CenterFrontBack 1, Strong 0, Weak 0
+//           M_* duct fittings, duct accessories     -> ALL FOUR ZERO. This fragment can never dimension them.
+//         So "no usable reference" on MEP fittings is expected, not a bug. Air terminals / equipment work.
+// GOTCHA: reading a created dimension back, `Dimension.Curve` throws "The input curve is not bound" —
+//         use `NumberOfSegments` / `Segments` / `References` to verify instead, never `.Curve`.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -9,8 +9,13 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified — confirm InsulationLiningBase.Thickness/HostElementId resolve in this
-//         Revit version before trusting bulk results (same caveat as filter-by-host.cs).
+// STATUS: ✓ LIVE-VERIFIED — first 2026-08-06 (add-then-rollback, every input exercised), re-verified
+//         2026-08-14. Both `Thickness` and `HostElementId` DO resolve on 2020 — the
+//         caveat is answered, not outstanding. Against 4x 25 mm duct insulation: a 20–30 mm band returned
+//         all 4, `resolveToHost = true` returned the 4 host Ducts, and a >=50 mm band returned 0 — that
+//         last one deliberately, as a negative control proving the thickness test actually excludes rather
+//         than passing everything through. A filter that only ever returns "all" looks correct until the
+//         day it matters.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

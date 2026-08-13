@@ -9,7 +9,7 @@ here "just works."
 ## 1. Point your AI coding tool at this folder
 
 **Option A — install as a Claude Code plugin (recommended).** This repo is itself an installable
-plugin (manifest in `.claude-plugin/`): one install gets all 10 skills auto-loaded on every project on
+plugin (manifest in `.claude-plugin/`): one install gets all 11 skills auto-loaded on every project on
 that machine, plus the bundled MCP relay — no folder copying, no `.mcp.json` editing. In an
 interactive Claude Code session on the target machine:
 

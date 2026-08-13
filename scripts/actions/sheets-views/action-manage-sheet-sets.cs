@@ -7,13 +7,20 @@
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) exist from a filter above. Only mode="create"
 //          actually consumes `elements` — report/delete/rename ignore them (pair with any cheap filter).
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// GOTCHA: creation must go through PrintManager.ViewSheetSetting (PrintRange.Select first) — a
-//         ViewSheetSet element cannot be constructed directly.
-// FLAGGED 2026-07-26 (static review): delete/rename go through Document.Delete / Element.Name on the
-//         collected ViewSheetSet element rather than ViewSheetSetting.Delete()/Rename(), because selecting
-//         an EXISTING saved set as CurrentViewSheetSet via the API is awkward on 2020. If rename throws,
-//         fall back to create-new + delete-old. First failure here = check this, not a logic bug.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog.
+// GOTCHA: everything must go through PrintManager.ViewSheetSetting — a ViewSheetSet element cannot be
+//         constructed directly, renamed by Element.Name, or removed by Document.Delete.
+// GOTCHA: `PrintManager.ViewSheetSetting` THROWS "This property is only available when user choose Select
+//         of Print Range" unless you set `pm.PrintRange = PrintRange.Select` first. Every mode that touches
+//         it does that first.
+// GOTCHA: PrintManager state is NOT transactional — PrintRange stays changed even if the transaction rolls
+//         back. Harmless (it is a dialog default, not model data), but do not expect a rollback to undo it.
+// LIVE-VERIFIED 2026-08-14 — all four modes against sheets M-901/902/903, each verified from a separate
+//         bridge call, not from this script's own report.
+// CORRECTED 2026-08-14 — the previous header claimed selecting an existing saved set as CurrentViewSheetSet
+//         "is awkward on 2020" and routed rename/delete through Element.Name / Document.Delete instead.
+//         Measured: that is FALSE. `CurrentViewSheetSet` is a settable property (reflection: canWrite=True),
+//         assigning it works, and the old route FAILED live with "You can NOT set the name here, please set
+//         the name via PrintSetup::Rename method!". Both now use the proper route.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -78,15 +85,22 @@ else if (mode == "delete" || mode == "rename")
             t.Start();
             try
             {
+                // Both routes go through ViewSheetSetting — select the existing set as current, then act.
+                // PrintRange.Select FIRST or `ViewSheetSetting` itself throws.
+                var pm = Document.PrintManager;
+                pm.PrintRange = PrintRange.Select;
+                var vss = pm.ViewSheetSetting;
+                vss.CurrentViewSheetSet = target;
+
                 if (mode == "delete")
                 {
-                    Document.Delete(target.Id);
+                    vss.Delete();
                     t.Commit();
                     sb.AppendLine($"Deleted sheet set '{setName}'.");
                 }
                 else
                 {
-                    target.Name = newSetName;
+                    vss.Rename(newSetName);
                     t.Commit();
                     sb.AppendLine($"Renamed sheet set '{setName}' -> '{newSetName}'.");
                 }

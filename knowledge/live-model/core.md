@@ -30,6 +30,16 @@ rather than just act on existing ones and don't fit the filter+action shape.
 - Posting AJ Tools' own ribbon commands — doesn't work, don't re-attempt
 
 ## Bridge basics
+- **"Don't go to Revit" is an absolute stop — obey it without asking why** (the user's rule, stated
+  2026-08-14: *"if i say do not go to revit becose another session is running"*). Make **no** bridge call
+  at all — not a ping, not a read-only count — until he says it is free again. The reason is the
+  documented one-connection-at-a-time limit (`AGENT-SPEC.md` §1.4): a call from here does not queue
+  behind his other session, it **preempts** it, so a "harmless" read can break work he is in the middle
+  of. Keep working on everything that does not need the model — the Brain's own files, reports built
+  from numbers already read this session, dashboards, planning — and say plainly which figures are from
+  an earlier read rather than fresh. Related: the same limit is what makes parallel bridge calls
+  unreliable — six at once on 2026-08-14 produced `the AJ AI bridge closed the pipe connection` on one
+  of them; go sequential.
 - For a common category count with one optional parameter breakdown, prefer the native
   `model_summary` MCP tool when it is exposed. It performs one read-only bridge call and returns the
   Revit version and model title, so a separate ping is unnecessary. Keep `run_csharp` for complex,

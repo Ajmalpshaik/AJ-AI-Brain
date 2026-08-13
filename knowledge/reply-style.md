@@ -32,6 +32,17 @@ How to answer, separate from what to build or fix.
   a few lines; don't pad it out. This is separate from (and doesn't replace) the bare-number/table rules
   above, which are for quick queries, not finished pieces of work.
 
+- **Anything with two or more numbers worth comparing gets a picture, unasked** (his rule, 2026-08-14:
+  *"i need always need visualization... if vishalization needdd it need to come"*) — and that picture is
+  **an inline chart in the chat reply, next to the schedule table**. This sits on top of the rules above,
+  it does not replace them: **a bare count is still a bare number, not a one-bar chart.**
+- **A published page is only ever made when he asks for one** (corrected the same day:
+  *"normaly i need to come in the chat... if i ask the artifects its need to come like this you make
+  html file"*). His word for it is **"artifact"**. Unasked, a page is slower for him and buries the
+  answer behind a link. The workflow, the template and the hard rules (never invent a figure, a failed
+  read shows as "not read" and never as 0) are in
+  [`skills/ajtools-visual-report/SKILL.md`](../skills/ajtools-visual-report/SKILL.md).
+
 Update this file directly whenever the user asks for a different reply format — it's meant to change often
 and stay small.
 
@@ -41,3 +52,6 @@ and stay small.
   not sorted by quantity.
 - Seed entry — a standing 7-point "Final Report" format applies to any substantive request (build/fix/
   check/live-model change), on top of (not instead of) the quick-answer rules above.
+- 2026-08-14 — visualization is now a standing part of the reply, not a request: two or more comparable
+  numbers get a chart or a dashboard automatically. Added the day he said *"always this need to come"*
+  after showing two Revit dashboards he wanted matched.

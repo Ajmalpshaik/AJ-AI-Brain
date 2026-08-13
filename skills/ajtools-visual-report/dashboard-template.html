@@ -1,0 +1,146 @@
+<!--
+  AJ AI Brain — dashboard template for skills/ajtools-visual-report.
+
+  Copy this file, replace every {{PLACEHOLDER}}, delete the sections you do not need, publish it.
+  Do NOT redesign it per job — the point is that every dashboard reads as one set.
+
+  Publishing notes that bite if forgotten:
+  - No <!DOCTYPE>, <html>, <head> or <body> tags. The <title> line stays — it names the page.
+  - A strict CSP blocks every external host. No CDN charts, no webfonts, no remote images.
+    That is why the bars below are plain divs and the type is a system stack.
+  - Bar widths are a percentage of the LARGEST value, not of the total.
+  - Fill nothing you did not read. A figure that failed gets the "unread" chip, never a 0.
+-->
+<title>{{MODEL}} {{WHAT}}</title>
+<style>
+  :root {
+    --ground: #F1F4F6; --surface: #FFFFFF; --surface-2: #E6ECEF;
+    --ink: #12171A; --ink-2: #48565C; --ink-3: #7B8B92; --line: #D2DBDF;
+    --accent: #15637C; --accent-2: #3E93AE; --accent-soft: #D6E7ED;
+    --flag: #8F5511; --flag-soft: #F5E6D1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F1416; --surface: #161D20; --surface-2: #1E272B;
+      --ink: #E6ECEF; --ink-2: #A1B0B7; --ink-3: #71838A; --line: #293438;
+      --accent: #5CB0CF; --accent-2: #3B8AA6; --accent-soft: #12333E;
+      --flag: #D59A57; --flag-soft: #372A15;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F1416; --surface: #161D20; --surface-2: #1E272B;
+    --ink: #E6ECEF; --ink-2: #A1B0B7; --ink-3: #71838A; --line: #293438;
+    --accent: #5CB0CF; --accent-2: #3B8AA6; --accent-soft: #12333E;
+    --flag: #D59A57; --flag-soft: #372A15;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.6; margin: 0; padding: 32px 20px 56px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  .num { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+  h1 { font-size: 30px; line-height: 1.15; font-weight: 600; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+  .sub { color: var(--ink-2); margin: 8px 0 0; font-size: 14px; }
+  h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600;
+       color: var(--ink-2); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .kpi .label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .kpi .value { font-size: 30px; font-weight: 600; letter-spacing: -.02em; margin-top: 6px; display: block; }
+  .kpi .unit { font-size: 14px; font-weight: 400; color: var(--ink-2); margin-left: 3px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px 24px; }
+  .bars { display: flex; flex-direction: column; gap: 12px; }
+  .bar-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) 82px; align-items: center; gap: 14px; }
+  .bar-label { font-size: 13px; color: var(--ink-2); }
+  .track { background: var(--surface-2); border-radius: 3px; height: 20px; overflow: hidden; }
+  .fill { background: var(--accent); height: 100%; border-radius: 3px 2px 2px 3px; }
+  .fill.b { background: var(--accent-2); }
+  .bar-value { font-size: 13px; text-align: right; color: var(--ink); }
+  .bar-value .pct { color: var(--ink-3); font-size: 12px; margin-left: 6px; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+       color: var(--ink-3); font-weight: 600; padding: 0 12px 8px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+  th.r, td.r { text-align: right; padding-right: 0; }
+  tr:last-child td { border-bottom: none; }
+  tfoot td { font-weight: 600; border-top: 1px solid var(--ink-3); border-bottom: none; padding-top: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 7px 13px;
+          border-radius: 999px; background: var(--surface-2); font-size: 13px; color: var(--ink-2); }
+  .chip b { font-weight: 600; color: var(--ink); }
+  .chip.zero, .chip.zero b { color: var(--ink-3); }
+  .chip.unread, .chip.unread b { background: var(--flag-soft); color: var(--flag); }
+  .note { background: var(--accent-soft); border-radius: 10px; padding: 16px 20px;
+          font-size: 13.5px; color: var(--ink-2); line-height: 1.65; }
+  .note strong { color: var(--ink); font-weight: 600; }
+  footer { font-size: 12.5px; color: var(--ink-3); line-height: 1.7; border-top: 1px solid var(--line); padding-top: 16px; }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .92em; color: var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">AJ AI Bridge · live read {{DATE}}</p>
+    <h1>{{MODEL}} {{WHAT}}</h1>
+    <p class="sub">{{REVIT_VERSION}} · read straight off the open model. {{ONE_LINE_ON_METHOD}}</p>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><span class="label">{{LABEL_1}}</span><span class="value num">{{VALUE_1}}</span></div>
+    <div class="kpi"><span class="label">{{LABEL_2}}</span><span class="value num">{{VALUE_2}}<span class="unit">{{UNIT}}</span></span></div>
+    <div class="kpi"><span class="label">{{LABEL_3}}</span><span class="value num">{{VALUE_3}}</span></div>
+    <div class="kpi"><span class="label">{{LABEL_4}}</span><span class="value num">{{VALUE_4}}</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>{{CHART_TITLE}}</h2>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-label num">{{ROW_LABEL}}</span>
+        <div class="track"><div class="fill" style="width: 100%"></div></div>
+        <span class="bar-value num">{{ROW_VALUE}}<span class="pct">{{ROW_PCT}}</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Schedule</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>{{COL_1}}</th><th class="r">{{COL_2}}</th><th class="r">{{COL_3}}</th><th class="r">Share</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">{{CELL}}</td><td class="r num">{{CELL}}</td><td class="r num">{{CELL}}</td><td class="r num">{{CELL}}</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Total</td><td class="r num">{{TOTAL}}</td><td class="r num">{{TOTAL}}</td><td class="r num">100%</td></tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Rest of the model</h2>
+    <div class="chips">
+      <span class="chip">{{CATEGORY}} <b class="num">{{COUNT}}</b></span>
+      <span class="chip zero">{{CATEGORY}} <b class="num">0</b></span>
+      <span class="chip unread">{{CATEGORY}} <b>not read</b></span>
+    </div>
+  </section>
+
+  <div class="note">
+    <strong>{{WHY_SOMETHING_IS_MISSING}}</strong> {{PLAIN_EXPLANATION}} Delete this whole block when
+    every figure was read cleanly.
+  </div>
+
+  <footer>
+    Every figure came from the open document through {{TOOLS_USED}}, with nothing changed in the model.
+    {{UNITS_NOTE}} Element IDs {{ID_RANGE}}.
+  </footer>
+
+</div>

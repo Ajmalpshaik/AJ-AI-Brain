@@ -11,7 +11,9 @@
 //         afterwards (it's a normal element; action-rotate-elements.cs works on it) — the views follow.
 // GOTCHA: planViewIdInt must be a ViewPlan (floor/ceiling plan) that is NOT a view template; the marker
 //         is visible in that view and the elevations inherit its phase.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog; run on one room first.
+// LIVE-VERIFIED 2026-08-14 — marker placed on the room's true centre, all 4 slots producing views at
+//         1:50; the project's ViewSection count going 16 -> 20 was confirmed from a SEPARATE bridge call
+//         rather than from this script's own report.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
