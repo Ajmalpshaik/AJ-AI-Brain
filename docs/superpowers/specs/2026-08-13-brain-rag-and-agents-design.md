@@ -277,12 +277,20 @@ today it disappears.
 
 `knowledge/live-model/core.md` (327 lines) and `knowledge/live-model/families.md` (456 lines).
 
-This is **not housekeeping — it is retrieval accuracy.** A 456-line file becomes roughly 15 chunks.
-Each competes separately, and the chunk that comes back may be missing the context sitting just above
-it. Big files retrieve worse than small focused ones.
-
-The 300-line split rule was always a RAG rule; nobody had connected it yet. With §7.1 in place, the
-improvement can be measured.
+> **CORRECTED 2026-08-13, after measuring.** This section originally claimed splitting was "not
+> housekeeping — it is retrieval accuracy", on the theory that a big file's many chunks each compete
+> separately and crowd out smaller files. **That theory was tested and refuted.** Damping the oversized
+> file that was wrongly ranking #1 never surfaced the correct smaller file — a third file simply took
+> the top spot instead. The small correct files are not being *beaten* by big ones; they are not scoring
+> on their own merits, which points at the embedding model, not at ranking. See `knowledge/brain-log.md`,
+> 2026-08-13.
+>
+> **So this is now an optional housekeeping item, not an accuracy fix**, and it is not part of the
+> accuracy pass. The ~300-line rule in `knowledge/INDEX.md` stands on readability and maintainability —
+> which are good enough reasons — but nothing has shown it improves retrieval, and this spec should not
+> have claimed it did without measuring. Related: `scripts/README.md` is the single largest matcher in
+> the index at **251 chunks, 8.4% of all 2,989**, and is deliberately left undiscounted for the same
+> reason — no evidence it is displacing better answers.
 
 ### 7.5 Close out the 34 unproven fragments
 
