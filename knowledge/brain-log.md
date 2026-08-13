@@ -1819,3 +1819,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   a published effect size was measured against someone else's corpus and someone else's chunker. This one
   is already structure-aware and kind-weighted, and the same idea double-counts instead of adding.** Fifth
   time today that measuring beat reasoning — and the first where the reasoning was a published paper's.
+- 2026-08-13 — **The knowledge graph now rebuilds itself too, and says when its markdown half is stale.**
+  `tools/graph-rebuild.mjs` (Stop hook) + `tools/graph-rebuild.py`. This closes the last silent-staleness
+  gap: the vector index has self-rebuilt since Phase 1, the graph never did, so `search_graph` could answer
+  confidently from a graph built days earlier with nothing anywhere saying so. Four decisions.
+  **(1) It does NOT call `graphify update .`.** That command runs extract → build → write in one step with
+  nowhere to insert `graphify-repair.py`, so it would silently undo the fix that took 203 dangling edges to
+  0 — a self-maintaining pipeline that quietly reverts its own repair is worse than no automation.
+  `graph-rebuild.py` runs the same pipeline with the repair in the middle. **(2) Gated on CODE files only.**
+  A rebuild is ~13 s against ~0.3 s for the index; only a code change can move the AST half, so editing a
+  knowledge note no longer pays to re-parse 328 source files. No-op cost is 0.68 s. **(3) The markdown half
+  cannot be automatic** — it needs subagents or a Gemini key — so instead of pretending, it REPORTS: "N of
+  58 documents changed since their cached extraction". Naming the gap is the honest half of not being able
+  to close it. **(4) `score-history.md` is excluded from that count**, because it is machine-written and
+  would report stale forever; a warning that is always on is one nobody reads, the same reasoning that made
+  the STALE INDEX banner compare content and not dates. Found while building it: the hook first reached for
+  `semantic-index/venv`, which does **not** contain graphify — it lives in whichever interpreter
+  `graphify` was installed into, recorded by graphify itself in `graphify-out/.graphify_python`.
