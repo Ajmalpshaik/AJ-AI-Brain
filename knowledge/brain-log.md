@@ -1762,3 +1762,15 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   cost:** collapsing concept references onto file nodes raised same-endpoint collapsed edges from 16 to 47.
   That is real information merging, traded knowingly for 162 recovered edges — and it is why the script
   prints what it did rather than running silently. Idempotent: a second run reports nothing to repair.
+- 2026-08-13 — **All 328 graph communities are named; zero `Community N` placeholders left.** `graphify
+  label` needs an LLM backend and found none — **but the host agent IS the LLM**, which is exactly what the
+  skill's Step 5 says: read the analysis, look at each community's node labels, write a 2–5 word name. No
+  API key was ever required for this; the CLI path simply assumes an external model. The distribution made
+  it tractable: **265 of 328 communities are a single node**, and only 60 hold 3+, but those 60 cover
+  **921 of 1,192 nodes (77%)** — so the whole job was reading 60 clusters, not 328. Those were named by
+  hand (`MCP Server & Native Tools`, `Live Model Scripting Gotchas`, `MEP Connection Method & Tracing`,
+  `Parametric Family Authoring`, `Voice Speaker Process`, …); the remaining 268 are auto-named after their
+  own hub node, which is what graphify's fallback does and is more honest than inventing a theme for one
+  node. **Where they are stored is worth writing down**: not `graph.community_labels` and not
+  `node.community_label`, but **`community_name` on each node** — two wrong guesses were made before
+  checking, and a "0 labels stored" reading nearly got reported as a failure when the labels were fine.
