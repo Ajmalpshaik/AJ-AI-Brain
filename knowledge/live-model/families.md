@@ -2,6 +2,16 @@
 
 > Part of the live-model knowledge set. Index: [`README.md`](README.md) — go back there to route to another topic.
 
+> **split-review: kept whole** (reviewed 2026-08-13, at 456 lines). This file is past the ~300-line rule
+> and stays that way on purpose. It is not four topics — it is **one method plus a chronological record of
+> the four builds that produced it**, and each build is written as what the previous one got wrong: the
+> second corrects the first's connector assumptions, the third documents a `ReplaceParameter` rollback that
+> corrupts the family, the fourth proves pipe and electrical connectors against a real manufacturer
+> datasheet. Split by build and the corrections lose the thing they correct; split method from builds and
+> the method loses its evidence. The earlier `core.md` split worked because the viewport material was a
+> genuinely different subject — there is no such seam here. **Re-open this decision only if a fifth build
+> adds a section that stands alone.**
+
 ## Building a parametric family from scratch (Family Editor, via the bridge)
 First done 2026-07-16: built a square ceiling air terminal (Generic Model template → category switched
 to Air Terminals) with a fully parametric box body, a rectangular duct neck, and a working duct
