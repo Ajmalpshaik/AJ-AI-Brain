@@ -96,3 +96,15 @@ background.
 Editing the Revit add-in's own compiled source code (the thing that provides the bridge listener on the
 Revit side) is a different codebase and a different kind of work — out of scope here. This Brain is about
 using the bridge to work on Revit *models*, not building the add-in that provides the bridge.
+
+**External standards documents** — Ashghal/PWA CAD standards manuals, QCS, NFPA, manufacturer
+catalogues — are also out of scope, decided 2026-08-13 in the user's own words: *"we are making a Revit
+AJ AI RAG, it's not connected with Ashghal standards or something like that — for that we have another
+skill, or we will create one."* Indexing them was built and then reverted the same hour. Three measured
+reasons, so nobody has to re-derive them: the PWA manuals are **CAD drafting** rules (layers, title
+blocks, drawing numbers), not Revit modelling; they would have added **604 chunks, a 20% increase** to a
+search that is currently right 3 times in 5, with **no way to measure the damage** until the test set
+grows; and **nothing has ever asked for them** — `job-log/` records what is really needed, so wait for
+evidence. If one standards rule genuinely matters, write it as a knowledge note **in your own words,
+having read it** — higher signal than 600 unchecked chunks, and it cannot look authoritative while being
+the superseded version. Standards belong to the `bim-standards-check` skill, not to this Brain's index.
