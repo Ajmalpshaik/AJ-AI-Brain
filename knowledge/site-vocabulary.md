@@ -50,6 +50,11 @@ handle it. This file only says which words to also search for. A term can sensib
 | level wise | group by level count | "count level wise" = group by Level |
 | plant room | mechanical equipment room | |
 | false ceiling | ceiling | site term for a suspended ceiling |
+| isulate | isolate temporary hide | recurring dictation spelling, recorded live 2026-08-13 |
+| biddest | biggest largest maximum | typing near-miss, recorded live 2026-08-13 |
+| widh | width | typing near-miss, recorded live 2026-08-13 |
+| isulate all | isolate temporary hide | as above |
+| vcds | volume control damper duct accessory | plural of `vcd`; asked live 2026-08-13 |
 
 ### Rows deliberately removed — a record, so they are not re-added
 
