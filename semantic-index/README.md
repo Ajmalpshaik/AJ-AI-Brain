@@ -140,6 +140,34 @@ cases right**:
 Real work questions get asked constantly; "show me the changelog" almost never. **If you want the change
 log, just open `knowledge/brain-log.md`** — don't search for it.
 
+### The same thing happened to `glossary.md` — caught 2026-08-13
+
+A week later the diffuser question was back at #2, this time displaced by
+[`knowledge/glossary.md`](../knowledge/glossary.md). Same structural cause: the glossary maps Ajmal's
+words to Revit meanings, so it gains a row every time a term causes confusion, and **a file of
+question-shaped phrases matches more questions the bigger it gets.** The table above still claimed the
+skill ranked #1. It had not for days, and nobody noticed — `score-brain.cmd` found it on its first run.
+
+**It could not take 0.85, and that difference is the interesting part.** Looking a word up *is* a real
+question, and the glossary is the right answer to it, so the discount had to stop the displacement
+without sinking the file's own job. Swept both ways:
+
+| Weight | "how many diffusers" → skill | "what does duck mean" → glossary |
+|---|---|---|
+| 1.00 | #2 ✗ | #1 ✓ |
+| 0.96 | #1 ✓ | #1 ✓ |
+| **0.93 (chosen)** | **#1 ✓** | **#1 ✓** |
+| 0.90 | #1 ✓ | #1 ✓ |
+| 0.85 | #1 ✓ | #2 ✗ — `nfpa13-sprinkler-spacing.md` took #1 |
+
+Both hold between 0.90 and 0.96, so **0.93 is the centre of that window** — chosen to sit as far from
+both cliffs as possible, because these scores differ by thousandths and an edge value is one new file
+away from flipping. Both cases are now guarded rows in `test-questions.md`.
+
+**The general lesson: any file that grows by absorbing the phrasing of real questions will eventually
+outrank the files that answer them.** Two have done it so far. Check the third the day you notice a
+reference file ranking oddly high.
+
 ### Semantic only — the baseline
 
 ```

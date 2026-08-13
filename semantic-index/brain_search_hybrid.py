@@ -137,8 +137,33 @@ KIND_WEIGHT = {
 # is asked constantly and a "show me the changelog" question almost never - and
 # when you do want the log, opening the file beats searching for it. Documented
 # in README.md so the behaviour is not mistaken for a bug later.
+#
+# glossary.md joined the list on 2026-08-13, for the same structural reason and caught by
+# the same question. It maps Ajmal's words to Revit meanings, so it gains a row every time
+# a term causes confusion - and a file of question-shaped phrases matches MORE questions the
+# bigger it gets. It had quietly taken #1 from ajtools-hvac-terminal-layout on "how many
+# diffusers do I need in this room" - the exact displacement brain-log.md was discounted for
+# - while README.md still claimed that question ranked the skill first. Found by
+# semantic-index/score_brain.py on its first ever run; nobody had noticed in the week since.
+#
+# UNLIKE brain-log.md, this one could NOT take 0.85, and the difference matters: looking a
+# word up IS a real question and the glossary is the right answer to it, so the discount has
+# to fix the displacement without sinking the file's own job. Swept, both cases per weight:
+#
+#   weight   "how many diffusers" -> skill   "what does duck mean" -> glossary
+#   1.00     #2  wrong                       #1  right
+#   0.98     #2  wrong                       #1  right
+#   0.96     #1  right                       #1  right
+#   0.93     #1  right                       #1  right     <- chosen
+#   0.90     #1  right                       #1  right
+#   0.85     #1  right                       #2  WRONG - nfpa13-sprinkler-spacing.md took #1
+#
+# The window where both hold is 0.90-0.96. 0.93 is its centre, chosen to sit as far as
+# possible from both cliffs rather than next to one - these scores sit within thousandths of
+# each other, so a value at the edge is one new file away from flipping.
 PATH_WEIGHT = {
     "knowledge/brain-log.md": 0.85,
+    "knowledge/glossary.md": 0.93,
 }
 
 # Words so common they carry no signal. Kept short on purpose - BM25's rarity
