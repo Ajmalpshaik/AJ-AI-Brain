@@ -53,6 +53,13 @@ quality measure once there are 20+ rows written by a person.
 | what does duck mean | knowledge/glossary.md |
 | can you tell me the how meny vcd is there and tell me the size | scripts/actions/reporting/action-count-and-report.cs |
 | can oyu tell me what is the biggest size of duct | knowledge/glossary.md |
+| okkey can you isulate all the vcds | skills/ajtools-live-model/SKILL.md |
+| can you isulate only the biddest widh vcd only | skills/ajtools-live-model/SKILL.md |
+| i need now all the vcds that bigger counts | skills/ajtools-live-model/SKILL.md |
+| now can you change the color to red | scripts/actions/color-graphics/action-set-color-uniform.cs |
+| is that this model contail spaces | skills/ajtools-live-model/SKILL.md |
+| what is the biggest space | skills/ajtools-live-model/SKILL.md |
+| now tell me what is in this how meny airterminal is there | skills/ajtools-live-model/SKILL.md |
 
 ## Where each seeded row came from
 
@@ -62,6 +69,7 @@ quality measure once there are 20+ rows written by a person.
 | add 4 more floor levels | **Wrong** — returned `create-floor.cs`, the slab creator. Actively misleading. | `knowledge/brain-log.md` |
 | how many light fitting | **Wrong** — matched "light hazard" in the sprinkler files. | `knowledge/brain-log.md` |
 | take my door schedule out to excel | **Wrong** — the right file was absent from the top 5 entirely. | `knowledge/brain-log.md` |
+| the seven rows from `isulate all the vcds` to `how meny airterminal is there` | **All Ajmal's own, asked during one real working session on 2026-08-13**, spellings kept exactly. They were captured late, in a batch, because the assistant promised to record each one as it was asked and then forgot seven times running — which is why `tools/test-row-nudge.mjs` now exists. **Expected answers come from `START-HERE.md`'s own routing table**, which sends "querying or changing the live, open Revit model right now — counts, sizes, view isolation" to `ajtools-live-model`; the colour one points at the specific fragment instead. **They are the assistant's reading of Ajmal's routing rules, not Ajmal's judgement — he should correct any that are wrong.** Note five share one expected file: that is what the routing says, and if the Brain cannot return the live-model skill for live-model questions, that is a real finding rather than a weak test. | asked live |
 | can oyu tell me what is the biggest size of duct | **Ajmal's own, asked live 2026-08-13**, his spelling kept. **A guard row: the Brain currently gets this RIGHT and must keep doing so.** `glossary.md` ranked #1 on *both* meaning and words, and that is the correct answer — its 2026-08-04 note says "the maximum duct size" has no single answer, because round carries Diameter and rectangular carries Width × Height, and sorting by the FIRST dimension gives the widest duct rather than the biggest one. The live model proved it: widest is 1524 × 470 (0.72 m²), biggest by area is 1234 × 992 (1.22 m²). A fragment returning one number here would be *less* useful than the warning. | asked live |
 | can you tell me the how meny vcd is there and tell me the size | **Ajmal's own, asked live 2026-08-13**, kept with his spelling. **Fails badly:** `action-count-and-report.cs` — PROVEN, and literally described as "bare count, or a size-breakdown table when asked" — is *absent from the entire candidate pool*, along with `action-count-by-group.cs` and `filter-by-category.cs`. Site vocabulary fired correctly (`vcd → volume control damper duct accessory`); ranking is what failed. **Expected answer chosen by the assistant — Ajmal to confirm or correct.** | asked live |
 | what does duck mean | **Guard row, not a quality measure.** Added by the assistant on 2026-08-13, and labelled as such because assistant-written questions must never be counted as evidence the search is good. Its only job is to stop one specific fix overshooting: discounting `glossary.md` to stop it displacing the terminal-layout skill also sinks the glossary on questions it genuinely answers. At 0.85 this returned `nfpa13-sprinkler-spacing.md` at #1. | this file |
