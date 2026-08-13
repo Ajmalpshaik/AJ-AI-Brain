@@ -1692,3 +1692,21 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   confidence of one drawn from Ajmal's own proven files. `brain_context.py` now ends every block with an
   instruction to say plainly when none of the hits actually answer the question. **"The Brain does not
   cover this" is a correct answer; quietly inventing one is not.**
+- 2026-08-13 — **A cross-encoder re-ranker is built, works, and ships OFF — because it measured neutral.**
+  `semantic-index/rerank.py` runs `ms-marco-MiniLM-L-6-v2` as ONNX through onnxruntime and tokenizers,
+  both of which arrive with chromadb, so it adds **no pip dependency**; `sentence-transformers` was
+  rejected for dragging in PyTorch (~2 GB) on a deliberately minimal offline machine. Enable per search
+  with `--rerank`, or `use_rerank=True`. Checked *before* building, which set an honest ceiling: of five
+  test questions three already returned the right file at #1, one had its answer at **#7** (what
+  re-ranking is for), and one was **absent from the whole candidate pool** — no re-ranker can promote
+  what the first stage never retrieved. Ceiling 3/5 → 4/5. Result: **2/5 fed the raw question, 3/5 fed
+  the expanded one, i.e. neutral, at ~1.5 s per query.** The reason is the keeper, and it is not a bug in
+  either component: *"take my door schedule out to excel"* only works **because** `site-vocabulary.md`
+  expands it — the word "excel" is in no file — so the raw question makes the cross-encoder correctly
+  find nothing; but *"add 4 more floor levels"* expands to `level elevation storey`, and **"elevation" is
+  two different things in Revit** (a level's height, and an elevation view), so the cross-encoder, which
+  genuinely reads, is led to `create-room-elevations.cs` (−2.35) over `create-levels.cs` (−7.08) — and it
+  was scoring the correct PURPOSE card, not a code chunk. **One layer needs the expansion, the other is
+  misled by it, in opposite directions, on the same five questions.** Untunable at this sample size, so
+  shipping it on would have been exactly the blind change the score card exists to prevent. The 89 MB
+  model is git-ignored, so `rerank.py --download` exists rather than living in someone's memory.
