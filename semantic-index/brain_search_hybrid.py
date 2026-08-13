@@ -358,6 +358,51 @@ def fragment_status_map(fragments):
 # THE SEARCH
 # --------------------------------------------------------------------------
 
+def _apply_rerank(query, order):
+    """Re-score the top of the merged list with the cross-encoder, and reorder it.
+
+    Only the head is re-scored - the cross-encoder reads question and chunk together, which
+    is what makes it accurate and far too slow to run over everything. The tail keeps its
+    RRF order and stays below the head, which is exactly what a re-ranker is for: it
+    reorders the shortlist, it cannot promote something the first stage never retrieved.
+
+    PATH_WEIGHT is re-applied here, and that detail matters. The discounts on brain-log.md
+    and glossary.md were measured against RRF scores; if the cross-encoder simply overwrote
+    the ordering, both would quietly come back and undo a fix made the same day. The logit
+    is squashed to 0-1 first so the multiplication has the right sign - multiplying a
+    NEGATIVE logit by 0.93 would make it larger, i.e. reward the file being discounted.
+
+    Returns the original order untouched if the model is missing or scoring fails. A
+    re-ranker that breaks must not take down a search that works without it.
+    """
+    try:
+        import rerank as _rr
+    except Exception:
+        return order
+
+    if not _rr.available():
+        return order
+
+    head, tail = order[:_rr.RERANK_DEPTH], order[_rr.RERANK_DEPTH:]
+    if not head:
+        return order
+
+    # The ORIGINAL question, not the vocabulary-expanded one. Expansion appends bare Revit
+    # keywords, which help a bi-encoder match but read as noise to a model that is genuinely
+    # reading the sentence.
+    scores = _rr.score(query, [entry["payload"]["snippet"] for _path, entry in head])
+    if scores is None or len(scores) != len(head):
+        return order
+
+    for (path, entry), logit in zip(head, scores):
+        prob = 1.0 / (1.0 + math.exp(-logit))
+        entry["rerank"] = round(logit, 3)
+        entry["_rr"] = prob * PATH_WEIGHT.get(path, 1.0)
+
+    head.sort(key=lambda kv: -kv[1]["_rr"])
+    return head + tail
+
+
 def _best_per_file(pairs):
     """pairs = [(path, rank, payload)] -> {path: (best_rank, payload)}."""
     out = {}
@@ -367,7 +412,7 @@ def _best_per_file(pairs):
     return out
 
 
-def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
+def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=False):
     """
     Search by meaning and by exact words, then merge.
 
@@ -513,8 +558,12 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
         if weight is not None:
             entry["score"] *= weight
 
+    order = sorted(combined.items(), key=lambda kv: -kv[1]["score"])
+    if use_rerank:
+        order = _apply_rerank(expanded, order)
+
     results = []
-    for path, entry in sorted(combined.items(), key=lambda kv: -kv[1]["score"]):
+    for path, entry in order:
         meta = entry["payload"]["meta"]
         results.append({
             "path": path,
@@ -528,6 +577,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True):
             "closeness": entry.get("closeness"),
             "bm25": entry.get("bm25"),
             "tool_terms": entry["tool"],
+            "rerank": entry.get("rerank"),
             "status": status_map.get(path),
             "snippet": entry["payload"]["snippet"],
         })
@@ -553,6 +603,10 @@ def main():
                         help="skip tools/fragment-index.mjs (no Node needed)")
     parser.add_argument("--explain", action="store_true",
                         help="show why each result ranked where it did")
+    parser.add_argument("--rerank", action="store_true",
+                        help="re-score the shortlist with the cross-encoder (off by "
+                             "default: measured neutral on the current 5-question test "
+                             "set and ~1.5s slower — see rerank.py)")
     args = parser.parse_args()
 
     query = " ".join(args.query)
@@ -560,7 +614,8 @@ def main():
     try:
         results, notes = hybrid_search(
             query, top_k=args.top, area=args.area,
-            use_fragment_tool=not args.no_fragment_tool)
+            use_fragment_tool=not args.no_fragment_tool,
+            use_rerank=args.rerank)
     except Exception as exc:
         print(f"ERROR: {exc}")
         print("If this says the collection does not exist, run "
