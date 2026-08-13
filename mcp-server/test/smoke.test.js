@@ -34,6 +34,7 @@ import { register as registerDeleteElements } from "../tools/delete-elements.js"
 // touches the bridge, so it gets its own test at the bottom of this file and the 17-tool guard
 // stays meaningful.
 import { register as registerSearchBrain } from "../brain-tools/search-brain.js";
+import { register as registerSearchGraph } from "../brain-tools/search-graph.js";
 
 // One representative, schema-valid argument object per tool — enough to exercise every branch in each
 // handler's own C#-building code (category resolution, optional fields, view targeting, etc.).
@@ -93,7 +94,41 @@ test("every tool module registers exactly one well-formed tool", () => {
   }
 });
 
-test("every handler runs its C# generation to completion and fails gracefully with no bridge", async () => {
+// SAFETY GATE, added 2026-08-13 after a near miss.
+//
+// The test below invokes EVERY handler with SAMPLE_ARGS, and those args include
+// `delete_elements: { category: "Ducts", confirm: true }`, plus move_elements,
+// set_parameter_value and the hide/colour tools. Its whole premise is the sentence at the
+// top of this file: "no live Revit/bridge connection needed". That premise is not checked
+// anywhere, and it stops being true the moment Revit is open with the bridge connected -
+// which is exactly when someone is most likely to run `npm test`.
+//
+// It happened: this suite was run during a live session on 2026-08-13. It survived only
+// because the active document was an unrelated blank `Project1` with zero ducts, so every
+// destructive call matched nothing. Had the real model been active, it would have deleted
+// 354 ducts, with `confirm: true` already supplied.
+//
+// So the premise is now enforced instead of assumed. A read-only `ping` decides it.
+async function bridgeIsLive() {
+  try {
+    const probe = createFakeServer();
+    registerPing(probe);
+    const result = await probe.registrations[0].handler({});
+    return result?.isError === false;
+  } catch {
+    return false;   // cannot tell -> treat as not live, the same as before this gate existed
+  }
+}
+
+test("every handler runs its C# generation to completion and fails gracefully with no bridge", async (t) => {
+  if (await bridgeIsLive()) {
+    t.skip(
+      "SKIPPED: the AJ AI Bridge is CONNECTED. This test invokes delete_elements with " +
+        "confirm:true against the active document. Close the bridge (or Revit) and re-run."
+    );
+    return;
+  }
+
   const server = createFakeServer();
   for (const register of [
     registerRunCsharp, registerPing, registerModelSummary, registerListElements, registerCountElements,
@@ -182,4 +217,52 @@ test("search_brain registers well-formed and returns without a bridge", async ()
       "expected the search's own output header in the results"
     );
   }
+});
+
+test("search_graph registers well-formed and returns without a bridge", async () => {
+  const server = createFakeServer();
+  registerSearchGraph(server);
+
+  assert.equal(server.registrations.length, 1, "search-graph.js must register exactly one tool");
+
+  const { name, description, schema, handler } = server.registrations[0];
+  assert.equal(name, "search_graph");
+  assert.ok(description && description.length > 10, "description missing or too short");
+  assert.deepEqual(Object.keys(schema).sort(), ["budget", "mode", "nodeA", "nodeB", "question"]);
+  assert.equal(typeof handler, "function");
+
+  // Three outcomes are all correct, and asserting only one would make `npm test` fail on a
+  // machine that is perfectly healthy: graphify-out/ is git-ignored so a fresh clone has no
+  // graph, and `graphify` is a user-level CLI that may not be installed at all. What must
+  // never happen is a throw, or a silent success carrying no traversal.
+  const result = await handler({ question: "how do ducts connect to air terminals", budget: 400 });
+
+  assert.ok(
+    result && Array.isArray(result.content) && result.content[0]?.type === "text",
+    "malformed tool result shape"
+  );
+
+  if (result.isError) {
+    assert.match(
+      result.content[0].text,
+      /graph|graphify/i,
+      `the only acceptable failures are a missing graph or a missing graphify CLI, got: ${result.content[0].text}`
+    );
+  } else {
+    assert.match(
+      result.content[0].text,
+      /Traversal:|NODE /,
+      "expected the graph traversal's own output in the results"
+    );
+  }
+});
+
+test("search_graph rejects mode 'path' without both endpoints", async () => {
+  const server = createFakeServer();
+  registerSearchGraph(server);
+  const { handler } = server.registrations[0];
+
+  const result = await handler({ question: "x", mode: "path", nodeA: "OnlyOne" });
+  assert.equal(result.isError, true, "expected a validation error when nodeB is missing");
+  assert.match(result.content[0].text, /nodeA and nodeB/i);
 });

@@ -32,8 +32,9 @@ import { register as registerReportParameters } from "./tools/report-parameters.
 import { register as registerMoveElements } from "./tools/move-elements.js";
 import { register as registerDeleteElements } from "./tools/delete-elements.js";
 
-// Not a Revit tool — see brain-tools/search-brain.js for why it lives outside tools/.
+// Not Revit tools — see brain-tools/search-brain.js for why they live outside tools/.
 import { register as registerSearchBrain } from "./brain-tools/search-brain.js";
+import { register as registerSearchGraph } from "./brain-tools/search-graph.js";
 
 const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.4.0" });
 
@@ -56,6 +57,7 @@ registerMoveElements(server);
 registerDeleteElements(server);
 
 registerSearchBrain(server);
+registerSearchGraph(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
