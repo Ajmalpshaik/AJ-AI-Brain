@@ -1620,3 +1620,30 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   readability, not accuracy, until something measures otherwise. `scripts/README.md` is the largest matcher
   in the index at **251 chunks, 8.4% of all 2,989**, and is deliberately left undiscounted on the same
   reasoning: nothing has shown it is actually displacing better answers.
+- 2026-08-13 — **`job-log/` records what this Brain is actually used for.** Nothing did before, so three
+  questions were unanswerable: which of the 269 fragments do the work, which have never run, and which
+  fail against a real model — the last being the most valuable signal the system produces and the one
+  that used to vanish when a session ended. `questions.jsonl` (written by `brain_context.py --log` from
+  the auto-search hook) records each question and what came back; `revit-runs.jsonl` (written by
+  `tools/job-log-revit.mjs`) records each call that reached Revit. **Fragments are identified from the
+  `// FRAGMENT (kind) — name.cs` headers inside the composed C# actually sent**, so the record stays
+  correct through renames and needs no separate registry — but it also means a malformed header makes
+  real usage invisible. Read it with `node tools/job-report.mjs [--unused]`. Two deliberate choices:
+  it lives **outside every indexed folder**, because a steadily growing file inside `knowledge/` would
+  become another large matcher — the exact fault `brain-log.md` and `glossary.md` were each discounted
+  for; and `--unused` says on every run that it means *no evidence yet*, not *dead*, because the log
+  started today and a fragment used heavily last week still shows as never-used. Its second purpose is
+  slower: every line is a *question → file* pair, which is the shape of data a fine-tune needs, and
+  fine-tuning is the only route left at the site-vocabulary failures that re-ranking was proven unable
+  to fix earlier the same day.
+- 2026-08-13 — **Two more agents: `brain-script-writer` and `brain-investigator`.** The Script Writer's
+  whole reason to exist is the one instruction most likely to be skipped — *search all 269 fragments
+  first* — and it is told that reporting "this already exists" is a complete, successful outcome, better
+  than a new file, because every fragment added competes in every future search. It marks what it writes
+  **untested**: compiling is not proof, and a corrupted NUL byte once passed a syntax check clean
+  (2026-07-22). The Investigator gets five read-only bridge tools and **no `run_csharp`**. That choice
+  has a real cost, recorded honestly in its own definition: without `run_csharp` it cannot trace MEP
+  connectivity, read geometry, or follow a system — those jobs stay in the main conversation with Ajmal.
+  The alternative was to give it `run_csharp` and *instruct* it not to write, which is not a boundary at
+  all. **The principle, now applied three times: a limit is what an agent was given, never what it was
+  told.**
