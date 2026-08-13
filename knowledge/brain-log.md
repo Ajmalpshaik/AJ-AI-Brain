@@ -1896,3 +1896,15 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   claimed. **The practical rule: if a selection looks empty after this example, re-read it before
   concluding the script failed** — three silent-success bugs in two days makes an unexplained zero worth
   a second look rather than a fourth bug report.
+- 2026-08-14 — **The whole non-MEP fixture set was built by API in a blank project, and two more fragments
+  cleared with it.** Four room-bounding walls (a closed 8×6 m rectangle), a **Room** and an **MEP Space**
+  both computing to 43.2 m², a **Floor** (Generic 300 mm), and **three Sheets** on the A1 metric title
+  block — `Wall.Create` + `NewRoom` + `NewSpace` + `NewFloor` + `ViewSheet.Create`, none of it needing a
+  real project. Cleared with it: **`create-hvac-zone.cs`** (zone on Level 1 under phase "New
+  Construction" — which is what `phaseName = null` resolves to, the document's LAST phase, not its first;
+  1 space added, 0 rejected, and the zone read back as genuinely holding that Space) and
+  **`create-room-elevations.cs`** (marker on the room's true centre, all 4 slots producing views at 1:50,
+  ViewSection count 16 → 20 confirmed independently). **Noted, because it will look like a bug the next
+  time somebody sees it: a freshly created Zone reports `Area = 0 m²` while the Space inside it reports
+  43.2 — the same delayed computation a new Space itself shows, which is why every check here reads state
+  back in a later call instead of trusting the value available at creation time.**
