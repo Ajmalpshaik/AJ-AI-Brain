@@ -1647,3 +1647,23 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   The alternative was to give it `run_csharp` and *instruct* it not to write, which is not a boundary at
   all. **The principle, now applied three times: a limit is what an agent was given, never what it was
   told.**
+- 2026-08-13 — **Indexing external standards PDFs was built, then reverted the same hour on Ajmal's
+  call — scope, not capability.** His words: *"we are making a Revit AJ AI RAG, it's not connected with
+  Ashghal standards or something like that — for that we have another skill, or we will create one."*
+  Recorded in `START-HERE.md` under what this Brain deliberately does not cover, so it is not rebuilt.
+  What the aborted attempt established, and is worth keeping: the documents live in
+  `D:\Ajmal\BIM Resources` (PWA/Ashghal CAD Standards Manuals — Buildings v3.0 2015 and v4.0 2023, Roads
+  and Drainage v6.0 2022 — plus the D0601 Modelling and Data Management Guide and a Quick Reference).
+  **Five of the six extract clean text with `pypdf`: ~561 pages, about 604 chunks** — which is 0.2× the
+  existing index, *not* the 7× that had been assumed, so scale was never the objection. The sixth
+  (`1761109911158.pdf`, 54 pages, ~79 chars/page, its one readable line reading `ESFR SPRINKLERS`) is
+  scanned images and would need OCR. Every page carries a running header giving title, version and page:
+  both the citation source and a contamination risk, since left in it would put the document's own title
+  into every chunk — the same everything-matches fault as `brain-log.md` and `glossary.md`, but baked
+  into the content rather than fixable by a weight. **The reasons to stop were not technical:** these are
+  CAD *drafting* standards (layers, title blocks, drawing numbers), not Revit modelling; 604 chunks is a
+  20% index increase with no way to measure the damage while the test set holds 5 questions; and
+  `job-log/` shows nothing has ever asked for them. **The better pattern, if a rule ever matters: write
+  it as a knowledge note in his own words, having read it** — higher signal than 600 unchecked chunks,
+  and it cannot quietly quote a superseded version, which was a live risk here since two editions of the
+  Buildings manual sit side by side. `pypdf` was uninstalled so the venv matches `requirements.txt`.
