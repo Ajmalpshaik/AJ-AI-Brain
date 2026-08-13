@@ -72,6 +72,15 @@
             "command": "node \"tools/verify-consistency-hook.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "mcp__aj-tools-aj-ai__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/job-log-revit.mjs\""
+          }
+        ]
       }
     ]
   }
