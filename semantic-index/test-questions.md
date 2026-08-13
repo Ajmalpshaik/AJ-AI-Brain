@@ -50,6 +50,7 @@ quality measure once there are 20+ rows written by a person.
 | add 4 more floor levels | scripts/creators/create-levels.cs |
 | how many light fitting | scripts/actions/reporting/action-count-by-group.cs |
 | take my door schedule out to excel | scripts/actions/sheets-views/action-export-schedule-to-csv.cs |
+| what does duck mean | knowledge/glossary.md |
 
 ## Where each seeded row came from
 
@@ -59,6 +60,7 @@ quality measure once there are 20+ rows written by a person.
 | add 4 more floor levels | **Wrong** — returned `create-floor.cs`, the slab creator. Actively misleading. | `knowledge/brain-log.md` |
 | how many light fitting | **Wrong** — matched "light hazard" in the sprinkler files. | `knowledge/brain-log.md` |
 | take my door schedule out to excel | **Wrong** — the right file was absent from the top 5 entirely. | `knowledge/brain-log.md` |
+| what does duck mean | **Guard row, not a quality measure.** Added by the assistant on 2026-08-13, and labelled as such because assistant-written questions must never be counted as evidence the search is good. Its only job is to stop one specific fix overshooting: discounting `glossary.md` to stop it displacing the terminal-layout skill also sinks the glossary on questions it genuinely answers. At 0.85 this returned `nfpa13-sprinkler-spacing.md` at #1. | this file |
 
 The three failures are all **vocabulary**, not ranking: the site word simply is not in the
 file that answers it. `knowledge/site-vocabulary.md` is the fix, and it is read live — a new
