@@ -1593,3 +1593,30 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   to a file is a single tool call) and a "health check" agent (`brain-status.mjs` already does it and
   never forgets). The rule that produced both cuts: **if the job has no judgment in it, it is a hook or
   a script, never an agent.**
+- 2026-08-13 — **`glossary.md` discounted to 0.93 — and 0.85 was measurably too harsh.** It had taken #1
+  from `ajtools-hvac-terminal-layout` on the diffuser question, the same displacement `brain-log.md` was
+  discounted for; `semantic-index/README.md` still claimed the skill ranked first, and had been wrong for
+  about a week. Applying the log's 0.85 fixed that and **broke a different question**: "what does duck
+  mean" then returned `nfpa13-sprinkler-spacing.md` at #1, so the glossary could no longer answer the one
+  kind of question it exists for. Swept both cases: they both hold from **0.90 to 0.96**, so 0.93 (the
+  centre) was chosen rather than an edge value — these RRF scores differ by thousandths, so an edge is one
+  new file away from flipping. Both are now guard rows in `test-questions.md`. **The transferable rule: a
+  discount aimed at a file's accidental matches must be checked against the file's own real job, or the
+  fix quietly removes a capability.**
+- 2026-08-13 — **REFUTED: big files do NOT win by having more chunks.** Worth recording precisely because
+  the evidence looked strong and the fix was about to be built. Both remaining test failures had a wrong
+  winner 4–5× the size of the right answer (`universal-actions-reference.md` 32 chunks vs
+  `create-levels.cs` 6; `action-plan-shortest-route.cs` 34 vs `action-count-by-group.cs` 8), which fitted
+  a tidy theory: `_best_per_file` takes each file's best chunk, so more chunks = more draws, and neither
+  BM25's length normalisation (which is per *chunk*, and chunks are all ~900 chars) nor RRF corrects for
+  it. That theory also seemed to explain why `brain-log.md` and `glossary.md` had each needed a manual
+  discount. **Tested it before building it: damping the suspected winner to 0.90/0.80/0.70 never surfaced
+  the correct file — a third file simply took #1 instead** (`create-view.cs`, then
+  `generate-room-coverage-layout.cs`). So the small correct files are not being *beaten* by big ones; they
+  are not scoring on their own merits at all, which points at the embedding model rather than at ranking.
+  **Two consequences.** (1) No chunk-count normalisation was built. (2) The claim in
+  `docs/superpowers/specs/2026-08-13-brain-rag-and-agents-design.md` §7.4 that splitting the two oversized
+  knowledge files would improve *retrieval* has lost its evidence — the ~300-line rule stands on
+  readability, not accuracy, until something measures otherwise. `scripts/README.md` is the largest matcher
+  in the index at **251 chunks, 8.4% of all 2,989**, and is deliberately left undiscounted on the same
+  reasoning: nothing has shown it is actually displacing better answers.
