@@ -16,6 +16,19 @@
 // with the user after the first one. Live-verified 2026-07-17: 3 cuts on a 4-row/8-terminal trunk, all 8
 // terminals still traced to the FCU afterward.
 //
+// ✓ RE-VERIFIED 2026-08-14 on a purpose-built multi-branch fixture - the fixture the 2026-07-23 note
+//   below says was unavailable. A 12 m trunk in 3 pieces with 4 takeoffs (x = 2000, 5000, 7000, 10000).
+//   Result: 4 takeoffs seen, grouped into 4 cut positions, last skipped, 3 cuts made at 2700/5700/7700 mm
+//   (each takeoff + 700 mm offset), 0 failed, 3 union fittings all connected, trunk 3 pieces -> 6. Then a
+//   full BFS trace over real connector links: 4 of 4 branches still reach the far end of the trunk.
+//   THE FIXTURE WAS BUILT BY API IN A BLANK PROJECT (Duct.Create + Document.Create.NewTakeoffFitting) -
+//   it never had to be found in a real model, which is what had blocked this for three weeks.
+//
+// BUG FOUND AND FIXED IN THAT RUN - see the onTrunkLine comment below. `Line.Distance()` on a bound
+//   LocationCurve measures to the SEGMENT, so a multi-piece trunk only ever found the piece whose Id was
+//   passed in. With 4 takeoffs it saw 1, skipLastTakeoff removed it, and the script printed
+//   "0 cut(s) made, 0 failed" - a success message for doing nothing.
+//
 // CAUTION (2026-07-23, code-review only - not re-tested this pass, no matching multi-branch trunk fixture
 // available): `trunkDir` is derived from `trunkPieceId`'s OWN stored point-0/point-1 order (whichever end
 // Revit happens to call "0"), not from any independent FCU/cap reference. `skipLastTakeoff` removes the
@@ -61,12 +74,31 @@ double marginFt = UnitUtils.ConvertToInternalUnits(marginMm, DisplayUnitType.DUT
 double groupToleranceFt = UnitUtils.ConvertToInternalUnits(groupToleranceMm, DisplayUnitType.DUT_MILLIMETERS);
 double offsetFt = halfWidthFt + marginFt;
 
-// Find every collinear trunk piece (same line as the starting piece) so multi-piece trunks are handled too.
+// Find every collinear trunk piece (same INFINITE line as the starting piece) so multi-piece trunks
+// are handled too.
+//
+// FIXED 2026-08-14 — this was measurably broken and failed SILENTLY. It used
+// `startCurve.Distance(point)`, and a Revit `Line` from a LocationCurve is BOUND (IsBound=True), so
+// Distance() returns the distance to that SEGMENT, not to the line it lies on. On a 3-piece 12 m trunk
+// the starting piece spanned x 0-4000 and the test measured 4000 mm and 8000 mm to the other two
+// pieces' far ends, excluding both. Only the piece whose Id was passed in was ever found.
+//
+// The damage was silent, which is what makes it worth this comment: with 4 takeoffs on the trunk it
+// saw 1, grouped it into a single cut position, `skipLastTakeoff` removed that one, and the script
+// reported "0 cut(s) made, 0 failed" — a clean success message for having done nothing at all.
+//
+// Perpendicular distance to the infinite line instead: project onto trunkDir, subtract, measure what
+// is left over.
+Func<XYZ, double> perpDistanceToTrunkLine = p =>
+{
+    XYZ v = p - refPoint;
+    return (v - trunkDir * v.DotProduct(trunkDir)).GetLength();
+};
 Func<Autodesk.Revit.DB.Mechanical.Duct, bool> onTrunkLine = d =>
 {
     var lc = (d.Location as LocationCurve)?.Curve as Line;
     if (lc == null) return false;
-    return startCurve.Distance(lc.GetEndPoint(0)) < 0.05 && startCurve.Distance(lc.GetEndPoint(1)) < 0.05
+    return perpDistanceToTrunkLine(lc.GetEndPoint(0)) < 0.05 && perpDistanceToTrunkLine(lc.GetEndPoint(1)) < 0.05
         && (lc.Direction.IsAlmostEqualTo(trunkDir) || lc.Direction.IsAlmostEqualTo(-trunkDir));
 };
 Func<List<Autodesk.Revit.DB.Mechanical.Duct>> findTrunkPieces = () =>

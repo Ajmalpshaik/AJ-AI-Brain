@@ -1864,3 +1864,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   documented in `live-model/core.md` and still walked into.** Status recorded honestly: the METHOD is
   proven (2/2 joined, both halves 1/1), the rewritten file as one uninterrupted run is NOT — a re-test
   threw a null reference and rolled back cleanly, and the null was not isolated before the session ended.
+- 2026-08-14 — **`slice-trunk-for-sizing.cs` re-verified, and a SILENT bug found and fixed:
+  `Line.Distance()` measures to the SEGMENT, not the line.** `onTrunkLine` tested collinearity with
+  `startCurve.Distance(endpoint) < 0.05`, but a `Line` taken from a `LocationCurve` is **bound**
+  (`IsBound = True`), so on a 3-piece 12 m trunk it measured 4000 mm and 8000 mm to the other two pieces
+  and excluded both. **A function whose comment says "so multi-piece trunks are handled too" only ever
+  found the piece whose Id was passed in.** The failure was invisible: with 4 takeoffs on the trunk it saw
+  1, grouped it into one cut position, `skipLastTakeoff` removed that one, and the script printed
+  **"0 cut(s) made, 0 failed"** — a clean success message for having done nothing. Fixed by measuring
+  perpendicular distance to the INFINITE line (project onto `trunkDir`, subtract, take what is left).
+  After the fix: 3 pieces found, 4 takeoffs, 3 cuts at 2700/5700/7700 mm (each takeoff + the 700 mm
+  offset), 0 failed, 3 union fittings all connected, trunk 3 pieces → 6 — then a full BFS walk over real
+  connector links confirmed **4 of 4 branches still reach the far trunk end**, which is the check the
+  recipe's own header demands instead of trusting `IsConnected`.
+  **The bigger point, and the second time in two days: the fixture was BUILT, not found.** The 2026-07-23
+  note on this file says plainly "no matching multi-branch trunk fixture available", and it had blocked
+  re-testing for three weeks. It took `Duct.Create` plus `Document.Create.NewTakeoffFitting` in a blank
+  project to make one — a 12 m trunk in 3 pieces with 4 real takeoffs, each producing the
+  `ConnectorType.Curve` connector the recipe counts. **"Fixture-blocked" should always be challenged with
+  "can this be created by API?" before it is accepted.**
