@@ -1533,3 +1533,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   glossary has the same property and never got the same treatment. Deliberately NOT fixed in the same
   turn: the fix changes ranking, and it now has a test that will prove whether it worked. Left as the
   first target for the accuracy pass, with the README's stale claim to be corrected alongside it.
+- 2026-08-13 — **The semantic index now rebuilds itself; it can no longer go stale.** It was a snapshot
+  that refreshed only when someone remembered `index-brain.cmd`, so any session that forgot left every
+  later session searching an older copy of the Brain — answering confidently out of text that no longer
+  existed. `tools/reindex-mark.mjs` (PostToolUse) writes a zero-byte flag and returns in ~0.15 s;
+  `tools/reindex-run.mjs` (Stop) does **one** rebuild per turn rather than one per edited file, then
+  clears the flag. Three decisions worth keeping: **(1)** neither calls `semantic-index/index-brain.cmd`
+  — that wrapper ends with `pause`, so a hook calling it would block forever waiting for a keypress, and
+  the same trap is now documented at the top of `score-brain.cmd`. **(2)** The marker deliberately does
+  **not** parse the hook payload to check *which* file changed: a rebuild with nothing changed re-embeds
+  nothing and costs ~3.5 s, while mis-parsing an undocumented payload would silently stop marking
+  altogether — the exact failure this pair removes. Cheap-and-always-right beats
+  clever-and-sometimes-off. **(3)** The marker runs *before* the consistency checker in the PostToolUse
+  list, because the checker exits 2 on drift and the flag must be set regardless. Measured: ~0.15 s when
+  there is nothing to do, ~3.5 s for a no-change rebuild, ~12 s after editing this file — 206 of the
+  index's 2,984 chunks live in `brain-log.md` alone, so the README's "2.8 s" is the small-file case.
