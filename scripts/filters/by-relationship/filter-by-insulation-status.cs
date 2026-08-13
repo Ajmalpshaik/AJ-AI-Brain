@@ -8,8 +8,13 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified — confirm InsulationLiningBase.HostElementId resolves in this Revit
-//         version before trusting bulk results (same caveat as filter-by-host.cs, which uses the same API).
+// STATUS: ✓ LIVE-VERIFIED — first 2026-08-06 (add-then-rollback, both branches flipped), re-verified
+//         2026-08-14 against a fixture left standing in the model. `InsulationLiningBase.HostElementId`
+//         DOES resolve on 2020; the old caveat is answered, not outstanding. 2026-08-14 run: 17 ducts of
+//         which 4 insulated — wantInsulated=true returned exactly those 4 ids, false returned exactly 13.
+//         Fixture built by action-add-remove-insulation.cs, which had itself been wrongly marked blocked
+//         for "no insulation fixture" — it CREATES the fixture. Two ducts are deliberately left insulated
+//         in the test model so this stays re-runnable without rebuilding anything.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

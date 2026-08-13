@@ -204,3 +204,16 @@ is exactly the one a fresh session cannot route.
   nothing in a search and "an external tool" returns everything. Full comparison:
   [`tool-landscape-removed.md`](tool-landscape-removed.md). Related dictation shape: he drops the
   **n** in the middle of a brand name, the same way "duck" loses the **t** of duct.
+- 2026-08-14 — **"visualization" (his word) = a CHART or DASHBOARD of the model's numbers**, not a 3D
+  render, not a Revit visual style, not a rendering job. Said as *"i need always need visualization...
+  if vishalization needdd it need to come"* while showing two dashboard pages of Revit data. The trap is
+  real: in normal Revit vocabulary "visualization" means rendering/walkthrough work, so a fresh session
+  could route this to the exact opposite job. If he ever means an actual render he will say render,
+  camera, or 3D view. Standing rule and workflow:
+  [`../skills/ajtools-visual-report/SKILL.md`](../skills/ajtools-visual-report/SKILL.md).
+- 2026-08-14 — **"artifact" (his word) = a published HTML page with its own link**, the shareable kind —
+  as opposed to a chart drawn inside the chat reply. Said as *"if i ask the artifects its need to come
+  like this you make html file"*. This is a **request word, not a default**: he wants the chart in the
+  chat normally, and only a page when he says artifact / dashboard / link / "I want to send it". Getting
+  this backwards buries the answer behind a link, which is exactly what he corrected. See
+  [`../skills/ajtools-visual-report/SKILL.md`](../skills/ajtools-visual-report/SKILL.md).

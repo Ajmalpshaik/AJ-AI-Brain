@@ -9,8 +9,17 @@
 // GOTCHA: an element can hold only ONE insulation — already-insulated elements are skipped and reported
 //         on add (remove first to change type/thickness).
 // GOTCHA: kind="lining" is DUCT-only (DuctLining); pipes are skipped and reported.
-// BLOCKED (no insulation fixture in this model, same blocker as the two insulation filters) — graceful
-//          paths only; NOT YET LIVE-VERIFIED (created 2026-07-26 from the round-2 suggestions).
+// LIVE-VERIFIED 2026-08-14, twice on the same day by two sessions — first on a scratch model (5 ducts:
+//          add 5, re-add skip 5, remove 5), then again on the current test model, each result read back
+//          from a SEPARATE bridge call. Second run: add 3 ducts -> 3 DuctInsulation, type "Rigid Fiber
+//          Board", 25.0 mm; skip path over one insulated + one bare duct returned exactly "added 1,
+//          skipped 1"; remove on 2 of the 4 left exactly the other 2 and all 17 ducts standing.
+// WAS WRONGLY MARKED BLOCKED until 2026-08-14, reason recorded so the mistake is not repeated: the note
+//          said "no insulation fixture in this model". But this fragment CREATES insulation — it never
+//          needed one. All it needs is an insulation TYPE, and the stock template ships six
+//          (2 DuctInsulationType, 2 PipeInsulationType, 2 DuctLiningType). It was runnable all along.
+//          Same false blocker had stalled filter-by-insulation-status.cs and filter-by-insulation-type.cs,
+//          which this fragment's output then cleared in the same session.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

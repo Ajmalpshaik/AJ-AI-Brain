@@ -37,6 +37,13 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 7. **Reply format** — see [`knowledge/reply-style.md`](knowledge/reply-style.md): a count question gets a
    bare number, a size/breakdown gets a schedule-style table, substantive work closes with a short
    final-report summary. Plain language, no unexplained jargon.
+8. **Show the numbers, don't just list them — without being asked.** His standing rule, 2026-08-14:
+   *"i need always need visualization... if vishalization needdd it need to come."* Two or more numbers
+   that invite comparison → draw them **as a chart inside the chat reply**. A published page (his word:
+   an **"artifact"**) is made **only when he asks for one** — never unasked, it just buries the answer
+   behind a link. One number stays one number (rule 7 still wins). How:
+   [`skills/ajtools-visual-report/SKILL.md`](skills/ajtools-visual-report/SKILL.md). Note his word
+   **"visualization" means a chart or dashboard of the model's numbers**, never a 3D render.
 
 ## Route by what the request is
 
@@ -52,11 +59,12 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Checking whether ductwork already built is still fully connected | [`skills/ajtools-mep-connectivity-verify/SKILL.md`](skills/ajtools-mep-connectivity-verify/SKILL.md) |
 | Figuring out unknown/ambiguous real MEP connectivity (what connects to what) | [`skills/ajtools-mep-trace/SKILL.md`](skills/ajtools-mep-trace/SKILL.md) |
 | Building a brand-new parametric family (.rfa) in the Family Editor | [`skills/ajtools-family-creation/SKILL.md`](skills/ajtools-family-creation/SKILL.md) |
+| **Showing numbers, not just listing them** — a chart in the reply, or a shareable dashboard page ("make it a dashboard", "give me the graph", "like that artifact") | [`skills/ajtools-visual-report/SKILL.md`](skills/ajtools-visual-report/SKILL.md) — **and it applies unasked**, see rule 8 below |
 | Saving something reusable, splitting a big file, making a new skill, a whole-session "did we save everything" sweep | [`skills/brain-self-maintain/SKILL.md`](skills/brain-self-maintain/SKILL.md) |
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
 | Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 316 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 317 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 

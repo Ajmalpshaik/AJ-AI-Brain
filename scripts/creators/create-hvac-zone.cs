@@ -8,7 +8,12 @@
 //         when added here (they silently leave the old zone); check zone membership first if that matters.
 // GOTCHA: the Zone and the Spaces must be on the same Phase — mismatches are the usual reason AddSpaces
 //         rejects a space.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
+// LIVE-VERIFIED 2026-08-14 — zone created on Level 1 under phase "New Construction", 1 space added,
+//         0 rejected, and the zone read back from a SEPARATE bridge call as genuinely holding that Space.
+// GOTCHA: `phaseName = null` resolves to the document's LAST phase, not its first.
+// GOTCHA: a freshly created Zone reports `Area = 0 m²` while the Space inside it already reports its real
+//         area — the same delayed computation a new Space shows. Read it back in a later call; do not
+//         trust the value available at creation time, and do not report that 0 as the answer.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -20,22 +20,15 @@ nothing about whether you can act. Headings are bold and items numbered on purpo
 counts them that way.
 
 **Needs a live bridge + the current test model — just run them:**
-1. `creators/create-hvac-zone.cs` — needs Spaces; `create-space.cs` is verified, so create then add.
-   CHECK FIRST: `AddSpaces` returns ONE bool for the whole SpaceSet and the code turns it into a
-   per-space count without ever reading `zone.Spaces.Size` back.
-2. `creators/create-room-elevations.cs` — the room exists. CHECK: it picks the Elevation ViewFamilyType by
-   `FirstOrDefault` and never reports which, so two projects can silently differ.
-3. `actions/sheets-views/action-add-aligned-dimensions.cs` — CHECK: Revit deletes degenerate dimensions
-   during the regeneration AT commit and only warns, so re-read `Document.GetElement(dim.Id)` afterwards.
-4. `actions/sheets-views/action-add-spot-elevations.cs` — CHECK: it takes the FIRST PlanarFace with a
-   Reference, with no `Math.Abs(pf.FaceNormal.Z) > 0.9` test, so a vertical side face yields a plausible
-   but wrong elevation.
-5. `actions/sheets-views/action-manage-sheet-sets.cs` — CHECK: it mutates `Document.PrintManager` inside a
-   transaction, and PrintManager state is not transactional, so it will not roll back.
-6. `actions/structural-changes/action-add-remove-insulation.cs` — ducts exist; create-then-rollback.
-7. `actions/structural-changes/action-place-accessory-on-run.cs` — ducts exist; create-then-rollback.
-8. `examples/color-isolate-select-by-size.cs` — composed example; every part is already verified.
-9. `recipes/slice-trunk-for-sizing.cs` — the 3 connected ducts are the fixture it wants.
+1. `actions/structural-changes/action-place-accessory-on-run.cs` — ducts exist; create-then-rollback.
+   Its METHOD is proven but the file as one uninterrupted run threw an unisolated null reference; read its
+   STATUS block. Suspect: an element handle reused across a transaction boundary after `BreakCurve`.
+
+(**Everything else in this group is closed.** 2026-08-14: `action-add-aligned-dimensions.cs`,
+`action-add-spot-elevations.cs`, `action-manage-sheet-sets.cs` and `action-add-remove-insulation.cs`
+verified live — several of their predicted CHECKs turned out wrong, see the Log entry for that date.
+`create-hvac-zone.cs` and `create-room-elevations.cs` were verified earlier the same day;
+`slice-trunk-for-sizing.cs` and `color-isolate-select-by-size.cs` a few days before that.)
 
 **Needs Ajmal's explicit go-ahead — destructive, or changes settings that do not roll back:**
 1. `actions/sheets-views/action-export-sheets-to-pdf.cs` — THE DANGEROUS ONE. Calls
@@ -49,21 +42,28 @@ pending: saving of any kind is impossible through the bridge's transaction group
 the fragment's own header.)
 
 **Needs a file, a printer, or content only Ajmal can supply:**
-1. `creators/load-family.cs` — an `.rfa` on disk. KNOWN BUG found by reading, fixable blind: its
-   `if (ok && fam != null) / else if (fam == null && !ok)` has no plain `else`, so the already-loaded
-   case (`ok == false`, `fam != null`) prints NOTHING — the very case its header promises to report.
-2. `actions/structural-changes/action-extract-cad-curves.cs` — a CAD import.
-3. `actions/structural-changes/action-copy-from-link.cs` — the RVT link exists but has no elements.
-4. `actions/parameters-naming/action-import-parameters-from-csv.cs` — a CSV.
-5. The six `actions/sheets-views/action-export-*.cs` — a real export folder, plus IFC/NWC exporters
+1. `actions/structural-changes/action-extract-cad-curves.cs` — a CAD import.
+2. `actions/structural-changes/action-copy-from-link.cs` — the RVT link exists but has no elements.
+3. `actions/parameters-naming/action-import-parameters-from-csv.cs` — a CSV.
+4. The six `actions/sheets-views/action-export-*.cs` — a real export folder, plus IFC/NWC exporters
    installed. ALL SIX SHARE ONE SHAPE: they announce a written file without ever checking the disk, and
    `action-export-views-to-dwg.cs` additionally discards the bool `Document.Export` returns.
 
+(`creators/load-family.cs` was item 1 here until 2026-08-14 — **closed**. It never needed Ajmal to supply
+an `.rfa`: the stock library at `C:\ProgramData\Autodesk\RVT 2020\Libraries\US Metric\` ships thousands,
+including 166 electrical. Its "KNOWN BUG" also turned out not to be real — see the Log entry.)
+
 **Fixture-blocked — need model content that does not exist yet:**
-1. Electrical content — `filters/by-relationship/filter-by-electrical-system.cs`.
-2. A nested shared family — the positive path of `filters/by-relationship/filter-by-subcomponents.cs`.
-3. A Ceiling — `creators/create-ceiling.cs`, `recipes/ray-trace-to-ceiling.cs`.
-4. A sleeve family — `recipes/place-sleeves-at-wall-penetrations.cs`.
+1. A nested shared family — the positive path of `filters/by-relationship/filter-by-subcomponents.cs`.
+2. A sleeve family — `recipes/place-sleeves-at-wall-penetrations.cs`.
+3. `recipes/ray-trace-to-ceiling.cs` — **not really fixture-blocked: it needs Ajmal to draw ONE ceiling by
+   hand**, ten seconds of work. `Ceiling.Create` does not exist before Revit 2022 (re-confirmed by
+   reflection 2026-08-14: 0 overloads, and no ceiling method on `Document.Create`), so the API cannot
+   build this one fixture. That makes it an ASK, not a wait. `creators/create-ceiling.cs` is not an open
+   item at all — it is already written up as CONFIRMED IMPOSSIBLE and does the right thing.
+
+(Electrical content was item 1 here until 2026-08-14 — **closed by building the fixture**: two stock MEP
+families loaded, a real panelled PowerCircuit created, `filter-by-electrical-system.cs` verified.)
 
 **Big recipes — deliberately left to be proven the day they run on a real job:**
 1. Verifying these verbatim costs far more than it returns against a test model, and they are idempotent.
@@ -1908,3 +1908,99 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   time somebody sees it: a freshly created Zone reports `Area = 0 m²` while the Space inside it reports
   43.2 — the same delayed computation a new Space itself shows, which is why every check here reads state
   back in a later call instead of trusting the value available at creation time.**
+- 2026-08-14 — **The last three annotation/sheet-set fragments verified live — and two of their three
+  predicted CHECKs were wrong, one dangerously so.** `action-add-aligned-dimensions.cs`: 3 diffusers at
+  2500 mm centres produced a 2-segment dimension reading 2500.0 mm each, confirmed from a separate call.
+  Measured while doing it — **stock duct fittings and duct accessories expose NO family references at all**
+  (CenterLeftRight/CenterFrontBack/Strong/Weak all 0), so this fragment can never dimension them; air
+  terminals expose CLR+CFB and work. Also: reading a dimension back, `Dimension.Curve` throws "The input
+  curve is not bound" — verify via `Segments`/`References`, never `.Curve`.
+  **`action-add-spot-elevations.cs` — a fourth silent-success bug, and the predicted fix would not have
+  caught it.** It annotated the SOFFIT at -300.0 mm on a 300 mm floor while reporting "1 placed, 0
+  skipped": Revit hands back the bottom face (normalZ -1.00) BEFORE the top, and the fragment took the
+  first planar face with a Reference. The open-items CHECK proposed guarding with
+  `Math.Abs(pf.FaceNormal.Z) > 0.9` — **that passes -1.00 and fixes nothing.** The guard has to be
+  POSITIVE: `FaceNormal.Z > 0.9`. Fixed by collecting every candidate face and choosing deliberately via a
+  new `facePreference` input ("top"/"bottom"/"any"), and the annotated level is now printed per element so
+  a wrong face cannot hide inside a success message again. Re-run reads 0.0 mm.
+  **`action-manage-sheet-sets.cs` — all four modes verified, and a three-week-old header assumption
+  disproved.** The header claimed selecting an existing saved set as `CurrentViewSheetSet` "is awkward on
+  2020", so rename/delete used `Element.Name`/`Document.Delete` instead. Rename FAILED live — Revit itself
+  names the fix: "please set the name via PrintSetup::Rename method". Reflection then showed
+  `CurrentViewSheetSet` is plainly settable (canWrite=True). Both now assign it and call
+  `ViewSheetSetting.Rename()`/`.Delete()`; rename kept the same element id and members, delete removed the
+  set and left all 3 sheets standing. Two further gotchas recorded in the header: `ViewSheetSetting` throws
+  unless `PrintRange = Select` is set first, and that PrintRange change is genuinely non-transactional.
+  **The pattern across all three: a CHECK written by reading the code is a hypothesis, not a finding.**
+  One was right, one was wrong-and-harmless, one was wrong in a way that would have shipped the bug.
+- 2026-08-14 — **"Fixture-blocked" was wrong a third time, and the fix took one call.**
+  `action-add-remove-insulation.cs` had been marked BLOCKED since July for "no insulation fixture in this
+  model". But that fragment **creates** insulation — it never needed a fixture, only an insulation TYPE,
+  and the stock template ships six (2 DuctInsulationType, 2 PipeInsulationType, 2 DuctLiningType). It was
+  runnable the whole time. Verified live: add (3 ducts -> 3 DuctInsulation, "Rigid Fiber Board", 25.0 mm),
+  the already-insulated skip ("added 1, skipped 1" over one insulated + one bare duct), and remove (2 of 4
+  gone, the other 2 untouched, all 17 ducts still standing). Its output then cleared
+  `filter-by-insulation-status.cs` (4 insulated / 13 bare out of 17, exact ids) and
+  `filter-by-insulation-type.cs` (20–30 mm band -> all 4, resolveToHost -> the 4 Ducts, **>=50 mm -> 0 as a
+  deliberate negative control** — a filter that only ever returns "all" looks correct until the day it
+  matters). **Two ducts are left permanently insulated in the test model** so these three stay re-runnable.
+  That is now THREE false "fixture-blocked" items in three days. The question to ask first is not "does the
+  fixture exist" but "can this fragment build its own fixture, or can the API build one".
+- 2026-08-14 — **`tools/brain-status.mjs` was undercounting verified fragments — the drift-detector had
+  drifted.** It reads `scripts/README.md` row markers with `/verified 2026/`, but nine rows say
+  "verified **live** 2026-08-14", so nine genuinely-verified fragments were being reported as "no status
+  either way" — the precise failure this tool exists to catch, inside the tool. Widened to
+  `/verified(?:\s+\w+)? 2026-\d\d-\d\d/`, which also picks up "re-verified". Real figure moved 223 -> 232
+  (83% -> 86%) with no fragment changing state. **Lesson: a checker that reads prose markers needs to
+  tolerate the ways a human actually writes them, or it quietly reports the library as worse than it is —
+  and nobody doubts a number that errs pessimistically.**
+- 2026-08-14 — Fixed drift found the same day: `create-hvac-zone.cs` and `create-room-elevations.cs` had
+  been verified live and logged, but both fragment headers still read "NOT YET LIVE-VERIFIED", and the two
+  insulation filters' headers still read "not yet live-verified" while their README rows recorded a
+  2026-08-06 verification. **The README and the headers are two records of the same fact and they drifted
+  apart in both directions.** Headers now carry the evidence, including the two gotchas worth keeping: a
+  fresh Zone reports `Area = 0 m²` until recomputed, and `phaseName = null` resolves to the document's LAST
+  phase, not its first.
+- 2026-08-14 — **Electrical was never "fixture-blocked" either — the fixture was built in four calls, and
+  `load-family.cs` fell out of the same discovery.** On 2026-08-07 `filter-by-electrical-system.cs` was
+  re-checked and called "genuinely blocked, needs electrical content". The unasked question was where
+  content comes from: `C:\ProgramData\Autodesk\RVT 2020\Libraries\US Metric\` ships **166 electrical
+  .rfa files**. Loading two of them cleared `load-family.cs` (item 1 of "needs a file only Ajmal can
+  supply" — it never needed one) and then produced the circuit that cleared the filter: a real panelled
+  PowerCircuit via `ElectricalSystem.Create` + `SelectPanel`. Verified with a negative control ("Data" -> 0).
+  **Three gotchas worth more than the verification itself:** (1) only the **MEP** library families carry
+  electrical connectors — the Architectural `M_Electrical Panel.rfa` / `M_Outlet-Duplex.rfa` place happily
+  but have a NULL `MEPModel.ConnectorManager`, and `ElectricalSystem.Create` then fails with the unhelpful
+  "There should be at least one component that can create the specified circuit type"; (2)
+  `ElectricalSystem.Elements` returns the LOADS on a circuit, **not** the panel feeding it, so a 2-equipment
+  circuit reports 1 element and that is correct; (3) `Connector.IsConnected` **throws** on a panelboard —
+  its 6 connectors include CableTrayConduit MasterSurface ones, and connection status only exists for
+  PhysicalConn. That last one sharpens the standing "never trust `IsConnected`" rule in `mep-trace.md`:
+  on some equipment it does not merely mislead, it will not even answer.
+  Also re-confirmed by reflection, so it is not re-litigated: **`Ceiling.Create` has 0 overloads on 2020**
+  and `Document.Create` has no ceiling method. `create-ceiling.cs` is correctly written up as impossible;
+  `ray-trace-to-ceiling.cs` is an ASK ("Ajmal, draw one ceiling"), not a fixture wait.
+
+- 2026-08-14 — **New skill: [`ajtools-visual-report`](../skills/ajtools-visual-report/SKILL.md), and
+  visualization became a standing reply rule rather than a request.** He said *"i need always need
+  visualization... if vishalization needdd it need to come"* after showing two Revit dashboards he wanted
+  matched, so the rule went into `START-HERE.md` (rule 8) and `reply-style.md`, not only the skill: two or
+  more comparable numbers now get a chart or a published dashboard unasked, while a bare count stays a
+  bare number. Ships with `dashboard-template.html` so the look is not re-derived per job. Proven once
+  end-to-end (duct takeoff off the live model); the other six shapes have proven *fragments* but no
+  dashboard built yet. Also logged: **his "visualization" means charts of the model's NUMBERS, never a 3D
+  render** — recorded in `glossary.md` because the Revit-normal meaning is the opposite job.
+- 2026-08-14 — **"Don't go to Revit" is now an absolute stop** (`live-model/core.md`, Bridge basics).
+  When he says another session is running, make zero bridge calls — not even a ping — because the
+  one-connection-at-a-time limit means a call preempts his other session rather than queueing. Same limit
+  killed one of six parallel calls that day: go sequential.
+- 2026-08-14 — **New: [`tool-landscape-removed.md`](tool-landscape-removed.md)** — how this Brain's
+  bridge compares to an external tool's A.I. Connector (the bought alternative), with prices dated, the one real
+  tool gap (accessibility checking), and the note that their 50 tool names are unpublished.
+- 2026-08-14 — **Corrected `ajtools-visual-report` within the hour: the chat is the default, a page is
+  on request.** The first two reports were published as artifacts he never asked for; he came back with
+  *"normaly i need to come in the chat... if i ask the artifects its need to come like this you make html
+  file"*. Skill, `reply-style.md` and `START-HERE.md` rule 8 all flipped, and **"artifact" is now recorded
+  in `glossary.md` as a request word, not a default output**. Also added to the skill: a size/width axis
+  sorts smallest→largest in BOTH table and chart, and a grouping that hides another (width hiding height)
+  must say so.

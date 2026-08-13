@@ -77,7 +77,13 @@ for (const b of BUCKETS) {
 // flagged as never-run, so it silently reads as fine.
 const scriptsReadme = read("scripts/README.md");
 const rows = scriptsReadme.split(/\r?\n/).filter((l) => l.startsWith("| [`"));
-const verified = rows.filter((l) => /verified 2026/.test(l) && !/NOT yet live-verified/.test(l));
+// `verified 2026-08-07` is the house wording, but rows written in a hurry say "verified live 2026-08-14"
+// or "re-verified 2026-08-06" and a strict /verified 2026/ silently dropped those into "no status" — the
+// exact undercount this tool exists to prevent, in the tool itself (found 2026-08-14: 9 rows, all really
+// verified, all counted as unproven). Allow one adverb between the word and the date.
+const verified = rows.filter(
+  (l) => /verified(?:\s+\w+)? 2026-\d\d-\d\d/.test(l) && !/NOT yet live-verified/.test(l),
+);
 const flagged = rows.filter((l) => /NOT yet live-verified/.test(l));
 const blocked = rows.filter(
   (l) => /BLOCKED|CONFIRMED IMPOSSIBLE/.test(l) && !verified.includes(l) && !flagged.includes(l),
