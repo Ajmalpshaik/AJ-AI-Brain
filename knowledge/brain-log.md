@@ -2004,3 +2004,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   in `glossary.md` as a request word, not a default output**. Also added to the skill: a size/width axis
   sorts smallest→largest in BOTH table and chart, and a grouping that hides another (width hiding height)
   must say so.
+- 2026-08-15 — **`recipes/mep-grayout.cs` proven end-to-end on a real model** — run on
+  `PLAN AT EL. +100.950_HVAC Ground Floor Layout Copy 2` (1:50, HLR, no view template): 87 categories +
+  589 sub-categories written, rebar pair off, and a read-back confirmed every value in the skill's table.
+  The 63 categories that lost a slot are exactly the predicted non-cuttable ones. Gap found on this
+  project: `MEP_Hidden_Short_Dash` is not loaded, so insulation came out grey but **solid** —
+  `recipes/create-mep-line-standards.cs` installs it, and the grayout must be re-run afterwards.
