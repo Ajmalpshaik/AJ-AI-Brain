@@ -2010,3 +2010,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   The 63 categories that lost a slot are exactly the predicted non-cuttable ones. Gap found on this
   project: `MEP_Hidden_Short_Dash` is not loaded, so insulation came out grey but **solid** —
   `recipes/create-mep-line-standards.cs` installs it, and the grayout must be re-run afterwards.
+- 2026-08-17 — **The daily "check AJ Tool / vector index / Graphify / Obsidian" routine cannot see three
+  of its four targets, and would have passed silently forever.** It runs in a Claude Code cloud container
+  against a fresh `git clone`, and the vector index (`semantic-index/chroma-db`, `venv`, `model-cache`),
+  the graph (`graphify-out/`) and the Obsidian vault generated into it are all **gitignored on purpose** —
+  the same "a stale index in this repo is worse than no index" rule recorded 2026-08-07. So the clone has
+  the *code* for all three and the *state* of none, and `.mcp.json` points at `D:\Ajmal\...`, so there is
+  no bridge in that session either. What a cloud run genuinely proves is the source side only: all 8
+  consistency checks, 11 skills · 270 fragments · 17 tools, 317 indexable files matching the coverage
+  claims, and every `.py`/`.mjs` tool parsing. **Freshness of the index, graph and vault is only
+  answerable on the Windows machine** — and note `brain-status.mjs` does not check any of the three, so
+  nothing on either machine reports their age today. That gap is the thing to close, not the routine.
