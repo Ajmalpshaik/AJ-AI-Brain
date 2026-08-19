@@ -217,3 +217,72 @@ is exactly the one a fresh session cannot route.
   chat normally, and only a page when he says artifact / dashboard / link / "I want to send it". Getting
   this backwards buries the answer behind a link, which is exactly what he corrected. See
   [`../skills/ajtools-visual-report/SKILL.md`](../skills/ajtools-visual-report/SKILL.md).
+- 2026-08-19 — **"sound attenuator", never "silencer"** — his correction, in his own words: *"sound
+  attenuator NOT Silencer ADD HTIS"*. Same device, and Revit content often ships the other word: the
+  family in this project is literally named `TCM_ATN_T001_Silencer_Rectangular` while its `ATN` code
+  means attenuator. So the wrong word is sitting in the model waiting to be copied. Write **Sound
+  Attenuator** in any description, schedule, register or reply. Found while rewriting duct-accessory
+  Descriptions on `4355-BHVD-3D-60P00-BL006A`.
+- 2026-08-19 — **his description format is `<Device in words> - <Shape>`**, taken from the family name
+  and dropping deflection, plenum/duct-mounted and material — e.g.
+  `TCM_SAG_T200_SupplyAirGrille_Single-Deflection_Rectangular_WithPlenum` becomes **"Supply Air Grille -
+  Rectangular"**. Applied to a whole family at once, every type, not only the placed ones. Consequence he
+  accepted knowingly: the material (aluminium / galvanised steel / PVC) disappears from the text.
+- 2026-08-19 — **the model file name is a data source, not just a label.** Ajmal's rule, his own words:
+  *"CWA it will not be always 60P00, this is as per the model name our 4355-BHVD-3D-60P00-BL006A.rvt...
+  after 3D what is that 60P00, so that's why its came."* The title reads
+  `<project>-<disc><sub>-3D-<CWA>-<block>`:
+
+  | Token | In `4355-BHVD-3D-60P00-BL006A` | Meaning |
+  |---|---|---|
+  | 1 | `4355` | project number |
+  | 2 | `BHVD` | **Sub-Discipline = the first two characters, `BH`** (confirmed by Ajmal 2026-08-19: *"yes Sub-Discipline also from model name BHVD"*), then `VD`; sheets prove the split by writing `4355-BH-VD-…` |
+  | 3 | `3D` | model type |
+  | 4 | **`60P00`** | **CWA — Construction Work Area.** The token straight after `3D` |
+  | 5 | `BL006A` | building / block |
+
+  So `4355-BHVD-3D-60A10-BL002A` carries CWA `60A10`. **Derive BOTH CWA and Sub-Discipline from the open document's title
+  every time; never carry either from the last model.** Same for the sheet numbers, view names and levels — Ajmal:
+  *"now new model so model number will be different and sheet numbers will be different, view name levels
+  totally different."* Automated in
+  [`../scripts/recipes/fill-mm-document-register.cs`](../scripts/recipes/fill-mm-document-register.cs),
+  which aborts rather than guess if the title has no `3D` token.
+- 2026-08-19 — **CWA = Construction Work Area**, the site's zoning of a plant into work areas. Appears as a
+  shared parameter on every element in the MM_ register and as segment 4 of the model file name.
+- 2026-08-19 — **`View Owner` and `View Use Group`** are the two custom view parameters that drive the
+  Project Browser grouping on the Tecnimont MM_ projects — `Tecnimont` and `03 - MileMate!` on 4355. A newly
+  created schedule has them **empty**, so it lands outside the browser structure and looks lost. Ajmal:
+  *"there is parameter for this schedule, view owner and view use group, that we need to change as per the
+  MM_V03, same like that we need for new creating schedules also."* Copy them off the project's own `MM_V03`
+  at run time rather than hardcoding — see
+  [`../scripts/creators/create-schedule.cs`](../scripts/creators/create-schedule.cs).
+- 2026-08-19 — **the Equipment Tag prefix identifies the equipment; the family name often does not.** Ajmal's
+  method, his own words: *"ACCU or ACU Equipment Tag is HCN, it means that is CRAC unit outdoor."* On
+  4355 the tag is `<PREFIX>-<number>` and the prefix is the real type code. It cut through a genuinely
+  messy library on `4355-BHVD-3D-60P00-BL003A`, where **four different family names** — `ACCU_Type 1.1`,
+  `ACCU_Type 1.3`, `ACU_Type 2.1`, `ACU_Type 2.2` — all carry `HCN` and are one piece of equipment. Read
+  the tag before trusting a family name, and before asking what something is.
+
+  | Prefix | Equipment | Seen on |
+  |---|---|---|
+  | `HCN` | **CRAC Unit Outdoor** (Ajmal, 2026-08-19) | ACCU/ACU families |
+  | `HSU` | indoor split units — VRF wall-mounted, ceiling cassette, precision AC | `TCM_WallMounted`, `STI_ME_ATU…cassette`, `Precision Air Conditioner` |
+  | `HEF` | exhaust fan (axial and centrifugal alike) | `TCM_EAF_T001`, `TCM_ECF` |
+  | `HGH` | exhaust louvre | `TCM_EAL_T100_J002` |
+  | `HPU` | packaged unit | `Packaged Air Conditioner` |
+  | `HAB` | PRF fan | `TCM_PRF_T004_FAN` |
+  | `HAH` | air handling unit | `AHU` |
+  | `HGS` / `HGR` / `HSL` | supply / return air terminal, sand trap louvre | air terminals |
+  | `HVD` / `HFD` / `HGD` / `HND` | volume / fire / gas-tight / non-return damper | duct accessories |
+  | `HSA` | **sound attenuator** — the project's own code agrees with [[his "never silencer" rule]] | duct accessories |
+  | `HAF` / `HWL` / `HEH` / `HID` / `DAD` | air filter / weather louvre / electric heater / — / duct access door | duct accessories |
+
+  Untagged is itself a signal: on BL003A the only equipment with no tag at all was
+  `MC_ConnectionNode_Outdoor_Supply_Air_Rectangular`, a placeholder rather than real equipment — Ajmal's
+  ruling on it was *"no need to look"*.
+- 2026-08-19 — **his equipment wording, given directly:** `TCM_WallMounted` → **"VRF Split Indoor"**;
+  `STI_ME_ATU_Air Terminal Unit_cassette` → **"Cassette Air Conditioner Unit"**; `TCM_PRF_T004_FAN` →
+  **"PRF Fans"**; `TCM_EAL_T100_J002_ExhaustLouvre1` → **"Exhaust Louvre"** (no shape suffix); ACCU/ACU →
+  **"CRAC Unit Outdoor"**. From BL006A the same day: `PackagedAirConditioner` → **"Packaged Unit"**,
+  `TCM_ACU_T002_AirCooledCondensingUnit` → **"Split Outdoor"**, `TCM_ECF_ExhaustCentrifugalFan` →
+  **"Exhaust Fan for Inertial Air Filter"** (named by what it serves, not what it is).

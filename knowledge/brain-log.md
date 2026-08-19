@@ -2021,3 +2021,39 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   claims, and every `.py`/`.mjs` tool parsing. **Freshness of the index, graph and vault is only
   answerable on the Windows machine** — and note `brain-status.mjs` does not check any of the three, so
   nothing on either machine reports their age today. That gap is the thing to close, not the routine.
+
+- **2026-08-19 — a schedule's *recipe* is now readable, not just its columns.**
+  `action-report-schedule-fields.cs` lists the columns of a schedule but nothing could read back the
+  rules around them, so "study how this schedule is built" meant hand-written C# every time. New
+  `actions/sheets-views/action-report-schedule-definition.cs` reports the category (including the `-1`
+  `<Multi-Category>` case), the filter rules with category/element IDs resolved to real names, the
+  sort/group levels in order, the itemised/headers/grand-total/links switches, and per column whether
+  its value comes from a built-in parameter, a SHARED parameter (with GUID), a project parameter, or a
+  schedule formula. Proven on the real multi-category `MM_V03` in 4355-BHVD-3D-60P00-BL006A. **The
+  formula TEXT of a calculated field cannot be read on Revit 2020** — `ScheduleField` has no formula
+  member at all, so the fragment detects it by reflection rather than calling `GetFormula()`, which is a
+  *compile* error there and therefore unreachable by try/catch.
+
+- **2026-08-19 — the two-open-projects trap, caught live.** With BL006A and BL002A both open, a new
+  schedule was created into the WRONG document because `Document` follows whatever Revit has in front,
+  and it changed between two tool calls in the same session. It failed silently — success message, real
+  Id, plausible row count. Written up in `knowledge/live-model/core.md`: pin the document by title for
+  any WRITE, and echo the document title in the result line. The only thing that exposed it was a count
+  that contradicted an earlier reading of the "same" model.
+
+- **2026-08-19 — the MM_ document register became a recipe, not a memory.** Filling the handover register
+  (CWA, MM_NP System Type, MM_Discipline Code, MM_Main Document Definition/Statement/Revision,
+  Sub-Discipline, MM_Main Drawing Number) was done by hand across four categories on
+  `4355-BHVD-3D-60P00-BL006A` — 160 elements — then folded into
+  `scripts/recipes/fill-mm-document-register.cs`. Two findings worth more than the script: the drawing
+  number must come from **what a sheet actually shows** (`FilteredElementCollector(doc, viewId)`), never
+  from the element's level; and **the candidate sheets differ per category** — ducting items belong to the
+  duct-layout sheets, equipment to the equipment-layout sheet. Getting that second one wrong is silent:
+  every element still receives a plausible sheet number. Ajmal caught it, not the script. Exceptions exist
+  inside a category too — exhaust louvres are Mechanical Equipment but drawn on the duct sheets.
+- **2026-08-19 — a family formula makes a parameter read-only, and "it's a type parameter" is not the
+  reason.** Four air-terminal grille types refused `Description.Set()` even inside a transaction, while the
+  round diffusers accepted it — same category, same built-in parameter, both type-level. The difference was
+  a material `if()` formula on Description inside the grille families. `Document.EditFamily` +
+  `FamilyManager.get_Parameter(...).IsDeterminedByFormula` is how to prove it rather than guess. 74 more
+  locked types sit unplaced across 22 other TCM families in the same project.
