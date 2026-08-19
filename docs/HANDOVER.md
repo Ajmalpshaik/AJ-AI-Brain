@@ -181,3 +181,67 @@ semantic-index\score-brain.cmd                                         # retriev
 
 Read the **top 3–5** search hits, never just #1 — measured ~3 in 4 right at #1, and the misses are site
 vocabulary. `knowledge/glossary.md` is the site-word → Revit-word map.
+
+## 8. Daily check, 2026-08-18 — the graphify split-brain has reopened
+
+Found by the scheduled daily tool check, which runs in a **Linux container holding a fresh git clone and
+nothing else**. Read §8.1 before trusting any of this: that container can see the *source* of all four
+tools and the *runtime state* of none of them.
+
+### The finding
+
+Since the last full markdown extraction (2026-08-13, brain-log), **13 document files have changed or been
+added**, including two that did not exist at extraction time:
+
+- `skills/ajtools-visual-report/` — **an entire new skill** (`SKILL.md` + `dashboard-template.html`)
+- `knowledge/tool-landscape-nonicatab.md` — a new knowledge note
+- modified: `CLAUDE.md`, `README.md`, `SETUP.md`, `START-HERE.md`, `knowledge/INDEX.md`,
+  `knowledge/glossary.md`, `knowledge/live-model/core.md`, `knowledge/reply-style.md`,
+  `knowledge/brain-log.md`, `scripts/README.md`
+
+Twelve `.cs` fragments also changed, but those are the **AST half — it rebuilds itself** on the Stop hook
+(`tools/graph-rebuild.mjs`). The markdown half cannot: it needs graphify's semantic pass, which is
+subagents or a `GEMINI_API_KEY`. So the graph's document side is **as of 2026-08-13 and is missing a whole
+skill**, while its code side is current — the exact split-brain closed on 2026-08-13 and reopened by five
+days of normal work. The **Obsidian vault is derived from that graph, so it is stale the same way** (last
+regenerated 2026-08-13: 1,503 notes, 325 stale pruned).
+
+This is the failure mode the 2026-08-13 entry predicted in writing: *"graphify's semantic pass over the
+markdown needs either a `GEMINI_API_KEY` or subagents"* — §5 B has carried it as an open item since, and it
+has now grown by 13 files.
+
+### Do this on the Windows machine — it cannot be done from the container
+
+```bash
+python tools/graph-rebuild.py --check    # authoritative staleness count, writes nothing
+```
+
+**That number, not the 13 above, is the real one.** The 13 is derived from git history; `--check` compares
+content hashes against the actual extraction cache. Two things will skew a naive reading: `score-history.md`
+is excluded as always-changing, and **`brain-log.md` is not excluded, so it will report stale on nearly
+every run** — it is written every session. Judge the count by the *other* files in the list.
+
+Then, for the markdown side, repeat the 2026-08-13 method (subagents, on Ajmal's explicit go-ahead) and
+keep its two lessons: **chunk by size, not by count** — the batch that died held all five big root docs —
+and **expect the shrink guard to fire**; overriding it needs a human reason, not a flag. `graphify-repair.py`
+must run on the extraction *before* the build or the 203→0 dangling-edge fix is silently undone. Regenerate
+the vault afterwards.
+
+### 8.1 The daily check cannot verify what it was asked to verify
+
+Worth fixing, because a check that always answers "cannot tell" is a check nobody reads. Of the four tools
+it is asked about, **three have no runtime state in git by deliberate design** — `.gitignore` excludes
+`graphify-out/` and `semantic-index/*` (venv, embedding model, Chroma DB) precisely because a stale derived
+index travelling with the repo is worse than none, and the vault travels with the folder, not the repo. The
+AJ AI bridge is a fourth case: `.mcp.json` points at `C:\Users\AjmalAlavudheen\...` and
+`D:\Ajmal\AJ AI Brain\mcp-server\index.js`, and it needs a live Revit session, so it is unreachable from a
+Linux container and was not connected to that session.
+
+From the clone, these are genuinely checkable and were all **clean on 2026-08-18**: 11 skills · 270
+fragments · 17 native tools, `verify-consistency.mjs` 8/8 with no drift, all 23 `mcp-server/` JS files
+parse, the `delete_elements` safety gate still present in `test/smoke.test.js`, working tree clean and
+level with `main`.
+
+**So the daily check belongs on the Windows machine**, where `graph-rebuild.py --check`,
+`index-brain.cmd`, a vault listing and a bridge `ping` all actually resolve. Run from anywhere else it can
+only ever report on source.
