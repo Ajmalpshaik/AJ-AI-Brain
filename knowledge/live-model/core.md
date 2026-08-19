@@ -207,6 +207,23 @@ rather than just act on existing ones and don't fit the filter+action shape.
   rollback is protective, not a bug — a bridge script either fully lands or fully doesn't, so after ANY
   script error re-read the model instead of assuming the pre-error lines stuck.
 
+- **When two projects are open, `Document` is whatever is in FRONT — and it can change between two of
+  your own tool calls.** Proven the hard way 2026-08-19: with `4355-BHVD-3D-60P00-BL006A` and
+  `4355-BHVD-3D-60A10-BL002A` both open, a schedule was created into BL002A while the session believed it
+  was working in BL006A. Nothing errored. The bridge reported success, a real Id, and a plausible row
+  count — the giveaway was only that the count (8 air terminals) disagreed with a number read minutes
+  earlier from the same "model" (45). **A wrong-document write is silent; only a number that contradicts
+  an earlier reading exposes it.**
+  - **For anything that WRITES, pin the document by title instead of using `Document`:**
+    `Document doc = null; foreach (Document d in Application.Documents) if (!d.IsLinked && d.Title == "<title>") doc = d;`
+    then build the `Transaction`, the `FilteredElementCollector` and every `GetCategory`/`GetElement` call
+    against `doc`. Transactions on a non-active open document work fine — this costs nothing and removes
+    the whole failure mode.
+  - **State the document title in the result line of any script that changes something**, so the wrong
+    target is visible in the output rather than inferred three calls later.
+  - Two open projects from the same template will BOTH contain the same view and schedule names, so
+    "I found MM_V03, therefore I'm in the right model" is not evidence of anything.
+
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`
   only exists from 2021 onward; on 2020 or earlier use

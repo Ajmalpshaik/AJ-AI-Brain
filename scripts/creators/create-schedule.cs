@@ -1,6 +1,23 @@
 // ============================================================
 // FRAGMENT (creator) — create-schedule.cs
 // PURPOSE: Create one new schedule (ViewSchedule) for a category, with a chosen set of fields/columns.
+//
+// ***A NEW SCHEDULE IS NOT FINISHED WHEN ITS COLUMNS ARE RIGHT (Ajmal, 2026-08-19).*** A project that
+// organises its Project Browser by custom view parameters will drop a freshly created schedule into the
+// wrong group — or no group — because those parameters start EMPTY. On the Tecnimont MM_ projects the two
+// that matter are **`View Owner`** and **`View Use Group`** (values there: `Tecnimont` and `03 - MileMate!`).
+// His words: *"there is parameter for this schedule, view owner and view use group, that we need to change
+// as per the MM_V03, same like that we need for new creating schedules also."*
+// **Copy them off an EXISTING schedule at run time, never hardcode them** — they differ per project, the
+// same way CWA does:
+//     var src = new FilteredElementCollector(doc).OfClass(typeof(ViewSchedule)).Cast<ViewSchedule>()
+//                   .FirstOrDefault(s => s.Name == "MM_V03");          // the project's reference schedule
+//     foreach (var bp in new[] { "View Owner", "View Use Group" }) {
+//         var sp = src.LookupParameter(bp); var dp = schedule.LookupParameter(bp);
+//         if (sp != null && dp != null && !dp.IsReadOnly) dp.Set(sp.AsString() ?? "");
+//     }
+// Do this inside the same transaction that creates the schedule. Verified live 2026-08-19 on
+// 4355-BHVD-3D-60P00-BL003A.
 //          Bare schedule only — no sorting/grouping/filtering/formatting configured; that still has to be
 //          set up in Revit's Schedule Properties dialog afterward, or added later as its own script if
 //          this becomes a repeated need.
