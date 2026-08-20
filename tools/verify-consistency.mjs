@@ -9,6 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const brainRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -250,7 +251,37 @@ function walkAll(dir, results = []) {
   return results;
 }
 
-const textFiles = walkAll(brainRoot);
+// ASK GIT WHICH FILES ARE OURS, rather than walking the whole folder.
+//
+// This check runs on EVERY Edit and Write via the PostToolUse hook, so its cost is paid dozens of
+// times in a working session, not once. Walking everything meant reading 2,456 files and 12.2 MB
+// each time - 2.5 s of the checker's 3.7 s - and most of it was the Python venv, the pip cache and
+// the downloaded embedding model. Those are third-party or machine-generated: our editing cannot
+// corrupt them, and if it could, this checker is not what would tell us.
+//
+// `--cached --others --exclude-standard` is tracked files PLUS new ones not yet added, minus
+// anything gitignored. That matters: a brand-new fragment is exactly the file most likely to carry
+// a fresh encoding fault, and `--cached` alone would have skipped it until it was committed.
+//
+// Measured 2026-08-21: 2,456 files / 12.2 MB / ~2,530 ms  ->  426 files / 3.2 MB / ~424 ms.
+// Falls back to the full walk if git is unavailable or this is not a repository, so a checkout
+// without git still gets checked - slowly, but checked.
+function ourTextFiles() {
+  try {
+    const out = execSync("git ls-files --cached --others --exclude-standard", {
+      cwd: brainRoot, encoding: "utf8", maxBuffer: 1e8, stdio: ["ignore", "pipe", "ignore"],
+    });
+    const files = out.split("\n")
+      .filter((f) => f && textExt.includes(path.extname(f)) && path.basename(f) !== "package-lock.json")
+      .map((f) => path.join(brainRoot, f));
+    if (files.length) return files;
+  } catch {
+    // no git, or not a repository - fall through
+  }
+  return walkAll(brainRoot);
+}
+
+const textFiles = ourTextFiles();
 for (const f of textFiles) {
   // Listing and reading are separate moments, so a file can legitimately vanish in between and this
   // whole checker would die on it — which is exactly what happened on 2026-08-11, when the voice

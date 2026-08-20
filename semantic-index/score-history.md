@@ -121,3 +121,4 @@ after the list gets buried one run at a time, and this is the file `CLAUDE.md` t
 - 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
 - 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
 - 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
+- 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
