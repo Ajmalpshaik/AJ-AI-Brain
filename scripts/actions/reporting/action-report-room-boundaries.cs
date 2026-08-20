@@ -15,6 +15,15 @@
 //   "0 boundary loops" rather than erroring. The positive path (a real enclosed room) is still untested.
 // ============================================================
 
+
+// Version-proof id VALUE, for the few places that need a number rather than an ElementId (testing for a
+// built-in negative id, casting to BuiltInParameter). Revit 2024 renamed IntegerValue -> Value and made
+// it 64-bit; naming either one directly fails to compile on the other version, so it is looked up by
+// name instead. The lookup happens ONCE and is captured, so each call is a field read, not a reflection
+// search - safe to use in a loop.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string boundaryLocation = "finish";  // "finish" (room-side face) | "center" (wall centerline)
 int maxSegmentsPerRoom = 40;         // detail cap per room; loop/segment counts always complete
@@ -55,7 +64,7 @@ foreach (var el in elements)
         {
             if (shown >= maxSegmentsPerRoom) break;
             var curve = seg.GetCurve();
-            var src = seg.ElementId.IntegerValue >= 0 ? Document.GetElement(seg.ElementId) : null;
+            var src = IdValue(seg.ElementId) >= 0 ? Document.GetElement(seg.ElementId) : null;
             sb.AppendLine($"      {fmtPt(curve.GetEndPoint(0))} -> {fmtPt(curve.GetEndPoint(1))}, {toMm(curve.Length):F0} mm, from: {(src != null ? $"'{src.Name}' (Id {src.Id})" : "(room separation/none)")}");
             shown++;
         }

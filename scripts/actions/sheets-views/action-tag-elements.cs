@@ -90,7 +90,7 @@ else
                 }
                 t.Commit();
                 sb.AppendLine($"Tagged {tagged} element(s) in view '{view.Name}', skipped {skipped}.");
-                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
             }
             catch (Exception ex)
             {

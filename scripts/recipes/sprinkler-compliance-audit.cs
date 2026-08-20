@@ -76,7 +76,7 @@ else
     double roomM2 = toM2(room.Area);
 
     // ---- the heads that are really there ----
-    var heads = new List<Tuple<int, XYZ, string>>();
+    var heads = new List<Tuple<ElementId, XYZ, string>>();
     foreach (var h in new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_Sprinklers)
                  .WhereElementIsNotElementType().ToList())
     {
@@ -84,7 +84,7 @@ else
         if (lp == null || !insideRoom(lp.Point)) continue;
         string tn = null;
         try { var ts = Document.GetElement(h.GetTypeId()); tn = ts == null ? null : ts.Name; } catch { }
-        heads.Add(Tuple.Create(h.Id.IntegerValue, lp.Point, tn ?? "(type unknown)"));
+        heads.Add(Tuple.Create(h.Id, lp.Point, tn ?? "(type unknown)"));
     }
 
     sb.AppendLine($"SPRINKLER AUDIT — '{room.Name}' (Id {roomIdInt}), {roomM2:F1} m2");

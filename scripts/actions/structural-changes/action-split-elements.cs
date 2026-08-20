@@ -82,7 +82,7 @@ using (var t = new Transaction(Document, "AJ Tools - Split Elements"))
         }
         t.Commit();
         sb.AppendLine($"Split {done} element(s) ({positionMode}={positionValue}), skipped {skipped}.");
-        if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+        if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
         if (failures.Count > 0)
             sb.AppendLine("Skipped detail: " + string.Join("; ", failures.Take(10)) +
                 (failures.Count > 10 ? $" ... and {failures.Count - 10} more" : ""));

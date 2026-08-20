@@ -131,7 +131,7 @@ else
                     samples.Add(new XYZ(bb.Max.X, bb.Max.Y, p.Z));
                 }
 
-                var hitIds = new List<int>();
+                var hitIds = new List<ElementId>();
                 var hitDists = new List<double>();
                 double worstSlopeRad = 0;
                 int misses = 0;
@@ -151,7 +151,7 @@ else
                     catch { }
 
                     if (h == null) { misses++; continue; }
-                    hitIds.Add(h.GetReference().ElementId.IntegerValue);
+                    hitIds.Add(h.GetReference().ElementId);
                     hitDists.Add(h.Proximity + startOff);
 
                     // how far off perpendicular is the surface we hit?

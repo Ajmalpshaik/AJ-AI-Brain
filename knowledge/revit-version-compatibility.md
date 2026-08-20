@@ -7,6 +7,10 @@ on a newer Revit, measured by scanning all 282 fragments on 2026-08-20 — not e
 Nothing here is unfixable, and the fixes are mechanical. What matters is knowing *which* failures shout
 and which stay quiet.
 
+> **DONE, 2026-08-20.** The migration below was applied to the whole library in one pass. What is left
+> is listed under "The three deliberate exceptions". The counts in the older sections are kept as the
+> record of what was found, not as a to-do list.
+
 ## Gate zero: the .NET question is NOT a fragment question
 
 This is the part that gets confused, so it goes first.
@@ -189,3 +193,59 @@ actual defect is that this library declares its id inputs as `int`:
 An `int` cannot hold a 2024+ id regardless of what it is passed to. **Change the declaration to `long`**
 and build the id with `MakeId`. Passing a `long` to `new ElementId(...)` directly would break 2020, which
 is exactly what `MakeId` exists to avoid.
+
+---
+
+## What was actually changed (2026-08-20)
+
+One pass over all 282 fragments. Applied by a balanced-paren parser rather than regex, because the value
+arguments contain nested calls.
+
+| | Sites | Change |
+|---|---|---|
+| Unit conversions | 202 | `UnitUtils.Convert*InternalUnits(x, DUT_*)` → arithmetic |
+| Id printing | 195 | `{x.Id.IntegerValue}` → `{x.Id}`, `.IntegerValue.ToString()` → `.ToString()` |
+| Id collections | ~60 | `HashSet<int>` / `List<int>` / `Dictionary<int,…>` → keyed by `ElementId` |
+| Id in GroupBy / OrderBy / tuples | ~20 | carry the `ElementId` itself |
+| Genuinely numeric | 8 | the `IdValue` helper, in 4 files |
+
+**Nothing needs `#if`, and nothing forked.** Every replacement is correct on Revit 2020 as well, so one
+source now runs 2020 → 2027.
+
+### Why `ElementId` rather than a helper, nearly everywhere
+
+`ElementId.GetHashCode()` returns the id value, so it works directly as a `Dictionary` key, a `HashSet`
+member, a `GroupBy` key and an `OrderBy` key. That is version-proof **with no reflection at all**, which
+matters because several of these sit inside loops over every element in the model. The reflection helper
+is reserved for the 8 places that need an actual number, and it caches the property lookup once.
+
+### The three deliberate exceptions
+
+1. **2 electrical conversions** in `create-equipment-family-from-datasheet.cs` still name
+   `DisplayUnitType`. Revit does not store voltage as volts — the internal unit is feet-based — and the
+   Autodesk doc hosts are blocked from the session that did this work, so the factor could not be
+   confirmed. Guessing would silently corrupt a voltage instead of failing loudly. **Verify the factor,
+   then convert.**
+2. **1 `IntegerValue` in `action-set-workset.cs`** is on a `WorksetId`, not an `ElementId`. Different
+   class, untouched by the 2024 change. It is annotated in place so nobody "fixes" it.
+3. **`prelude.cs` `ResolveView` now takes an `ElementId`, not an `int?`.** Any future fragment calling it
+   must pass `someView.Id` or `null`.
+
+### Checked before and after, since no C# compiler was available
+
+- No `something / UnitUtils.Convert…` anywhere, which would have inverted the arithmetic when the call
+  was replaced in place. Zero found.
+- No method chained onto a conversion call, which would have bound to the numeric literal. Zero found.
+- No numeric format specifier on an `IntegerValue`, which would throw once the value became an
+  `ElementId`. Zero found.
+- A scan for `new ElementId(x)` where `x` had itself become an `ElementId` found **2 real bugs**
+  (`tag-elements-in-active-view.cs`, `fill-mm-document-register.cs`), both fixed. This scan is worth
+  repeating after any similar sweep.
+- `git diff --stat` stayed proportional to the edit, so none of the UTF-8 double-encoding this repo has
+  suffered before.
+
+### Still not proven
+
+**None of this has been compiled or run.** It is a source-level migration done without Revit. Run the
+pilot and a couple of the heavier recipes on a real model before trusting the library again — the
+fragment status counts in `tools/brain-status.mjs` describe the PRE-migration state.

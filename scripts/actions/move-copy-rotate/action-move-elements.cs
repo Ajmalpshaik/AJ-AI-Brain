@@ -32,8 +32,8 @@ Func<Element, XYZ> probePoint = e =>
 double verifyTolFt = 1.0 / 304.8; // 1mm
 
 int moved = 0, skipped = 0, blocked = 0, partial = 0, unverified = 0;
-var blockedIds = new List<int>();
-var partialIds = new List<int>();
+var blockedIds = new List<ElementId>();
+var partialIds = new List<ElementId>();
 
 using (var t = new Transaction(Document, "AJ Tools - Move Elements"))
 {
@@ -77,12 +77,12 @@ using (var t = new Transaction(Document, "AJ Tools - Move Elements"))
             if (actualShift < verifyTolFt)
             {
                 blocked++;
-                blockedIds.Add(e.Id.IntegerValue);
+                blockedIds.Add(e.Id);
             }
             else if (now.DistanceTo(was + translation) > verifyTolFt)
             {
                 partial++; // moved, but constrained — hosted/attached elements do this legitimately
-                partialIds.Add(e.Id.IntegerValue);
+                partialIds.Add(e.Id);
             }
             else moved++;
         }

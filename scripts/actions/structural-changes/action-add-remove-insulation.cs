@@ -101,10 +101,10 @@ if (mode == "add")
 }
 else if (mode == "remove")
 {
-    var hostIds = new HashSet<int>(elements.Select(e => e.Id.IntegerValue));
+    var hostIds = new HashSet<ElementId>(elements.Select(e => e.Id));
     var toDelete = new FilteredElementCollector(Document).OfClass(typeof(InsulationLiningBase))
         .Cast<InsulationLiningBase>()
-        .Where(i => hostIds.Contains(i.HostElementId.IntegerValue))
+        .Where(i => hostIds.Contains(i.HostElementId))
         .Where(i => kind == "lining" ? i is Autodesk.Revit.DB.Mechanical.DuctLining : !(i is Autodesk.Revit.DB.Mechanical.DuctLining))
         .Select(i => i.Id)
         .ToList();

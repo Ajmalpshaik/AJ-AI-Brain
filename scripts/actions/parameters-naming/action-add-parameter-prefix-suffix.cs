@@ -49,7 +49,7 @@ Func<Element, (Element owner, Parameter param, string source)> resolveOwner = e 
 var targets = elements
     .Select(resolveOwner)
     .Where(o => o.owner != null)
-    .GroupBy(o => o.source + ":" + o.owner.Id.IntegerValue)
+    .GroupBy(o => o.source + ":" + o.owner.Id)
     .Select(g => g.First())
     .ToList();
 

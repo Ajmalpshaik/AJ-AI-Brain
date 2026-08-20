@@ -17,7 +17,7 @@
 // non-zero Volume returned for both a Room and a Space). Re-verified end-to-end on a real Room+Space pair.
 
 bool anyVolumeZero = false;
-var rows = new List<(int id, string name, string number, string level, double areaSqm, double volumeCum, string occupancy)>();
+var rows = new List<(ElementId id, string name, string number, string level, double areaSqm, double volumeCum, string occupancy)>();
 int skipped = 0;
 
 foreach (var e in elements)
@@ -33,7 +33,7 @@ foreach (var e in elements)
     string occupancy = sp.LookupParameter("Occupancy")?.AsString() ?? "";
     string levelName = sp.Level?.Name ?? "";
 
-    rows.Add((sp.Id.IntegerValue, sp.Name, sp.Number, levelName, areaSqm, volumeCum, occupancy));
+    rows.Add((sp.Id, sp.Name, sp.Number, levelName, areaSqm, volumeCum, occupancy));
 }
 
 sb.AppendLine($"Room/Space data for {rows.Count} element(s) ({skipped} skipped, not a Room/Space):");

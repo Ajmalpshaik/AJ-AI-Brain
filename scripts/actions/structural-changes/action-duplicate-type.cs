@@ -72,7 +72,7 @@ using (var t = new Transaction(Document, "AJ Tools - Duplicate Type"))
         t.Commit();
         sb.AppendLine($"Duplicated {duplicated} distinct type(s) (mode='{mode}'), skipped {skipped}" +
             (unresolved > 0 ? $", {unresolved} element(s) had no resolvable type." : "."));
-        if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+        if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
         if (failures.Count > 0)
             sb.AppendLine("Skipped detail: " + string.Join("; ", failures.Take(10)) +
                 (failures.Count > 10 ? $" ... and {failures.Count - 10} more" : ""));

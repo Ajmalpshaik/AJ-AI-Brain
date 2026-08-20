@@ -14,13 +14,13 @@
 Func<double, double> toMm = v => v * 304.8;
 
 // dedupe: instance -> its type; a type element passed directly is used as-is
-var typeIds = new HashSet<int>();
+var typeIds = new HashSet<ElementId>();
 var typesToReport = new List<ElementType>();
 foreach (var el in elements)
 {
     var asType = el as ElementType;
     var ty = asType ?? Document.GetElement(el.GetTypeId()) as ElementType;
-    if (ty != null && typeIds.Add(ty.Id.IntegerValue)) typesToReport.Add(ty);
+    if (ty != null && typeIds.Add(ty.Id)) typesToReport.Add(ty);
 }
 
 int withStructure = 0, without = 0;
@@ -44,7 +44,7 @@ foreach (var ty in typesToReport)
     int idx = 0;
     foreach (var layer in layers)
     {
-        var mat = layer.MaterialId.IntegerValue >= 0 ? Document.GetElement(layer.MaterialId)?.Name : null;
+        var mat = layer.MaterialId != ElementId.InvalidElementId ? Document.GetElement(layer.MaterialId)?.Name : null;
         bool isCore = idx >= cs.GetFirstCoreLayerIndex() && idx <= cs.GetLastCoreLayerIndex();
         sb.AppendLine($"    {idx + 1}. {layer.Function}, {toMm(layer.Width):F1} mm, material: {mat ?? "(by category)"}{(isCore ? "  [CORE]" : "")}");
         idx++;

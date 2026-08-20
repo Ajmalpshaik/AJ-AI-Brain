@@ -24,7 +24,7 @@ sb.AppendLine($"{(unitsOk ? "PASS" : "FAIL")}  units      1000mm -> {ft:F5} ft -
 
 // ---- VIEW TARGETING ----
 View activeView = ResolveView(null);
-View byId = activeView == null ? null : ResolveView(activeView.Id.IntegerValue);
+View byId = activeView == null ? null : ResolveView(activeView.Id);
 bool viewOk = activeView != null && byId != null && byId.Id == activeView.Id;
 sb.AppendLine($"{(viewOk ? "PASS" : "FAIL")}  view       active='{(activeView == null ? "none" : activeView.Name)}', by-Id resolves to the same view");
 

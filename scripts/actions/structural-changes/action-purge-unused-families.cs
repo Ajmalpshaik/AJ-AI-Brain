@@ -26,16 +26,16 @@ bool wholeFamiliesOnly = false;         // true = only delete families where EVE
 // ---- END INPUTS ----
 
 // count placed instances per symbol in one pass
-var usedSymbolIds = new HashSet<int>();
+var usedSymbolIds = new HashSet<ElementId>();
 foreach (var fi in new FilteredElementCollector(Document).OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>())
 {
     var sid = fi.GetTypeId();
-    if (sid != ElementId.InvalidElementId) usedSymbolIds.Add(sid.IntegerValue);
+    if (sid != ElementId.InvalidElementId) usedSymbolIds.Add(sid);
     // a nested symbol is "used" through its parent — protect it from deletion
     foreach (var subId in fi.GetSubComponentIds())
     {
         var sub = Document.GetElement(subId);
-        if (sub != null) usedSymbolIds.Add(sub.GetTypeId().IntegerValue);
+        if (sub != null) usedSymbolIds.Add(sub.GetTypeId());
     }
 }
 
@@ -53,7 +53,7 @@ foreach (var fam in families.OrderBy(f => f.FamilyCategory?.Name).ThenBy(f => f.
 {
     var symbolIds = fam.GetFamilySymbolIds().ToList();
     totalSymbols += symbolIds.Count;
-    var unusedHere = symbolIds.Where(id => !usedSymbolIds.Contains(id.IntegerValue)).ToList();
+    var unusedHere = symbolIds.Where(id => !usedSymbolIds.Contains(id)).ToList();
     if (unusedHere.Count == 0) continue;
 
     bool wholeFamilyUnused = unusedHere.Count == symbolIds.Count;
@@ -86,13 +86,13 @@ else
         try
         {
             // delete whole families outright where every type is unused, individual symbols otherwise
-            var wholeSet = new HashSet<int>(fullyUnusedFamilyIds.Select(i => i.IntegerValue));
+            var wholeSet = new HashSet<ElementId>(fullyUnusedFamilyIds);
             var toDelete = new List<ElementId>(fullyUnusedFamilyIds);
             foreach (var sid in unusedSymbolIds)
             {
                 var sym = Document.GetElement(sid) as FamilySymbol;
                 if (sym == null) continue;
-                if (sym.Family != null && wholeSet.Contains(sym.Family.Id.IntegerValue)) continue; // family goes as a whole
+                if (sym.Family != null && wholeSet.Contains(sym.Family.Id)) continue; // family goes as a whole
                 toDelete.Add(sid);
             }
 

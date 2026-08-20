@@ -2213,3 +2213,15 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   ElementId(myInt)` compiles fine on 2024+ because C# widens int to long, so the constructor was never the
   bug — the bug is 33 inputs **declared** `int` (`viewIdInt`, `roomIdInt`, `levelIdInt`), which cannot hold
   a 64-bit id whatever they are passed to.
+
+- 2026-08-20 — **The whole fragment library is now version-proof, 2020 through 2027, from one source.**
+  202 unit conversions became arithmetic; 195 id prints dropped `.IntegerValue`; ~80 id collections,
+  GroupBy/OrderBy keys and tuples now carry the `ElementId` itself (its `GetHashCode` returns the id, so
+  it keys a Dictionary/HashSet directly — version-proof with **no reflection**, which matters because
+  several sit in loops over every element). Only 8 genuinely numeric sites use a cached-lookup helper.
+  **No `#if`, no fork, no per-version copy.** Three deliberate exceptions, all annotated in place: 2
+  electrical conversions (Revit does not store voltage as volts and the doc hosts were blocked — verify
+  the factor first), 1 `WorksetId` (a different class, not affected), and `prelude.cs ResolveView` which
+  now takes an `ElementId`. A post-sweep scan for `new ElementId(x)` where `x` had itself become an
+  `ElementId` caught **2 real bugs** — worth repeating after any similar mass edit. **Not compiled, not
+  run**: the brain-status proven-counts describe the pre-migration state.
