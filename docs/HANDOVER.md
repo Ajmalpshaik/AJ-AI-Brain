@@ -1,7 +1,7 @@
 # Handover — pick this up on the Windows PC
 
 Last updated: **2026-08-20**, end of a long remote session. This replaces the 2026-08-14 handover, which
-had gone stale (it said 270 fragments; there are now 285).
+had gone stale (it said 270 fragments; there are now 287).
 
 ## The prompt
 
@@ -22,7 +22,7 @@ fragment touched on 2026-08-20 as unproven until step 1 below says otherwise.
 
 What changed:
 
-1. **All 285 fragments were made version-proof** — one source now runs on Revit 2020 through 2027. 202
+1. **All 287 fragments were made version-proof** — one source now runs on Revit 2020 through 2027. 202
    unit conversions became arithmetic (`mm / 304.8`, which no Revit version can deprecate) and element
    ids stayed as `ElementId` instead of being turned into numbers. No `#if`, no fork.
 2. **A new opening check** — `scripts/context/context-session-start.cs`, one call that reports the Revit
@@ -35,6 +35,13 @@ What changed:
    `RevitAPI.dll`. Deliberately a different database — the Brain's search never reads it.
 5. **`recipes/audit-flex-curves.cs`** — flex duct and flex pipe had no fragment at all.
 6. **`tools/check-scripts.cmd`** — see step 1.
+7. **Two sprinkler fragments merged in from PR #17** — `sprinkler-pipe-schedule-size.cs` (pipe sizing by
+   the schedule method) and `sprinkler-set-room-hazard.cs` (hazard class recorded per Room). They were
+   written before the migration, so they were brought in line the same way when the branch merged:
+   arithmetic units, `ElementId` keys throughout. Step 1 covers them like everything else. Both also
+   need a live run — the pipe one needs modelled sprinkler pipe connected to heads, and the hazard one
+   needs three text project parameters bound to Rooms through the Revit UI, which no script can create:
+   `FF_Hazard_Class`, `FF_Hazard_Source`, `FF_Standard`.
 
 ---
 
@@ -47,7 +54,7 @@ tools\check-scripts.cmd
 ```
 
 Double-click it. Revit does **not** need to be open and nothing is changed. It finds every Revit on the
-PC and compile-checks all 285 fragments against each, then says in plain words which versions are safe.
+PC and compile-checks all 287 fragments against each, then says in plain words which versions are safe.
 
 **This single command answers the whole session.** Green everywhere means the version-proofing worked.
 Any FAIL list is a small fix — send it to Claude, because every change follows one of three patterns, so

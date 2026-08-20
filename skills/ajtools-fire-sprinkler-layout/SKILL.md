@@ -1,6 +1,6 @@
 ---
 name: ajtools-fire-sprinkler-layout
-description: Lay out or code-check fire sprinkler heads in a room against NFPA 13 — head count, spacing, distance to walls, minimum spacing, maximum area per head, hazard class, deflector height, and what a beam or a column does to the layout. Use whenever the request is about fire fighting, fire protection, sprinklers, sprinkler heads, deluge/wet/dry sprinkler layout, "how many sprinklers does this room need", "check my sprinkler spacing", "is this layout NFPA compliant", "fire fighting layout for this room", "how far below the ceiling", "there is no ceiling, upright or pendent", "there is a beam/column in the room" — including broken-English/dictated versions ("fire figting", "sprinkler spacing rools", "make sprinkler in this room", "pendend or upraght", "beem", "colom", "celling"). Fires for CHECKING an existing sprinkler layout as much as creating one. Do NOT use this for HVAC air terminals (that is ajtools-hvac-terminal-layout), for smoke detectors, CCTV, WiFi or lighting coverage (that is the plain coverage recipe — those have no NFPA spacing rules), or for hydraulic calculations, pipe sizing, pump selection or density/remote-area design, which this Brain does not do at all.
+description: Lay out or code-check fire sprinkler heads in a room against NFPA 13 — head count, spacing, distance to walls, minimum spacing, maximum area per head, hazard class, deflector height, and what a beam or a column does to the layout. Use whenever the request is about fire fighting, fire protection, sprinklers, sprinkler heads, deluge/wet/dry sprinkler layout, "how many sprinklers does this room need", "check my sprinkler spacing", "is this layout NFPA compliant", "fire fighting layout for this room", "how far below the ceiling", "there is no ceiling, upright or pendent", "there is a beam/column in the room" — including broken-English/dictated versions ("fire figting", "sprinkler spacing rools", "make sprinkler in this room", "pendend or upraght", "beem", "colom", "celling"). Fires for CHECKING an existing sprinkler layout as much as creating one. Do NOT use this for HVAC air terminals (that is ajtools-hvac-terminal-layout), for smoke detectors, CCTV, WiFi or lighting coverage (that is the plain coverage recipe — those have no NFPA spacing rules), or for hydraulic calculations, pump selection or density/remote-area design, which this Brain does not do at all. Pipe SIZING by the pipe-schedule method IS covered ("size the sprinkler pipe", "how many heads on this pipe", "is this pipe big enough") — sizing only, never routing, and it checks whether the schedule method is even permitted before it sizes anything.
 ---
 
 # AJ Tools — Fire Sprinkler Layout (NFPA 13)
@@ -15,6 +15,7 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 
 | The question | The chunk |
 |---|---|
+| **which hazard class, and how to decide it** | [`knowledge/fire-sprinkler/hazard-classification.md`](../../knowledge/fire-sprinkler/hazard-classification.md) |
 | how many heads, how far apart, how far off the wall | [`knowledge/nfpa13-sprinkler-spacing.md`](../../knowledge/nfpa13-sprinkler-spacing.md) |
 | pendent / upright / sidewall / concealed / extended coverage | [`knowledge/fire-sprinkler/sprinkler-types.md`](../../knowledge/fire-sprinkler/sprinkler-types.md) |
 | how far below the ceiling — or below the slab where there is none | [`knowledge/fire-sprinkler/deflector-and-ceiling-height.md`](../../knowledge/fire-sprinkler/deflector-and-ceiling-height.md) |
@@ -23,6 +24,7 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 | the spec says **BS EN 12845**, not NFPA | [`knowledge/fire-sprinkler/nfpa-vs-en12845.md`](../../knowledge/fire-sprinkler/nfpa-vs-en12845.md) |
 | does this space need heads at all, and what temperature rating | [`knowledge/fire-sprinkler/where-sprinklers-are-required.md`](../../knowledge/fire-sprinkler/where-sprinklers-are-required.md) |
 | what is still missing for a complete design, and why pipe sizing is gated | [`knowledge/fire-sprinkler/roadmap-zero-to-finish.md`](../../knowledge/fire-sprinkler/roadmap-zero-to-finish.md) |
+| **sizing the pipe** — schedule method, and whether it is even permitted | [`knowledge/fire-sprinkler/pipe-sizing.md`](../../knowledge/fire-sprinkler/pipe-sizing.md) |
 | the whole method, in order | [`knowledge/fire-sprinkler/layout-method.md`](../../knowledge/fire-sprinkler/layout-method.md) |
 | which category, which API call, which fragment | [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md) |
 
@@ -39,7 +41,11 @@ verified against the standard. Say so when one of them drives an answer.
 - **It never says "compliant".** Say what was checked and what the measured values were. NFPA is not the
   whole picture: for the user's projects the AHJ is **QCDD**, whose own requirements and the project
   specification sit on top and can be stricter.
-- Pipe sizing, pump/tank selection, and hydraulic calculation are out of scope for this Brain entirely.
+- **Pipe SIZING by the schedule method is in scope** (added 2026-08-20) —
+  [`scripts/recipes/sprinkler-pipe-schedule-size.cs`](../../scripts/recipes/sprinkler-pipe-schedule-size.cs).
+  It checks first whether the schedule method is permitted at all, and on most real projects the honest
+  answer is that it is not. **Hydraulic calculation, pump/tank selection and water-supply analysis stay
+  out entirely**, and so does routing — sizing works on pipe that already exists in the model.
 
 ## Step 1 — get the inputs that decide every number (never assume these)
 
