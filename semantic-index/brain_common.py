@@ -50,6 +50,29 @@ VOCABULARY_PATH = BRAIN_ROOT / "knowledge" / "site-vocabulary.md"
 
 COLLECTION_NAME = "aj_brain"
 
+# --------------------------------------------------------------------------
+# WHICH EMBEDDING MODEL — the one setting that decides retrieval quality
+# --------------------------------------------------------------------------
+# Selectable on purpose (2026-08-20). The previous swap replaced the model
+# outright, which made the change impossible to A/B: you cannot ask "is the new
+# one actually better" if the old one no longer exists in the code.
+#
+#   bge-small-en-v1.5   default. 512 word-pieces, 2024-era, ONNX via embed_bge.py
+#   all-MiniLM-L6-v2    the previous model. 256 word-pieces, 2021, shipped by chromadb
+#
+# Switching changes build_fingerprint(), so index-brain.cmd rebuilds by itself.
+# To compare the two honestly:
+#
+#   set AJ_BRAIN_EMBED_MODEL=all-MiniLM-L6-v2  &&  index-brain.cmd --full  &&  score-brain.cmd
+#   set AJ_BRAIN_EMBED_MODEL=bge-small-en-v1.5 &&  index-brain.cmd --full  &&  score-brain.cmd
+#
+# score-history.md stamps every run with the model, so the two lines are
+# comparable afterwards instead of being two bare numbers nobody can interpret.
+EMBED_MODEL_BGE = "bge-small-en-v1.5"
+EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
+
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_BGE
+
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.
 INDEX_TARGETS = [
@@ -135,6 +158,19 @@ def get_embedding_function():
     both would answer every question — just quietly worse. A loud failure naming
     the exact command costs one minute; a silent one costs months.
     """
+    if EMBED_MODEL == EMBED_MODEL_MINILM:
+        from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import (
+            ONNXMiniLM_L6_V2,
+        )
+        ONNXMiniLM_L6_V2.DOWNLOAD_PATH = MODEL_DIR / ONNXMiniLM_L6_V2.MODEL_NAME
+        return ONNXMiniLM_L6_V2()
+
+    if EMBED_MODEL != EMBED_MODEL_BGE:
+        raise SystemExit(
+            "Unknown AJ_BRAIN_EMBED_MODEL: " + EMBED_MODEL + "\n"
+            "Valid values: " + EMBED_MODEL_BGE + ", " + EMBED_MODEL_MINILM
+        )
+
     import embed_bge
 
     if not embed_bge.available():
@@ -305,7 +341,7 @@ def build_fingerprint() -> str:
     parts = [
         str(CHUNK_TARGET), str(CHUNK_MAX), str(CHUNK_OVERLAP),
         repr(sorted(FILE_EXTENSIONS)), repr(INDEX_TARGETS), repr(ROOT_DOCS),
-        "bge-small-en-v1.5",
+        EMBED_MODEL,
     ]
     for src in (SEMANTIC_ROOT / "brain_common.py",
                 SEMANTIC_ROOT / "brain_index.py"):

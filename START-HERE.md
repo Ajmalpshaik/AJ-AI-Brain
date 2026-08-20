@@ -111,7 +111,7 @@ AJ AI RAG, it's not connected with Ashghal standards or something like that — 
 skill, or we will create one."* Indexing them was built and then reverted the same hour. Three measured
 reasons, so nobody has to re-derive them: the PWA manuals are **CAD drafting** rules (layers, title
 blocks, drawing numbers), not Revit modelling; they would have added **604 chunks, a 20% increase** to a
-search that is currently right 3 times in 5, with **no way to measure the damage** until the test set
+search whose measured accuracy is in `semantic-index/score-history.md`, with **no way to measure the damage** until the test set
 grows; and **nothing has ever asked for them** — `job-log/` records what is really needed, so wait for
 evidence. If one standards rule genuinely matters, write it as a knowledge note **in your own words,
 having read it** — higher signal than 600 unchecked chunks, and it cannot look authoritative while being

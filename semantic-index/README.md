@@ -73,7 +73,7 @@ Measured 2026-08-06, same index, same question:
 ### How reliable is it, really — measured, not claimed
 
 The before/after above is the case hybrid was *built* for, so it proves little on its own. This is the
-number that counts: **24 questions written by independent testers** in a modeller's own words, across
+number that counts: **questions written by independent testers** in a modeller's own words, across
 HVAC, fire, tagging, sheets/views, general Revit work and the Brain itself.
 
 | Result | Count |
