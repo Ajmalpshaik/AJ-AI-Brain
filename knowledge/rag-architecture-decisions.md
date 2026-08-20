@@ -79,11 +79,13 @@ behaviour does not change — which is exactly what makes it safe, because `scor
 identical line before and after is the proof it worked. That is what "easy to do all kinds of RAG
 working" actually costs here: about a day, and no measurement risk.
 
-**Second gap, not architecture:** the search runs on Windows only. The Python is portable, but the venv
-and the `.cmd` wrappers are not — on Claude Code for web there is no venv and no `chromadb`, so the
-retrieval layer is dark in exactly the sessions that edit the Brain most. A setup script and a `bin/`
-path fix, a couple of hours. `tools/auto-search-hook.mjs` already looks in both `venv/Scripts` and
-`venv/bin`, so half of it is done.
+**Second gap, and it is smaller than it looks:** the `.cmd` wrappers are Windows-only, but a
+cross-platform path already exists — `mcp-server/brain-tools/search-brain.js` registers `search_brain`
+as an MCP tool, and both it and `tools/auto-search-hook.mjs` already look in `venv/Scripts` *and*
+`venv/bin`. **What is missing is only the venv itself off Windows:** `requirements.txt` gives Windows
+setup commands only, so on Claude Code for web there is no `venv/` and no `chromadb`, and every entry
+point reports "no Python found". A `setup.sh` beside `requirements.txt` closes it — an hour, not a
+re-architecture.
 
 ## Revisit a rewrite only when both of these are true
 
@@ -93,3 +95,32 @@ path fix, a couple of hours. `tools/auto-search-hook.mjs` already looks in both 
    demonstrated on those rows, not argued from a diagram.
 
 Until then, every hour spent on architecture buys less than an hour spent writing test questions.
+
+
+## Folder structure — same verdict, for a related reason
+
+Asked in the same conversation. The layout is **fine, and it is load-bearing**: the folder path becomes
+the `category` field on every chunk (`brain_index.py`, `chunks_for_file`), and it is what the routing
+tables in `START-HERE.md`, `knowledge/INDEX.md` and `scripts/README.md` point at. Moving folders is not
+a cosmetic change here — **610 path references across the markdown files and 73 `// SOURCE:` lines
+inside the fragments** would move with them.
+
+Top level separates by **role**, and that is the right axis: `skills/` how to do a job, `knowledge/` what
+is true and what bites, `scripts/` the C#, `tools/` maintenance, `semantic-index/` search,
+`mcp-server/` the Revit bridge. Inside `scripts/`, the split is by **verb** — `actions/` change
+something, `filters/` narrow a set, `creators/` make new elements, `recipes/` multi-step jobs,
+`commands/` one-shot Revit commands, `context/` read the session, `lib/` the shared prelude. A request
+maps onto that without being taught it.
+
+Four small things are genuinely untidy, none urgent:
+
+| What | Why it is worth a look |
+|---|---|
+| `scripts/actions/selection/` holds **1 file** | A folder with one file adds a routing decision and offers no choice. Fold into `actions/visibility/` or leave — but do not add more one-file folders. |
+| `scripts/recipes/` is **36 files, flat, 588 KB** — the largest folder | `actions/` is subdivided at a third that size. The 8 `sprinkler-*.cs` are already a group in everything but the folder. |
+| `scripts/actions/sheets-views/` is **35 files** | Sheets and views are two jobs sharing one folder — it is larger than most top-level folders. |
+| `docs/superpowers/` — 2 plans + 1 spec from 2026-08-13 | The work they describe is **built**; the spec still says "Nothing in here is built yet". `docs/` is deliberately outside the index, so nothing will ever correct them. Delete or mark done. |
+
+**Do not reshuffle for tidiness.** The consistency checker would catch every broken link, but that is 683
+references churned for no measured gain, and the same rule applies as to the pipeline: change it when a
+job it blocks turns up, not because a diagram would look better.

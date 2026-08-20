@@ -2362,3 +2362,15 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `api-index/` is a *copy* of the pipeline rather than a second config of it, and a shared corpus module
   is what "easy to do all kinds of RAG working" actually costs. Second gap: the search is Windows-only,
   so it is dark on Claude Code for web.
+
+- 2026-08-20 — Follow-up on the same question: **folder structure**. Verdict recorded in
+  `knowledge/rag-architecture-decisions.md` — the layout is fine and **load-bearing**: the folder path
+  becomes each chunk's `category` in the index, and 610 markdown path references plus 73 `// SOURCE:`
+  lines point at it, so a reshuffle is 683 references churned for no measured gain. Four untidy spots
+  noted, none urgent (`actions/selection/` holds one file; `recipes/` is 36 files flat; `sheets-views/`
+  is 35; `docs/superpowers/` describes work that is now built). **Two real drifts found and fixed on the
+  way:** `START-HERE.md` and the `search_brain` MCP tool description both still claimed search accuracy
+  was "~3 in 4 at #1" — one of the three discredited figures CLAUDE.md warns about two paragraphs later,
+  against a real 3/14. Both now quote `score-history.md`. Also corrected an overstatement in the note
+  itself: search is not Windows-only — `search_brain` and the auto-search hook both handle
+  `venv/bin`; the only missing piece is a `setup.sh` to build the venv off Windows.
