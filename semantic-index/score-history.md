@@ -9,7 +9,29 @@ model, the chunk size and the corpus all changed underneath them without being r
 three different accuracy figures (75%, 60%, 29%) ended up quoted around this Brain at the same time. They
 are kept for history, not for comparison.
 
-One line per `score-brain` run, oldest first. Written automatically.
+## The 2026-08-20 cluster — read this before comparing those lines
+
+Eight runs that day alternate between 3/14 and 2/14. They are **not** eight different search
+configurations. They are the same search, measured while one question sat on a knife edge.
+
+The runs at `chunks=3996` are the corpus at `main`; `chunks=3998-4018` add one knowledge file, one
+`INDEX.md` table row and one edited line of `START-HERE.md`. The whole 3/14 -> 2/14 difference is
+`what does duck mean` moving `glossary.md` from #1 to #6 — **on a corpus 2 chunks larger.**
+
+Also note these were the first runs ever made off Windows, on `all-MiniLM-L6-v2`, using
+`semantic-index/setup.sh`. `bge-small-en-v1.5` still has **no score line at all**: `huggingface.co` is blocked from the container the runs happened in. That measurement is still
+owed, and it is step 3 of the handover.
+
+**Confirmed once more after merging `main`:** the same 4001-chunk corpus, with only main's two commits
+mixed in, scores **3/14 / MRR 0.325** — the row flipped back with no search change at all. A 1-point
+move on this test set is noise. **Do not adopt or reject anything on it**, including the BGE comparison
+that is still owed.
+
+Full working: `semantic-index/rag-architecture-decisions.md`.
+
+One line per `score-brain` run, oldest first. Written automatically. **`score_brain.py` appends to
+the END of this file, so any explanation you add goes ABOVE this line, never below it** — prose put
+after the list gets buried one run at a time, and this is the file `CLAUDE.md` tells people to quote.
 
 - 1/4 at #1, 2/4 in top 3, 2/4 in top 5
 - 1/4 at #1, 2/4 in top 3, 2/4 in top 5
@@ -49,26 +71,5 @@ One line per `score-brain` run, oldest first. Written automatically.
 - 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4018 fp=ab19d3a62e3514a5
 - 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4001 fp=ab19d3a62e3514a5
 - 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.265  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3998 fp=ab19d3a62e3514a5
-
-## The 2026-08-20 cluster — read this before comparing those lines
-
-Eight runs that day alternate between 3/14 and 2/14. They are **not** eight different search
-configurations. They are the same search, measured while one question sat on a knife edge.
-
-The runs at `chunks=3996` are the corpus at `main`; `chunks=3998-4018` add one knowledge file, one
-`INDEX.md` table row and one edited line of `START-HERE.md`. The whole 3/14 -> 2/14 difference is
-`what does duck mean` moving `glossary.md` from #1 to #6 — **on a corpus 2 chunks larger.**
-
-Also note these were the first runs ever made off Windows, on `all-MiniLM-L6-v2`, using
-`semantic-index/setup.sh`. `bge-small-en-v1.5` — the current default — still has **no score line at
-all**: `huggingface.co` is blocked from the container the runs happened in. That measurement is still
-owed, and it is step 3 of the handover.
-
-**Confirmed once more after merging `main`:** the same 4001-chunk corpus, with only main's two commits
-mixed in, scores **3/14 / MRR 0.325** — the row flipped back with no search change at all. A 1-point
-move on this test set is noise. **Do not adopt or reject anything on it**, including the BGE comparison
-that is still owed.
-
-Full working: `semantic-index/rag-architecture-decisions.md`.
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.326  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4001 fp=a5fe51a07241db26
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.325  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4009 fp=5e2411794df50cea
