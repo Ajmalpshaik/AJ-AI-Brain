@@ -40,8 +40,9 @@ export function register(server) {
     "Search the AJ AI Brain in plain English for the skill, knowledge note or C# fragment " +
       "that answers a question. Matches meaning as well as exact words, and marks fragments " +
       "PROVEN or unproven. Use it before writing any new C# and before answering any Revit " +
-      "how-to question. Read the top 3-5 results, not just the first - measured accuracy at " +
-      "#1 is about three in four, and the misses are usually site vocabulary. Reads only; " +
+      "how-to question. Read the top 3-5 results, not just the first - the last reproducible " +
+      "run scored 3/14 at #1 and 5/14 in the top 3, and the misses are usually site " +
+      "vocabulary (semantic-index/score-history.md is the only figure to quote). Reads only; " +
       "works with Revit closed.",
     {
       query: z

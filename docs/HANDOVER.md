@@ -100,8 +100,9 @@ What changed:
    version, which API generation is live, the document, what unit the project displays, unloaded links,
    closed worksets, warnings.
 3. **The search was measured properly for the first time** and a real bug fixed (RRF was fusing chunk
-   ranks while ranking files). The embedding model is now selectable and defaults to `bge-small-en-v1.5`,
-   **which has never been downloaded or scored.**
+   ranks while ranking files). The embedding model is now selectable. **Superseded the same day:** BGE was
+   briefly the default and broke search on the PC — see item 1 above. The default is `all-MiniLM-L6-v2`
+   again, and **BGE still has no score line at all.**
 4. **A separate Revit API index** in `api-index/`, fed by reflecting over the running Revit's own
    `RevitAPI.dll`. Deliberately a different database — the Brain's search never reads it.
 5. **`recipes/audit-flex-curves.cs`** — flex duct and flex pipe had no fragment at all.
@@ -150,19 +151,27 @@ the simple ones do not.
 
 ### 3. Is the new search model actually better?
 
+**Still owed. It is the one measurement this Brain has never taken.**
+
 ```
 cd semantic-index
-venv\Scripts\python.exe embed_bge.py --download     (~127 MB, once)
+venv\Scripts\python.exe embed_bge.py --download     (~127 MB, once, needs huggingface.co)
 venv\Scripts\python.exe embed_bge.py                (smoke test, should print PASS)
+echo bge-small-en-v1.5 > embed-model.txt            (pin it, so search and index agree)
 index-brain.cmd --full                              (~80 s)
 score-brain.cmd
 ```
 
-**The number to beat is `3/14 at #1, MRR 0.321` on `all-MiniLM-L6-v2`** — that line is already in
+**The number to beat is `3/14 at #1, MRR 0.325` on `all-MiniLM-L6-v2`** — in
 `semantic-index/score-history.md`, stamped with the model that produced it.
 
-If BGE loses, revert in one line: `set AJ_BRAIN_EMBED_MODEL=all-MiniLM-L6-v2`. That is exactly why the
-model was made selectable rather than replaced.
+**Read the note at the bottom of `score-history.md` before you judge the result.** That row is
+knife-edge: measured 2026-08-20, `what does duck mean` flips between #1 and #6 on a **2-chunk** corpus
+change, which is 7% of a 14-row score all by itself. **A 1-point move either way proves nothing.** If BGE
+wins or loses by one, it is a tie — say so rather than adopting or rejecting on noise.
+
+If BGE loses, delete `embed-model.txt` and rebuild. That is exactly why the model was made selectable
+rather than replaced.
 
 ### 4. Optional — build the API reference index
 
@@ -184,6 +193,19 @@ Write them the way you would say them out loud. The file explains why they must 
 assistant's.
 
 ---
+
+## Since this handover was written — merged from the review branch (PR #22)
+
+- **`semantic-index/setup.sh`** — one command sets the search up on Linux/macOS. Nothing to do on the
+  PC; it exists so a container session is not searching blind. Proven on a wiped venv.
+- **Model choice can be pinned** in `semantic-index/embed-model.txt` (git-ignored, per-machine), so an
+  upgrade to BGE survives without setting an env var on every command — the failure item 1 above
+  describes, in its other direction.
+- **`docs/superpowers/` is gone** — two plans and a spec with 60 unticked boxes for work that is
+  entirely built. The five genuinely live items moved into `semantic-index/rag-architecture-decisions.md`.
+- **`semantic-index/rag-architecture-decisions.md`** is new: why the retrieval layer is not being
+  rewritten, the six standard upgrades already measured and reverted here, and the folder-structure
+  verdict. Read it before anyone proposes rebuilding the RAG.
 
 ## Still open from before — carried forward, still true
 

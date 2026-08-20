@@ -78,7 +78,33 @@ EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
 # died with "model has not been downloaded yet" until it was fetched. A default
 # that needs a download before the tool runs at all is not a default. BGE stays
 # one env var away, which is all the A/B above ever needed.
-EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_MINILM
+#
+# ...and one env var away is still a per-command choice, which is its own version
+# of the same fault. Set it for the rebuild but forget it for the search and the
+# two disagree silently: a MiniLM query against a BGE index answers every question,
+# just quietly worse, and nothing tells you. So an upgrade can be PINNED once, in
+# semantic-index/embed-model.txt (git-ignored - it is per-machine state, like venv/):
+#
+#     python embed_bge.py --download
+#     echo bge-small-en-v1.5 > semantic-index/embed-model.txt
+#     python brain_index.py --full          <- rebuilds itself; the fingerprint changed
+#
+# Precedence is env var > pin file > MiniLM, so the documented A/B still wins over
+# the pin and behaves exactly as it always did.
+EMBED_MODEL_PATH = SEMANTIC_ROOT / "embed-model.txt"
+
+
+def _pinned_model():
+    """The model this machine has been pinned to, or None. Never raises: an unreadable
+    or unrecognised pin falls through to the default rather than breaking every search."""
+    try:
+        name = EMBED_MODEL_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return name if name in (EMBED_MODEL_BGE, EMBED_MODEL_MINILM) else None
+
+
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or _pinned_model() or EMBED_MODEL_MINILM
 
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.
