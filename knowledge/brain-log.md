@@ -2269,3 +2269,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   outside `INDEX_TARGETS` so the Brain's indexer never reads it — **0 of 343 indexed files come from
   it**, and the Brain stayed at 3,786 chunks. Indexing + search proven end to end on a synthetic corpus
   that matches reflection's output shape; the real harvest is unproven until run on a live Revit.
+
+- 2026-08-20 — New `recipes/audit-flex-curves.cs`, closing a gap that was **bigger than the count
+  suggested**. A first look said "FlexDuct 5 fragments, FlexPipe 1"; reading them showed all six hits
+  were only the CATEGORY NAME inside a list (obstruction sweeps, grayout, a multi-category filter).
+  **Nothing in the library measured, connected or checked a flex run.** The new recipe audits both types
+  together — they behave identically — reporting size, real spline length against the direct line (the
+  slack the drawing hides), bend points, whether both ends are genuinely connected, and which runs exceed
+  the length the PROJECT allows. The length limit is an input defaulting to 0/off: a flex allowance is a
+  per-job spec decision, not a number to inherit (START-HERE rule 3).
+  Two design choices worth keeping: it **collects by `OST_FlexDuctCurves`/`OST_FlexPipeCurves` and casts
+  to `MEPCurve`**, so it never names `FlexDuct` (`...DB.Mechanical`) or `FlexPipe` (`...DB.Plumbing`) and
+  cannot hit the fully-qualify compile trap `core.md` records; and it reads length from `Curve.Length` /
+  `GetEndPoint` / `Tessellate` only, which exist on every targeted version, rather than any
+  flex-specific member. Counts `Connector.AllRefs`, never `IsConnected`, per the hvac-ducts.md gotcha.
+  Unproven — written without Revit.
