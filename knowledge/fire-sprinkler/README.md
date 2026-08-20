@@ -13,6 +13,7 @@ is permitted before it sizes anything.
 
 | The question is about… | Open |
 |---|---|
+| **Which hazard class is this space, and how is that decided** — all five NFPA classes and the EN LH/OH1–4/HHP/HHS set, the 8 ft stockpile line, mixed occupancy, and the car-park reclassification | [`hazard-classification.md`](hazard-classification.md) |
 | How many heads, how far apart, how far off the wall — hazard class, max area per head, max/min spacing, wall distances, the small-room rule, the worked jobs already done | [`../nfpa13-sprinkler-spacing.md`](../nfpa13-sprinkler-spacing.md) — the numbers chunk, stayed where it was so old links still work |
 | Which head — pendent, upright, sidewall, concealed, recessed, flush, dry, extended coverage — and what changes in the layout when the type changes | [`sprinkler-types.md`](sprinkler-types.md) |
 | **The Z dimension**: how far below the ceiling, how far below the slab when there is no ceiling, sloped ceilings, ceiling pockets, clearance above stored goods | [`deflector-and-ceiling-height.md`](deflector-and-ceiling-height.md) |

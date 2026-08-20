@@ -15,6 +15,7 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 
 | The question | The chunk |
 |---|---|
+| **which hazard class, and how to decide it** | [`knowledge/fire-sprinkler/hazard-classification.md`](../../knowledge/fire-sprinkler/hazard-classification.md) |
 | how many heads, how far apart, how far off the wall | [`knowledge/nfpa13-sprinkler-spacing.md`](../../knowledge/nfpa13-sprinkler-spacing.md) |
 | pendent / upright / sidewall / concealed / extended coverage | [`knowledge/fire-sprinkler/sprinkler-types.md`](../../knowledge/fire-sprinkler/sprinkler-types.md) |
 | how far below the ceiling — or below the slab where there is none | [`knowledge/fire-sprinkler/deflector-and-ceiling-height.md`](../../knowledge/fire-sprinkler/deflector-and-ceiling-height.md) |

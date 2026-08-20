@@ -2196,3 +2196,27 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   it back from a separate call. The tables themselves hit the same wall as the beam obstruction table:
   sources gave the method's limits clearly and its numbers not at all, so they are an editable input seeded
   `[UNCONFIRMED]` with a warning on every run. **Hydraulic calculation stays permanently out of scope.**
+
+- **2026-08-20 — hazard classification studied in full, and car parks are the finding.** Ajmal asked for
+  all hazard types, how they are decided, and the understanding behind them, kept in the Brain. The Brain
+  had been refusing to run without a hazard class since the first sprinkler session while carrying only a
+  four-row table of example occupancies — so this closes the gap it had been pointing at.
+  `knowledge/fire-sprinkler/hazard-classification.md` now carries all five NFPA classes with their
+  defining test, examples and design density/area; the EN 12845 set (LH, OH1–OH4, HHP1–4, HHS) with its
+  different shape — **EN holds density constant across OH1–OH4 and grows the area of operation instead,
+  where NFPA moves the density**; how the call is actually made; the **8 ft (2.4 m) stockpile line**, which
+  is the sharpest and most measurable question on a walk-through; mixed occupancy; and where storage stops
+  being an occupancy class and becomes a different chapter entirely.
+  **The finding that matters most for Ajmal: car parks were reclassified from Ordinary Hazard Group 1 to
+  Group 2** in recent NFPA editions — 0.20 gpm/ft² instead of 0.15. Car parks are constant on his projects
+  and an old office template will still say OH1. **The max area per head is IDENTICAL between OH1 and OH2
+  (130 ft² / 12.1 m²), so the layout looks exactly the same and the hydraulic demand is a third higher.**
+  A spacing check cannot catch this; only the class label can. That is the general shape of the whole
+  subject and the reason every fragment prints its class on every line.
+  Also built `recipes/sprinkler-set-room-hazard.cs`, closing roadmap item 2: the class, its SOURCE and its
+  STANDARD are recorded per Room and read back, so a mixed floor stays mixed instead of being flattened to
+  one label. It deliberately **never decides the class** — the room-name matching is a suggestion engine
+  for the report only, never written, and write mode refuses to run without the source of the decision.
+  Two limits recorded honestly: a script cannot create the project parameters (that needs a shared-
+  parameter file bound through the UI, a one-time job for Ajmal), and the rest of the chain still takes a
+  typed `hazardLabel` rather than reading the room's recorded class — wiring that through is the next step.
