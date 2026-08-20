@@ -32,11 +32,16 @@
 // GOTCHA: this never prints the word "compliant". It prints what was checked, the measured value and the
 //         limit it was checked against. QCDD and the project specification sit on top of NFPA.
 //
-// STATUS: NOT LIVE-VERIFIED — written 2026-08-20 with no Revit session. Every Revit call is proven
-//   elsewhere (collector by category, Room.IsPointInRoom, GetBoundarySegments, Curve.Distance — all live
-//   in recipes/generate-room-coverage-layout.cs, 2026-07-27). The partition arithmetic is plain C#.
-//   Run it on a room with a known-good layout first; if the numbers do not match a hand check, the
-//   sampling resolution (sampleMm) is the first thing to look at.
+// STATUS: LIVE-VERIFIED 2026-08-20 on Revit 2020 (model 'Project1'), auditing the 38 heads that
+//   recipes/sprinkler-place-heads.cs had just placed, from a SEPARATE bridge call. 0 failures across
+//   four rooms, and it independently reproduced the grid recipe's own spacing and wall figures — two
+//   different methods (real nearest-neighbour vs grid formula) agreeing is what makes the pair worth
+//   running.
+//   THE PARTITION FIGURE IS THE POINT, and the run demonstrated why: on a perfectly regular grid the
+//   partition still reports a LARGER worst-case area per head than the grid A_s, because the edge cells
+//   are bigger — Room 3 measured 13.81 m2 against A_s 13.15, and Room 1 11.25 against 10.00. Both are
+//   correct; the partition is the honest worst case and A_s is the code's definition. Never swap them.
+//   Sampling at 250 mm over 988-2,240 points per room was comfortably fast on a 3,262-element model.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

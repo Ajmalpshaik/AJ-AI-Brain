@@ -164,7 +164,22 @@ one fix usually applies across the library.
 
 Do this before anything else. Everything below is wasted effort if step 1 is red.
 
-### 2. Then open Revit and prove three things on a real model
+### 2. DONE 2026-08-20 — the migration holds on a live model, and the id assumption is confirmed
+
+Ran on Revit 2020, model `Project1` (3,262 elements, 4 rooms, 2 levels). **`{l.Id}` prints the bare id
+number exactly as `{l.Id.IntegerValue}` used to** — observed as `Id 316` for the active view and
+`Id 918776`…`918785` for the rooms, with no `Autodesk.Revit.DB.ElementId` wrapper text and no braces.
+**That settles the assumption the whole 211-site migration rests on: no further change needed.**
+`context-session-start.cs` ran clean and reported Revit 2020 / 32-bit ElementId / DisplayUnitType, no
+links, 0 warnings. UNITS printed `level 'Level 1' elevation displays as: 0` — a bare `0` with no unit
+suffix, which is what this project displays; every mm figure in the session was converted explicitly
+with `/ 304.8` regardless, per START-HERE rule 3.
+
+Also proven the same session, well beyond the pilot: the four fire-sprinkler fragments (survey, grid,
+place, audit) — 38 heads placed and independently audited. See the foot of `knowledge/brain-log.md`.
+**Still true: none of the 2024-only reflection fixes has been run live.**
+
+<details><summary>The original step 2 instructions, kept for the parts not yet done</summary>
 
 ```
 ping
@@ -178,6 +193,12 @@ number the way `{l.Id.IntegerValue}` used to. If the ids look wrong in that outp
 
 Then run something heavier — `mep-grayout.cs` or the tagging recipe — because those exercise the parts
 the simple ones do not.
+
+</details>
+
+**Still owed from step 2:** `mep-grayout.cs` and the tagging recipe have not been run live. They were the
+two named as exercising the parts the simple fragments do not, and `mep-grayout.cs` is Ajmal's own
+standing "do the grayout" job — it was one of the six fixed on 2026-08-20 and has only been compiled.
 
 ### 3. Is the new search model actually better?
 

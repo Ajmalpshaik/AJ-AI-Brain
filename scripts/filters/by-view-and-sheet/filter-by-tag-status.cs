@@ -27,10 +27,24 @@ if (view == null)
 }
 else
 {
+    // Version-proof tagged-element read. Revit 2022 let one tag point at several elements, so the single
+    // `TaggedLocalElementId` property was replaced by `GetTaggedLocalElementIds()` and REMOVED - naming it
+    // in code stops the fragment compiling on 2024. Looked up by name once, so one source serves 2020-2027.
+    var _tagGetIds = typeof(IndependentTag).GetMethod("GetTaggedLocalElementIds", Type.EmptyTypes);
+    var _tagOneId  = typeof(IndependentTag).GetProperty("TaggedLocalElementId");
+    Func<IndependentTag, IEnumerable<ElementId>> TaggedIdsOf = tg =>
+    {
+        if (_tagGetIds != null)
+            return ((System.Collections.IEnumerable)_tagGetIds.Invoke(tg, null)).Cast<ElementId>();
+        if (_tagOneId != null)
+            return new[] { (ElementId)_tagOneId.GetValue(tg) };
+        return Enumerable.Empty<ElementId>();
+    };
+
     var taggedIds = new HashSet<ElementId>();
     foreach (IndependentTag tag in new FilteredElementCollector(Document, view.Id).OfClass(typeof(IndependentTag)))
     {
-        try { taggedIds.Add(tag.TaggedLocalElementId); } catch { }
+        try { foreach (var tid in TaggedIdsOf(tag)) taggedIds.Add(tid); } catch { }
     }
 
     elements = new FilteredElementCollector(Document, view.Id)

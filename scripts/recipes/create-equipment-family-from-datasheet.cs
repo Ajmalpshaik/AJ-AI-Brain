@@ -105,6 +105,70 @@ double ctrlVA      = 0;       // 0 = not stated in the submittal. Leave 0 rather
 if (!Document.IsFamilyDocument) return "Active document is not a family document - open the family and make it active first.";
 var doc = Document;
 var fm  = doc.FamilyManager;
+
+// ---- VERSION-PROOF UnitUtils.ConvertToInternalUnits ------------------------------------------------
+// Electrical units are the one conversion this library cannot do as arithmetic (volts and volt-amperes
+// are not a fixed factor off an internal foot the way mm are), so the API call has to stay - and
+// DisplayUnitType went inaccessible at 2024. Ask the real method which unit type IT takes.
+var _cvtM = typeof(UnitUtils).GetMethods()
+    .Where(m => m.Name == "ConvertToInternalUnits" && m.GetParameters().Length == 2
+             && m.GetParameters()[0].ParameterType == typeof(double))
+    .OrderBy(m => m.GetParameters()[1].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+    .FirstOrDefault();
+if (_cvtM == null) throw new InvalidOperationException("This Revit has no UnitUtils.ConvertToInternalUnits(double, unit).");
+var _unitT = _cvtM.GetParameters()[1].ParameterType;
+
+// forgeName is the UnitTypeId property ("Volts"); dutName is the old enum member ("DUT_VOLTS").
+Func<double, string, string, double> ToInternal = (v, forgeName, dutName) =>
+{
+    object unit;
+    if (_unitT.Name == "ForgeTypeId")
+    {
+        var ty = typeof(Document).Assembly.GetType("Autodesk.Revit.DB.UnitTypeId");
+        var pr = ty == null ? null : ty.GetProperty(forgeName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        if (pr == null) throw new InvalidOperationException("No UnitTypeId." + forgeName + " on this Revit.");
+        unit = pr.GetValue(null);
+    }
+    else unit = Enum.Parse(_unitT, dutName);
+    return (double)_cvtM.Invoke(null, new object[] { v, unit });
+};
+// ---------------------------------------------------------------------------------------------------
+
+
+// ---- VERSION-PROOF FamilyManager.AddParameter -----------------------------------------------------
+// Revit 2022 replaced the ParameterType enum with ForgeTypeId (SpecTypeId.Length, SpecTypeId.Boolean.YesNo)
+// and 2024 made the old enum inaccessible, so naming it in code stops this fragment compiling there.
+// The overload is chosen from the REAL method's own third parameter type, not by testing whether
+// ForgeTypeId exists - Revit 2021 ships ForgeTypeId but this method there still takes the old enum.
+var _addParamM = typeof(FamilyManager).GetMethods()
+    .Where(m => m.Name == "AddParameter" && m.GetParameters().Length == 4
+             && m.GetParameters()[0].ParameterType == typeof(string)
+             && m.GetParameters()[1].ParameterType.Name == "BuiltInParameterGroup"
+             && m.GetParameters()[3].ParameterType == typeof(bool))
+    .OrderBy(m => m.GetParameters()[2].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+    .FirstOrDefault();
+if (_addParamM == null) throw new InvalidOperationException("This Revit has no FamilyManager.AddParameter(string, BuiltInParameterGroup, spec, bool).");
+var _specT = _addParamM.GetParameters()[2].ParameterType;
+
+// The leaf name is the same in both worlds ("Length", "YesNo"); SpecTypeId files YesNo under Boolean.
+Func<string, object> _specFor = nm =>
+{
+    if (_specT.Name != "ForgeTypeId") return Enum.Parse(_specT, nm);
+    var _asm = typeof(Document).Assembly;
+    var _fl = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+    foreach (var tn in new[] { "Autodesk.Revit.DB.SpecTypeId", "Autodesk.Revit.DB.SpecTypeId+Boolean", "Autodesk.Revit.DB.SpecTypeId+String" })
+    {
+        var ty = _asm.GetType(tn);
+        var pr = ty == null ? null : ty.GetProperty(nm, _fl);
+        if (pr != null) return pr.GetValue(null);
+    }
+    throw new InvalidOperationException("No SpecTypeId named '" + nm + "' on this Revit.");
+};
+Func<string, BuiltInParameterGroup, string, bool, FamilyParameter> AddParam =
+    (nm, grp, spec, inst) => (FamilyParameter)_addParamM.Invoke(fm, new object[] { nm, grp, _specFor(spec), inst });
+// ---------------------------------------------------------------------------------------------------
+
 if (fm.Types.Size > 0) return "Family already has " + fm.Types.Size + " type(s) - stopping rather than overwriting.";
 if (new FilteredElementCollector(doc).OfClass(typeof(Extrusion)).GetElementCount() > 0) return "Family already has extrusions - stopping.";
 
@@ -139,22 +203,22 @@ using (var t = new Transaction(doc, "Parameters + type")) {
     try {
         var G = BuiltInParameterGroup.PG_GEOMETRY;
         var C = BuiltInParameterGroup.PG_CONSTRAINTS;
-        fm.AddParameter("Width",  G, ParameterType.Length, false);
-        fm.AddParameter("Depth",  G, ParameterType.Length, false);
-        fm.AddParameter("Height", G, ParameterType.Length, false);
-        fm.AddParameter("Top Stub Base", G, ParameterType.Length, false);   // 5mm inside the body
+        AddParam("Width",  G, "Length", false);
+        AddParam("Depth",  G, "Length", false);
+        AddParam("Height", G, "Length", false);
+        AddParam("Top Stub Base", G, "Length", false);   // 5mm inside the body
         foreach (var row in stubs)
             if ((string)row[6] != "none")
-                fm.AddParameter((string)row[0] + " OD", G, ParameterType.Length, false);
+                AddParam((string)row[0] + " OD", G, "Length", false);
         if (addClearanceZone) {
             foreach (var n in new[]{"Front Clearance","Left Clearance","Right Clearance","Ceiling Clearance","Floor Clearance",
                                     "Clearance Left Extent","Clearance Right Extent","Clearance Total Depth","Clearance Top","Clearance Bottom"})
-                fm.AddParameter(n, C, ParameterType.Length, false);
-            fm.AddParameter("Show Clearance Zone", BuiltInParameterGroup.PG_GRAPHICS, ParameterType.YesNo, true);
+                AddParam(n, C, "Length", false);
+            AddParam("Show Clearance Zone", BuiltInParameterGroup.PG_GRAPHICS, "YesNo", true);
         }
         foreach (var row in stubs)
             if ((string)row[3] == "top")
-                fm.AddParameter((string)row[0] + " Top", G, ParameterType.Length, false);
+                AddParam((string)row[0] + " Top", G, "Length", false);
 
         var ft = fm.NewType(familyTypeName);
         fm.CurrentType = ft;
@@ -325,8 +389,8 @@ foreach (var row in stubs)
                 int    poles = heating ? elecPoles : ctrlPoles;
                 double va    = heating ? (elecThreePhase ? Math.Sqrt(3.0) : 1.0) * elecVolts * elecAmps : ctrlVA;
                 ce.get_Parameter(BuiltInParameter.RBS_ELEC_NUMBER_OF_POLES).Set(poles);
-                ce.get_Parameter(BuiltInParameter.RBS_ELEC_VOLTAGE).Set(UnitUtils.ConvertToInternalUnits(volts, DisplayUnitType.DUT_VOLTS));
-                if (va > 0) ce.get_Parameter(BuiltInParameter.RBS_ELEC_APPARENT_LOAD).Set(UnitUtils.ConvertToInternalUnits(va, DisplayUnitType.DUT_VOLT_AMPERES));
+                ce.get_Parameter(BuiltInParameter.RBS_ELEC_VOLTAGE).Set(ToInternal(volts, "Volts", "DUT_VOLTS"));
+                if (va > 0) ce.get_Parameter(BuiltInParameter.RBS_ELEC_APPARENT_LOAD).Set(ToInternal(va, "VoltAmperes", "DUT_VOLT_AMPERES"));
                 var pf = ce.LookupParameter("Power Factor"); if (pf != null && !pf.IsReadOnly) pf.Set(elecPF);
             }
             // there is NO BuiltInParameter.CONNECTOR_DESCRIPTION - reach it by name

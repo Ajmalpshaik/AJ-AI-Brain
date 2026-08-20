@@ -45,6 +45,40 @@ if (!Document.IsFamilyDocument) return "Active document is not a family document
 // already supplies that namespace (every other fragment names FilteredElementCollector unqualified),
 // so the line was pure breakage. Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
 var fm = Document.FamilyManager;
+
+// ---- VERSION-PROOF FamilyManager.AddParameter -----------------------------------------------------
+// Revit 2022 replaced the ParameterType enum with ForgeTypeId (SpecTypeId.Length, SpecTypeId.Boolean.YesNo)
+// and 2024 made the old enum inaccessible, so naming it in code stops this fragment compiling there.
+// The overload is chosen from the REAL method's own third parameter type, not by testing whether
+// ForgeTypeId exists - Revit 2021 ships ForgeTypeId but this method there still takes the old enum.
+var _addParamM = typeof(FamilyManager).GetMethods()
+    .Where(m => m.Name == "AddParameter" && m.GetParameters().Length == 4
+             && m.GetParameters()[0].ParameterType == typeof(string)
+             && m.GetParameters()[1].ParameterType.Name == "BuiltInParameterGroup"
+             && m.GetParameters()[3].ParameterType == typeof(bool))
+    .OrderBy(m => m.GetParameters()[2].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+    .FirstOrDefault();
+if (_addParamM == null) throw new InvalidOperationException("This Revit has no FamilyManager.AddParameter(string, BuiltInParameterGroup, spec, bool).");
+var _specT = _addParamM.GetParameters()[2].ParameterType;
+
+// The leaf name is the same in both worlds ("Length", "YesNo"); SpecTypeId files YesNo under Boolean.
+Func<string, object> _specFor = nm =>
+{
+    if (_specT.Name != "ForgeTypeId") return Enum.Parse(_specT, nm);
+    var _asm = typeof(Document).Assembly;
+    var _fl = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+    foreach (var tn in new[] { "Autodesk.Revit.DB.SpecTypeId", "Autodesk.Revit.DB.SpecTypeId+Boolean", "Autodesk.Revit.DB.SpecTypeId+String" })
+    {
+        var ty = _asm.GetType(tn);
+        var pr = ty == null ? null : ty.GetProperty(nm, _fl);
+        if (pr != null) return pr.GetValue(null);
+    }
+    throw new InvalidOperationException("No SpecTypeId named '" + nm + "' on this Revit.");
+};
+Func<string, BuiltInParameterGroup, string, bool, FamilyParameter> AddParam =
+    (nm, grp, spec, inst) => (FamilyParameter)_addParamM.Invoke(fm, new object[] { nm, grp, _specFor(spec), inst });
+// ---------------------------------------------------------------------------------------------------
+
 double LFt(double mm) => mm / 304.8;
 double MM(double ft) => ft * 304.8;
 var sb = new System.Text.StringBuilder();
@@ -79,9 +113,9 @@ using (var t = new Transaction(Document, "Add body parameters"))
     t.Start();
     try
     {
-        lengthParam = fm.AddParameter("Length", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
-        widthParam  = fm.AddParameter("Width",  BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
-        heightParam = fm.AddParameter("Height", BuiltInParameterGroup.PG_GEOMETRY, ParameterType.Length, false);
+        lengthParam = AddParam("Length", BuiltInParameterGroup.PG_GEOMETRY, "Length", false);
+        widthParam  = AddParam("Width",  BuiltInParameterGroup.PG_GEOMETRY, "Length", false);
+        heightParam = AddParam("Height", BuiltInParameterGroup.PG_GEOMETRY, "Length", false);
         var ft = fm.NewType(defaultTypeName);
         fm.CurrentType = ft;
         fm.Set(lengthParam, LFt(bodyLengthMm));
@@ -208,13 +242,13 @@ if (addNeck)
         t.Start();
         try
         {
-            neckWParam = fm.AddParameter("Neck Width",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-            neckHParam = fm.AddParameter("Neck Height", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
-            neckDParam = fm.AddParameter("Neck Depth",  BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            neckWParam = AddParam("Neck Width",  BuiltInParameterGroup.PG_MECHANICAL, "Length", false);
+            neckHParam = AddParam("Neck Height", BuiltInParameterGroup.PG_MECHANICAL, "Length", false);
+            neckDParam = AddParam("Neck Depth",  BuiltInParameterGroup.PG_MECHANICAL, "Length", false);
             fm.Set(neckWParam, LFt(neckWidthMm));
             fm.Set(neckHParam, LFt(neckHeightMm));
             fm.Set(neckDParam, LFt(neckDepthMm));
-            neckTopParam = fm.AddParameter("Neck Top", BuiltInParameterGroup.PG_MECHANICAL, ParameterType.Length, false);
+            neckTopParam = AddParam("Neck Top", BuiltInParameterGroup.PG_MECHANICAL, "Length", false);
             fm.SetFormula(neckTopParam, "Height + Neck Depth"); // NO quotes around spaced names — quoting breaks the formula
             t.Commit();
         }

@@ -4,8 +4,11 @@
 //          slab case (no slope arrows, no openings, no shape editing).
 // PRODUCES: elements (List<Element>, the single new Floor, wrapped in a list), sb
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// GOTCHA: Revit 2020 uses the legacy Document.Create.NewFloor(CurveArray, ...) — the newer static
-//         Floor.Create(...) only exists from Revit 2022, don't "modernize" this call.
+// VERSION: both floor APIs are reached BY NAME at run time, so one source covers 2020 through 2027.
+//         Revit 2022 removed Document.Create.NewFloor(CurveArray, FloorType, Level, bool) and replaced
+//         it with the static Floor.Create(Document, IList<CurveLoop>, ElementId, ElementId). Neither
+//         name can appear in the source or it stops compiling on the other version. Floor.Create takes
+//         no `structural` flag - it is set afterwards via FLOOR_PARAM_IS_STRUCTURAL.
 // GOTCHA: the boundary auto-closes (last point connects back to the first) and must not self-intersect;
 //         Revit throws on a crossed loop and the transaction rolls back cleanly.
 // NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog; run once on a small test slab.
@@ -56,16 +59,41 @@ else
             {
                 int n = boundaryMm.GetLength(0);
                 double z = level.Elevation;
-                var curves = new CurveArray();
+                var lines = new List<Curve>();
                 for (int i = 0; i < n; i++)
                 {
                     int j = (i + 1) % n;
                     var p1 = new XYZ(mm(boundaryMm[i, 0]), mm(boundaryMm[i, 1]), z);
                     var p2 = new XYZ(mm(boundaryMm[j, 0]), mm(boundaryMm[j, 1]), z);
-                    curves.Append(Line.CreateBound(p1, p2));
+                    lines.Add(Line.CreateBound(p1, p2));
                 }
 
-                var floor = Document.Create.NewFloor(curves, floorType, level, structural);
+                // Modern API preferred where it exists; both looked up by name (see VERSION note above).
+                Floor floor;
+                var _floorCreateM = typeof(Floor).GetMethod("Create",
+                    new[] { typeof(Document), typeof(IList<CurveLoop>), typeof(ElementId), typeof(ElementId) });
+                if (_floorCreateM != null)
+                {
+                    var loop = CurveLoop.Create(lines);
+                    floor = (Floor)_floorCreateM.Invoke(null,
+                        new object[] { Document, new List<CurveLoop> { loop }, floorType.Id, level.Id });
+                    if (structural)
+                    {
+                        var sp = floor.get_Parameter(BuiltInParameter.FLOOR_PARAM_IS_STRUCTURAL);
+                        if (sp != null && !sp.IsReadOnly) sp.Set(1);
+                    }
+                }
+                else
+                {
+                    var _creation = Document.Create;
+                    var _newFloorM = _creation.GetType().GetMethod("NewFloor",
+                        new[] { typeof(CurveArray), typeof(FloorType), typeof(Level), typeof(bool) });
+                    if (_newFloorM == null)
+                        throw new InvalidOperationException("This Revit has neither Floor.Create nor Document.Create.NewFloor.");
+                    var curves = new CurveArray();
+                    foreach (var c in lines) curves.Append(c);
+                    floor = (Floor)_newFloorM.Invoke(_creation, new object[] { curves, floorType, level, structural });
+                }
                 elements.Add(floor);
                 t.Commit();
                 sb.AppendLine($"Created floor (Id {floor.Id}), type '{floorType.Name}', on level '{level.Name}', {n} boundary points, structural: {structural}.");

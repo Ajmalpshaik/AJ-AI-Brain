@@ -47,12 +47,17 @@
 //         deflectorZmm if you already know it; leave it 0 and the survey reports raw soffit levels
 //         without judging them, which is honest rather than guessed.
 //
-// STATUS: NOT LIVE-VERIFIED — written 2026-08-20 with no Revit session. The calls it uses are all
-//   proven elsewhere in this library: FilteredElementCollector + BoundingBoxIntersectsFilter, Room
-//   .IsPointInRoom / get_BoundingBox (recipes/generate-room-coverage-layout.cs, live 2026-07-27),
-//   LocationCurve reading (recipes/slice-trunk-for-sizing.cs, live 2026-08-14). New here is the bay
-//   detection arithmetic — pure C#, no Revit call. Run it on one known room and check the beam list
-//   against what you can see on screen before trusting the bay number.
+// STATUS: LIVE-VERIFIED 2026-08-20 on Revit 2020 (model 'Project1', Room 3, 118.3 m2). Ran clean and
+//   reported correctly: found the one ceiling at 2,400 mm, and correctly reported no beams, no columns
+//   and no services in a room that genuinely has none. The "DECK: no floor/slab found" and
+//   "VOID: cannot be measured" branches both fired and read sensibly — worth knowing they are the normal
+//   output for a model with no slab above, not a failure.
+//   STILL UNPROVEN, because the test model had none of it: the BAY MODULE arithmetic, the sloped-member
+//   flag, the box-fallback width path, and every services branch. Those need a room with real beams and
+//   real ducts before the numbers they print can be trusted. The ceiling/deck/void half is proven.
+//   ONE FIX APPLIED: `Autodesk.Revit.DB.Architecture.Room` must be fully qualified — the bridge prelude
+//   does not import that namespace, and a bare `Room` is error CS0246. This file already qualifies it;
+//   anything composed FROM it must too.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

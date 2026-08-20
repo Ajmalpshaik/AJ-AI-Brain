@@ -40,6 +40,30 @@ code's dimensions are to the flat plate. Measure the difference once per family 
 explicit input — never assume zero. This is the silent error that makes a fully-checked layout wrong on
 site by 50 mm.
 
+> **How to measure it, proven 2026-08-20.** Place one head, then slice its geometry and find the widest
+> disc — the deflector is the widest flat plate on the head. Walk the solids' triangulated faces,
+> collect vertices within a few mm of each Z, and take the maximum radius from the insertion axis:
+>
+> ```
+> for (double z = bb.Min.Z; z <= bb.Max.Z; z += mm(4))
+>     foreach (var s in solids) foreach (Face f in s.Faces) { ... f.Triangulate(0.5) ... }
+> ```
+>
+> On **RASCO F156 CONVENTIONAL** (family `F56C1B`, Reliable Sprinkler, a real BIMobject download in
+> Ajmal's model) this gave a 36.2 mm disc **56 mm ABOVE the insertion point**, with the piping connector
+> AT the insertion point pointing **down** (`BasisZ 0,0,-1`). Read together those two facts say the pipe
+> comes from below and the body sits above it — **the family is modelled as an UPRIGHT**, even though the
+> type is named "CONVENTIONAL" and its own metadata is contradictory (`Response = Standard` against
+> `Product family = Commercial quick response`; a technical-description URL pointing at the sidewall
+> datasheet). **The name told us nothing; the geometry told us everything.** That is trap 5 below, in the
+> place it costs the most.
+>
+> Practical consequence: under a suspended ceiling you normally want a pendent, and an upright family
+> puts its branch pipe *below* the tiles. If an upright is used anyway, set the insertion Z as
+> `ceilingUnderside − deflectorGap − originToDeflector`; for a 2,400 mm ceiling and a 100 mm gap that is
+> `2400 − 100 − 56 = 2244 mm`. Confirmed by read-back: deflector landed at 2,300 mm, inside the
+> 25–305 mm window.
+
 **5. `Connector.IsConnected` and element names describe intent, not physical reality.** The Brain's
 standing rule, and it applies here: verify geometrically.
 
@@ -65,6 +89,23 @@ Height parameters differ by family, so read rather than guess. Common ones: `Off
 `Elevation from Level`, `Offset`. `ParamText` from
 [`../../scripts/lib/prelude.cs`](../../scripts/lib/prelude.cs) keeps "blank" and "no such parameter"
 visibly different, which matters here — a blank height reads as zero and puts every head on the floor.
+
+> **The placement point's Z is not honoured, and nothing tells you** — proven 2026-08-20, Revit 2020.
+> `NewFamilyInstance(new XYZ(x, y, mm(2400)), sym, level, NonStructural)` on a OneLevelBased sprinkler
+> put the head at **2,500 mm**: the family's own default elevation won, silently, with no exception and
+> no warning. The script's own "placed 1, failed 0" was true and useless — the head was 100 mm out.
+>
+> So the height is **two** steps, never one: create the instance, then write the parameter, then read it
+> back from the document.
+>
+> ```csharp
+> var fi = Document.Create.NewFamilyInstance(pt, sym, lvl, StructuralType.NonStructural);
+> var ep = fi.LookupParameter("Elevation from Level");
+> if (ep != null && !ep.IsReadOnly) ep.Set(mm(targetZmm));
+> ```
+>
+> Verified on a 38-head batch: every head read back at exactly the target Z. This is the same lesson as
+> trap 5 — **a write that reports success is not evidence the value took.**
 
 ## Reading the plane above a head
 

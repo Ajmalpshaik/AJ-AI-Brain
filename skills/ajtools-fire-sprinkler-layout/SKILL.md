@@ -100,9 +100,17 @@ Two side doors off that chain:
   Its own table, and the across-room throw check that spacing alone never makes.
 - **"Check my sprinkler spacing"** with nothing to design → jump straight to step 9.
 
-**All eight were written 2026-08-20 and none has been run against a real model yet.** That is not a reason
-to refuse the job — it is the Brain's standing rule: run one element first, check the real result, then use
-it for the batch, and say plainly that is what you are doing.
+**Four of the ten have now been run against a real model** (2026-08-20, Revit 2020): steps 1, 4, 8 and 9 —
+`sprinkler-obstruction-survey.cs`, `sprinkler-nfpa-grid.cs`, `sprinkler-place-heads.cs` and
+`sprinkler-compliance-audit.cs`. 38 heads across four rooms, grid hand-checked, audit clean from a separate
+bridge call. Read each one's STATUS block: they now say which branches are proven and which the test model
+never exercised (no beams, no columns, no services, so the whole obstruction half is still untried).
+
+**The other six remain unproven.** That is not a reason to refuse the job — it is the Brain's standing rule:
+run one element first, check the real result, then use it for the batch, and say plainly that is what you
+are doing. On the 2026-08-20 run that rule paid for itself twice in one step: the pilot head exposed a
+silent 100 mm elevation error *and* a family whose deflector was on the opposite end from the obvious guess.
+Both are written up in [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md).
 
 Two things the chain will not do for you, and both are yours to say out loud:
 

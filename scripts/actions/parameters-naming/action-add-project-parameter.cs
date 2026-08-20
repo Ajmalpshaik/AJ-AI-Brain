@@ -6,10 +6,12 @@
 //          parameter that already exists. This one creates the parameter itself.
 // DOES NOT consume `elements` — operates on the document's shared parameter file and category bindings,
 //          not a model element set.
-// VERSION NOTE: uses the legacy (2020-era) API — ParameterType enum + BuiltInParameterGroup — because
-// the modern ForgeTypeId API (SpecTypeId/GroupTypeId) does not exist on Revit 2020 at all (confirmed
-// live; see AGENT-SPEC.md §6.3). On 2022+ swap ParameterType.Text for SpecTypeId.String.Text and
-// BuiltInParameterGroup.PG_DATA for GroupTypeId.Data.
+// VERSION NOTE: the spec argument is resolved at RUN time, so one source runs on 2020 through 2027.
+// Revit 2022 swapped ExternalDefinitionCreationOptions' second argument from the old enum to a
+// ForgeTypeId, and 2024 made the old enum inaccessible - so neither name can appear in the source. The
+// constructor is chosen by its own real parameter type and the spec looked up by leaf name ("Text").
+// BuiltInParameterGroup is still named directly: it compiles on 2020 and 2024, and 2027 cannot be
+// checked yet because the compile harness has no .NET 10 reference set (see docs/HANDOVER.md).
 // GOTCHA: needs Application.SharedParametersFilename already pointing at a real, writable shared parameter
 //         .txt file — if none is set, this creates one at sharedParamFileFallbackPath instead of failing.
 // Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
@@ -25,6 +27,35 @@ string sharedParamFileFallbackPath = @"C:\Temp\AJTools_SharedParameters.txt"; //
 
 var sb = new System.Text.StringBuilder();
 var app = Document.Application;
+
+// ---- VERSION-PROOF ExternalDefinitionCreationOptions ----------------------------------------------
+// Picked by the constructor's own second parameter type, not by testing whether ForgeTypeId exists -
+// Revit 2021 ships ForgeTypeId but this constructor there still takes the old enum.
+var _edcoCtor = typeof(ExternalDefinitionCreationOptions).GetConstructors()
+    .Where(c => c.GetParameters().Length == 2 && c.GetParameters()[0].ParameterType == typeof(string))
+    .OrderBy(c => c.GetParameters()[1].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+    .FirstOrDefault();
+if (_edcoCtor == null) throw new InvalidOperationException("This Revit has no ExternalDefinitionCreationOptions(string, spec) constructor.");
+var _edcoSpecT = _edcoCtor.GetParameters()[1].ParameterType;
+
+// The leaf name is the same in both worlds ("Text"); SpecTypeId files Text under String.
+Func<string, object> _specFor = nm =>
+{
+    if (_edcoSpecT.Name != "ForgeTypeId") return Enum.Parse(_edcoSpecT, nm);
+    var _asm = typeof(Document).Assembly;
+    var _fl = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+    foreach (var tn in new[] { "Autodesk.Revit.DB.SpecTypeId", "Autodesk.Revit.DB.SpecTypeId+String", "Autodesk.Revit.DB.SpecTypeId+Boolean" })
+    {
+        var ty = _asm.GetType(tn);
+        var pr = ty == null ? null : ty.GetProperty(nm, _fl);
+        if (pr != null) return pr.GetValue(null);
+    }
+    throw new InvalidOperationException("No SpecTypeId named '" + nm + "' on this Revit.");
+};
+Func<string, string, ExternalDefinitionCreationOptions> MakeDefOptions = (nm, spec) =>
+    (ExternalDefinitionCreationOptions)_edcoCtor.Invoke(new object[] { nm, _specFor(spec) });
+// ---------------------------------------------------------------------------------------------------
+
 
 if (string.IsNullOrEmpty(app.SharedParametersFilename))
 {
@@ -53,7 +84,7 @@ else
             ExternalDefinition definition = existingDef as ExternalDefinition;
             if (definition == null)
             {
-                var options = new ExternalDefinitionCreationOptions(parameterName, ParameterType.Text);
+                var options = MakeDefOptions(parameterName, "Text");
                 definition = group.Definitions.Create(options) as ExternalDefinition;
             }
 

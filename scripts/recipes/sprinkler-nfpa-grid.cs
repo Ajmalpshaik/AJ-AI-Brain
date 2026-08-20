@@ -48,12 +48,22 @@
 //         remote area or hydraulics, and it never prints the word "compliant". The AHJ (QCDD on Ajmal's
 //         projects) and the project specification sit on top of NFPA and can be stricter.
 //
-// STATUS: NOT LIVE-VERIFIED — written 2026-08-20 with no Revit session available. Every API call in it
-//   is already live-proven elsewhere in this library: Room.get_BoundingBox / IsPointInRoom /
-//   GetBoundarySegments and the detail-circle drawing all come from recipes/generate-room-coverage-
-//   layout.cs (live 2026-07-26 and 2026-07-27). What is NEW is the search and the check arithmetic —
-//   no Revit call, so it is C# logic that a first run on one real room will settle in a minute.
-//   Run it on ONE room, read the check table against a hand calculation, then trust it for the rest.
+// STATUS: LIVE-VERIFIED 2026-08-20 on Revit 2020 (model 'Project1'), four rectangular rooms, light
+//   hazard / NFPA 13 / unobstructed. The search and the check table were HAND-CHECKED against all four
+//   and came out exact:
+//     Room 1  12,772 x 4,700   -> 3 x 2 =  6   S 4,257  L 2,350   A_s 10.00 m2
+//     Room 2   9,400 x 9,800   -> 3 x 3 =  9   S 3,133  L 3,267   A_s 10.24 m2
+//     Room 3   9,700 x 12,200  -> 3 x 3 =  9   S 3,233  L 4,067   A_s 13.15 m2
+//     Room 4  27,900 x 4,900   -> 7 x 2 = 14   S 3,986  L 2,450   A_s  9.77 m2
+//   Hand check of the minimum: nx = ceil(W / maxSpacing), ny = ceil(H / maxSpacing) reproduces every one.
+//   WHAT THE RUN ACTUALLY SHOWED, and it is the useful lesson: on all four rooms the binding limit was
+//   the 4,572 mm SPACING cap, never the area rule — A_s came out 9.8-13.2 m2 against a 20.90 allowance,
+//   and every room needed roughly double its area-rule floor. Room 4 is the clearest case: the area rule
+//   asks for 7 heads and the layout needs 14, because a 4,900 mm wide room cannot take a single row
+//   (the centre line would sit 2,450 mm off each wall against a 2,286 mm limit). **Quoting the area-rule
+//   floor as "the head count" would have under-counted every room in this model.**
+//   STILL UNPROVEN: gridMode "fixed", baySpacingMm, drawCircles, and the SHAPE WARNING branch — the test
+//   rooms were all exact rectangles (bbox area == room area) with no bay module and nothing drawn.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

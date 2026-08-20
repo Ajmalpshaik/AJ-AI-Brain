@@ -36,10 +36,31 @@
 //         wait for a clear go-ahead. confirmPlacement exists so that cannot be skipped by accident.
 // GOTCHA: never Document.Regenerate() after Commit() — illegal, and it surfaces as a HANG, not an error.
 //
-// STATUS: NOT LIVE-VERIFIED as a whole — written 2026-08-20 with no Revit session. Its core,
-//   `NewFamilyInstance(point, symbol, level, StructuralType.NonStructural)` with symbol.Activate(), is
-//   live-proven in creators/create-point-based-element.cs. New here is the read-back and the reporting.
-//   Place ONE head first, look at it in Revit, then run the batch.
+// GOTCHA — PROVEN 2026-08-20, AND IT IS THE ONE THAT BITES: **the Z of the placement point is NOT
+//         honoured on a OneLevelBased family.** Asked for Z = 2,400 mm via
+//         `NewFamilyInstance(new XYZ(x, y, mm(2400)), sym, level, NonStructural)` and the head landed at
+//         **2,500 mm** — the family's own default elevation won, silently, with no error and no warning.
+//         Every head would have been 100 mm out and the script would have reported success.
+//         THE FIX, and it is proven to work: after creating each instance, write the height explicitly —
+//           var ep = fi.LookupParameter("Elevation from Level");
+//           if (ep != null && !ep.IsReadOnly) ep.Set(mm(targetZmm));
+//         then READ IT BACK. On the 38-head batch this gave min 2,244 / max 2,244 mm, 0 heads adrift.
+//         'Offset from Host' mirrors 'Elevation from Level' on an unhosted family — either can be read,
+//         but write the one you then verify.
+//
+// GOTCHA — PROVEN 2026-08-20: **find the deflector by MEASURING the family, never by assuming an end.**
+//         See knowledge/fire-sprinkler/revit-modelling.md for the method (slice the solid, find the
+//         widest disc) and for the RASCO F156 case where a type named "CONVENTIONAL" turned out to be
+//         modelled as an UPRIGHT with the deflector 56 mm ABOVE the origin. Placing it as if the origin
+//         were the deflector puts the head 56 mm wrong, and the sign of the error depends on the family.
+//
+// STATUS: LIVE-VERIFIED 2026-08-20 on Revit 2020 (model 'Project1'). 38 heads placed across 4 rooms in
+//   one transaction, 0 failed, using RASCO F156 (OneLevelBased, so the UNHOSTED path this fragment
+//   takes). The read-back is what earned its keep: it caught the elevation bug above on the pilot head
+//   before the batch ran. Read-back confirmed 38 in the model, all at Z 2,244 mm, and
+//   Room.IsPointInRoom put 6 / 9 / 9 / 14 in the four rooms exactly as planned. A third check from a
+//   SEPARATE bridge call (recipes/sprinkler-compliance-audit.cs) then agreed — 0 failures.
+//   Place ONE head first and measure it. On this run the pilot found two separate faults.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

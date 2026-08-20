@@ -83,6 +83,52 @@ double minHorizontalStub = (550.0 * viewScaleRatio) / 304.8;
 double minVerticalStub = (30.0 * viewScaleRatio) / 304.8;
 
 // Reproduced from AJTools.Services.LeaderLogic.LeaderLogicService.GetE1 — class unreachable from here.
+// ---- VERSION-PROOF TAG API (Revit 2022 changed both of these, and REMOVED the old names) ----------
+// A tag could point at exactly one element before 2022; from 2022 it can point at several. So
+// `TaggedLocalElementId` became `GetTaggedLocalElementIds()`, and the single `LeaderElbow` property
+// became `GetLeaderElbow(Reference)` / `SetLeaderElbow(Reference, XYZ)`. Naming the old members in code
+// stops this fragment compiling on 2024+; naming the new ones stops it compiling on 2020. Looked up by
+// name once, here, so ONE source runs on 2020 through 2027.
+var _tagGetIds    = typeof(IndependentTag).GetMethod("GetTaggedLocalElementIds", Type.EmptyTypes);
+var _tagOneId     = typeof(IndependentTag).GetProperty("TaggedLocalElementId");
+var _tagGetRefs   = typeof(IndependentTag).GetMethod("GetTaggedReferences", Type.EmptyTypes);
+var _tagGetElbow  = typeof(IndependentTag).GetMethod("GetLeaderElbow", new[] { typeof(Reference) });
+var _tagSetElbow  = typeof(IndependentTag).GetMethod("SetLeaderElbow", new[] { typeof(Reference), typeof(XYZ) });
+var _tagElbowProp = typeof(IndependentTag).GetProperty("LeaderElbow");
+
+// The FIRST tagged element. Every tag this fragment creates is single-reference, so first == the one.
+Func<IndependentTag, ElementId> TaggedIdOf = tg =>
+{
+    if (_tagGetIds != null)
+        return ((System.Collections.IEnumerable)_tagGetIds.Invoke(tg, null)).Cast<ElementId>().FirstOrDefault();
+    if (_tagOneId != null) return (ElementId)_tagOneId.GetValue(tg);
+    return ElementId.InvalidElementId;
+};
+Func<IndependentTag, Reference> _firstRef = tg =>
+    _tagGetRefs == null ? null
+        : ((System.Collections.IEnumerable)_tagGetRefs.Invoke(tg, null)).Cast<Reference>().FirstOrDefault();
+
+Func<IndependentTag, XYZ> GetElbow = tg =>
+{
+    if (_tagGetElbow != null)
+    {
+        var r = _firstRef(tg);
+        return r == null ? null : (XYZ)_tagGetElbow.Invoke(tg, new object[] { r });
+    }
+    return _tagElbowProp == null ? null : (XYZ)_tagElbowProp.GetValue(tg);
+};
+Action<IndependentTag, XYZ> SetElbow = (tg, pt) =>
+{
+    if (_tagSetElbow != null)
+    {
+        var r = _firstRef(tg);
+        if (r != null) _tagSetElbow.Invoke(tg, new object[] { r, pt });
+        return;
+    }
+    if (_tagElbowProp != null) _tagElbowProp.SetValue(tg, pt);
+};
+// ---------------------------------------------------------------------------------------------------
+
 Func<XYZ, XYZ, double?, XYZ> getE1 = (l1, t1, preferredSign) =>
 {
     XYZ delta = t1 - l1;
@@ -501,7 +547,7 @@ using (var tx = new Transaction(doc, "Tag elements — scored candidate placemen
             var tag = IndependentTag.Create(doc, tagType.Id, view.Id, reference, bestNeedsLeader, TagOrientation.Horizontal, bestT1);
             if (tag.GetTypeId() != tagType.Id) tag.ChangeTypeId(tagType.Id);
             tag.TagHeadPosition = bestT1;
-            if (bestNeedsLeader && bestE1 != null) tag.LeaderElbow = bestE1;
+            if (bestNeedsLeader && bestE1 != null) SetElbow(tag, bestE1);
 
             if (bestNeedsLeader) placedWithLeader++; else placedNoLeader++;
 
@@ -542,10 +588,10 @@ using (var txFix = new Transaction(doc, "Correct elbow clearance using real meas
         foreach (var tag in justPlacedTags)
         {
             XYZ e1Current = null;
-            try { if (tag.HasLeader) e1Current = tag.LeaderElbow; } catch { }
+            try { if (tag.HasLeader) e1Current = GetElbow(tag); } catch { }
             if (e1Current == null) continue;
 
-            var tagged = doc.GetElement(tag.TaggedLocalElementId);
+            var tagged = doc.GetElement(TaggedIdOf(tag));
             var tlc = tagged?.Location as LocationCurve;
             XYZ l1 = tlc != null ? tlc.Curve.Evaluate(0.5, true) : tag.TagHeadPosition;
 
@@ -571,7 +617,7 @@ using (var txFix = new Transaction(doc, "Correct elbow clearance using real meas
             }
             else newE1 = l1.Add(viewUp.Multiply(dyView));
 
-            if (newE1 != null) { tag.LeaderElbow = newE1; corrected++; }
+            if (newE1 != null) { SetElbow(tag, newE1); corrected++; }
         }
         sb.AppendLine($"Final elbow-clearance correction pass: {corrected} tag(s) adjusted using real measured boxes.");
         txFix.Commit();
@@ -613,7 +659,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
             double cx = projX(t1T), cy = projY(t1T);
             return (cx - halfW, cx + halfW, cy - halfH, cy + halfH);
         };
-        Func<IndependentTag, XYZ> safeElbow = (tagEl) => { try { return tagEl.HasLeader ? tagEl.LeaderElbow : null; } catch { return null; } };
+        Func<IndependentTag, XYZ> safeElbow = (tagEl) => { try { return tagEl.HasLeader ? GetElbow(tagEl) : null; } catch { return null; } };
         Action<Dictionary<ElementId, XYZ>, ElementId, XYZ> addMove = (dict, id, v) => { if (dict.TryGetValue(id, out var ex2)) dict[id] = ex2.Add(v); else dict[id] = v; };
 
         int cleanupMoves = 0, cleanupIter;
@@ -678,14 +724,14 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
                 var tagM = doc.GetElement(kv.Key) as IndependentTag;
                 if (tagM == null) continue;
                 XYZ newHead = tagM.TagHeadPosition.Add(kv.Value);
-                var taggedEl = doc.GetElement(tagM.TaggedLocalElementId);
+                var taggedEl = doc.GetElement(TaggedIdOf(tagM));
                 var tlcM = taggedEl?.Location as LocationCurve;
                 XYZ l1M = tlcM != null ? tlcM.Curve.Evaluate(0.5, true) : tagM.TagHeadPosition;
                 tagM.TagHeadPosition = newHead;
                 if (tagM.HasLeader)
                 {
                     var newE1 = getE1(l1M, newHead, null);
-                    if (newE1 != null) tagM.LeaderElbow = newE1;
+                    if (newE1 != null) SetElbow(tagM, newE1);
                 }
                 cleanupMoves++;
             }

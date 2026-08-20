@@ -24,11 +24,12 @@ counts them that way.
    Its METHOD is proven but the file as one uninterrupted run threw an unisolated null reference; read its
    STATUS block. Suspect: an element handle reused across a transaction boundary after `BreakCurve`.
 
-2. `recipes/sprinkler-nfpa-grid.cs`, `recipes/sprinkler-compliance-audit.cs` and
-   `recipes/sprinkler-sidewall-layout.cs` — a placed Room is all three need, and Room 4 exists. These are
-   the three of the eight sprinkler fragments (2026-08-20) that can be proven on the model as it stands.
-   Run the grid one first and check its table against a hand calculation; the arithmetic is plain C# with
-   no Revit call in it, so one room settles all three.
+2. `recipes/sprinkler-sidewall-layout.cs` — a placed Room is all it needs, and four exist. It is the last
+   of the three that were listed here on 2026-08-20 as provable on the model as it stands:
+   **`sprinkler-nfpa-grid.cs` and `sprinkler-compliance-audit.cs` were both closed the same day** — run
+   live on all four rooms, hand-checked, 0 failures (see the Log entries at the foot of this file).
+   `sprinkler-obstruction-survey.cs` and `sprinkler-place-heads.cs` went with them. Sidewall needs a
+   corridor-shaped room to be a fair test; Room 4 (27,900 x 4,900 mm) is the obvious candidate.
 
 4. `recipes/sprinkler-pipe-schedule-size.cs` (2026-08-20) — needs modelled sprinkler PIPE connected to
    heads, which this model does not have yet. The walk and the lookup can be exercised the moment any
@@ -2451,3 +2452,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   compiling against the real RevitAPI.dll is a measurement** — the same lesson this repo keeps relearning,
   now with the tool that makes it cheap. Those 7, plus the 3 known `ParameterType` ones, are the whole of
   what still fails on 2024; all are real API removals needing reflection dispatch, not migration slips.
+
+- 2026-08-20 — **The fire-sprinkler chain ran on a real model for the first time: 4 of the 10 fragments
+  are now LIVE-VERIFIED.** `sprinkler-obstruction-survey.cs`, `sprinkler-nfpa-grid.cs`,
+  `sprinkler-place-heads.cs` and `sprinkler-compliance-audit.cs`, on Revit 2020 / model `Project1`, four
+  rectangular rooms with a flat 2,400 mm grid ceiling, light hazard / NFPA 13 / unobstructed. 38 heads
+  placed, 0 failures on an independent audit run from a separate bridge call. The grid recipe's table was
+  hand-checked against all four rooms and came out exact. STATUS blocks updated with what is proven and
+  what is still not: the bay-module arithmetic, the services branches, `gridMode "fixed"`, `baySpacingMm`
+  and `drawCircles` were all untouched by this model and remain unproven.
+- 2026-08-20 — **Two placement traps found, and the "place one first" rule is what found them.** (1) The
+  Z of the placement point is **not honoured** on a OneLevelBased family — asked 2,400 mm, got 2,500 mm,
+  silently, with the script reporting success; the height must be written to `Elevation from Level`
+  afterwards and read back. (2) A family named "RASCO F156 **CONVENTIONAL**" is modelled as an **UPRIGHT**
+  — connector at the origin pointing down, deflector 56 mm *above* the origin — so the origin-to-deflector
+  offset had the opposite sign to the obvious guess. Both written into
+  `knowledge/fire-sprinkler/revit-modelling.md`, including the slice-the-solid method for measuring where
+  any family's deflector really is. **The family name told us nothing; the geometry told us everything.**
+- 2026-08-20 — Recorded that the bridge prelude does not import `Autodesk.Revit.DB.Architecture`, so a
+  bare `Room` is `CS0246`. Fully qualify it in anything composed from the sprinkler fragments.

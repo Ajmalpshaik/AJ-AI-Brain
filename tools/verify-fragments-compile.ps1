@@ -74,6 +74,7 @@ New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 # 1. Locate the Revit API assemblies
 # ---------------------------------------------------------------------------------------------------
 $revitApi = $null; $revitApiUi = $null
+$frameworkRefs = @()   # .NET ref-pack DLLs; stays empty for a .NET Framework Revit
 if (-not $DryRun) {
     if (-not $RevitPath) {
         $candidates = @()
@@ -98,6 +99,51 @@ if (-not $DryRun) {
         }
     }
     Write-Host ("Revit API : {0}" -f $RevitPath) -ForegroundColor Cyan
+
+    # ---- .NET-based Revit (2025+) needs the .NET reference assemblies, not Framework's -------------
+    # Revit 2025 moved the add-in surface to .NET 8 and 2027 to .NET 10. csc's DEFAULT references are
+    # the .NET Framework ones, so RevitAPI.dll's own reference to System.Runtime 10.0.0.0 cannot be
+    # resolved and EVERY fragment fails with CS0012 "The type Object is defined in an assembly that is
+    # not referenced". That is a harness fault, not 283 broken fragments - it was read as the latter
+    # once (2026-08-20) before this block existed. Detection is the runtimeconfig.json Autodesk ships
+    # beside RevitAPI.dll: present means .NET, absent means Framework.
+    $rtConfig = Join-Path $RevitPath "RevitAPI.runtimeconfig.json"
+    if (Test-Path $rtConfig) {
+        $tfm = "net10.0"; $major = 10
+        try {
+            $cfg = Get-Content $rtConfig -Raw | ConvertFrom-Json
+            if ($cfg.runtimeOptions.tfm) { $tfm = $cfg.runtimeOptions.tfm }
+            $fx = $cfg.runtimeOptions.frameworks | Where-Object { $_.name -eq "Microsoft.NETCore.App" } | Select-Object -First 1
+            if ($fx.version) { $major = [int]($fx.version -split '\.')[0] }
+        } catch { }
+
+        # Highest installed ref pack whose major matches what this Revit asks for.
+        $packRoot = Join-Path $env:ProgramFiles "dotnet\packs"
+        foreach ($packName in @("Microsoft.NETCore.App.Ref", "Microsoft.WindowsDesktop.App.Ref")) {
+            $verDir = Get-ChildItem (Join-Path $packRoot $packName) -Directory -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -like "$major.*" } |
+                Sort-Object { [version]$_.Name } | Select-Object -Last 1
+            if (-not $verDir) { continue }
+            $refDir = Join-Path $verDir.FullName "ref\$tfm"
+            if (-not (Test-Path $refDir)) {
+                $refDir = (Get-ChildItem (Join-Path $verDir.FullName "ref") -Directory -ErrorAction SilentlyContinue |
+                           Select-Object -Last 1).FullName
+            }
+            if ($refDir -and (Test-Path $refDir)) {
+                $frameworkRefs += (Get-ChildItem $refDir -Filter *.dll -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+            }
+        }
+
+        if ($frameworkRefs.Count -eq 0) {
+            Write-Host ("This Revit targets {0}, but no matching .NET {1} reference pack is installed." -f $tfm, $major) -ForegroundColor Red
+            Write-Host "  Every fragment would report a false CS0012 failure, so the run is stopped instead." -ForegroundColor Yellow
+            Write-Host ("  Fix: install the .NET {0} SDK (it brings the ref pack), then re-run." -f $major) -ForegroundColor Yellow
+            exit 2
+        }
+        Write-Host ("Target    : {0} - using {1} reference assemblies" -f $tfm, $frameworkRefs.Count) -ForegroundColor Cyan
+    } else {
+        Write-Host "Target    : .NET Framework - using csc's default references" -ForegroundColor Cyan
+    }
 }
 
 # ---------------------------------------------------------------------------------------------------
@@ -224,10 +270,14 @@ $src
     }
 
     $outDll = Join-Path $workDir "out.dll"
-    $args = @(
-        "/nologo", "/target:library", "/langversion:latest", "/warn:0",
-        "/out:$outDll", "/reference:$revitApi", "/reference:$revitApiUi", $wrapperPath
-    )
+    $args = @("/nologo", "/target:library", "/langversion:latest", "/warn:0", "/out:$outDll")
+    if ($frameworkRefs.Count -gt 0) {
+        # /nostdlib+ so csc does not ALSO pull in Framework's mscorlib alongside the .NET ref pack -
+        # having both is how you get "predefined type is defined twice" on every single fragment.
+        $args += "/nostdlib+"
+        foreach ($r in $frameworkRefs) { $args += "/reference:$r" }
+    }
+    $args += @("/reference:$revitApi", "/reference:$revitApiUi", $wrapperPath)
     $result = & $CscPath @args 2>&1
     # Only CS#### *errors* count. Warnings are suppressed by /warn:0 anyway, but a fragment that already
     # ends in `return sb.ToString();` makes the harness's own trailing return unreachable - a warning,
