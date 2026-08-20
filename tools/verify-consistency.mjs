@@ -272,9 +272,27 @@ for (const f of textFiles) {
         break;
       }
     }
+    // Control characters, which are almost always a Windows path eaten by a string escape:
+    // "AJTools\bridges" written through a language that reads \b becomes AJTools<0x08>ridges, and
+    // "tools\verify-x.ps1" becomes tools<0x0b>erify-x.ps1. It is invisible in most editors, and the
+    // damage is real: the SessionStart banner printed the bridges path with the "b" missing for days,
+    // and six files across the two repos carried one before the 2026-08-20 sweep found them. Tab is
+    // allowed (it is legitimate in markdown tables and code); \r is already stripped by the split.
+    let ctrlCode = -1;
+    for (let c = 0; c < line.length; c++) {
+      const code = line.charCodeAt(c);
+      // tab (9) is legitimate; newline/CR are already gone via the split
+      if (code < 9 || (code > 10 && code < 32)) { ctrlCode = code; break; }
+    }
+    if (ctrlCode !== -1) {
+      const hex = `0x${ctrlCode.toString(16).padStart(2, "0")}`;
+      issues.push(
+        `CONTROL CHAR in ${path.relative(brainRoot, f)}:${i + 1}: found ${hex} — almost certainly a backslash path escape that got interpreted (\b, \v, \0); write the literal backslash instead`,
+      );
+    }
   });
 }
-console.log(`Checked ${textFiles.length} text file(s) for double-encoded characters.`);
+console.log(`Checked ${textFiles.length} text file(s) for double-encoded and control characters.`);
 
 // === 7. Cross-references inside script fragments ===
 // Fragment headers point at the knowledge file that explains them ("// SOURCE: ../../knowledge/..."),

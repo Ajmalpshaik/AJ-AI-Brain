@@ -41,7 +41,7 @@ prompt, behaves exactly as it always did. More than one — nothing is sent unti
 ### Three new tools (native tools 17 → 20)
 
 `list_revit_instances` · `use_revit_instance` · `use_revit_document`. They read
-`%APPDATA%\AJToolsridges\<pid>.json`, which each Revit writes with its version and open document.
+`%APPDATA%\AJTools\bridges\<pid>.json`, which each Revit writes with its version and open document.
 
 ### Proven live on 2026-08-20, and what is NOT
 

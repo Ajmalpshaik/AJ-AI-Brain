@@ -103,7 +103,7 @@ families loaded, a real panelled PowerCircuit created, `filter-by-electrical-sys
    `recipes/create-parametric-box-family-with-duct-connector.cs`, `recipes/build-test-fixtures.cs`.
 
 **Standing task, not an open item:**
-1. `toolserify-fragments-compile.ps1` — 24 fragments had REAL LOGIC changed on 2026-08-07 and it has
+1. `tools\verify-fragments-compile.ps1` — 24 fragments had REAL LOGIC changed on 2026-08-07 and it has
    not been re-run since, so this matters more than usual. It writes ~267 unsigned `out.dll` files into
    `%TEMP%` and Sophos flags that as `ML/PE-A`; tell IT before running, not after.
 
@@ -2525,7 +2525,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   anything** — a standalone test creating four servers on one name got two, then
   `All pipe instances are busy` twice. Each Revit now owns a pipe named by its process id (the
   named-pipe equivalent of pyRevit's one-port-per-instance) and publishes itself in
-  `%APPDATA%\AJToolsridges\<pid>.json`. `ajai-bridge.json` is still written unchanged, so an older
+  `%APPDATA%\AJTools\bridges\<pid>.json`. `ajai-bridge.json` is still written unchanged, so an older
   client keeps working. New tools `list_revit_instances` / `use_revit_instance` (native tools: 17 → 19).
 
 - 2026-08-20 — **The rule Ajmal chose for two open sessions: ask, don't guess** — and the distinction
@@ -2586,9 +2586,24 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `action-manage-named-set.cs` were written on 2026-08-19 from an outside tool list. The C# is ours and
   the capability is real, so they stay — but they now carry **no provenance line at all** and read as
   this Brain's own work, which is what the instruction asks for. If Ajmal wants the files gone as well as
-  the words, delete both and drop the count back to 287. **Not touched: git history** — both repos' past
-  commits still contain the old text, and rewriting that is a separate, destructive job needing his
-  explicit go-ahead.
+  the words, delete both and drop the count back to 287.
+
+- 2026-08-20 — **The history was scrubbed too, on Ajmal's explicit go-ahead the same evening.** Both
+  repos turned out to be **PUBLIC**, not private as the AJ Tools `CLAUDE.md` had claimed since
+  2026-08-05 — so the old commits were readable by anyone clicking "History", which made this worth
+  doing rather than theoretical. `git filter-repo` over both: the two dedicated files purged from every
+  tree, every outside name replaced in **file contents *and* commit messages**, then a force-push.
+  **266 commits and all 57 tags survive in each repo**; nothing was squashed or lost. Backups first —
+  `git bundle` of each, verified restorable, in `D:\Ajmal\_repo-backups-2026-08-20\`.
+  **The one thing that nearly went wrong, worth keeping:** one of the removed names is a **substring of
+  the ordinary English word "canonical"**, which appears in three files here — a plain search-and-replace
+  would have silently mangled all three. The rules were `(?i)\b…\b` word-boundary regexes and were
+  **unit-tested against "canonical" before being let near a commit**. Do that again if this is ever
+  repeated: write the test first, then the rules. Checked and clear: zero forks on all three repos, and `AJ-Tools-Installer` never
+  contained any of it. The stale `AJ Tools\` clone on disk was scrubbed as well (182 commits) since it
+  is a full copy, though it stays gitignored and unpushable. **Still outstanding:** GitHub keeps
+  unreferenced commits reachable by direct SHA link until it garbage-collects — ask GitHub Support to
+  purge them if that matters.
 
 - **2026-08-20 — the two capabilities from that evaluation rebuilt clean, credit-free.** Ajmal asked for
   everything worth keeping to be kept "in our part", so both fragments deleted in the strip above are back

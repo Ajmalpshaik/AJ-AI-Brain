@@ -17,7 +17,7 @@ tool is registered from `../index.js`; nothing here runs on its own.
 | `use_revit_document` | [`use-revit-document.js`](use-revit-document.js) | Pin this chat to one open project inside that Revit, by title |
 
 **About the last three (added 2026-08-20).** More than one Revit can host a bridge now: each session owns a
-pipe named by its process id and publishes itself in `%APPDATA%\AJToolsridges\<pid>.json`. They are
+pipe named by its process id and publishes itself in `%APPDATA%\AJTools\bridges\<pid>.json`. They are
 the only tools here that do **not** talk to Revit — they read that folder and set which session the rest
 of the tools use.
 

@@ -20,7 +20,8 @@
       4. Every skills/ folder is named in README.md and START-HERE.md, and every literal
          "N skills" claim in README.md/SETUP.md/plugin.json matches the real folder count.
       5. AGENT-SPEC.md section 3.5's fragment counts match what's actually on disk.
-      6. No file contains double-encoded (mojibake) text - the signature of a UTF-8 file
+      6. No file contains double-encoded (mojibake) text, or a stray control character from
+         a backslash path escape that got interpreted - the signature of a UTF-8 file
          read as ANSI and written back, which CLAUDE.md warns about.
       7. Every relative .md reference inside a scripts/**/*.cs fragment resolves - the
          "// SOURCE: ../../knowledge/..." headers that link a fragment to its reasoning.
@@ -266,9 +267,23 @@ foreach ($file in $textFiles) {
                 break
             }
         }
+        # Control characters: almost always a Windows path eaten by a string escape. "AJTools" plus a
+        # backslash-b then "ridges" becomes AJTools<0x08>ridges; "tools" plus backslash-v gives
+        # tools<0x0b>erify-x.ps1. Invisible in most editors, and the damage is real - the SessionStart
+        # banner printed the bridges path with its "b" missing for days. Tab (9) is legitimate; CR/LF
+        # are already gone via the split. Kept in sync with verify-consistency.mjs.
+        foreach ($ch in $lines[$i].ToCharArray()) {
+            $code = [int]$ch
+            if ($code -lt 9 -or ($code -gt 10 -and $code -lt 32)) {
+                $rel = $file.FullName.Substring($brainRoot.Length).TrimStart('', '/')
+                $hex = '0x' + $code.ToString('x2')
+                $issues.Add("CONTROL CHAR in " + $rel + ":" + ($i + 1) + ": found " + $hex + " - almost certainly a backslash path escape that got interpreted; write the literal backslash instead")
+                break
+            }
+        }
     }
 }
-Write-Host ("Checked {0} text file(s) for double-encoded characters." -f @($textFiles).Count)
+Write-Host ("Checked {0} text file(s) for double-encoded and control characters." -f @($textFiles).Count)
 
 Write-Host "`n=== 7. Cross-references inside script fragments ===" -ForegroundColor Cyan
 # Fragment headers point at the knowledge file that explains them ("// SOURCE: ../../knowledge/..."),
