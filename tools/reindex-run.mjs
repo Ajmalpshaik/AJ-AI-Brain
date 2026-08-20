@@ -46,6 +46,7 @@ if (!python) {
 const result = spawnSync(python, [path.join(semanticRoot, "brain_index.py")], {
   encoding: "utf8",
   cwd: semanticRoot,
+  windowsHide: true, // else Windows 11 flashes a Terminal window over Revit on every rebuild
 });
 
 if (result.error || result.status !== 0) {

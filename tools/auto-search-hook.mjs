@@ -143,7 +143,10 @@ const result = spawnSync(
   // answers "which of the 269 fragments actually get used", which nothing else can, and
   // builds the question -> file pairs a fine-tune would need.
   [path.join(semanticRoot, "brain_context.py"), "--top", "5", "--log", prompt],
-  { encoding: "utf8", cwd: semanticRoot, maxBuffer: 4 * 1024 * 1024, timeout: 60000 }
+  // windowsHide: this hook runs with no console of its own, so a console child gets a NEW
+  // console - which Windows 11 hands to Windows Terminal as a black window over Revit.
+  { encoding: "utf8", cwd: semanticRoot, maxBuffer: 4 * 1024 * 1024, timeout: 60000,
+    windowsHide: true }
 );
 
 if (result.error || result.status !== 0) process.exit(0);

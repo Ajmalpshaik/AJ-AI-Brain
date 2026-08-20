@@ -21,6 +21,7 @@ that one file — don't read the whole folder.**
 | A change to the Brain itself (new skill, split file, retired script) — recording it, not making it | [`brain-log.md`](brain-log.md) |
 | **Should we rebuild the search / "do RAG properly"** — what the retrieval layer already has, the six standard upgrades that measured worse here, and the two conditions that would justify a rewrite | [`../semantic-index/rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md) |
 | **Can a clickable page reach the bridge** — what MCP Apps actually allows, which half is already built, and the wrong claim not to repeat | [`mcp-ui-surface.md`](mcp-ui-surface.md) |
+| **A black terminal window keeps opening over Revit** — why the venv Python does that, and the rule every background Python or hook spawn here must follow | [`windows-console-window-trap.md`](windows-console-window-trap.md) |
 
 ## Adding new knowledge
 

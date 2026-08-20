@@ -2676,3 +2676,12 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   because the score check reads the index it rebuilds; the other four have no such dependency. Each
   child is isolated and a failure is reported rather than swallowed — five hooks behind one entry
   means a bug here would silently disable all of them, which is this repo's worst failure mode.
+- 2026-08-21 — **the warm search server no longer opens a black window over Revit.** The venv's
+  `python.exe` is a launcher shim over the Store Python: it re-executes the base interpreter as a
+  second process, which never sees `DETACHED_PROCESS`, so that process took a console of its own —
+  and on Windows 11 a console is a Windows Terminal window. Closing it killed the server, so the
+  next message started another. `brain_client.start_server_detached()` now launches `pythonw.exe`
+  (no console exists to hand out), and the four hook-side Python spawns pass `windowsHide: true`.
+  Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
+  hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
+  knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
