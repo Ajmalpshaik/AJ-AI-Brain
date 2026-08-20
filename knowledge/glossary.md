@@ -210,13 +210,6 @@ is exactly the one a fresh session cannot route.
   and "bigger counts" are two different questions one message apart.** If a request could mean either,
   say which one you are answering — or ask. Related: the 2026-08-04 entry above, where "maximum duct
   size" had the same shape of ambiguity.
-- 2026-08-14 — **"an external tool tab" / "an external tool tab ai connector" = an external tool** (an external tool, `an external site`) and its
-  **A.I. Connector for Revit** — the bought, off-the-shelf alternative to this Brain's AJ AI Bridge: an
-  MCP add-in giving Claude/ChatGPT/Cursor a fixed menu of ~37 read-only tools free, 50+ read-write on
-  PRO. Written down on first use, per the 2026-08-10 rule; the spelling matters because "an external tool" returns
-  nothing in a search and "an external tool" returns everything. Full comparison:
-  [`tool-landscape-removed.md`](tool-landscape-removed.md). Related dictation shape: he drops the
-  **n** in the middle of a brand name, the same way "duck" loses the **t** of duct.
 - 2026-08-14 — **"visualization" (his word) = a CHART or DASHBOARD of the model's numbers**, not a 3D
   render, not a Revit visual style, not a rendering job. Said as *"i need always need visualization...
   if vishalization needdd it need to come"* while showing two dashboard pages of Revit data. The trap is

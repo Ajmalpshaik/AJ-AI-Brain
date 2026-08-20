@@ -365,6 +365,21 @@ assistant's.
   unique commits. **`claude/rag-architecture-review-bqpjah` was kept**: it carries open **draft PR #22**
   ("Answer the 'rebuild the RAG properly' question with the measurements"), which is Ajmal's to merge or
   close. Remote is now `main` + that one branch.
+- **Two new fragments need one live run each — nothing else is outstanding on them.** Added 2026-08-20
+  after Ajmal asked for the useful capabilities from an outside tool evaluation to be kept "in our part".
+  Both are written as this Brain's own, carry no outside reference, and are **289/289 compile-clean on
+  Revit 2020, 2024 and 2027** — but compiling is a floor, see the rule at the bottom of this file.
+  - [`action-test-view-filter-match.cs`](../scripts/actions/reporting/action-test-view-filter-match.cs)
+    — dry-runs a View Filter against `elements` without applying it. **To verify:** point it at a filter
+    you already know the answer for, with a deliberate mix — some elements it catches, and some from a
+    category the filter was never scoped to. The third verdict (*N/A — category not in scope*) is the
+    whole reason it exists; confirm those land as N/A and not as "no match".
+  - [`action-manage-named-set.cs`](../scripts/actions/visibility/action-manage-named-set.cs) — name a
+    set once, then select / isolate / hide / show it by name. **To verify:** `mode="list"` first (it is
+    read-only), then `create` from a small selection, then `isolate`, then `show`. Also worth proving
+    the staleness report: delete one element of a saved set and re-run — it should say so out loud
+    rather than quietly acting on a shorter list.
+
 - `knowledge/live-model/core.md` is at 303 lines, just past the ~300-line split rule, and has not been
   reviewed for splitting.
 

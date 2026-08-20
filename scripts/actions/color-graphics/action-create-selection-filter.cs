@@ -8,7 +8,7 @@
 //          "everything where System Type contains CDP").
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// STATUS: not yet live-verified.
+// STATUS: live-verified 2026-07-22.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

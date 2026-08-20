@@ -33,7 +33,7 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 348 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 350 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
@@ -91,6 +91,14 @@ He named two problems. Both have an answer that already exists:
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
   [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same eight checks.
+- **Never name an outside source in anything written here — no other people's repos, tools, products,
+  websites or personal names.** Ajmal's instruction, 2026-08-20: *"do not mention any thing that we took
+  from this web site or repo... the words also remove... remove his name and do not use like that."*
+  This covers `// SOURCE:` headers, knowledge notes, log entries and skill text alike. A `SOURCE:` line
+  points at a **file inside this Brain** and nothing else. If a technique is worth having, write it in
+  your own words as this Brain's own knowledge and verify it here — do not record where it came from,
+  and do not create a file whose subject is somebody else's tool. Everything of that kind was stripped
+  on 2026-08-20; putting any of it back undoes a deliberate decision.
 - Log structural changes (new skill, split file, new/retired script) in
   [`knowledge/brain-log.md`](knowledge/brain-log.md), 1–3 lines each.
 - **Never bulk-edit files here with PowerShell `Get-Content`/`Set-Content`.** Windows PowerShell 5.1 reads

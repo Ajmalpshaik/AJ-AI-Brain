@@ -6,11 +6,9 @@
 //          gradient across ordered groups, or three hue-stepped modes (random/pastel/neon — see below).
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// SOURCE: ../../../knowledge/live-model/mep-trace.md § Color-coding a traced run; parameter-value stringification and the
-//         palette/gradient modes adapted from an external repository's
-//         ColorSplashEventHandler (a different architecture — fixed MCP tools, not raw scripting — so
-//         only the technique was taken, not any code, and re-verified against this project's own
-//         version-compat rules, e.g. RevitCompat's ForgeTypeId boundary already documented separately).
+// SOURCE: ../../../knowledge/live-model/mep-trace.md § Color-coding a traced run. Parameter-value
+//         stringification and the palette/gradient modes are written to this project's own
+//         version-compat rules, e.g. RevitCompat's ForgeTypeId boundary already documented separately.
 // GOTCHA fixed 2026-07-22: "random" used to pick each group's R/G/B independently — two groups can land
 //         on near-identical colors purely by chance (the user: "its not be identical visually also i
 //         need different colors and randomize"). Fixed by stepping HUE evenly around the color wheel

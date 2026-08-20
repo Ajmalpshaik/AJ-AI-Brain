@@ -125,9 +125,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
 - 2026-07-22 — Universal-actions audit: built `action-delete-elements.cs`, `action-rename-element.cs`,
   `create-schedule.cs`; wrote `knowledge/universal-actions-reference.md`.
 - 2026-07-22 — Expanded the reference to 175 actions (v2), then 182 (v3, full Revisions lifecycle).
-- 2026-07-22 — Reviewed a competitor's MCP skill text: did NOT copy it; folded the factual Revit lessons
-  into `core.md`/glossary (UniqueId stability, discover-params-first, overflow caution, linked-element
-  LevelId). Upgrade inspired by it: all 11 graphics/visibility fragments got optional `targetViewIdInt`.
+- 2026-07-22 — Folded four factual Revit lessons into `core.md`/glossary (UniqueId stability,
+  discover-params-first, overflow caution, linked-element LevelId). Same pass: all 11
+  graphics/visibility fragments got optional `targetViewIdInt`.
 - 2026-07-22 — Created `AGENT-SPEC.md` (11-section operating manual); follow-up caught 2 staleness gaps
   in it same-day. Lesson: a consolidated spec needs a deliberate re-check after changes, not just a link
   check.
@@ -251,13 +251,12 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (`.claude/settings.json` → `tools/verify-consistency-hook.ps1`) that re-runs the consistency checker
   after every edit in this repo — drift now surfaces same-turn (exit-2/stderr path live-tested with a
   planted unlisted script, then removed).
-- 2026-07-26 — Harvested 6 principles from a third-party Revit-MCP doctrine the user found (an external tool
-  connector — different product, its tool names don't apply here) into `live-model/core.md` Bridge
-  basics: empty-result-is-valid, never-invent-ElementIds, resolve view-relative direction words before
-  moving, one-composed-script-over-many-calls, verify-small, workshared-sync reminder. Its
-  "reuse cached state, don't re-query" rule was rejected — conflicts with our proven fresh-reads rule.
-- 2026-07-26 — Tool-gap backlog build: user compared this setup against another Revit MCP server's tool
-  list; 9 gaps found became 14 new fragments — room elevations, floors, sheet sets, compare-elements,
+- 2026-07-26 — Added 6 bridge principles to `live-model/core.md` Bridge basics:
+  empty-result-is-valid, never-invent-ElementIds, resolve view-relative direction words before
+  moving, one-composed-script-over-many-calls, verify-small, workshared-sync reminder. A
+  "reuse cached state, don't re-query" rule was considered and rejected — it conflicts with our proven
+  fresh-reads rule.
+- 2026-07-26 — Tool-gap backlog build: 9 gaps found became 14 new fragments — room elevations, floors, sheet sets, compare-elements,
   parameter CSV round-trip (Excel via agent-side xlsx), model-health-audit recipe, compact save,
   sync-with-central, link unload/remove, and DWG/IFC/NWC/image exports. All marked NOT live-verified yet.
 - 2026-07-26 — Round 2 (self-proposed gaps, user approved all): 17 more fragments — load-family,
@@ -2023,9 +2022,12 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   When he says another session is running, make zero bridge calls — not even a ping — because the
   one-connection-at-a-time limit means a call preempts his other session rather than queueing. Same limit
   killed one of six parallel calls that day: go sequential.
-- 2026-08-14 — **New: [`tool-landscape-removed.md`](tool-landscape-removed.md)** — how this Brain's
-  bridge compares to an external tool's A.I. Connector (the bought alternative), with prices dated, the one real
-  tool gap (accessibility checking), and the note that their 50 tool names are unpublished.
+- 2026-08-14 — **New: [`mcp-ui-surface.md`](mcp-ui-surface.md)** — corrects a claim made in session that
+  day: *"no widget, no artifact, no web page can ever reach the bridge."* True of a chat widget or a
+  published page; **false for a UI served by our own MCP server**, which is what MCP Apps
+  (`io.modelcontextprotocol/ui`) is for. The Revit half already exists — `select_elements`,
+  `set_parameter_value`, `report_parameters` since 2026-07-22 — so what is missing is the UI layer, not
+  the plumbing. Host support is the real unknown: build a small proof before promising it.
 - 2026-08-14 — **Corrected `ajtools-visual-report` within the hour: the chat is the default, a page is
   on request.** The first two reports were published as artifacts he never asked for; he came back with
   *"normaly i need to come in the chat... if i ask the artifects its need to come like this you make html
@@ -2567,3 +2569,37 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   connection OPEN between calls (that is what makes a long job fast). Closing only the server left a
   live socket holding the event loop up, so the run hung to the runner's timeout — 7 green checks and a
   failed file. Keep every accepted socket and destroy them in `after()`.
+
+- 2026-08-20 — **Every outside source stripped from both repos, and the rule written down so it stays
+  stripped.** Ajmal: *"do not mention any thing that we took from this web site or repo or we take like
+  that files also remove and the words also remove... remove his name and do not use like that."*
+  Removed across the Brain and the AJ Tools repo: **22 `// SOURCE:` / `LESSON:` fragment-header
+  attributions** naming an outside repo (11 fragments here, 11 in the mirrored `.claude/scripts/` copy),
+  the whole competitor-comparison knowledge note, the AJ Tools `scripts/history.md` "where these ideas
+  came from" file, and nine log/README passages naming outside projects. Derived layers cleaned too
+  (job-log entries, graphify caches and stale graph snapshots); all gitignored, so none of it ever
+  travelled in git anyway. **What was kept deliberately:** the *techniques* themselves, which are ours
+  now and verified here, and the one genuinely-our-own engineering fact rescued out of the deleted note
+  into [`mcp-ui-surface.md`](mcp-ui-surface.md). The rule is now a bullet in `CLAUDE.md` in both repos,
+  because the failure mode is a future session politely re-adding a credit line.
+  **The one judgement call, flagged rather than buried:** `action-test-view-filter-match.cs` and
+  `action-manage-named-set.cs` were written on 2026-08-19 from an outside tool list. The C# is ours and
+  the capability is real, so they stay — but they now carry **no provenance line at all** and read as
+  this Brain's own work, which is what the instruction asks for. If Ajmal wants the files gone as well as
+  the words, delete both and drop the count back to 287. **Not touched: git history** — both repos' past
+  commits still contain the old text, and rewriting that is a separate, destructive job needing his
+  explicit go-ahead.
+
+- **2026-08-20 — the two capabilities from that evaluation rebuilt clean, credit-free.** Ajmal asked for
+  everything worth keeping to be kept "in our part", so both fragments deleted in the strip above are back
+  as this Brain's own, with no outside name anywhere in them:
+  [`action-test-view-filter-match.cs`](../scripts/actions/reporting/action-test-view-filter-match.cs)
+  (dry-run a View Filter against `elements` without applying it — and its third verdict, *N/A, the
+  category was never in the filter's scope*, is the one that actually answers "why isn't my filter
+  catching these ducts") and
+  [`action-manage-named-set.cs`](../scripts/actions/visibility/action-manage-named-set.cs) (name a set
+  once, then select / isolate / hide / show it by name). The named-set one is built on Revit's own
+  `SelectionFilterElement` rather than an in-memory id cache **on purpose** — a frozen id list goes stale
+  exactly the way recall does, which `START-HERE.md` rule 2 forbids, so every mode re-resolves and reports
+  what no longer exists. Library 287 → 289; **289/289 compile-clean on Revit 2020, 2024 and 2027**, both
+  still to be live-verified.

@@ -6,9 +6,6 @@
 //          stay in whatever 2D view is active.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// SOURCE: technique adapted from an external repository's
-//         OperateElementEventHandler (SelectionBox case) — a different architecture, only the
-//         technique was taken, not any code.
 // GOTCHA: `UIDocument.ActiveView = targetView` SWITCHES THE VIEW THE USER IS LOOKING AT, and that is a
 //         UI change, not a document one — it does NOT come back when the transaction (or an enclosing
 //         TransactionGroup) is rolled back, and Undo will not restore it either. Confirmed live

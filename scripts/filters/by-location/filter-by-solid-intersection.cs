@@ -9,8 +9,9 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified — the box-solid construction (GeometryCreationUtilities) hasn't been
-//         run against the real model yet.
+// STATUS: live-verified 2026-07-22 (ElementIntersectsSolidFilter path). CAVEAT: the box-solid
+//         construction via GeometryCreationUtilities has still not been run against a real model —
+//         verify that on one element before trusting it for a batch.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

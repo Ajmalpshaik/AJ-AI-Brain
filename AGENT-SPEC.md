@@ -222,7 +222,7 @@ document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 287 real C# fragments in `scripts/` (49 filters, 145
+now also have a native tool above), and the 289 real C# fragments in `scripts/` (49 filters, 147
 actions, 33 creators, 8 commands, 36 recipes, 3 examples, 12 read-only `context/` fragments, 1 shared
 `lib/` prelude — count re-verified 2026-08-20, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
 silently again), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
