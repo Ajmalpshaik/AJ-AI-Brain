@@ -286,3 +286,23 @@ is exactly the one a fresh session cannot route.
   **"CRAC Unit Outdoor"**. From BL006A the same day: `PackagedAirConditioner` → **"Packaged Unit"**,
   `TCM_ACU_T002_AirCooledCondensingUnit` → **"Split Outdoor"**, `TCM_ECF_ExhaustCentrifugalFan` →
   **"Exhaust Fan for Inertial Air Filter"** (named by what it serves, not what it is).
+- 2026-08-20 — **his fire-fighting wording, from the message that started the sprinkler build.** Written
+  down in his phrasing, per his rule that the words matter as much as the conclusion. The spellings also
+  went into [`site-vocabulary.md`](site-vocabulary.md) so a search finds the files whichever way he types.
+
+  | His words | What it means |
+  |---|---|
+  | "srinkler" | sprinkler — his consistent spelling, in the same message four times |
+  | "pendend sprinkler" | **pendent** head, pointing down below a ceiling |
+  | "upraght sprinkler" | **upright** head, pointing up, used where there is no ceiling |
+  | "wall sprinkler" | **sidewall** head — its own spacing table, not a pendent turned sideways |
+  | "beem" / "colom" | beam (Structural Framing) / column (Structural Columns and Columns) |
+  | "with celling how, without celling how" | the two deflector-height cases: below a ceiling, or below the slab and beams where there is none. This is the question [`fire-sprinkler/deflector-and-ceiling-height.md`](fire-sprinkler/deflector-and-ceiling-height.md) exists to answer |
+  | "how mcuh from the wall" | the distance-to-wall rule — max half the allowable spacing, min 4 in (102 mm) |
+  | "if upraght howmcuh from the slab" | the upright deflector rule — 25–305 mm below a flat soffit, or 25–152 mm below the **beam** where beams hang below the deck |
+  | "room boundy" | the room's real boundary, as opposed to its bounding box — and he is right that it is the thing to lay out from |
+
+  His framing of the whole job, worth keeping verbatim because it is the routing sentence a future session
+  has to recognise: *"main aim to add sprinklers in the room with room boundy and if any beem or colom is
+  there in the room as per that need to place"*. That is: room boundary in, obstruction-aware head
+  positions out — the chain in [`fire-sprinkler/layout-method.md`](fire-sprinkler/layout-method.md).

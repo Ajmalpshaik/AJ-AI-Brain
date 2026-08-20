@@ -55,6 +55,17 @@ handle it. This file only says which words to also search for. A term can sensib
 | widh | width | typing near-miss, recorded live 2026-08-13 |
 | isulate all | isolate temporary hide | as above |
 | vcds | volume control damper duct accessory | plural of `vcd`; asked live 2026-08-13 |
+| srinkler | sprinkler fire | recurring dictation spelling, recorded from Ajmal's own message 2026-08-20 |
+| pendend | pendent sprinkler | his spelling, 2026-08-20 |
+| upraght | upright sprinkler | his spelling, 2026-08-20 |
+| beem | beam structural framing | his spelling, 2026-08-20 |
+| colom | column structural column | his spelling, 2026-08-20 |
+| celling | ceiling | his spelling, and it appears in nearly every sprinkler question |
+| room boundy | room boundary | his phrasing, 2026-08-20 |
+| wall sprinkler | sidewall sprinkler | site word for a sidewall head |
+| how much from wall | distance to wall spacing | his phrasing of the wall-distance rule |
+| how much from the slab | deflector deck distance below | his phrasing of the upright height rule |
+| fire figting | fire fighting sprinkler | already-known dictation spelling, written down at last |
 
 ### Rows deliberately removed — a record, so they are not re-added
 

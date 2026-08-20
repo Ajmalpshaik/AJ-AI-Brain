@@ -2057,3 +2057,28 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   a material `if()` formula on Description inside the grille families. `Document.EditFamily` +
   `FamilyManager.get_Parameter(...).IsDeterminedByFormula` is how to prove it rather than guess. 74 more
   locked types sit unplaced across 22 other TCM families in the same project.
+
+- **2026-08-20 — fire sprinklers went from one knowledge note to a subject.** Ajmal asked for the whole
+  thing studied properly — spacing, room coverage, "with celling how without celling how", pendent /
+  upright / wall, "how mcuh from the wall", "if upraght howmcuh from the slab", and what a beam or a column
+  does — then turned into tools. Added `knowledge/fire-sprinkler/` (6 chunks: types, deflector/ceiling
+  height, obstructions, the method, the Revit side, and a folder README), and eight fragments
+  `scripts/recipes/sprinkler-*.cs` that run as a chain: survey the room → derive the grid from the code
+  limits → check every head against the beams and columns → move what fails → set the height by reading
+  what is really above → place → audit. `nfpa13-sprinkler-spacing.md` kept its spacing rules and worked
+  Room 4 examples and handed its three thin bullets (deflector, obstructions, sidewall) to the new chunks.
+  Three things are worth more than the files:
+  **(1)** the old Rule 6 bullet here quoted *"2.5 in at 1 ft, 5.5 in at 3 ft, 22 in at 10 ft"* as the beam
+  table — those numbers are the **obstruction-against-a-wall** table, which climbs far more slowly. Two
+  different tables, conflated for weeks, lenient one way and strict the other.
+  **(2)** NFPA 13's own beam table could not be retrieved in that session — the environment blocked every
+  page fetch and only search snippets came back. Rather than hardcode remembered numbers, the table is an
+  **editable input** on `sprinkler-obstruction-check.cs` seeded `[UNCONFIRMED]`, and every run prints that
+  warning until someone types their adopted edition's values in. Same treatment for the other values that
+  only one source corroborated. An unchecked number cannot quietly become a compliance claim.
+  **(3)** the column exception: the three-times rule is capped at 24 in for most isolated obstructions but
+  **not for a vertical one**, so a 600 mm column needs 1,800 mm clear, not 610. That is the car-park trap
+  and it is now enforced in code rather than remembered.
+  All eight fragments are written but **not live-verified** — no Revit in that session. Every Revit call in
+  them is proven elsewhere in this library and each header names which, so the honest route is one element
+  first, check the real result, then the batch.
