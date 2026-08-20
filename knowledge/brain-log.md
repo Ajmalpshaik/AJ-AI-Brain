@@ -2349,3 +2349,27 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   code, which is slow and goes wrong") is answered in CLAUDE.md as a habit rather than a tool: search
   before writing, and **compile-check fresh C# before he runs it** — a round trip through Revit costs his
   attention, a compile costs a minute of nobody's.
+
+
+- 2026-08-20 — **The two tools built that day were both broken on the Windows PC they were built for,
+  and running them is what proved it.** `tools/check-scripts.cmd` — called "the single command that
+  answers the whole session" — could not start: the `.ps1` was written in a Linux container as UTF-8
+  **without a BOM**, and Windows PowerShell 5.1 reads a BOM-less file as ANSI, so its eight em dashes
+  corrupted and broke the string terminators. Exactly the trap `CLAUDE.md` warns about, arriving from the
+  one direction the warning did not cover: a file *authored* off-Windows rather than bulk-edited on it.
+  Fixed with a UTF-8 BOM, which the three `.ps1` files that already worked all had. **Rule for container
+  sessions: a `.ps1` needs a BOM or pure ASCII.** Second, search was dead — `bge-small-en-v1.5` had been
+  made the *default* embedding model but its ~127 MB weights were never downloaded, so every
+  `ask-brain-hybrid` call died on "model has not been downloaded yet". `brain_common.py` now defaults to
+  `all-MiniLM-L6-v2`, which ships inside chromadb; BGE stays one env var away, which is all the A/B ever
+  needed. A default that requires a download before the tool runs at all is not a default.
+
+- 2026-08-20 — **The version-proofing was measured, and it mostly held: 281/287 compile on 2020,
+  274/287 on 2024.** The 2027 figure of 4/287 is a **harness** bug, not 283 broken fragments — Revit 2027
+  runs on .NET 10, so `RevitAPI.dll` wants `System.Runtime 10.0.0.0` while
+  `verify-fragments-compile.ps1` still compiles against the .NET Framework reference set; every failure is
+  `CS0012 ... 'System.Runtime, Version=10.0.0.0'`. Fix the harness, not the fragments. The real failures
+  are genuine per-version API differences (`CS0122` member not accessible, `CS1061` member absent, plus
+  `CS0308/0030/0019/0029/1503/1501`), and six fail on **both** 2020 and 2024 — the one that matters most
+  being `recipes/mep-grayout.cs`, Ajmal's own standing "do the grayout" job. Full list and the fix order
+  are in `docs/HANDOVER.md`.
