@@ -2194,3 +2194,12 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **skill-area prior** (peaks at 1.1-1.2 but only moves wins between halves of a 7/7 test set — fitting
   the sample). Over-fetching chunks also measured neutral. Docs: the three circulating accuracy figures
   (75%, 60%, 29%) are gone; `score-history.md` is now the single stamped source.
+
+- 2026-08-20 — New note `knowledge/revit-version-compatibility.md`: what happens to the fragment library on
+  Revit 2024+. Measured, not estimated — **200 of 282 fragments (71%) touch an API that changed after 2020**,
+  and there is **not one version guard anywhere**. The important distinction it records: unit conversion
+  (`DisplayUnitType`, 93 files) fails LOUD as a bridge compile error, while `ElementId.IntegerValue` /
+  `new ElementId(int)` (168 files) fails SILENT — compiles and runs on 2024+, throws only once ids exceed
+  32 bits, so a small test model passes and a real project model does not. Also settles a recurring
+  confusion: fragments are source compiled by the bridge at run time, so the .NET target is the BRIDGE's
+  problem, never a fragment's. Tags (2022) and the Dimension split (2025) scanned clean, 0 fragments each.
