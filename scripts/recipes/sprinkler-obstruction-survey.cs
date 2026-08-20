@@ -8,6 +8,7 @@
 // STANDALONE — has its own sb and returns; not filter+action shaped.
 // SOURCE: ../../knowledge/fire-sprinkler/obstructions.md            (what each of these does to a head)
 // SOURCE: ../../knowledge/fire-sprinkler/revit-modelling.md         (which category holds what, and the traps)
+// SOURCE: ../../knowledge/fire-sprinkler/concealed-spaces.md        (whether the ceiling VOID needs its own heads)
 //
 // RUN THIS FIRST. The grid recipe knows the room OUTLINE and nothing about what hangs inside it, and the
 //   single biggest driver of a head count in an exposed-structure room is the BAY MODULE, not the code's
@@ -31,6 +32,14 @@
 // GOTCHA: **soffit levels here are bounding-box bottoms.** Accurate for a level beam, a flat slab and a
 //         horizontal duct; WRONG for anything sloped or cranked, where the box bottom is the low end.
 //         Sloped members are flagged rather than quietly averaged.
+// GOTCHA: **the VOID DEPTH this reports is a prompt, not an answer.** Ceiling top to slab soffit, from
+//         bounding boxes — right for a flat ceiling under a flat slab, approximate for anything sloped or
+//         stepped, and it does NOT deduct the beams hanging inside the void (the clear depth under a
+//         downstand is less, sometimes much less, and that is the depth a sprinkler actually lives in).
+//         It also cannot tell you whether the void needs heads: **NFPA tests what the void is MADE OF,
+//         BS EN 12845 tests whether it is deeper than 800 mm, and the two disagree on the same void.**
+//         The threshold below is the BS/EN one because it is the only one that IS a depth. On an NFPA job
+//         the flag means "go and ask what is in this void", nothing more.
 // GOTCHA: **"no ceiling found" can mean the ceiling is a linked-model element.** This reads the host
 //         document only. If the architectural model is linked, use
 //         filters/by-relationship/filter-by-linked-model-elements.cs and say the survey is host-only.
@@ -57,6 +66,9 @@ bool surveyStructure = true;          // beams / joists / trusses  + columns
 bool surveyServices = true;           // ducts, flex ducts, cable tray, conduit, pipes, lighting
 bool surveyCeilingAndDeck = true;     // is there a ceiling, and what is the slab above
 double searchAboveRoomMm = 6000;      // how far above the room's own top to look for the deck and framing
+double voidDepthThresholdMm = 800;    // ceiling void depth that triggers a flag. 800 mm is the BS 5306-2 /
+                                      // BS EN 12845 trigger for sprinklers IN the void. NFPA has no depth
+                                      // trigger at all — it tests combustibility. Set 0 to skip the flag.
 int maxListedPerCategory = 30;        // detail cap; counts always cover everything
 // ---- END INPUTS ----
 
@@ -122,7 +134,7 @@ else
             .Where(inThisRoom).ToList();
 
     // ---------- 1. CEILING AND DECK — which height rule this room is under ----------
-    double ceilingZ = double.NaN, deckZ = double.NaN;
+    double ceilingZ = double.NaN, ceilingTopZ = double.NaN, deckZ = double.NaN;
     if (surveyCeilingAndDeck)
     {
         sb.AppendLine("1. WHAT IS ABOVE — this decides pendent vs upright, and which deflector rule applies");
@@ -141,6 +153,7 @@ else
                 var b = c.get_BoundingBox(null);
                 if (b == null) continue;
                 if (double.IsNaN(ceilingZ) || b.Min.Z < ceilingZ) ceilingZ = b.Min.Z;
+                if (double.IsNaN(ceilingTopZ) || b.Max.Z < ceilingTopZ) ceilingTopZ = b.Max.Z;
                 sb.AppendLine($"   CEILING '{c.Name}' (Id {c.Id.IntegerValue}) underside about {toMm(b.Min.Z):N0} mm"
                     + $" — {toMm(b.Min.Z - zRoomBase):N0} mm above this level");
             }
@@ -163,6 +176,43 @@ else
         if (floorsAbove.Count == 0) sb.AppendLine("   DECK: no floor/slab found above this room within the search height.");
         else sb.AppendLine($"   DECK: {floorsAbove.Count} slab(s) above; lowest soffit {toMm(deckZ):N0} mm"
             + $" — {toMm(deckZ - zRoomBase):N0} mm above this level.");
+
+        // --- THE CEILING VOID: does it need sprinklers of its own? ---
+        if (!double.IsNaN(ceilingTopZ) && !double.IsNaN(deckZ))
+        {
+            double voidMm = toMm(deckZ - ceilingTopZ);
+            sb.AppendLine($"   VOID: {voidMm:N0} mm clear between the ceiling top ({toMm(ceilingTopZ):N0} mm) and the slab soffit ({toMm(deckZ):N0} mm).");
+            if (voidMm <= 0)
+            {
+                sb.AppendLine("      That is zero or negative, which is not a real void — the two bounding boxes overlap in Z.");
+                sb.AppendLine("      Usual causes: a sloped or stepped ceiling, or the slab found above is not the one over this room.");
+                sb.AppendLine("      Measure it in a section before using any of it.");
+            }
+            else if (voidDepthThresholdMm > 0 && voidMm >= voidDepthThresholdMm)
+            {
+                sb.AppendLine($"      *** OVER THE {voidDepthThresholdMm:N0} mm THRESHOLD. This is the BS 5306-2 / BS EN 12845 trigger for");
+                sb.AppendLine("          sprinklers INSIDE the void — upright in the void, pendent below the ceiling, TWO layouts.");
+                sb.AppendLine("      *** NFPA 13 HAS NO DEPTH TRIGGER. It asks what the void is MADE OF: combustible construction needs");
+                sb.AppendLine("          protection, noncombustible/limited-combustible with minimal combustible loading may be omitted.");
+                sb.AppendLine("          So the two standards DISAGREE on this void. Which one does this project's specification call up?");
+                sb.AppendLine("          QCDD enforces NFPA by default, but a spec can call up BS EN 12845 instead — and plenty do.");
+                sb.AppendLine("          Settle it before laying anything out: knowledge/fire-sprinkler/concealed-spaces.md.");
+            }
+            else if (voidDepthThresholdMm > 0)
+            {
+                sb.AppendLine($"      Under the {voidDepthThresholdMm:N0} mm BS/EN threshold — but that says nothing about NFPA, which tests");
+                sb.AppendLine("      combustibility, not depth. A shallow void of combustible construction still needs protecting.");
+            }
+            if (voidMm > 0)
+            {
+                sb.AppendLine("      NOTE: beams inside the void are NOT deducted from that figure — see the beam list below for how far");
+                sb.AppendLine("      they hang. The clear depth under a downstand is what a void sprinkler actually lives in.");
+                sb.AppendLine("      If the void IS protected, run this whole chain again for it as its own job: it is usually OBSTRUCTED");
+                sb.AppendLine("      construction, so its grid is not the ceiling grid copied upward.");
+            }
+        }
+        else if (surveyCeilingAndDeck)
+            sb.AppendLine("   VOID: cannot be measured — need both a ceiling and a slab above, and one of them was not found.");
         sb.AppendLine();
     }
 
