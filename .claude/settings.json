@@ -54,23 +54,7 @@
           },
           {
             "type": "command",
-            "command": "node \"tools/reindex-run.mjs\""
-          },
-          {
-            "type": "command",
-            "command": "node \"tools/score-check.mjs\""
-          },
-          {
-            "type": "command",
-            "command": "node \"tools/test-row-nudge.mjs\""
-          },
-          {
-            "type": "command",
-            "command": "node \"tools/fragment-nudge.mjs\""
-          },
-          {
-            "type": "command",
-            "command": "node \"tools/graph-rebuild.mjs\""
+            "command": "node \"tools/stop-hooks.mjs\""
           }
         ]
       }

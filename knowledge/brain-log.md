@@ -2661,3 +2661,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   changes 88% of answers), and `site-vocabulary.md` rows (documented as additive, they replace).
   All measurements in [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md),
   which lives outside the index on purpose — writing about the search inside it costs retrieval.
+- 2026-08-21 — **the search no longer loads the model on every message.** A warm process
+  ([`brain_server.py`](../semantic-index/brain_server.py) + `brain_client.py`) holds the embedding
+  model and the tokenised corpus, and the per-message hook talks to it from Node with no Python at
+  all: **3,536 ms -> ~650 ms**. Same `hybrid_search`, byte-identical output, guardrail lines intact.
+  It starts itself on first use, and every failure path falls back to searching in-process, so it can
+  speed a search up but never break one. Localhost-only, token-checked, read-only, idles out.
+  Also cached the corpus + BM25 build inside `hybrid_search` itself (763 ms -> ~220 ms per warm
+  query), keyed on the index build stamp so a rebuild invalidates it — verified across a real
+  rebuild, and verified identical on 30 real questions.
+- 2026-08-21 — **the five end-of-turn hooks now run together**
+  ([`stop-hooks.mjs`](../tools/stop-hooks.mjs)): 2,105 ms -> 900 ms on a quiet turn, and 31 s -> 20 s
+  on a turn that actually re-indexes, re-scores and rebuilds the graph. Re-index runs first and alone
+  because the score check reads the index it rebuilds; the other four have no such dependency. Each
+  child is isolated and a failure is reported rather than swallowed — five hooks behind one entry
+  means a bug here would silently disable all of them, which is this repo's worst failure mode.

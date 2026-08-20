@@ -556,6 +556,71 @@ def _rank_files(pairs, limit=CANDIDATES):
             in enumerate(ordered, start=1)}
 
 
+_corpus_cache = {}
+
+
+def _index_stamp():
+    """
+    What the corpus cache is keyed on: which index build this is.
+
+    `build` changes when the chunking rules or model change; `built_at` changes
+    on every successful build, including an incremental one that re-embedded a
+    single file. Together they move whenever the stored chunks could have moved,
+    which is exactly when a cached copy of them must be thrown away.
+    """
+    try:
+        manifest = json.loads(cfg.MANIFEST_PATH.read_text(encoding="utf-8"))
+        return (manifest.get("build", ""), manifest.get("built_at", ""),
+                len(manifest.get("files", {})))
+    except (OSError, ValueError, AttributeError):
+        # No manifest, or unreadable: return a value that can never match a
+        # previous one, so the cache is skipped rather than silently trusted.
+        return None
+
+
+def _word_corpus(collection, area):
+    """
+    (docs, metas, BM25) for the exact-word side, cached per index build.
+
+    WHY. BM25 has to see every chunk, so this pulled all 3,888 documents out of
+    the database and re-tokenised them **on every single query**. Measured
+    2026-08-21: 247 ms to pull, 199 ms to tokenise, 102 ms to build the index -
+    548 ms of a 763 ms warm query, repeated identically every time, over data
+    that only changes when the index is rebuilt.
+
+    Nothing here helps a one-shot command-line search, which does one query and
+    exits. It is the multi-query callers that gain: score_brain.py runs 28
+    queries in one process, and brain_server.py stays alive across many. Putting
+    the cache HERE rather than in the server means both get it from one piece of
+    code, and the server stays a thin socket wrapper with no second copy of the
+    search logic to drift.
+
+    Keyed on the index build stamp, so a rebuild in another process invalidates
+    it. That matters more than it looks: a full rebuild DELETES and recreates the
+    collection, and a handle to the old one raises NotFoundError - so a stale
+    cache here would not quietly answer from old data, it would crash. Both are
+    unacceptable; the stamp prevents both.
+    """
+    stamp = _index_stamp()
+    key = (area, stamp)
+    if stamp is not None and key in _corpus_cache:
+        return _corpus_cache[key]
+
+    everything = collection.get(include=["documents", "metadatas"])
+    docs = everything["documents"] or []
+    metas = everything["metadatas"] or []
+    if area:
+        keep = [i for i, m in enumerate(metas) if m.get("area") == area]
+        docs = [docs[i] for i in keep]
+        metas = [metas[i] for i in keep]
+    bm25 = BM25([tokenise(d) for d in docs]) if docs else None
+
+    if stamp is not None:
+        _corpus_cache.clear()  # only ever one build is current
+        _corpus_cache[key] = (docs, metas, bm25)
+    return docs, metas, bm25
+
+
 def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=False):
     """
     Search by meaning and by exact words, then merge.
@@ -613,18 +678,10 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
 
     # --- signal 2: exact words -------------------------------------------
     # Pull every chunk so BM25 sees the same corpus the semantic side does.
-    everything = collection.get(include=["documents", "metadatas"])
-    docs = everything["documents"] or []
-    metas = everything["metadatas"] or []
-    if area:
-        keep = [i for i, m in enumerate(metas) if m.get("area") == area]
-        docs = [docs[i] for i in keep]
-        metas = [metas[i] for i in keep]
+    docs, metas, bm25 = _word_corpus(collection, area)
 
     words = {}
-    bm25 = None
     if docs:
-        bm25 = BM25([tokenise(d) for d in docs])
         scored = bm25.scores(terms)
         # Discount matches found in weak evidence (input forms, code bodies).
         scored = [s * KIND_WEIGHT.get(metas[i].get("kind"), 1.0)
