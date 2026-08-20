@@ -16,6 +16,9 @@ index is worse than no index (the same reasoning the repo's .gitignore already
 applies to graphify-out/).
 """
 
+import collections
+import hashlib
+import itertools
 import re
 import sys
 import time
@@ -25,6 +28,131 @@ import brain_common as cfg
 cfg.prepare_environment()  # must happen before chromadb is imported
 
 BATCH_SIZE = 200
+
+# --------------------------------------------------------------------------
+# DUPLICATE DETECTION
+#
+# WHY THIS RUNS ON EVERY BUILD. Duplication in this Brain is prevented at WRITE
+# time, not cleaned up at ingest: skills/brain-self-maintain routes every new
+# note to exactly one home, tools/verify-consistency.mjs fails on drift, and
+# tools/fragment-index.mjs exists so a fragment gets found instead of rewritten.
+# Measured 2026-08-20 those rules are working - 5 exact duplicate chunk groups in
+# 3,882 (0.26%), one near-duplicate PURPOSE card pair in 507, and zero duplicated
+# knowledge sections in 1,652.
+#
+# But that was a measurement taken by hand, once. Nothing would have taken it
+# again, and write-time prevention is exactly the kind of guarantee that decays
+# silently - the day it stops working, nothing says so. So this reports rather
+# than deletes: the one pair found is two genuinely sibling tools that SHOULD
+# both exist, which is also why an ingest de-duplicator that dropped chunks by
+# itself would be a regression rather than a cleanup.
+#
+# Costs 0.4 s on top of a build (measured over 3,885 chunks).
+
+# Only kinds where saying the same thing twice is a real fault: a fragment's
+# PURPOSE card, and a knowledge/skill section. The other three are all expected
+# to repeat and were measured doing so - `code` bodies share helper functions on
+# purpose and carry the lowest weight anyway (0.35); `source` chunks are one line
+# each; and `inputs` forms are parameter lists, so sibling tools match almost by
+# definition. Including `inputs` flagged copy-vs-move at 80% and room-vs-space at
+# 60% - both correct, both permanent, which is how a check becomes noise.
+DUP_KINDS = ("card", "section")
+DUP_SHINGLE = 5        # words per shingle
+DUP_JACCARD = 0.55     # overlap at which two chunks are "the same thing"
+DUP_MIN_SHARED = 8     # shared shingles before a pair is worth scoring at all
+
+# Pairs already looked at and judged legitimate. This list is the difference
+# between a check people read and one they learn to ignore - the repo already
+# hit that with always-changing files in brain-status.mjs. Add a pair here only
+# after deciding both files genuinely deserve to exist.
+ACCEPTED_DUPLICATES = {
+    ("scripts/actions/color-graphics/action-set-category-halftone.cs",
+     "scripts/actions/color-graphics/action-set-category-line-style.cs"),
+}
+
+
+def _dup_normalise(text: str) -> str:
+    return re.sub(r"\s+", " ", text.strip().lower())
+
+
+def _dup_shingles(text: str):
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {" ".join(words[i:i + DUP_SHINGLE])
+            for i in range(max(0, len(words) - DUP_SHINGLE + 1))}
+
+
+def find_duplicates(chunks):
+    """
+    Duplicated content ACROSS files. Returns (exact_pairs, near_pairs).
+
+    Within-file repeats are ignored on purpose - consecutive body chunks share
+    CHUNK_OVERLAP characters by design, so a file overlapping itself is the
+    splitter working, not a fault.
+    """
+    exact = collections.defaultdict(set)
+    for _cid, text, meta in chunks:
+        if meta.get("kind") in DUP_KINDS:
+            exact[hashlib.sha1(_dup_normalise(text).encode()).hexdigest()].add(meta["path"])
+
+    exact_pairs = set()
+    for paths in exact.values():
+        if len(paths) > 1:
+            exact_pairs.update(itertools.combinations(sorted(paths), 2))
+
+    near_pairs = {}
+    by_kind = collections.defaultdict(list)
+    for _cid, text, meta in chunks:
+        if meta.get("kind") in DUP_KINDS:
+            by_kind[meta["kind"]].append((meta["path"], _dup_shingles(text)))
+
+    for items in by_kind.values():
+        # Inverted index so this stays near-linear instead of comparing every
+        # chunk with every other one. A shingle shared by a crowd of chunks is
+        # boilerplate, not evidence, so very common ones are skipped.
+        inverted = collections.defaultdict(set)
+        for i, (_path, shingles) in enumerate(items):
+            for shingle in shingles:
+                inverted[shingle].add(i)
+
+        shared = collections.Counter()
+        for ids in inverted.values():
+            if 2 <= len(ids) <= 12:
+                shared.update(itertools.combinations(sorted(ids), 2))
+
+        for (a, b), count in shared.items():
+            if count < DUP_MIN_SHARED:
+                continue
+            path_a, sh_a = items[a]
+            path_b, sh_b = items[b]
+            if path_a == path_b:
+                continue
+            union = len(sh_a | sh_b)
+            score = len(sh_a & sh_b) / union if union else 0.0
+            if score >= DUP_JACCARD:
+                key = tuple(sorted((path_a, path_b)))
+                near_pairs[key] = max(near_pairs.get(key, 0.0), score)
+
+    exact_pairs -= ACCEPTED_DUPLICATES
+    for pair in ACCEPTED_DUPLICATES:
+        near_pairs.pop(pair, None)
+    return sorted(exact_pairs), sorted(near_pairs.items(), key=lambda kv: -kv[1])
+
+
+def report_duplicates(exact_pairs, near_pairs):
+    """Warn, never fail. Two similar files can both be correct."""
+    if not exact_pairs and not near_pairs:
+        return
+    print()
+    print("  NOTE — files that now say much the same thing. Not an error: check "
+          "whether one should")
+    print("  be merged or point at the other, then add the pair to "
+          "ACCEPTED_DUPLICATES in brain_index.py.")
+    for a, b in exact_pairs:
+        print(f"      identical  {a}")
+        print(f"                 {b}")
+    for (a, b), score in near_pairs:
+        print(f"      {int(score * 100)}% alike  {a}")
+        print(f"                 {b}")
 
 # --------------------------------------------------------------------------
 # PARSERS
@@ -408,14 +536,36 @@ def main():
 
         chunks, bad = chunks_for(targets)
         store(collection, chunks, "embedding")
+
+        # COUNT FIRST, MANIFEST SECOND, AND NEVER THE OTHER WAY ROUND.
+        #
+        # The manifest is what says "this index is current" - so writing it
+        # before the build has been checked means any later failure leaves a
+        # half-built index claiming to be finished. That happened on 2026-08-21:
+        # a rebuild crashed on this very count() call, having already written
+        # the manifest, and the next run reported "UP TO DATE - nothing has
+        # changed" over an index holding 1,200 chunks of 3,895. It answers every
+        # question, from a third of the Brain, with nothing looking wrong. This
+        # is the exact fault the whole build-fingerprint mechanism exists to
+        # prevent, arriving through the back door.
+        stored = collection.count()
+        if stored != len(chunks):
+            print()
+            print(f"  BUILD FAILED — stored {stored} chunk(s), expected "
+                  f"{len(chunks)}. Manifest NOT written, so the next run will")
+            print("  rebuild rather than trust this. Re-run with --full.")
+            return 1
         cfg.write_manifest([rel for _, rel, _ in targets])
 
         print()
         print("DONE (full rebuild)")
         print(f"  files indexed : {len(targets)}")
-        print(f"  chunks stored : {collection.count()}")
+        print(f"  chunks stored : {stored}")
         print(f"  time taken    : {time.time() - start:.1f} seconds")
         report_bad(bad)
+        # `chunks` is already the whole corpus on this path.
+        cfg.write_corpus_vocabulary(chunks)
+        report_duplicates(*find_duplicates(chunks))
         return 0
 
     # ---- incremental ------------------------------------------------------
@@ -448,16 +598,33 @@ def main():
     chunks, bad = chunks_for([t for t in targets if t[1] in rebuild])
     store(collection, chunks, "embedding")
 
+    # Same ordering rule as the full path above, and the same reason: the
+    # manifest is the claim that this index is current, so it is written only
+    # after the store has been shown to have worked. An exception anywhere
+    # above leaves no manifest update, and the next run rebuilds instead of
+    # trusting a half-written index.
+    stored = collection.count()
+    if stored <= 0:
+        print()
+        print("  BUILD FAILED — the collection is empty after storing. "
+              "Manifest NOT written. Re-run with --full.")
+        return 1
     cfg.write_manifest([rel for _, rel, _ in targets])
 
     print()
     print("DONE (incremental)")
     print(f"  files indexed : {len(targets)}")
     print(f"  re-embedded   : {len(rebuild)} file(s), {len(chunks)} chunk(s)")
-    print(f"  chunks stored : {collection.count()}")
+    print(f"  chunks stored : {stored}")
     print(f"  time taken    : {time.time() - start:.1f} seconds")
     print(f"  database at   : {cfg.CHROMA_DIR}")
     report_bad(bad)
+    # Only the changed files were chunked above, and duplication is a property
+    # of the whole corpus - a new file duplicating an untouched one is exactly
+    # the case worth catching. Re-chunking all 352 costs 0.4 s and no embedding.
+    all_chunks, _ = chunks_for(targets)
+    cfg.write_corpus_vocabulary(all_chunks)
+    report_duplicates(*find_duplicates(all_chunks))
     return 0
 
 

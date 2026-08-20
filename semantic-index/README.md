@@ -292,13 +292,28 @@ and rebuilding both work with no internet, and your Brain's text never leaves th
 machine — there is no API key anywhere in this layer because there is no service to
 call.
 
-**The model is `bge-small-en-v1.5`** (changed from `all-MiniLM-L6-v2` on 2026-08-20).
-The old one was a 2021 model that read only 256 word-pieces at a time; this one reads
-512 and retrieves measurably better. It is the same size class and still runs on
-`onnxruntime`, so nothing new was installed. Changing the model changes the
-fingerprint in `brain_common.py`, which makes the next `index-brain.cmd` rebuild
-everything by itself — vectors from two different models cannot be compared, so a
-part-migrated index would answer every question, just quietly worse.
+**The model is `all-MiniLM-L6-v2`.** Ask it rather than trust this line —
+`python -c "import brain_common as c; print(c.EMBED_MODEL)"` from this folder is the
+only answer that cannot go stale.
+
+`bge-small-en-v1.5` was made the default on 2026-08-20 and **reverted the same day**:
+its weights are a separate ~127 MB download that had never been fetched, so every
+`ask-brain-hybrid` call died with "model has not been downloaded yet". A default that
+needs a download before the tool runs at all is not a default. `brain_common.py` now
+falls back to `all-MiniLM-L6-v2`, which ships inside chromadb and always works.
+
+BGE is still one setting away — `AJ_BRAIN_EMBED_MODEL=bge-small-en-v1.5`, or write the
+name into `semantic-index/embed-model.txt` — and `semantic-index/embed_bge.py` is
+written and waiting. **What is not true is that it retrieves better here: it has never
+been scored on this corpus** (`score-history.md` has no BGE line at all). It reads 512
+word-pieces to MiniLM's 256, which is a reason to expect more, not a measurement. And
+the comparison cannot be settled on today's 14-row test set — a 1-point move there is
+documented noise, which is the same reason two other finished features sit switched off.
+
+Changing the model changes the fingerprint in `brain_common.py`, so the next
+`index-brain.cmd` rebuilds everything by itself — vectors from two different models
+cannot be compared, and a part-migrated index would answer every question, just quietly
+worse.
 
 **Nothing is ever written to the system temp folder.** This is a hard rule, set
 after `tools/verify-fragments-compile.ps1` wrote ~267 unsigned DLLs into `%TEMP%`

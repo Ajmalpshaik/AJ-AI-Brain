@@ -44,6 +44,7 @@ tuning to stay sane when one side returns nothing useful.
 """
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -343,14 +344,78 @@ class BM25:
 # fragment-index.mjs — READ ONLY, never modified
 # --------------------------------------------------------------------------
 
+_FRAGMENT_CACHE_PATH = cfg.SEMANTIC_ROOT / "fragment-index-cache.json"
+_fragment_memo = None
+
+
+def _scripts_fingerprint():
+    """
+    Cheap signature of scripts/ - stat only, no file contents read.
+
+    Deliberately NOT a content hash, which is the opposite of the choice made
+    for the index manifest, and for a reason worth stating. There, a false
+    *miss* meant a needless 92-second rebuild, so contents were worth reading.
+    Here a false miss costs one node subprocess, so the stat is the better
+    trade: a git checkout moves every mtime, misses the cache, re-runs node
+    once and is correct. The dangerous direction - a false *hit* - needs a
+    fragment to change while keeping both its size and its modified time to the
+    nanosecond, which does not happen in practice.
+    """
+    parts = []
+    scripts = cfg.BRAIN_ROOT / "scripts"
+    for path in sorted(scripts.rglob("*.cs")):
+        try:
+            st = path.stat()
+            parts.append(f"{path.name}:{st.st_size}:{st.st_mtime_ns}")
+        except OSError:
+            parts.append(f"{path.name}:?")
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
 def load_fragment_index():
     """
-    Run `node tools/fragment-index.mjs --json` and return its fragment list.
+    The fragment list from `node tools/fragment-index.mjs --json`, cached.
 
     Returns (fragments, note). On any failure the note explains why and the
     caller carries on with the other two signals rather than dying - but the
     note is always printed, so a silent downgrade is impossible.
+
+    WHY THE CACHE. This was spawning a Node process on EVERY query, to re-read
+    and re-parse all 290 `.cs` fragments for data that only changes when one of
+    those files changes. Measured 2026-08-21 it was the single largest cost in
+    a search - larger than embedding the question and the vector lookup put
+    together, by a wide margin. Almost every search is its own short-lived
+    process, so an in-memory cache alone would have helped nothing; the result
+    is written to disk and re-read on the next run.
     """
+    global _fragment_memo
+    if _fragment_memo is not None:
+        return _fragment_memo
+
+    fingerprint = _scripts_fingerprint()
+    try:
+        cached = json.loads(_FRAGMENT_CACHE_PATH.read_text(encoding="utf-8"))
+        if cached.get("fingerprint") == fingerprint:
+            _fragment_memo = (cached["fragments"], None)
+            return _fragment_memo
+    except (OSError, ValueError, KeyError):
+        pass
+
+    result = _run_fragment_index()
+    if result[0]:  # only cache a good answer, never an error state
+        try:
+            # Atomic, for the same reason as the corpus vocabulary: two searches
+            # can run at once, and half a cache file is worse than none.
+            cfg.atomic_write_text(
+                _FRAGMENT_CACHE_PATH,
+                json.dumps({"fingerprint": fingerprint, "fragments": result[0]}))
+        except OSError:
+            pass
+    _fragment_memo = result
+    return result
+
+
+def _run_fragment_index():
     script = cfg.BRAIN_ROOT / "tools" / "fragment-index.mjs"
     if not script.is_file():
         return [], f"not found: {script}"
@@ -509,6 +574,16 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
     if fired:
         shown = "; ".join(f"{p} -> {' '.join(w)}" for p, w in fired)
         notes.append(f"site vocabulary applied: {shown}")
+
+    # Then spelling, on whatever the vocabulary did not already claim. Same
+    # words-side-only reasoning as above, and it applies harder here: a typo is
+    # worth nothing at all to BM25, while the meaning side copes with it through
+    # sub-word tokens. Corrections are added, never substituted - see
+    # cfg.correct_spelling for why that is the opposite choice from expansion.
+    expanded, spelled = cfg.correct_spelling(expanded)
+    if spelled:
+        shown = "; ".join(f"{t} -> {c}" for t, c in spelled)
+        notes.append(f"spelling: {shown}")
 
     terms = query_terms(expanded)
 
@@ -743,6 +818,30 @@ def main():
         if r["tool_terms"]:
             found_by.append(f"fragment-index: {', '.join(r['tool_terms'])}")
         print(f"   found by: {' + '.join(found_by) if found_by else 'n/a'}")
+
+        # Warn ONLY when the two searches disagree - when a file surfaced on one
+        # signal alone. CLAUDE.md, START-HERE.md and the prompt hook all carry
+        # the instruction "high in BOTH meaning and words is the strong signal;
+        # only one firing means check before trusting it", so the tool should say
+        # it rather than make a person work it out from two rank numbers.
+        #
+        # MEASURED 2026-08-20, and the result is why this prints nothing in the
+        # normal case: over 60 real questions from job-log/questions.jsonl,
+        # **300 of 300 top-5 results appeared in BOTH lists.** One-sided results
+        # do not currently happen - over-fetching CHUNK_OVERFETCH x and cutting to
+        # CANDIDATES distinct files means both retrievers return much the same
+        # file set and differ only in order. So the guidance describes a case the
+        # current configuration never produces.
+        #
+        # It is kept, silent, rather than deleted: it costs one comparison, and
+        # it becomes true the moment the candidate pool shrinks or a retriever is
+        # swapped - both of which are live questions in
+        # rag-architecture-decisions.md. A label that fires on every result is
+        # noise; one that fires on the exception is a check.
+        if bool(r["meaning_rank"]) != bool(r["word_rank"]):
+            only = "meaning" if r["meaning_rank"] else "word match"
+            print(f"   CAUTION: found by {only} alone — the other search "
+                  f"missed it, so check before trusting")
 
         if args.explain:
             bits = [f"score {r['score']}"]

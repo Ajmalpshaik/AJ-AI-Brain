@@ -14,7 +14,9 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # --------------------------------------------------------------------------
@@ -271,6 +273,147 @@ def load_vocabulary():
     return entries
 
 
+VOCAB_PATH = SEMANTIC_ROOT / "corpus-vocabulary.txt"
+
+# Spelling correction limits. maxd is the edit distance allowed, and it scales
+# with length because one wrong letter in a 4-letter word leaves far more
+# equally-plausible candidates than one wrong letter in an 11-letter word.
+SPELL_MIN_LEN = 4        # below this, everything is a near-neighbour of everything
+SPELL_MAX_UNKNOWN = 6    # stop after this many unknown words, to bound the cost
+_vocab_cache = None
+_vocab_buckets = None
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    """
+    Write via a temporary file and one rename, so no reader ever sees a partial file.
+
+    NOT a theoretical precaution. `write_corpus_vocabulary` originally wrote in
+    place, and a search running while the Stop hook re-indexed read a truncated
+    dictionary - which makes ordinary words look unknown, changes which ones get
+    spell-corrected, and changes the answer. It showed up as one unreproducible
+    score-card run (2/14, MRR 0.252) sitting between two identical ones (3/14,
+    MRR 0.314) on the same corpus fingerprint. A rename on one filesystem is
+    atomic, so a reader gets either the whole old file or the whole new one.
+    """
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
+
+
+def write_corpus_vocabulary(chunks) -> None:
+    """Record every word the Brain actually contains. Called after a build."""
+    words = set()
+    for _cid, text, _meta in chunks:
+        words.update(re.findall(r"[a-z0-9]+", text.lower()))
+    words = sorted(w for w in words if len(w) >= 3 and not w.isdigit())
+    atomic_write_text(VOCAB_PATH, "\n".join(words))
+
+
+def load_corpus_vocabulary():
+    """
+    (set of words, {(first letter, length): [words]}) or (empty, empty).
+
+    Missing file means spelling correction quietly does nothing - the same
+    contract as a missing site-vocabulary.md. Never broken, just less helpful.
+    """
+    global _vocab_cache, _vocab_buckets
+    if _vocab_cache is not None:
+        return _vocab_cache, _vocab_buckets
+    words = set()
+    if VOCAB_PATH.is_file():
+        try:
+            words = {w for w in VOCAB_PATH.read_text(encoding="utf-8").split("\n") if w}
+        except OSError:
+            words = set()
+    buckets = {}
+    for word in words:
+        buckets.setdefault((word[0], len(word)), []).append(word)
+    _vocab_cache, _vocab_buckets = words, buckets
+    return words, buckets
+
+
+def _edit_distance(a: str, b: str, maxd: int) -> int:
+    """Levenshtein, abandoned as soon as it cannot come in under maxd."""
+    la, lb = len(a), len(b)
+    if abs(la - lb) > maxd:
+        return maxd + 1
+    prev = list(range(lb + 1))
+    for i in range(1, la + 1):
+        cur = [i] + [0] * lb
+        best = i
+        for j in range(1, lb + 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1,
+                         prev[j - 1] + (a[i - 1] != b[j - 1]))
+            if cur[j] < best:
+                best = cur[j]
+        if best > maxd:
+            return maxd + 1
+        prev = cur
+    return prev[lb]
+
+
+def correct_spelling(query: str):
+    """
+    Add the corpus spelling of any query word that appears in NO file.
+
+    Returns (rewritten_text, [(typed, corrected)]).
+
+    WHY THIS EXISTS. Measured 2026-08-21 over 170 real questions in
+    job-log/questions.jsonl: **65% contain a word that appears in no file at
+    all**, and the top of that list is not site jargon - it is `shedule`,
+    `equpment`, `discription`, `accessorys`. Ordinary Revit words, typed fast.
+    A typo is invisible to BM25 (a word in no document contributes nothing at
+    all), so the exact-word half of the hybrid simply loses it. Measured on
+    three real questions, fixing the spelling changed the #1 answer every time,
+    and in one case surfaced fill-mm-document-register.cs - the right fragment -
+    where the typed version had missed it completely.
+
+    THREE SAFETY RULES, and the middle one is the important one:
+
+      1. Only words absent from the corpus are touched. A word that exists is
+         never "corrected", however odd it looks.
+      2. **A unique best match, or nothing.** `clor` sits one letter from three
+         corpus words and `meny` from five, so both are left alone. This is what
+         separates fixing `shedule` from guessing at chatter, and it is why this
+         can be on by default.
+      3. The typo is ADDED to, never replaced - the opposite of expand_query,
+         and for the opposite reason. A site word is replaced because it
+         actively misleads; a typo appears in no file, so it cannot mislead the
+         word search, and keeping it protects the meaning side, which handles
+         misspellings well on its own through sub-word tokens.
+    """
+    words, buckets = load_corpus_vocabulary()
+    if not words:
+        return query, []
+
+    fixes, seen, unknown = [], set(), 0
+    for word in re.findall(r"[a-z0-9]+", query.lower()):
+        if len(word) < SPELL_MIN_LEN or word.isdigit() or word in words:
+            continue
+        if word in seen:
+            continue
+        seen.add(word)
+        unknown += 1
+        if unknown > SPELL_MAX_UNKNOWN:
+            break
+        maxd = 1 if len(word) <= 6 else 2
+        best, best_d = [], maxd + 1
+        for length in range(len(word) - maxd, len(word) + maxd + 1):
+            for cand in buckets.get((word[0], length), ()):
+                dist = _edit_distance(word, cand, maxd)
+                if dist < best_d:
+                    best_d, best = dist, [cand]
+                elif dist == best_d:
+                    best.append(cand)
+        if len(best) == 1 and best_d <= maxd:
+            fixes.append((word, best[0]))
+
+    if not fixes:
+        return query, []
+    return query + " " + " ".join(c for _t, c in fixes), fixes
+
+
 def expand_query(query: str):
     """
     Swap any site phrase in the question for the Revit words that mean it.
@@ -396,16 +539,64 @@ def read_manifest():
     return data if isinstance(data.get("files"), dict) else None
 
 
+def _git_commit() -> str:
+    """
+    The commit the Brain was sitting on when the index was built, or "".
+
+    Fails quietly and completely: no git on PATH, not a repository, a git that
+    hangs - all give "". This is a label on the build, never something the
+    build depends on, so it must not be able to break an index rebuild.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(BRAIN_ROOT), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5)
+        return out.stdout.strip() if out.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
 def write_manifest(rel_paths) -> None:
-    """Record what the index was built from. Called after a successful build."""
+    """
+    Record what the index was built from. Called after a successful build.
+
+    `built_at` and `git_commit` are stamped because until 2026-08-20 nothing
+    recorded WHEN an index was built - only what it was built from. The age
+    shown at session start was inferred from folder mtime, and `brain-status.mjs`
+    says in its own comments why that is a hint rather than a verdict: a fresh
+    checkout stamps every file with checkout time, so a never-built index and a
+    current one look identical. The manifest is the one file that knows the
+    truth, so it is the right place to write it down.
+
+    Both are labels, never inputs. `build_fingerprint()` still decides whether a
+    rebuild is needed, and `check_staleness()` still compares file contents -
+    neither reads these fields, so a wrong clock or a missing git cannot cause a
+    wrong rebuild decision.
+    """
     entries = {}
     for rel in rel_paths:
         path = BRAIN_ROOT / rel
         if path.is_file():
             entries[rel.replace("\\", "/")] = fingerprint(path)
-    MANIFEST_PATH.write_text(
-        json.dumps({"build": build_fingerprint(), "files": entries}, indent=1),
-        encoding="utf-8")
+    atomic_write_text(MANIFEST_PATH, json.dumps({
+        "build": build_fingerprint(),
+        "built_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "git_commit": _git_commit(),
+        "files": entries,
+    }, indent=1))
+
+
+def manifest_build_info():
+    """
+    (built_at, git_commit) from the manifest - either may be "".
+
+    Empty means an index built before these were stamped, which is unknown
+    rather than old. Callers must say "unknown", never invent a date.
+    """
+    manifest = read_manifest()
+    if manifest is None:
+        return "", ""
+    return manifest.get("built_at", "") or "", manifest.get("git_commit", "") or ""
 
 
 def check_staleness():
