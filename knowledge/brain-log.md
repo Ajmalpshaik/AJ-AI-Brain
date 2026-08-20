@@ -2039,6 +2039,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   The 63 categories that lost a slot are exactly the predicted non-cuttable ones. Gap found on this
   project: `MEP_Hidden_Short_Dash` is not loaded, so insulation came out grey but **solid** —
   `recipes/create-mep-line-standards.cs` installs it, and the grayout must be re-run afterwards.
+- **2026-08-20 — the 2026-08-17 gap is closed: `brain-status.mjs` now reports the three derived layers.**
+  It looks for `semantic-index/chroma-db`, `graphify-out/graph.json`, and the biggest `.md` folder inside
+  `graphify-out/` (the Obsidian vault has moved between graphify versions, so it is discovered not
+  hard-coded), prints their build date and how many source files are newer than each. When none are
+  present — every cloud/container session — it says so in those words instead of inventing a staleness
+  number, because a fresh checkout stamps every file with checkout time and would read as "everything is
+  newer than the build". Judge is mtime, a hint not a verdict; the authoritative checks are still the
+  content-comparing STALE INDEX banner from `ask-brain-hybrid` and `python tools/graph-rebuild.py --check`
+  — both named in the output so nobody stops there. `brain-log.md` and `score-history.md` are excluded
+  from the "newer than build" count for the same reason `graph-rebuild.py` excludes score-history: they
+  are machine-written every session and a warning that is always on gets ignored. Fixture-tested on both
+  branches (absent and present).
 - 2026-08-17 — **The daily "check AJ Tool / vector index / Graphify / Obsidian" routine cannot see three
   of its four targets, and would have passed silently forever.** It runs in a Claude Code cloud container
   against a fresh `git clone`, and the vector index (`semantic-index/chroma-db`, `venv`, `model-cache`),
