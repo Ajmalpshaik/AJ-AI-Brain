@@ -2471,3 +2471,34 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   any family's deflector really is. **The family name told us nothing; the geometry told us everything.**
 - 2026-08-20 — Recorded that the bridge prelude does not import `Autodesk.Revit.DB.Architecture`, so a
   bare `Room` is `CS0246`. Fully qualify it in anything composed from the sprinkler fragments.
+
+
+- 2026-08-20 — **Every fragment now compiles on every Revit on the PC: 287/287 on 2020, 2024 AND 2027.**
+  The thirteen that failed on a newer version were real API removals, not migration slips — they compiled
+  on 2020 precisely because they used the surface Autodesk later deleted. All are now resolved **by name
+  at run time**: `ParameterType`→`SpecTypeId`, `DisplayUnitType`→`UnitTypeId`, `UnitType`/`DisplayUnits`→
+  `GetAllMeasurableSpecs`/`GetUnitTypeId`, `IndependentTag.TaggedLocalElementId`/`.LeaderElbow`→the
+  multi-reference methods, `Document.NewFloor`→`Floor.Create`, `BuiltInParameterGroup`→`GroupTypeId`,
+  and the string-rule `caseSensitive` argument that 2023 dropped. **The rule that made this work: pick the
+  overload from the REAL method's own parameter type, never by testing whether `ForgeTypeId` exists** —
+  Revit 2021 ships `ForgeTypeId` while those same methods there still take the old enum, so the obvious
+  feature-test gives the wrong answer on exactly one version.
+
+- 2026-08-20 — **The "283 fragments fail on Revit 2027" scare was one missing compiler flag.**
+  `verify-fragments-compile.ps1` was compiling against the .NET **Framework** reference set while 2027
+  runs on **.NET 10**, so every fragment died on `CS0012 ... System.Runtime 10.0.0.0`. It now detects a
+  .NET-based Revit from the `RevitAPI.runtimeconfig.json` Autodesk ships beside `RevitAPI.dll` and passes
+  the matching reference pack with `/nostdlib+`. 2027 went from 4/287 to 281/287 in one run, then to
+  287/287 once the six real removals underneath were fixed. **If a future Revit ever reports every
+  fragment failing, suspect the harness before the library.**
+
+- 2026-08-20 — **New tool `tools/probe-revit-api/`: read any Revit version's real API without opening
+  Revit.** Written because a question could not be answered any other way — Windows PowerShell 5.1 runs on
+  .NET Framework and **throws `BadImageFormatException` loading a .NET 10 assembly**, so the usual
+  `Assembly::LoadFrom` one-liner is dead on exactly the versions whose API changed most. It uses
+  `MetadataLoadContext`, which only reads metadata and never executes Revit code. It immediately settled
+  the one thing reflection could not fix: **Revit 2027 removed HVAC zones from the API outright** — no
+  zone method left on `Creation.Document`, no `Zone.AddSpaces`, and `Space.Zone` read-only. That is a
+  capability removal, not a rename, so `creators/create-hvac-zone.cs` now compiles on 2027 and reports in
+  plain words that the job must be done in the Revit UI there. Use this tool before assuming a missing
+  member was merely renamed.

@@ -10,8 +10,8 @@
 // Revit 2022 swapped ExternalDefinitionCreationOptions' second argument from the old enum to a
 // ForgeTypeId, and 2024 made the old enum inaccessible - so neither name can appear in the source. The
 // constructor is chosen by its own real parameter type and the spec looked up by leaf name ("Text").
-// BuiltInParameterGroup is still named directly: it compiles on 2020 and 2024, and 2027 cannot be
-// checked yet because the compile harness has no .NET 10 reference set (see docs/HANDOVER.md).
+// The parameter GROUP is resolved the same way: 2027 removed the old group enum for GroupTypeId, so
+// neither name appears in the source. Verified to compile on Revit 2020, 2024 and 2027.
 // GOTCHA: needs Application.SharedParametersFilename already pointing at a real, writable shared parameter
 //         .txt file — if none is set, this creates one at sharedParamFileFallbackPath instead of failing.
 // Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
@@ -27,6 +27,40 @@ string sharedParamFileFallbackPath = @"C:\Temp\AJTools_SharedParameters.txt"; //
 
 var sb = new System.Text.StringBuilder();
 var app = Document.Application;
+
+// ---- VERSION-PROOF ParameterBindings.Insert / ReInsert ---------------------------------------------
+// The third argument is the parameter GROUP. Revit 2027 removed the old group enum in favour of
+// GroupTypeId, so that enum cannot be named in source that must also run on 2020. Both the method and
+// the group value are resolved by name; "PG_DATA" maps to GroupTypeId.Data by stripping PG_ and
+// Title-casing, which is the rule for every group member this library uses.
+Func<string, System.Reflection.MethodInfo> _bindM = which => typeof(BindingMap).GetMethods()
+    .Where(m => m.Name == which && m.GetParameters().Length == 3
+             && m.GetParameters()[0].ParameterType == typeof(Definition))
+    .OrderBy(m => m.GetParameters()[2].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+    .FirstOrDefault();
+
+Func<System.Type, string, object> _groupAs = (gt, nm) =>
+{
+    if (gt.Name != "ForgeTypeId") return Enum.Parse(gt, nm);
+    var core = nm.StartsWith("PG_") ? nm.Substring(3) : nm;
+    var camel = string.Join("", core.Split('_')
+        .Select(w => w.Length == 0 ? w : w.Substring(0, 1).ToUpper() + w.Substring(1).ToLower()));
+    var gidT = typeof(Document).Assembly.GetType("Autodesk.Revit.DB.GroupTypeId");
+    var pr = gidT == null ? null : gidT.GetProperty(camel,
+        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+    if (pr == null) throw new InvalidOperationException("No GroupTypeId." + camel + " on this Revit (from '" + nm + "').");
+    return pr.GetValue(null);
+};
+
+Func<string, Definition, Binding, string, bool> BindParam = (which, def, bind, grp) =>
+{
+    var m = _bindM(which);
+    if (m == null) throw new InvalidOperationException("This Revit has no BindingMap." + which + "(Definition, Binding, group).");
+    return (bool)m.Invoke(Document.ParameterBindings,
+        new object[] { def, bind, _groupAs(m.GetParameters()[2].ParameterType, grp) });
+};
+// ---------------------------------------------------------------------------------------------------
+
 
 // ---- VERSION-PROOF ExternalDefinitionCreationOptions ----------------------------------------------
 // Picked by the constructor's own second parameter type, not by testing whether ForgeTypeId exists -
@@ -107,8 +141,8 @@ else
                     ? (ElementBinding)app.Create.NewInstanceBinding(catSet)
                     : app.Create.NewTypeBinding(catSet);
 
-                bool inserted = Document.ParameterBindings.Insert(definition, binding, BuiltInParameterGroup.PG_DATA);
-                if (!inserted) inserted = Document.ParameterBindings.ReInsert(definition, binding, BuiltInParameterGroup.PG_DATA);
+                bool inserted = BindParam("Insert", definition, binding, "PG_DATA");
+                if (!inserted) inserted = BindParam("ReInsert", definition, binding, "PG_DATA");
 
                 t.Commit();
                 sb.AppendLine($"{(inserted ? "Bound" : "FAILED to bind")} parameter '{parameterName}' ({(isInstanceParameter ? "Instance" : "Type")}) to categories: {string.Join(", ", addedCategories)}.");

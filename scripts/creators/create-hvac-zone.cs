@@ -14,6 +14,13 @@
 // GOTCHA: a freshly created Zone reports `Area = 0 m²` while the Space inside it already reports its real
 //         area — the same delayed computation a new Space shows. Read it back in a later call; do not
 //         trust the value available at creation time, and do not report that 0 as the answer.
+// VERSION: Revit 2027 REMOVES this capability from the API altogether, and this fragment says so
+//          rather than failing to compile. Confirmed by reading 2027's own RevitAPI.dll: the whole
+//          Autodesk.Revit.Creation.Document class has no zone method left (NewZone is gone),
+//          Zone.AddSpaces no longer exists, and Space.Zone is read-only. So on 2027 an HVAC Zone must
+//          be created and filled through the Revit UI. Both calls here are therefore reached BY NAME,
+//          which keeps ONE source compiling on 2020, 2024 and 2027, working on the first two and
+//          reporting a plain reason on the third.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -40,7 +47,15 @@ else
         t.Start();
         try
         {
-            var zone = Document.Create.NewZone(level, phase);
+            // Version-proof zone creation. Revit 2027 removed Document.Create.NewZone(Level, Phase),
+            // so the name cannot appear in source that must also run on 2020, where it is the ONLY way
+            // to make a Zone. Reached by name; if a future Revit drops it entirely this says so plainly
+            // rather than failing with a type error the modeller cannot act on.
+            var _creation = Document.Create;
+            var _newZoneM = _creation.GetType().GetMethod("NewZone", new[] { typeof(Level), typeof(Phase) });
+            if (_newZoneM == null)
+                throw new InvalidOperationException("This Revit has no Document.Create.NewZone(Level, Phase) - HVAC Zones must be created through the Revit UI here.");
+            var zone = (Autodesk.Revit.DB.Mechanical.Zone)_newZoneM.Invoke(_creation, new object[] { level, phase });
             try { zone.Name = zoneName; } catch { } // name collision — zone still created with default name
 
             int added = 0, rejected = 0;
@@ -56,7 +71,12 @@ else
                 }
                 if (spaceSet.Size > 0)
                 {
-                    bool ok = zone.AddSpaces(spaceSet);
+                    // Reached by name: Revit 2027 removed Zone.AddSpaces entirely (see header).
+                    var _addSpacesM = zone.GetType().GetMethod("AddSpaces",
+                        new[] { typeof(Autodesk.Revit.DB.Mechanical.SpaceSet) });
+                    if (_addSpacesM == null)
+                        throw new InvalidOperationException("This Revit has no Zone.AddSpaces(SpaceSet) - spaces must be put into the zone through the Revit UI here.");
+                    bool ok = (bool)_addSpacesM.Invoke(zone, new object[] { spaceSet });
                     if (ok) added = spaceSet.Size;
                     else { rejected += spaceSet.Size; notes.Add("AddSpaces returned false — check the Phase gotcha in the header"); }
                 }

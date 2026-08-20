@@ -74,40 +74,63 @@ error text lands in `fragment-compile-failures.txt` at the repo root (gitignored
 
 ### So the next job, in order
 
-**Done on the PC, 2026-08-20 — Revit 2020 is now 287/287, Revit 2024 is 280/287.**
+**DONE on the PC, 2026-08-20. Every Revit installed on this machine now compiles the whole library:**
 
-The six that failed on both versions are fixed and compile-verified on 2020 and 2024. Five were a single
-wrong word left by the migration — `int` where its own new code returns `ElementId`, each time on the line
-*directly after* a correctly migrated one (`mep-grayout.cs` is the clearest: `ElementId wallId = IdOf(...)`
-then `int doorId = IdOf(...)`). The three `(BuiltInCategory)someId` casts became
-`(BuiltInCategory)IdValue(id)`, which is what the prelude's helper exists for. `sprinkler-layout-options.cs`
-was a different bug entirely — 9 fields in a `System.Tuple`, which stops at 8, so it had **never compiled
-on any version**; it is now a named ValueTuple.
+| Revit | Result |
+|---|---|
+| 2020 | **SAFE — 287/287** |
+| 2024 | **SAFE — 287/287** |
+| 2027 | **SAFE — 287/287** |
 
-**What is left is 7 fragments on Revit 2024, and they are NOT the same kind of problem.** They compile on
-2020 precisely because they use APIs Autodesk removed afterwards, so they need reflection dispatch to keep
-one source serving both — and a live run after, because a differently-shaped API can compile and still act
-on the wrong element:
+Three separate problems were behind the original failures, and they needed three different answers.
 
-| Fragment | Removed API | Replacement |
-|---|---|---|
-| `action-add-project-parameter.cs` | `ParameterType` | `SpecTypeId` |
-| `create-equipment-family-from-datasheet.cs` | `ParameterType`, `DisplayUnitType` | `SpecTypeId`, `UnitTypeId` |
-| `create-parametric-box-family-with-duct-connector.cs` | `ParameterType` | `SpecTypeId` |
-| `filter-by-tag-status.cs` | `IndependentTag.TaggedLocalElementId` | `GetTaggedLocalElementIds()` |
-| `tag-elements-in-active-view.cs` | `TaggedLocalElementId`, `LeaderElbow` | + `GetLeaderElbow(reference)` |
-| `context-project-units.cs` | `UnitType`, `DisplayUnits`, `UnitSymbol` | `ForgeTypeId` / `UnitTypeId` |
-| `creators/create-floor.cs` | `Document.NewFloor` | `Floor.Create` |
+**1. Migration slips (6 fragments).** The version-proofing pass left `int` where its own new code returns
+`ElementId`, each time on the line *directly after* a correctly migrated one — `mep-grayout.cs` is the
+clearest: `ElementId wallId = IdOf(...)` then `int doorId = IdOf(...)`. One word each. Plus three
+`(BuiltInCategory)someId` casts that needed `(BuiltInCategory)IdValue(id)`, which is what the prelude's
+helper is for. `sprinkler-layout-options.cs` was not a version bug at all — 9 fields in a `System.Tuple`,
+which stops at 8, so it had **never compiled on any version**; now a named ValueTuple.
 
-`knowledge/revit-version-compatibility.md` had said `IndependentTag` affected **0 fragments** and did not
-mention `UnitType` or `NewFloor` at all. Corrected — see its §4. **A source scan is a guess; compiling
-against the real `RevitAPI.dll` is a measurement.**
+**2. Real API removals (13 fragments).** These compiled on the old Revit *because* they used the old
+surface. Every one is now resolved **by name at run time**, so a single source still serves 2020:
 
-Still outstanding, unchanged:
+| Removed | Replacement |
+|---|---|
+| `ParameterType` | `SpecTypeId` |
+| `DisplayUnitType` | `UnitTypeId` (electrical — the one conversion that cannot be arithmetic) |
+| `UnitType`, `FormatOptions.DisplayUnits`/`UnitSymbol` | `GetAllMeasurableSpecs()`, `GetUnitTypeId()`, `GetSymbolTypeId()` |
+| `IndependentTag.TaggedLocalElementId`, `.LeaderElbow` | `GetTaggedLocalElementIds()`, `Get`/`SetLeaderElbow(Reference)` |
+| `Document.Create.NewFloor` | `Floor.Create` |
+| `BuiltInParameterGroup`, `Definition.ParameterGroup` | `GroupTypeId`, `GetGroupTypeId()` |
+| string-rule `caseSensitive` argument | dropped at 2023 — comparison is case-insensitive by definition |
 
-1. Teach `verify-fragments-compile.ps1` the .NET 10 reference set so Revit 2027 gives a real answer
-   (currently reports 283 false failures — a harness fault, not the fragments).
-2. Step 2 below (live Revit run) is still untouched and is what actually proves correctness.
+The overload is always chosen from the **real method's own parameter type**, never by testing whether
+`ForgeTypeId` exists — Revit 2021 ships `ForgeTypeId` while those methods there still take the old enum.
+
+**3. A harness fault that looked like 283 broken fragments.** `verify-fragments-compile.ps1` compiled
+against the .NET **Framework** reference set while Revit 2027 runs on **.NET 10**, so every fragment
+failed with `CS0012 ... System.Runtime 10.0.0.0`. It now detects a .NET-based Revit from the
+`RevitAPI.runtimeconfig.json` beside `RevitAPI.dll` and uses the matching reference pack with
+`/nostdlib+`. **If a future Revit reports every fragment failing, suspect this first.**
+
+### The one thing that could NOT be fixed, and should not be re-attempted
+
+**`creators/create-hvac-zone.cs` cannot work on Revit 2027.** Not a naming change — the capability is
+gone: `Autodesk.Revit.Creation.Document` has no zone method left, `Zone.AddSpaces` does not exist, and
+`Space.Zone` is read-only. On 2027 an HVAC Zone must be created and filled through the Revit UI. The
+fragment compiles there and reports exactly that. It still works normally on 2020 and 2024.
+
+That was settled by **reading 2027's own `RevitAPI.dll`**, using the new
+[`tools/probe-revit-api`](../tools/probe-revit-api/README.md). It exists because Windows PowerShell 5.1
+cannot load a .NET 10 assembly at all, so the usual `Assembly::LoadFrom` one-liner fails on exactly the
+versions whose API has moved most. Use it before assuming a member was renamed.
+
+### What is still open
+
+1. **Nothing here has been run against a live model.** Step 2 below is untouched and is the only thing
+   that proves correctness. The reflection work deserves it most: a differently-shaped API can compile
+   perfectly and still act on the wrong element.
+2. Ajmal's 15 test questions for the search (step 5 below) — still the highest-value thing only he can do.
 
 **Still true and unchanged: compiling is a floor, not a ceiling.** None of the 2026-08-20 work has been
 run against a real model yet.

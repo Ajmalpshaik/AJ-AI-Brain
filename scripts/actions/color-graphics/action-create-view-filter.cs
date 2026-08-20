@@ -47,6 +47,26 @@ else
     else
     {
         ElementId paramId = sampleParam.Id;
+// Version-proof text rules. Revit 2023 REMOVED the caseSensitive argument from every string rule -
+        // filter text comparison became case-insensitive by definition - so the 3-argument form does not exist
+        // on 2027 and the 2-argument form does not exist on 2020. The overload is chosen from what the running
+        // Revit actually offers. NOTE: on 2023+ the caseSensitive input below is accepted and then ignored,
+        // because Revit itself no longer offers the distinction.
+        Func<string, ElementId, string, bool, FilterRule> TextRule = (which, pid, val, cs) =>
+        {
+            var cands = typeof(ParameterFilterRuleFactory).GetMethods()
+                .Where(m => m.Name == which)
+                .Select(m => new { M = m, P = m.GetParameters() })
+                .Where(x => x.P.Length >= 2 && x.P[0].ParameterType == typeof(ElementId)
+                         && x.P[1].ParameterType == typeof(string))
+                .ToList();
+            var three = cands.FirstOrDefault(x => x.P.Length == 3 && x.P[2].ParameterType == typeof(bool));
+            if (three != null) return (FilterRule)three.M.Invoke(null, new object[] { pid, val, cs });
+            var two = cands.FirstOrDefault(x => x.P.Length == 2);
+            if (two != null) return (FilterRule)two.M.Invoke(null, new object[] { pid, val });
+            throw new InvalidOperationException("This Revit has no ParameterFilterRuleFactory." + which + "(ElementId, string, ...).");
+        };
+
         FilterRule rule = null;
 
         try
@@ -64,14 +84,14 @@ else
                 case "lt": rule = ParameterFilterRuleFactory.CreateLessRule(paramId, matchNumericValue, 1e-6); break;
                 case "lte": rule = ParameterFilterRuleFactory.CreateLessOrEqualRule(paramId, matchNumericValue, 1e-6); break;
                 // text
-                case "equals": rule = ParameterFilterRuleFactory.CreateEqualsRule(paramId, matchTextValue, caseSensitive); break;
-                case "notequals": rule = ParameterFilterRuleFactory.CreateNotEqualsRule(paramId, matchTextValue, caseSensitive); break;
-                case "beginswith": rule = ParameterFilterRuleFactory.CreateBeginsWithRule(paramId, matchTextValue, caseSensitive); break;
-                case "notbeginswith": rule = ParameterFilterRuleFactory.CreateNotBeginsWithRule(paramId, matchTextValue, caseSensitive); break;
-                case "endswith": rule = ParameterFilterRuleFactory.CreateEndsWithRule(paramId, matchTextValue, caseSensitive); break;
-                case "notendswith": rule = ParameterFilterRuleFactory.CreateNotEndsWithRule(paramId, matchTextValue, caseSensitive); break;
-                case "notcontains": rule = ParameterFilterRuleFactory.CreateNotContainsRule(paramId, matchTextValue, caseSensitive); break;
-                default: rule = ParameterFilterRuleFactory.CreateContainsRule(paramId, matchTextValue, caseSensitive); break; // "contains"
+                case "equals": rule = TextRule("CreateEqualsRule", paramId, matchTextValue, caseSensitive); break;
+                case "notequals": rule = TextRule("CreateNotEqualsRule", paramId, matchTextValue, caseSensitive); break;
+                case "beginswith": rule = TextRule("CreateBeginsWithRule", paramId, matchTextValue, caseSensitive); break;
+                case "notbeginswith": rule = TextRule("CreateNotBeginsWithRule", paramId, matchTextValue, caseSensitive); break;
+                case "endswith": rule = TextRule("CreateEndsWithRule", paramId, matchTextValue, caseSensitive); break;
+                case "notendswith": rule = TextRule("CreateNotEndsWithRule", paramId, matchTextValue, caseSensitive); break;
+                case "notcontains": rule = TextRule("CreateNotContainsRule", paramId, matchTextValue, caseSensitive); break;
+                default: rule = TextRule("CreateContainsRule", paramId, matchTextValue, caseSensitive); break; // "contains"
             }
         }
         catch (Exception ex)

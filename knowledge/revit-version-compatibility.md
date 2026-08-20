@@ -119,9 +119,34 @@ source is a guess, compiling against the real `RevitAPI.dll` is a measurement.
 | `creators/create-floor.cs` | `Document.NewFloor` | 2022 — use `Floor.Create` |
 
 These are **real API removals, not migration slips** — which is why they compile happily on 2020. Each
-needs the reflection dispatch described above so one source keeps serving 2020 *and* 2024, and each
-needs a live run afterwards: swapping to a differently-shaped API can compile and still tag the wrong
-element.
+now uses the reflection dispatch described above, so one source keeps serving 2020 *and* 2024, and each
+still needs a live run: swapping to a differently-shaped API can compile and still tag the wrong element.
+
+**All done 2026-08-20. Every fragment now compiles on Revit 2020, 2024 and 2027 — 287/287 on all three.**
+
+### 5. What Revit 2027 removed on top — measured, once the harness could see it
+
+2027 was reporting 283 false failures because `verify-fragments-compile.ps1` was compiling against the
+.NET **Framework** reference set while 2027 runs on **.NET 10**. Fixed (the harness now reads the
+`RevitAPI.runtimeconfig.json` Autodesk ships beside `RevitAPI.dll` and uses the matching ref pack with
+`/nostdlib+`), and six genuine 2027 removals appeared underneath:
+
+| Gone at 2027 | Replacement | Fragments |
+|---|---|---|
+| `BuiltInParameterGroup` | `GroupTypeId` — strip `PG_`, Title-case the rest | 3 |
+| `Definition.ParameterGroup` | `Definition.GetGroupTypeId()` | 1 |
+| string-rule `caseSensitive` arg | dropped at **2023**; comparison is case-insensitive by definition | 1 |
+| `Document.Create.NewZone`, `Zone.AddSpaces` | **nothing — the capability is gone** | 1 |
+
+The last row is the one that matters. `creators/create-hvac-zone.cs` cannot be made to work on 2027 by
+any amount of reflection: the whole `Autodesk.Revit.Creation.Document` class has no zone method left,
+`Zone.AddSpaces` does not exist, and `Space.Zone` is read-only. **On Revit 2027 an HVAC Zone must be
+created and filled through the Revit UI.** The fragment compiles there and says exactly that.
+
+That was settled by reading 2027's own `RevitAPI.dll` rather than guessing, using the new
+[`tools/probe-revit-api`](../tools/probe-revit-api/README.md) — which exists because Windows PowerShell
+5.1 **cannot load a .NET 10 assembly at all**, so the usual `Assembly::LoadFrom` one-liner fails on
+exactly the versions whose API has changed most.
 
 ## What else lands later
 
@@ -130,7 +155,7 @@ element.
 | 2022 | `IndependentTag` tag members renamed for multi-reference | **YES — 2 fragments.** The original "0" was wrong; see §4 |
 | 2025 | `Dimension` split into `LinearDimension` / `RadialDimension` / `ArcLengthDimension`; exact-type checks fail | **No** — scanned, 0 fragments |
 | 2026 | Add-in isolation via `<ManifestSettings>` | Bridge-side only |
-| 2027 | .NET 10; all-user add-ins move to `Program Files` (needs admin) | Bridge-side only |
+| 2027 | .NET 10; all-user add-ins move to `Program Files` (needs admin) | **Also 6 API removals — see §5** |
 
 ## The measured picture
 

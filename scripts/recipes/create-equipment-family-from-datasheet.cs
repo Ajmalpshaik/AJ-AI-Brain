@@ -144,12 +144,15 @@ Func<double, string, string, double> ToInternal = (v, forgeName, dutName) =>
 var _addParamM = typeof(FamilyManager).GetMethods()
     .Where(m => m.Name == "AddParameter" && m.GetParameters().Length == 4
              && m.GetParameters()[0].ParameterType == typeof(string)
-             && m.GetParameters()[1].ParameterType.Name == "BuiltInParameterGroup"
-             && m.GetParameters()[3].ParameterType == typeof(bool))
-    .OrderBy(m => m.GetParameters()[2].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+             && m.GetParameters()[3].ParameterType == typeof(bool)
+             && (m.GetParameters()[1].ParameterType.Name == "BuiltInParameterGroup"
+              || m.GetParameters()[1].ParameterType.Name == "ForgeTypeId"))
+    .OrderBy(m => (m.GetParameters()[1].ParameterType.Name == "ForgeTypeId" ? 0 : 1)
+                + (m.GetParameters()[2].ParameterType.Name == "ForgeTypeId" ? 0 : 1))
     .FirstOrDefault();
-if (_addParamM == null) throw new InvalidOperationException("This Revit has no FamilyManager.AddParameter(string, BuiltInParameterGroup, spec, bool).");
-var _specT = _addParamM.GetParameters()[2].ParameterType;
+if (_addParamM == null) throw new InvalidOperationException("This Revit has no 4-argument FamilyManager.AddParameter(name, group, spec, isInstance).");
+var _groupT = _addParamM.GetParameters()[1].ParameterType;   // enum before 2027, ForgeTypeId after
+var _specT  = _addParamM.GetParameters()[2].ParameterType;
 
 // The leaf name is the same in both worlds ("Length", "YesNo"); SpecTypeId files YesNo under Boolean.
 Func<string, object> _specFor = nm =>
@@ -165,8 +168,24 @@ Func<string, object> _specFor = nm =>
     }
     throw new InvalidOperationException("No SpecTypeId named '" + nm + "' on this Revit.");
 };
-Func<string, BuiltInParameterGroup, string, bool, FamilyParameter> AddParam =
-    (nm, grp, spec, inst) => (FamilyParameter)_addParamM.Invoke(fm, new object[] { nm, grp, _specFor(spec), inst });
+
+// "PG_GEOMETRY" -> the old enum member, or GroupTypeId.Geometry on 2027 where the enum is REMOVED.
+// The leaf name is derivable: strip PG_, then Title-case each underscore-separated word.
+Func<System.Type, string, object> _groupAs = (gt, nm) =>
+{
+    if (gt.Name != "ForgeTypeId") return Enum.Parse(gt, nm);
+    var core = nm.StartsWith("PG_") ? nm.Substring(3) : nm;
+    var camel = string.Join("", core.Split('_')
+        .Select(w => w.Length == 0 ? w : w.Substring(0, 1).ToUpper() + w.Substring(1).ToLower()));
+    var gidT = typeof(Document).Assembly.GetType("Autodesk.Revit.DB.GroupTypeId");
+    var pr = gidT == null ? null : gidT.GetProperty(camel,
+        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+    if (pr == null) throw new InvalidOperationException("No GroupTypeId." + camel + " on this Revit (from '" + nm + "').");
+    return pr.GetValue(null);
+};
+Func<string, string, string, bool, FamilyParameter> AddParam =
+    (nm, grp, spec, inst) => (FamilyParameter)_addParamM.Invoke(fm,
+        new object[] { nm, _groupAs(_groupT, grp), _specFor(spec), inst });
 // ---------------------------------------------------------------------------------------------------
 
 if (fm.Types.Size > 0) return "Family already has " + fm.Types.Size + " type(s) - stopping rather than overwriting.";
@@ -201,8 +220,8 @@ sb.AppendLine("Category: " + doc.OwnerFamily.FamilyCategory.Name);
 using (var t = new Transaction(doc, "Parameters + type")) {
     t.Start();
     try {
-        var G = BuiltInParameterGroup.PG_GEOMETRY;
-        var C = BuiltInParameterGroup.PG_CONSTRAINTS;
+        var G = "PG_GEOMETRY";
+        var C = "PG_CONSTRAINTS";
         AddParam("Width",  G, "Length", false);
         AddParam("Depth",  G, "Length", false);
         AddParam("Height", G, "Length", false);
@@ -214,7 +233,7 @@ using (var t = new Transaction(doc, "Parameters + type")) {
             foreach (var n in new[]{"Front Clearance","Left Clearance","Right Clearance","Ceiling Clearance","Floor Clearance",
                                     "Clearance Left Extent","Clearance Right Extent","Clearance Total Depth","Clearance Top","Clearance Bottom"})
                 AddParam(n, C, "Length", false);
-            AddParam("Show Clearance Zone", BuiltInParameterGroup.PG_GRAPHICS, "YesNo", true);
+            AddParam("Show Clearance Zone", "PG_GRAPHICS", "YesNo", true);
         }
         foreach (var row in stubs)
             if ((string)row[3] == "top")

@@ -46,6 +46,29 @@ Func<Parameter, string> valueText = p =>
     }
 };
 
+// Version-proof parameter-group label. Revit 2027 removed Definition.ParameterGroup (an enum) in favour
+// of Definition.GetGroupTypeId() (a ForgeTypeId), so naming either one alone breaks the other version.
+// Only the printable NAME is wanted here, so both are reduced to a string.
+var _defGroupProp   = typeof(Definition).GetProperty("ParameterGroup");
+var _defGroupMethod = typeof(Definition).GetMethod("GetGroupTypeId", Type.EmptyTypes);
+Func<Definition, string> GroupNameOf = d =>
+{
+    try
+    {
+        if (_defGroupMethod != null)
+        {
+            var fid = _defGroupMethod.Invoke(d, null);
+            if (fid == null) return "";
+            var lbl = typeof(LabelUtils).GetMethod("GetLabelForGroup", new[] { fid.GetType() });
+            if (lbl != null) { try { return (string)lbl.Invoke(null, new object[] { fid }); } catch { } }
+            var tp = fid.GetType().GetProperty("TypeId");
+            return tp != null ? ((string)tp.GetValue(fid) ?? "") : fid.ToString();
+        }
+        return _defGroupProp != null ? _defGroupProp.GetValue(d).ToString() : "";
+    }
+    catch { return ""; }
+};
+
 var rows = new List<(string source, string name, string kind, string group, string storage, bool readOnly, string value)>();
 var seenKeys = new HashSet<string>();
 
@@ -55,7 +78,7 @@ Action<Element, string> collectFrom = (el, source) =>
     {
         string key = source + "|" + p.Definition.Name;
         if (!seenKeys.Add(key)) continue;
-        rows.Add((source, p.Definition.Name, kindOf(p), p.Definition.ParameterGroup.ToString(), p.StorageType.ToString(), p.IsReadOnly, valueText(p)));
+        rows.Add((source, p.Definition.Name, kindOf(p), GroupNameOf(p.Definition), p.StorageType.ToString(), p.IsReadOnly, valueText(p)));
     }
 };
 

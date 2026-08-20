@@ -50,3 +50,7 @@ job-log/*.jsonl
 api-index/corpus/
 api-index/chroma-db-api/
 api-index/run-temp/
+
+# tools/probe-revit-api is a dotnet project - its build output is not part of the Brain
+tools/probe-revit-api/bin/
+tools/probe-revit-api/obj/
