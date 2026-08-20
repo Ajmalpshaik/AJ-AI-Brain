@@ -319,3 +319,25 @@ is exactly the one a fresh session cannot route.
   has to recognise: *"main aim to add sprinklers in the room with room boundy and if any beem or colom is
   there in the room as per that need to place"*. That is: room boundary in, obstruction-aware head
   positions out — the chain in [`fire-sprinkler/layout-method.md`](fire-sprinkler/layout-method.md).
+- 2026-08-20 — **"sealing void" = the ceiling void, and the 800 he remembered is real but not NFPA.** His
+  question, verbatim: *"as part of NFP, as I remember, okay, I'm not sure as part of the NFP, if the
+  sealing wood... sealing and slab distance... this sealing void is more than eight hundred or something,
+  we need a print and pendant also."*
+
+  | His words | What it means |
+  |---|---|
+  | "sealing" | **ceiling** — dictation, and it appears in most of his sprinkler questions |
+  | "sealing void" / "sealing and slab distance" | the **ceiling void** — the gap between the suspended ceiling and the slab above. NFPA's word for it is a **concealed space** |
+  | "print sprinkler" | **upright** sprinkler — same dictation family as "upraght" |
+  | "we need a print and pendant also" | the **two-layer** case: upright inside the void, pendent below the ceiling |
+
+  **He was right to say he was not sure it was NFPA — it is not.** The 800 mm ceiling-void trigger comes
+  from the BS lineage (BS 5306-2, superseded by BS EN 12845). NFPA 13 has **no depth trigger for a ceiling
+  void at all**: it asks whether the concealed space is of combustible construction, and lets you omit
+  sprinklers from a noncombustible / limited-combustible space with minimal combustible loading. The two
+  standards therefore disagree on the same void in both directions. Full write-up, including which one
+  applies on his jobs: [`fire-sprinkler/concealed-spaces.md`](fire-sprinkler/concealed-spaces.md).
+
+  Worth keeping as a pattern, not just a fact: **he remembered the number correctly and the source
+  incorrectly.** That is the normal shape of site knowledge, and it is why "which standard is this project
+  on" belongs in the opening questions of every sprinkler job rather than being assumed.

@@ -2102,3 +2102,19 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   All eight fragments are written but **not live-verified** — no Revit in that session. Every Revit call in
   them is proven elsewhere in this library and each header names which, so the honest route is one element
   first, check the real result, then the batch.
+
+- **2026-08-20 — the ceiling void, and a number remembered right with the wrong source.** Ajmal asked
+  whether NFPA requires sprinklers in the ceiling void once it is "more than eight hundred or something",
+  and flagged himself that he was not sure. Checked: the **800 mm is real but it is BS 5306-2 / BS EN
+  12845, not NFPA**. NFPA 13 has no depth trigger for a ceiling void — it tests whether the concealed
+  space is of combustible construction, and permits omission in a noncombustible/limited-combustible space
+  with minimal combustible loading. The two disagree **both ways**: a 900 mm noncombustible void may need
+  nothing under NFPA and heads under BS/EN; a 600 mm combustible void is the reverse. New chunk
+  `knowledge/fire-sprinkler/concealed-spaces.md` carries the two tests side by side, the NFPA omission
+  list, and the two-layer consequence (upright in the void, pendent below — and the void is usually
+  OBSTRUCTED construction, so its grid is not the ceiling grid copied upward, which is the standard
+  mistake). `sprinkler-obstruction-survey.cs` now measures the void (ceiling top to slab soffit) and flags
+  it against a settable threshold, while saying in the same breath that a depth flag cannot answer an NFPA
+  question. The pattern worth keeping is bigger than the fact: **he remembered the number correctly and
+  the standard incorrectly**, which is the normal shape of site knowledge — so "which standard is this
+  project on" now belongs in the opening questions of a sprinkler job, not in an assumption.

@@ -66,6 +66,10 @@ handle it. This file only says which words to also search for. A term can sensib
 | how much from wall | distance to wall spacing | his phrasing of the wall-distance rule |
 | how much from the slab | deflector deck distance below | his phrasing of the upright height rule |
 | fire figting | fire fighting sprinkler | already-known dictation spelling, written down at last |
+| sealing | ceiling | his dictation of "ceiling", recorded 2026-08-20 |
+| sealing void | ceiling void concealed space | as above — and it is the concealed-space question |
+| ceiling void | concealed space void sprinkler | the void between ceiling and slab; NFPA calls it a concealed space |
+| print sprinkler | upright sprinkler | dictation near-miss for "upright", 2026-08-20 |
 
 ### Rows deliberately removed — a record, so they are not re-added
 

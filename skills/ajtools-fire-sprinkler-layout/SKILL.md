@@ -19,6 +19,7 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 | pendent / upright / sidewall / concealed / extended coverage | [`knowledge/fire-sprinkler/sprinkler-types.md`](../../knowledge/fire-sprinkler/sprinkler-types.md) |
 | how far below the ceiling — or below the slab where there is none | [`knowledge/fire-sprinkler/deflector-and-ceiling-height.md`](../../knowledge/fire-sprinkler/deflector-and-ceiling-height.md) |
 | a beam, a column, a wide duct in the room | [`knowledge/fire-sprinkler/obstructions.md`](../../knowledge/fire-sprinkler/obstructions.md) |
+| **does the ceiling void need its own heads** — upright above, pendent below, and the 800 mm figure that is not NFPA | [`knowledge/fire-sprinkler/concealed-spaces.md`](../../knowledge/fire-sprinkler/concealed-spaces.md) |
 | the whole method, in order | [`knowledge/fire-sprinkler/layout-method.md`](../../knowledge/fire-sprinkler/layout-method.md) |
 | which category, which API call, which fragment | [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md) |
 
