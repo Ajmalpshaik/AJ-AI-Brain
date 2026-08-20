@@ -58,9 +58,9 @@ string writeRadiusToParameter = ""; // optional — write the radius (mm) into t
 int maxRowsListed = 30;             // per-element detail cap; the statistics always cover everything
 // ---- END INPUTS ----
 
-Func<double,double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double,double> mmToFt = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double,double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double,double> toMm = v => v * 304.8;
+Func<double,double> mmToFt = v => v / 304.8;
+Func<double,double> toM2 = v => v / 10.763910416709722;
 
 Func<Element,XYZ> centreOf = el =>
 {
@@ -84,7 +84,7 @@ else if (source == "spacing" && pts.Count < 2)
 else
 {
     // ---- radius per element ----
-    var radius = new Dictionary<int,double>();
+    var radius = new Dictionary<ElementId,double>();
     foreach (var e in pts)
     {
         double r;
@@ -94,12 +94,12 @@ else
             var p = e.LookupParameter(flowParameterName);
             if (p == null) { var te = Document.GetElement(e.GetTypeId()); p = te?.LookupParameter(flowParameterName); }
             double lps = (p != null && p.HasValue)
-                ? UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_LITERS_PER_SECOND) : 0;
+                ? p.AsDouble() * 28.316846592 : 0;
             double m2 = lps / designFlowPerM2;
             r = mmToFt(Math.Sqrt(m2 / Math.PI) * 1000.0);   // equivalent circular radius
         }
         else r = pts.Where(o => o.Id != e.Id).Min(o => centreOf(e).DistanceTo(centreOf(o))) / 2.0;
-        radius[e.Id.IntegerValue] = r;
+        radius[e.Id] = r;
     }
 
     var rs = radius.Values.ToList();
@@ -133,7 +133,7 @@ else
                 bool inside=false; try { inside = rm.IsPointInRoom(probe); } catch {}
                 return inside; }).ToList();
             if (mine.Count == 0) continue;
-            double a = mine.Sum(e => { double r = radius[e.Id.IntegerValue]; return Math.PI*r*r; });
+            double a = mine.Sum(e => { double r = radius[e.Id]; return Math.PI*r*r; });
             sb.AppendLine($"    {rm.Name}: floor {toM2(rm.Area):F0} m2, {mine.Count} element(s), coverage {toM2(a):F0} m2 ({toM2(a)/toM2(rm.Area)*100:F0}%)");
         }
     }
@@ -151,10 +151,10 @@ else
                 {
                     var p = e.LookupParameter(writeRadiusToParameter);
                     if (p == null || p.IsReadOnly) { skipped++; continue; }
-                    double mmVal = toMm(radius[e.Id.IntegerValue]);
+                    double mmVal = toMm(radius[e.Id]);
                     bool ok = p.StorageType == StorageType.String
                         ? p.Set($"{mmVal:F0}")
-                        : p.StorageType == StorageType.Double ? p.Set(radius[e.Id.IntegerValue])
+                        : p.StorageType == StorageType.Double ? p.Set(radius[e.Id])
                         : p.StorageType == StorageType.Integer ? p.Set((int)Math.Round(mmVal)) : false;
                     if (ok) wrote++; else skipped++;
                 }
@@ -182,7 +182,7 @@ else
                 {
                     foreach (var e in pts)
                     {
-                        var c = centreOf(e); double r = radius[e.Id.IntegerValue];
+                        var c = centreOf(e); double r = radius[e.Id];
                         if (r <= 0) continue;
                         var ctr = new XYZ(c.X, c.Y, flatZ);
                         // ONE closed circle, one element — verified 2026-07-26
@@ -194,7 +194,7 @@ else
                         try {
                             var g = Document.Create.NewGroup(made);
                             if (!string.IsNullOrEmpty(drawnGroupName)) { try { g.GroupType.Name = drawnGroupName; } catch { } }
-                            sb.AppendLine($"  Grouped the circles as '{g.GroupType.Name}' (Id {g.Id.IntegerValue}).");
+                            sb.AppendLine($"  Grouped the circles as '{g.GroupType.Name}' (Id {g.Id}).");
                         } catch (Exception exG) { sb.AppendLine($"  Grouping failed ({exG.Message}) — circles are still drawn."); }
                     }
                     t.Commit();

@@ -61,7 +61,7 @@ double insulationThicknessMm = 25;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 sb.AppendLine("BUILD TEST FIXTURES");
 sb.AppendLine("===================");
@@ -126,7 +126,7 @@ if (makeWorksharing)
                 if (WorksetTable.IsWorksetNameUnique(Document, wsName))
                 {
                     var ws = Workset.Create(Document, wsName);
-                    sb.AppendLine($"MADE  workset     — '{wsName}' (Id {ws.Id.IntegerValue})");
+                    sb.AppendLine($"MADE  workset     — '{wsName}' (Id {ws.Id})");
                 }
                 else sb.AppendLine($"REUSE workset     — '{wsName}' already exists");
             }
@@ -181,7 +181,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Build Test Fixture
                     }
                     t.Commit();
                 }
-                sb.AppendLine($"MADE  ducts       — {createdDucts.Count}: {string.Join(", ", createdDucts.Select(d => d.Id.IntegerValue))}");
+                sb.AppendLine($"MADE  ducts       — {createdDucts.Count}: {string.Join(", ", createdDucts.Select(d => d.Id))}");
                 made++;
             }
         }
@@ -221,7 +221,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Build Test Fixture
                     }
                     t.Commit();
                 }
-                sb.AppendLine($"MADE  insulation  — {insulationThicknessMm}mm on ducts {string.Join(", ", createdDucts.Take(2).Select(d => d.Id.IntegerValue))}");
+                sb.AppendLine($"MADE  insulation  — {insulationThicknessMm}mm on ducts {string.Join(", ", createdDucts.Take(2).Select(d => d.Id))}");
                 sb.AppendLine("                    unblocks action-add-remove-insulation, filter-by-insulation-status, filter-by-insulation-type");
                 made++;
             }
@@ -244,7 +244,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Build Test Fixture
                     var naming = Document.GetElement(members[0]).Category.Id;
                     var asm = AssemblyInstance.Create(Document, members, naming);
                     t.Commit();
-                    sb.AppendLine($"MADE  assembly    — Id {asm.Id.IntegerValue} from ducts {string.Join(", ", members.Select(i => i.IntegerValue))}");
+                    sb.AppendLine($"MADE  assembly    — Id {asm.Id} from ducts {string.Join(", ", members.Select(i => i))}");
                     sb.AppendLine("                    unblocks filter-by-assembly");
                 }
                 made++;
@@ -268,7 +268,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Build Test Fixture
                     var g = Document.Create.NewGroup(members);
                     g.GroupType.Name = "AJ Test Group";
                     t.Commit();
-                    sb.AppendLine($"MADE  group       — Id {g.Id.IntegerValue} from ducts {string.Join(", ", members.Select(i => i.IntegerValue))}");
+                    sb.AppendLine($"MADE  group       — Id {g.Id} from ducts {string.Join(", ", members.Select(i => i))}");
                     sb.AppendLine("                    unblocks filter-by-group, action-ungroup-elements");
                 }
                 made++;

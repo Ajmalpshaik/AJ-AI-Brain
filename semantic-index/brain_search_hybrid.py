@@ -67,6 +67,27 @@ AREA_CHOICES = ["fragment", "knowledge", "skill", "guide"]
 # result count, so the merge has material to work with.
 CANDIDATES = 80
 
+# How many CHUNKS to pull in order to end up with CANDIDATES distinct FILES.
+#
+# MEASURED, 2026-08-20. Asking Chroma for 80 chunks returned only 32-37 distinct
+# files on the four questions that were failing outright - 43 to 48 of the 80
+# slots went to repeat chunks of the SAME file (one sprinkler note supplied ten
+# of them). So the "80-candidate pool" was really a 33-candidate pool, and the
+# right answer sat just outside it. That is a retrieval loss no re-ranker can
+# repair, and it is invisible on the score line.
+#
+# Over-fetch then de-duplicate. HNSW cost is near-flat in n_results at this size,
+# so this is paid for in microseconds.
+#
+# HONEST RESULT: the multiplier itself measured NEUTRAL. Swept x1/x2/x3/x4/x6/x10
+# on the 14 questions - identical #1, top-3, top-5 and retrievable at every value,
+# MRR within 0.003. The gain that showed up (MRR 0.299 -> 0.323, retrievable
+# 10 -> 11, top-3 3 -> 5) came entirely from _rank_files() re-ranking over FILES,
+# not from fetching more chunks. Kept at 3 because it makes the pool genuinely
+# hold CANDIDATES distinct files as documented, and gives the cross-encoder more
+# to re-rank if it is ever switched on - not because it is worth anything today.
+CHUNK_OVERFETCH = 3
+
 # Reciprocal Rank Fusion. K flattens the curve so rank 1 does not utterly
 # dominate rank 2; 60 is the value the original RRF paper settled on.
 RRF_K = 60
@@ -165,6 +186,47 @@ PATH_WEIGHT = {
     "knowledge/brain-log.md": 0.85,
     "knowledge/glossary.md": 0.93,
 }
+
+# A prior on WHAT KIND of file should win a "how do I" question, applied after
+# fusion. Everything defaults to 1.0; only a measured value belongs here.
+#
+# BUILT AND LEFT OFF, 2026-08-20 - the same call as the cross-encoder in rerank.py.
+#
+# The structural argument for boosting skills is real: 11 skill files compete with
+# 282 fragments for the same questions, so without a prior the fragments win on
+# sheer volume. And the sweep looks tempting:
+#
+#   weight   skill-Qs #1   other-Qs #1   overall #1   MRR
+#   1.00       1 / 7         2 / 7           3        0.323
+#   1.10       3 / 7         1 / 7           4        0.412
+#   1.20       3 / 7         1 / 7           4        0.424
+#   1.35       3 / 7         0 / 7           3        0.375
+#
+# It is off because of the middle column. It does not FIND anything new - it moves
+# wins from one half of the test set to the other and nets +1, on a set that splits
+# exactly 7 skill / 7 non-skill. That 50/50 split is an artefact of 14 questions,
+# not a measurement of what gets asked, so tuning a global prior on it is fitting
+# the sample rather than the job. 1.35 collapsing back to 3 shows how narrow the
+# window is.
+#
+# Turn it on ONLY after test-questions.md reaches ~30 rows AND the skill/non-skill
+# mix reflects real questions. Then re-run this sweep; if 1.1-1.2 still wins on
+# BOTH columns, it has earned its place.
+AREA_WEIGHT = {}
+
+
+# NO CONFIDENCE FLOOR - MEASURED, 2026-08-20.
+#
+# "Say nothing here answers this, instead of a confident wrong #1" is an obvious
+# idea and it does not work on this Brain. Measured on all 14 questions, top-1
+# closeness for a CORRECT top hit was 35.5 / 43.4 / 65.1, and for a WRONG one it
+# ranged 27.8 to 56.6. The distributions overlap almost completely, the fused
+# score sits in 0.030-0.037 either way, and every single query fires both signals -
+# so there is no threshold that rejects wrong answers without rejecting right ones
+# at about the same rate.
+#
+# Written down so the idea is not rebuilt from intuition later. Revisit only with
+# a signal that actually separates the two, not a tuned cut-off on these.
 
 # Words so common they carry no signal. Kept short on purpose - BM25's rarity
 # weighting already drives "the" and "how" towards zero on its own.
@@ -412,6 +474,23 @@ def _best_per_file(pairs):
     return out
 
 
+def _rank_files(pairs, limit=CANDIDATES):
+    """Collapse chunk hits to files, keep the best `limit`, renumber them 1..N.
+
+    The renumbering matters. RRF fuses ranked lists of the things being ranked,
+    and the things here are FILES - but the ranks arriving from Chroma and BM25
+    are CHUNK ranks. Leaving them alone made a file's fused score depend on how
+    many chunks the files above it happened to be split into: a correct answer
+    sitting behind one heavily-chunked note was scored as rank 40 rather than
+    rank 5, purely because that note is long.
+    """
+    best = _best_per_file(pairs)
+    ordered = sorted(best.items(), key=lambda kv: kv[1][0])[:limit]
+    return {path: (position, payload)
+            for position, (path, (_chunk_rank, payload))
+            in enumerate(ordered, start=1)}
+
+
 def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=False):
     """
     Search by meaning and by exact words, then merge.
@@ -442,7 +521,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
     # --- signal 1: meaning ------------------------------------------------
     raw = collection.query(
         query_texts=[expanded],
-        n_results=min(CANDIDATES, max(collection.count(), 1)),
+        n_results=min(CANDIDATES * CHUNK_OVERFETCH, max(collection.count(), 1)),
         where=where,
     )
     meaning_pairs = []
@@ -455,7 +534,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
                 "snippet": doc.strip(),
                 "closeness": round(max(0.0, 1.0 - dist) * 100, 1),
             }))
-    meaning = _best_per_file(meaning_pairs)
+    meaning = _rank_files(meaning_pairs)
 
     # --- signal 2: exact words -------------------------------------------
     # Pull every chunk so BM25 sees the same corpus the semantic side does.
@@ -475,8 +554,11 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
         # Discount matches found in weak evidence (input forms, code bodies).
         scored = [s * KIND_WEIGHT.get(metas[i].get("kind"), 1.0)
                   for i, s in enumerate(scored)]
+        # Every positively-scored chunk, not the first CANDIDATES of them: the
+        # cut to CANDIDATES now happens after de-duplication, in _rank_files, so
+        # it cuts to distinct FILES. Sorting a few thousand floats is free.
         ranked = sorted((i for i, s in enumerate(scored) if s > 0),
-                        key=lambda i: -scored[i])[:CANDIDATES]
+                        key=lambda i: -scored[i])
         word_pairs = [
             (metas[i]["path"], rank, {
                 "meta": metas[i],
@@ -485,7 +567,7 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
             })
             for rank, i in enumerate(ranked, start=1)
         ]
-        words = _best_per_file(word_pairs)
+        words = _rank_files(word_pairs)
 
     # --- signal 3: fragment-index.mjs ------------------------------------
     # Which of the question's words are distinctive enough to be worth a
@@ -552,11 +634,15 @@ def hybrid_search(query, top_k=5, area=None, use_fragment_tool=True, use_rerank=
             combined[path]["score"] += WEIGHT_PROVEN_TOOL / (RRF_K + 1)
             combined[path]["tool"] = sorted(matched)
 
-    # Discount the change-log style files before the final ordering.
+    # Discount the change-log style files, and apply the per-area prior, before
+    # the final ordering.
     for path, entry in combined.items():
         weight = PATH_WEIGHT.get(path)
         if weight is not None:
             entry["score"] *= weight
+        area_weight = AREA_WEIGHT.get(entry["payload"]["meta"].get("area"))
+        if area_weight is not None:
+            entry["score"] *= area_weight
 
     order = sorted(combined.items(), key=lambda kv: -kv[1]["score"])
     if use_rerank:

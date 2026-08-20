@@ -17,7 +17,7 @@ sb.AppendLine($"Loadable families in model: {families.Count}");
 foreach (var f in families)
 {
     string cat = f.FamilyCategory?.Name ?? "(no category)";
-    sb.AppendLine($"  - {f.Name} (Id {f.Id.IntegerValue}, category: {cat})");
+    sb.AppendLine($"  - {f.Name} (Id {f.Id}, category: {cat})");
 }
 
 return sb.ToString();

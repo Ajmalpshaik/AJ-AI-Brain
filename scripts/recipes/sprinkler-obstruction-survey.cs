@@ -73,8 +73,8 @@ int maxListedPerCategory = 30;        // detail cap; counts always cover everyth
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 var room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
 
@@ -91,7 +91,7 @@ else
     Func<XYZ, bool> insideRoom = p =>
     { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
 
-    sb.AppendLine($"OBSTRUCTION SURVEY — '{room.Name}' (Id {roomIdInt}), {UnitUtils.ConvertFromInternalUnits(room.Area, DisplayUnitType.DUT_SQUARE_METERS):F1} m2,"
+    sb.AppendLine($"OBSTRUCTION SURVEY — '{room.Name}' (Id {roomIdInt}), {room.Area / 10.763910416709722:F1} m2,"
         + $" level '{room.Level.Name}' at {toMm(zRoomBase):N0} mm");
     sb.AppendLine("READ-ONLY. Measurements only — the construction classification is still yours to make.");
     sb.AppendLine();
@@ -154,7 +154,7 @@ else
                 if (b == null) continue;
                 if (double.IsNaN(ceilingZ) || b.Min.Z < ceilingZ) ceilingZ = b.Min.Z;
                 if (double.IsNaN(ceilingTopZ) || b.Max.Z < ceilingTopZ) ceilingTopZ = b.Max.Z;
-                sb.AppendLine($"   CEILING '{c.Name}' (Id {c.Id.IntegerValue}) underside about {toMm(b.Min.Z):N0} mm"
+                sb.AppendLine($"   CEILING '{c.Name}' (Id {c.Id}) underside about {toMm(b.Min.Z):N0} mm"
                     + $" — {toMm(b.Min.Z - zRoomBase):N0} mm above this level");
             }
             sb.AppendLine($"   -> {ceilings.Count} ceiling(s). Lowest underside {toMm(ceilingZ):N0} mm.");
@@ -259,7 +259,7 @@ else
                 if (!byDir.ContainsKey(key)) byDir[key] = new List<Tuple<double, Element, double, double>>();
                 byDir[key].Add(Tuple.Create(offset, e, depthBelowDeck, widthMm));
 
-                beamRows.Add($"   BEAM '{e.Name}' (Id {e.Id.IntegerValue}) soffit {toMm(soffit):N0} mm"
+                beamRows.Add($"   BEAM '{e.Name}' (Id {e.Id}) soffit {toMm(soffit):N0} mm"
                     + $" | width across {widthMm:N0} mm"
                     + (double.IsNaN(depthBelowDeck) ? "" : $" | hangs {depthBelowDeck:N0} mm below the deck")
                     + (lc == null ? "  [box fallback — no location curve, width may be overstated]" : ""));
@@ -314,7 +314,7 @@ else
                 double keepOut = 3.0 * maxDim;
                 var cx = (b.Min.X + b.Max.X) / 2.0; var cy = (b.Min.Y + b.Max.Y) / 2.0;
                 if (shown++ < maxListedPerCategory)
-                    sb.AppendLine($"   COLUMN '{c.Name}' (Id {c.Id.IntegerValue}) at {toMm(cx):N0}, {toMm(cy):N0} mm"
+                    sb.AppendLine($"   COLUMN '{c.Name}' (Id {c.Id}) at {toMm(cx):N0}, {toMm(cy):N0} mm"
                         + $" | {wx:N0} x {wy:N0} mm | KEEP HEADS AT LEAST {keepOut:N0} mm CLEAR (3 x {maxDim:N0})");
             }
             sb.AppendLine($"   -> {cols.Count} column(s) (structural + architectural). A vertical obstruction gets the FULL 3x its");
@@ -356,7 +356,7 @@ else
                 else { call = "no deflector level given — level reported, not judged"; undecided++; }
 
                 if (shown++ < maxListedPerCategory)
-                    sb.AppendLine($"   {e.Category.Name} '{e.Name}' (Id {e.Id.IntegerValue}) soffit {toMm(soffit):N0} mm"
+                    sb.AppendLine($"   {e.Category.Name} '{e.Name}' (Id {e.Id}) soffit {toMm(soffit):N0} mm"
                         + $" | across {width:N0} mm | {call}");
             }
         }

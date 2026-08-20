@@ -29,7 +29,7 @@ bool hasLeader = true;
 string facePreference = "top";  // "top" = highest upward face (FFL — the usual job) | "bottom" = soffit | "any"
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var spotView = Document.GetElement(new ElementId(viewIdInt)) as View;
 if (spotView == null || spotView.IsTemplate)
@@ -101,7 +101,7 @@ else
                 if (faceRef == null || measurePt == null)
                 {
                     skipped++;
-                    notes.Add($"Id {el.Id.IntegerValue}: no usable face reference");
+                    notes.Add($"Id {el.Id}: no usable face reference");
                     continue;
                 }
 
@@ -112,12 +112,12 @@ else
                     Document.Create.NewSpotElevation(spotView, faceRef, measurePt, bend, end, measurePt, hasLeader);
                     placed++;
                     // print the level actually annotated — this is what makes a wrong face visible
-                    notes.Add($"Id {el.Id.IntegerValue}: annotated {UnitUtils.ConvertFromInternalUnits(measurePt.Z, DisplayUnitType.DUT_MILLIMETERS):F1} mm{faceNote}");
+                    notes.Add($"Id {el.Id}: annotated {measurePt.Z * 304.8:F1} mm{faceNote}");
                 }
                 catch (Exception exOne)
                 {
                     skipped++;
-                    notes.Add($"Id {el.Id.IntegerValue}: {exOne.Message}");
+                    notes.Add($"Id {el.Id}: {exOne.Message}");
                 }
             }
             t.Commit();

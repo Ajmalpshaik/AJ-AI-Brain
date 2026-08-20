@@ -34,7 +34,7 @@ using (var t = new Transaction(Document, "AJ Tools - Delete Elements"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Id {e.Id.IntegerValue}: {exOne.Message}");
+                failures.Add($"Id {e.Id}: {exOne.Message}");
             }
         }
         t.Commit();

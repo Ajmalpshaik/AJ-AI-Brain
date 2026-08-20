@@ -113,12 +113,12 @@ var cIns    = new Autodesk.Revit.DB.Color(insR, insG, insB);
 var cEquip  = new Autodesk.Revit.DB.Color(equipFillR, equipFillG, equipFillB);
 var cBlack  = new Autodesk.Revit.DB.Color(0, 0, 0);
 
-int IdOf(BuiltInCategory b) { var c = Category.GetCategory(doc, b); return c == null ? -1 : c.Id.IntegerValue; }
-var blackIds = new HashSet<int>(blackRun.Select(IdOf).Where(i => i != -1));
-var insIds   = new HashSet<int>(insulation.Select(IdOf).Where(i => i != -1));
-var equipIds = new HashSet<int>(equipmentSolid.Select(IdOf).Where(i => i != -1));
-var grey80Ids = new HashSet<int>(keepGreyAt80.Select(IdOf).Where(i => i != -1));
-int wallId = IdOf(BuiltInCategory.OST_Walls), floorId = IdOf(BuiltInCategory.OST_Floors);
+ElementId IdOf(BuiltInCategory b) { var c = Category.GetCategory(doc, b); return c == null ? ElementId.InvalidElementId : c.Id; }
+var blackIds = new HashSet<ElementId>(blackRun.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
+var insIds   = new HashSet<ElementId>(insulation.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
+var equipIds = new HashSet<ElementId>(equipmentSolid.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
+var grey80Ids = new HashSet<ElementId>(keepGreyAt80.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
+ElementId wallId = IdOf(BuiltInCategory.OST_Walls), floorId = IdOf(BuiltInCategory.OST_Floors);
 int doorId = IdOf(BuiltInCategory.OST_Doors), windowId = IdOf(BuiltInCategory.OST_Windows);
 
 var cats = doc.Settings.Categories.Cast<Category>()
@@ -132,12 +132,12 @@ using (var t = new Transaction(doc, "AJ Tools - MEP grayout"))
     t.Start();
     try
     {
-        var offIds = new HashSet<int>(turnOff.Select(IdOf).Where(i => i != -1));
+        var offIds = new HashSet<ElementId>(turnOff.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
 
         foreach (var c in cats)
         {
             if (!c.get_AllowsVisibilityControl(view)) { notControllable++; continue; }
-            int id = c.Id.IntegerValue;
+            var id = c.Id;
 
             // --- 1. visibility: everything on, the named few off ---
             bool wantHidden = offIds.Contains(id);
@@ -234,7 +234,7 @@ using (var t = new Transaction(doc, "AJ Tools - MEP grayout"))
     }
 }
 
-sb.AppendLine($"MEP grayout applied to view '{view.Name}' (Id {view.Id.IntegerValue}, 1:{view.Scale}, {view.DisplayStyle}).");
+sb.AppendLine($"MEP grayout applied to view '{view.Name}' (Id {view.Id}, 1:{view.Scale}, {view.DisplayStyle}).");
 sb.AppendLine($"  categories written {written} | shown {shown} | hidden {hidden} | not controllable here {notControllable}");
 sb.AppendLine($"  sub-categories written {subsWritten} (line colour + weight only — they never hold fill or transparency)");
 sb.AppendLine($"  categories where Revit discarded at least one slot: {lostSlots.Count} — expected, see the header");

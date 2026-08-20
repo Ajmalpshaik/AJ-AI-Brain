@@ -79,8 +79,8 @@ XYZ viewUp    = (view.UpDirection != null && view.UpDirection.GetLength() > 1e-9
 Func<XYZ, double> projX = v => v.DotProduct(viewRight);
 Func<XYZ, double> projY = v => v.DotProduct(viewUp);
 
-double minHorizontalStub = UnitUtils.ConvertToInternalUnits(550.0 * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
-double minVerticalStub = UnitUtils.ConvertToInternalUnits(30.0 * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
+double minHorizontalStub = (550.0 * viewScaleRatio) / 304.8;
+double minVerticalStub = (30.0 * viewScaleRatio) / 304.8;
 
 // Reproduced from AJTools.Services.LeaderLogic.LeaderLogicService.GetE1 — class unreachable from here.
 Func<XYZ, XYZ, double?, XYZ> getE1 = (l1, t1, preferredSign) =>
@@ -97,13 +97,13 @@ Func<XYZ, XYZ, double?, XYZ> getE1 = (l1, t1, preferredSign) =>
     return l1.Add(viewUp.Multiply(dyView));
 };
 
-double offsetFeet = UnitUtils.ConvertToInternalUnits(baseOffsetMm * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
-double minOffsetFeet = UnitUtils.ConvertToInternalUnits(250, DisplayUnitType.DUT_MILLIMETERS);
+double offsetFeet = (baseOffsetMm * viewScaleRatio) / 304.8;
+double minOffsetFeet = 250 / 304.8;
 if (offsetFeet < minOffsetFeet) offsetFeet = minOffsetFeet;
-double noLeaderOffsetFeet = UnitUtils.ConvertToInternalUnits(noLeaderOffsetMm * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
+double noLeaderOffsetFeet = (noLeaderOffsetMm * viewScaleRatio) / 304.8;
 
-double estWidthFeet = UnitUtils.ConvertToInternalUnits(baselineTagWidthMm * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
-double estHeightFeet = UnitUtils.ConvertToInternalUnits(baselineTagHeightMm * viewScaleRatio, DisplayUnitType.DUT_MILLIMETERS);
+double estWidthFeet = (baselineTagWidthMm * viewScaleRatio) / 304.8;
+double estHeightFeet = (baselineTagHeightMm * viewScaleRatio) / 304.8;
 int estSampleCount = 0;
 
 double cellSizeFeet = estWidthFeet * 3.0; // spatial bucket size, generous relative to a tag box
@@ -130,8 +130,8 @@ var elementsToTag = new FilteredElementCollector(doc, view.Id)
         if (lc == null || lc.Curve == null) return true;
         var p0 = lc.Curve.GetEndPoint(0);
         var p1 = lc.Curve.GetEndPoint(1);
-        double lengthMm = UnitUtils.ConvertFromInternalUnits(lc.Curve.Length, DisplayUnitType.DUT_MILLIMETERS);
-        double dzMm = UnitUtils.ConvertFromInternalUnits(Math.Abs(p1.Z - p0.Z), DisplayUnitType.DUT_MILLIMETERS);
+        double lengthMm = lc.Curve.Length * 304.8;
+        double dzMm = Math.Abs(p1.Z - p0.Z) * 304.8;
         if (onlyHorizontalRuns && dzMm >= levelToleranceMm) return false;
         if (lengthMm < minLengthMm) return false;
         return true;
@@ -552,14 +552,14 @@ using (var txFix = new Transaction(doc, "Correct elbow clearance using real meas
             var bb = tag.get_BoundingBox(view);
             if (bb == null) continue;
             XYZ t1 = tag.TagHeadPosition;
-            double halfWmm = UnitUtils.ConvertFromInternalUnits(Math.Abs(Math.Min(t1.X - bb.Min.X, bb.Max.X - t1.X)), DisplayUnitType.DUT_MILLIMETERS);
-            double halfHmm = UnitUtils.ConvertFromInternalUnits(Math.Abs(Math.Min(t1.Y - bb.Min.Y, bb.Max.Y - t1.Y)), DisplayUnitType.DUT_MILLIMETERS);
-            double edx = UnitUtils.ConvertFromInternalUnits(Math.Abs(e1Current.X - t1.X), DisplayUnitType.DUT_MILLIMETERS);
-            double edy = UnitUtils.ConvertFromInternalUnits(Math.Abs(e1Current.Y - t1.Y), DisplayUnitType.DUT_MILLIMETERS);
+            double halfWmm = Math.Abs(Math.Min(t1.X - bb.Min.X, bb.Max.X - t1.X)) * 304.8;
+            double halfHmm = Math.Abs(Math.Min(t1.Y - bb.Min.Y, bb.Max.Y - t1.Y)) * 304.8;
+            double edx = Math.Abs(e1Current.X - t1.X) * 304.8;
+            double edy = Math.Abs(e1Current.Y - t1.Y) * 304.8;
             bool clashing = (edy < 5 && edx < halfWmm) || (edx < 5 && edy < halfHmm);
             if (!clashing) continue;
 
-            double neededHalfWFeet = UnitUtils.ConvertToInternalUnits(halfWmm + 60.0, DisplayUnitType.DUT_MILLIMETERS); // measured half-width + margin
+            double neededHalfWFeet = (halfWmm + 60.0) / 304.8; // measured half-width + margin
             XYZ delta = t1 - l1;
             double dxView = projX(delta), dyView = projY(delta);
             XYZ newE1;
@@ -598,7 +598,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
     txCleanup.Start();
     try
     {
-        double marginFeet = UnitUtils.ConvertToInternalUnits(50.0, DisplayUnitType.DUT_MILLIMETERS);
+        double marginFeet = 50.0 / 304.8;
         var ductsForCleanup = new FilteredElementCollector(doc, view.Id).OfCategory(elementCategory).WhereElementIsNotElementType().ToList();
         var ductBoxesForCleanup = new List<(double minX, double maxX, double minY, double maxY)>();
         foreach (var d in ductsForCleanup) { var b = realViewBox(d); if (b.HasValue) ductBoxesForCleanup.Add(b.Value); }
@@ -614,7 +614,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
             return (cx - halfW, cx + halfW, cy - halfH, cy + halfH);
         };
         Func<IndependentTag, XYZ> safeElbow = (tagEl) => { try { return tagEl.HasLeader ? tagEl.LeaderElbow : null; } catch { return null; } };
-        Action<Dictionary<int, XYZ>, int, XYZ> addMove = (dict, id, v) => { if (dict.TryGetValue(id, out var ex2)) dict[id] = ex2.Add(v); else dict[id] = v; };
+        Action<Dictionary<ElementId, XYZ>, ElementId, XYZ> addMove = (dict, id, v) => { if (dict.TryGetValue(id, out var ex2)) dict[id] = ex2.Add(v); else dict[id] = v; };
 
         int cleanupMoves = 0, cleanupIter;
         const int CLEANUP_CAP = 20;
@@ -624,7 +624,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
             var fullBoxes = new List<(IndependentTag tag, double minX, double maxX, double minY, double maxY)>();
             foreach (var t in liveTags) { var b = realViewBox(t); if (b.HasValue) fullBoxes.Add((t, b.Value.minX, b.Value.maxX, b.Value.minY, b.Value.maxY)); }
 
-            var moves = new Dictionary<int, XYZ>();
+            var moves = new Dictionary<ElementId, XYZ>();
 
             for (int i = 0; i < fullBoxes.Count; i++)
             for (int j = i + 1; j < fullBoxes.Count; j++)
@@ -647,8 +647,8 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
                 else if (!aIsL && bIsL) { aShare = 1; bShare = 0; }
                 else { aShare = 0.5; bShare = 0.5; }
 
-                addMove(moves, a.tag.Id.IntegerValue, axisDir.Multiply(sign * pushDist * aShare));
-                addMove(moves, b.tag.Id.IntegerValue, axisDir.Multiply(-sign * pushDist * bShare));
+                addMove(moves, a.tag.Id, axisDir.Multiply(sign * pushDist * aShare));
+                addMove(moves, b.tag.Id, axisDir.Multiply(-sign * pushDist * bShare));
             }
 
             foreach (var t in liveTags)
@@ -667,7 +667,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
                     double sign = Math.Sign(tCenter - dCenter);
                     if (sign == 0) sign = 1;
                     XYZ axisDir = pushXAxis ? viewRight : viewUp;
-                    addMove(moves, t.Id.IntegerValue, axisDir.Multiply(sign * pushDist));
+                    addMove(moves, t.Id, axisDir.Multiply(sign * pushDist));
                 }
             }
 
@@ -675,7 +675,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
 
             foreach (var kv in moves)
             {
-                var tagM = doc.GetElement(new ElementId(kv.Key)) as IndependentTag;
+                var tagM = doc.GetElement(kv.Key) as IndependentTag;
                 if (tagM == null) continue;
                 XYZ newHead = tagM.TagHeadPosition.Add(kv.Value);
                 var taggedEl = doc.GetElement(tagM.TaggedLocalElementId);

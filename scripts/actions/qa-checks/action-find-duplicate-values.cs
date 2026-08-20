@@ -32,7 +32,7 @@ var flagged = groups.SelectMany(g => g.Select(x => x.el)).ToList();
 
 sb.AppendLine($"Checked {elements.Count} element(s) on '{parameterName}': {groups.Count} duplicate value(s), {flagged.Count} element(s) flagged.");
 foreach (var g in groups)
-    sb.AppendLine($"  '{g.Key}': " + string.Join(", ", g.Select(x => x.el.Id.IntegerValue)));
+    sb.AppendLine($"  '{g.Key}': " + string.Join(", ", g.Select(x => x.el.Id)));
 
 if (selectFlagged && flagged.Count > 0)
 {

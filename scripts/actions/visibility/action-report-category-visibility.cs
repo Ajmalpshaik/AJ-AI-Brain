@@ -35,7 +35,7 @@ else
             .WhereElementIsNotElementType()
             .Select(e => e.Category)
             .Where(c => c != null)
-            .GroupBy(c => c.Id.IntegerValue)
+            .GroupBy(c => c.Id)
             .Select(g => g.First())
             .OrderBy(c => c.Name)
             .ToList();

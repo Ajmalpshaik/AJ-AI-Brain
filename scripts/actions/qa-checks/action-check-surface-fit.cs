@@ -59,8 +59,8 @@ double startOffsetMm = 10;          // start each ray this far along it, to clea
 int maxProblemsListed = 25;         // detail cap — the summary always covers every element
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 XYZ dir = direction == "up" ? XYZ.BasisZ : direction == "down" ? -XYZ.BasisZ
         : direction == "+X" ? XYZ.BasisX : direction == "-X" ? -XYZ.BasisX
@@ -131,7 +131,7 @@ else
                     samples.Add(new XYZ(bb.Max.X, bb.Max.Y, p.Z));
                 }
 
-                var hitIds = new List<int>();
+                var hitIds = new List<ElementId>();
                 var hitDists = new List<double>();
                 double worstSlopeRad = 0;
                 int misses = 0;
@@ -151,7 +151,7 @@ else
                     catch { }
 
                     if (h == null) { misses++; continue; }
-                    hitIds.Add(h.GetReference().ElementId.IntegerValue);
+                    hitIds.Add(h.GetReference().ElementId);
                     hitDists.Add(h.Proximity + startOff);
 
                     // how far off perpendicular is the surface we hit?
@@ -181,7 +181,7 @@ else
                 else ok++;
 
                 if (verdict != null && problems.Count < maxProblemsListed)
-                    problems.Add($"  - '{el.Name}' (Id {el.Id.IntegerValue}) at ({toMm(p.X):F0}, {toMm(p.Y):F0}): {verdict}");
+                    problems.Add($"  - '{el.Name}' (Id {el.Id}) at ({toMm(p.X):F0}, {toMm(p.Y):F0}): {verdict}");
             }
 
             int checkedCount = elements.Count - noPoint;

@@ -29,14 +29,14 @@ using (var t = new Transaction(Document, "AJ Tools - Create Selection Filter"))
         {
             existing.SetElementIds(ids);
             t.Commit();
-            sb.AppendLine($"Updated existing Selection Filter '{filterName}' (Id {existing.Id.IntegerValue}) — now {ids.Count} element(s).");
+            sb.AppendLine($"Updated existing Selection Filter '{filterName}' (Id {existing.Id}) — now {ids.Count} element(s).");
         }
         else
         {
             var sfe = SelectionFilterElement.Create(Document, filterName);
             sfe.SetElementIds(ids);
             t.Commit();
-            sb.AppendLine($"Created Selection Filter '{filterName}' (Id {sfe.Id.IntegerValue}) — {ids.Count} element(s). Not yet applied to any view — run action-apply-view-filter.cs next.");
+            sb.AppendLine($"Created Selection Filter '{filterName}' (Id {sfe.Id}) — {ids.Count} element(s). Not yet applied to any view — run action-apply-view-filter.cs next.");
         }
     }
     catch (Exception ex)

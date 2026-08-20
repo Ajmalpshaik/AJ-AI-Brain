@@ -55,7 +55,7 @@ else if (mode == "remove")
         t.Start();
         try
         {
-            var names = linkTypeIds.Select(id => Document.GetElement(id)?.Name ?? id.IntegerValue.ToString()).ToList();
+            var names = linkTypeIds.Select(id => Document.GetElement(id)?.Name ?? id.ToString()).ToList();
             var deleted = Document.Delete(linkTypeIds);
             t.Commit();
             sb.AppendLine($"REMOVED {linkTypeIds.Count} link type(s) from the project ({deleted.Count} element(s) gone incl. their instances): {string.Join(", ", names.Select(n => $"'{n}'"))}.");

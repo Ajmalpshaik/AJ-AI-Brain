@@ -13,6 +13,6 @@ var phases = Document.Phases.Cast<Phase>().ToList();
 sb.AppendLine($"{phases.Count} phase(s), in order:");
 for (int i = 0; i < phases.Count; i++)
 {
-    sb.AppendLine($"  {i + 1}. '{phases[i].Name}' (Id {phases[i].Id.IntegerValue})");
+    sb.AppendLine($"  {i + 1}. '{phases[i].Name}' (Id {phases[i].Id})");
 }
 return sb.ToString();

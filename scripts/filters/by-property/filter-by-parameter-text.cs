@@ -63,7 +63,7 @@ Func<Parameter, string> parameterToText = p =>
             return "";
 
         var refElement = Document.GetElement(id);
-        return refElement?.Name ?? ("#" + id.IntegerValue);
+        return refElement?.Name ?? ("#" + id);
     }
 
     return "";

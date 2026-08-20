@@ -39,6 +39,6 @@ else
         .Where(e => e != null)
         .ToList();
 
-    sb.AppendLine($"Filtered {elements.Count} member element(s) of group '{group.Name}' (Id {group.Id.IntegerValue}).");
+    sb.AppendLine($"Filtered {elements.Count} member element(s) of group '{group.Name}' (Id {group.Id}).");
 }
 // ---- continue with one or more action fragments below, or add return sb.ToString(); to stop here ----

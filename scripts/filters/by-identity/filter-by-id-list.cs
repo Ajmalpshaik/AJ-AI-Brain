@@ -27,6 +27,6 @@ foreach (var id in elementIds)
 sb.AppendLine($"Looked up {elementIds.Length} Id(s): found {elements.Count}, missing {missing.Count}" +
     (missing.Count > 0 ? $" ({string.Join(", ", missing)})" : "") + ".");
 foreach (var e in elements)
-    sb.AppendLine($"  Id {e.Id.IntegerValue}: '{e.Name}' — category: {e.Category?.Name ?? "(none)"}");
+    sb.AppendLine($"  Id {e.Id}: '{e.Name}' — category: {e.Category?.Name ?? "(none)"}");
 // ---- continue with one or more action fragments below (e.g. action-report-parameters.cs for full
 // parameter values), or add return sb.ToString(); to stop here ----

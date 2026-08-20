@@ -22,7 +22,7 @@ List<(double p1XMm, double p1YMm, double p1ZMm, double p2XMm, double p2YMm, doub
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 View view = mode == "detail" ? (viewIdInt != 0 ? Document.GetElement(new ElementId(viewIdInt)) as View : Document.ActiveView) : null;
 
 if (mode == "detail" && view == null)

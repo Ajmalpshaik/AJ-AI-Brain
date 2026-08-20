@@ -49,8 +49,8 @@ else
             foreach (var (xMm, yMm, name, number) in spacesToCreate)
             {
                 var uv = new UV(
-                    UnitUtils.ConvertToInternalUnits(xMm, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(yMm, DisplayUnitType.DUT_MILLIMETERS));
+                    xMm / 304.8,
+                    yMm / 304.8);
                 var space = Document.Create.NewSpace(level, uv);
                 if (!string.IsNullOrEmpty(name)) space.Name = name;
                 if (!string.IsNullOrEmpty(number)) space.Number = number;

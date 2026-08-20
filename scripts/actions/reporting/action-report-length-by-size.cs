@@ -21,7 +21,7 @@ foreach (var e in elements)
     var sp = e.get_Parameter(sizeParam);
     var lp = e.get_Parameter(lengthParam);
     string size = (sp != null && sp.HasValue) ? sp.AsString() : "unknown";
-    double lenMm = (lp != null && lp.HasValue) ? UnitUtils.ConvertFromInternalUnits(lp.AsDouble(), DisplayUnitType.DUT_MILLIMETERS) : 0;
+    double lenMm = (lp != null && lp.HasValue) ? lp.AsDouble() * 304.8 : 0;
 
     if (!groups.ContainsKey(size)) groups[size] = Tuple.Create(0, 0.0);
     var cur = groups[size];

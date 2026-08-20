@@ -11,7 +11,7 @@
 int maxRows = 50;
 // ---- END INPUTS ----
 
-Func<double, double> mm = ft => UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = ft => ft * 304.8;
 
 sb.AppendLine($"Location for {Math.Min(elements.Count, maxRows)} of {elements.Count} element(s), in mm:");
 foreach (var e in elements.Take(maxRows))
@@ -19,13 +19,13 @@ foreach (var e in elements.Take(maxRows))
     if (e.Location is LocationPoint lp)
     {
         var p = lp.Point;
-        sb.AppendLine($"  Id {e.Id.IntegerValue}: point ({mm(p.X):F0}, {mm(p.Y):F0}, {mm(p.Z):F0})");
+        sb.AppendLine($"  Id {e.Id}: point ({mm(p.X):F0}, {mm(p.Y):F0}, {mm(p.Z):F0})");
     }
     else if (e.Location is LocationCurve lc)
     {
         var p0 = lc.Curve.GetEndPoint(0);
         var p1 = lc.Curve.GetEndPoint(1);
-        sb.AppendLine($"  Id {e.Id.IntegerValue}: line from ({mm(p0.X):F0}, {mm(p0.Y):F0}, {mm(p0.Z):F0}) to ({mm(p1.X):F0}, {mm(p1.Y):F0}, {mm(p1.Z):F0})");
+        sb.AppendLine($"  Id {e.Id}: line from ({mm(p0.X):F0}, {mm(p0.Y):F0}, {mm(p0.Z):F0}) to ({mm(p1.X):F0}, {mm(p1.Y):F0}, {mm(p1.Z):F0})");
     }
     else
     {
@@ -33,11 +33,11 @@ foreach (var e in elements.Take(maxRows))
         if (bb != null)
         {
             var c = (bb.Min + bb.Max) * 0.5;
-            sb.AppendLine($"  Id {e.Id.IntegerValue}: no direct location — bounding-box center ({mm(c.X):F0}, {mm(c.Y):F0}, {mm(c.Z):F0})");
+            sb.AppendLine($"  Id {e.Id}: no direct location — bounding-box center ({mm(c.X):F0}, {mm(c.Y):F0}, {mm(c.Z):F0})");
         }
         else
         {
-            sb.AppendLine($"  Id {e.Id.IntegerValue}: no location or bounding box available.");
+            sb.AppendLine($"  Id {e.Id}: no location or bounding box available.");
         }
     }
 }

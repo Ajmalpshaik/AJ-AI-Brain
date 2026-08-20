@@ -20,9 +20,9 @@ double toleranceMm = 1;
 
 var sb = new System.Text.StringBuilder();
 
-double valueFt = UnitUtils.ConvertToInternalUnits(valueMm, DisplayUnitType.DUT_MILLIMETERS);
-double toleranceFt = UnitUtils.ConvertToInternalUnits(toleranceMm, DisplayUnitType.DUT_MILLIMETERS);
-double valueMaxFt = UnitUtils.ConvertToInternalUnits(valueMaxMm, DisplayUnitType.DUT_MILLIMETERS);
+double valueFt = valueMm / 304.8;
+double toleranceFt = toleranceMm / 304.8;
+double valueMaxFt = valueMaxMm / 304.8;
 
 List<Element> elements = new FilteredElementCollector(Document)
     .OfCategory(targetCategory)

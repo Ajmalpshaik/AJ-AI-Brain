@@ -28,7 +28,7 @@ string namePrefix = null;       // null = keep Revit's default names; else "<pre
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var planView = Document.GetElement(new ElementId(planViewIdInt)) as ViewPlan;
 if (planView == null || planView.IsTemplate)
@@ -89,9 +89,9 @@ else
                         elements.Add(elevView);
                     }
                     t.Commit();
-                    sb.AppendLine($"Created elevation marker (Id {marker.Id.IntegerValue}) with {elements.Count} elevation view(s) in plan '{planView.Name}':");
+                    sb.AppendLine($"Created elevation marker (Id {marker.Id}) with {elements.Count} elevation view(s) in plan '{planView.Name}':");
                     foreach (var v in elements)
-                        sb.AppendLine($"  - '{v.Name}' (Id {v.Id.IntegerValue})");
+                        sb.AppendLine($"  - '{v.Name}' (Id {v.Id})");
                 }
                 catch (Exception ex)
                 {

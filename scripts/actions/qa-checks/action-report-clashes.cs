@@ -51,6 +51,6 @@ sb.AppendLine($"Checked {setAIds.Count} element(s) (set A) against {setBIds.Coun
 sb.AppendLine("Set A Id | Set B Id");
 sb.AppendLine("--- | ---");
 foreach (var (aId, bId) in clashes.Take(maxPairsReported))
-    sb.AppendLine($"{aId.IntegerValue} | {bId.IntegerValue}");
+    sb.AppendLine($"{aId} | {bId}");
 if (clashes.Count > maxPairsReported) sb.AppendLine($"... {clashes.Count - maxPairsReported} more pair(s) not shown.");
 // ---- continue with another action fragment below, or add return sb.ToString(); to finish ----

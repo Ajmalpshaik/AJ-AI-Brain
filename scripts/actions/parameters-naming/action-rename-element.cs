@@ -34,7 +34,7 @@ using (var t = new Transaction(Document, "AJ Tools - Rename Element"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Id {e.Id.IntegerValue} ('{e.Name}'): {exOne.Message}");
+                failures.Add($"Id {e.Id} ('{e.Name}'): {exOne.Message}");
             }
         }
         t.Commit();

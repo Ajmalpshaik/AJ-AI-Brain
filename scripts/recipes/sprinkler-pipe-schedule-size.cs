@@ -6,6 +6,10 @@
 //          back only when told to explicitly.
 // STANDALONE — has its own sb and returns.
 // SOURCE: ../../knowledge/fire-sprinkler/pipe-sizing.md   (both methods, the gate, and the tables)
+// VERSION-PROOF (2026-08-20, brought in line with the library-wide migration): unit conversion is
+//         plain arithmetic (1 ft = exactly 304.8 mm) and every id collection is keyed by ElementId,
+//         so this runs on Revit 2020 through 2027 from one source. The id INPUT is still declared
+//         int, matching the rest of the library — see knowledge/revit-version-compatibility.md.
 //
 // *** IT CHECKS THE GATE BEFORE IT CHECKS ANYTHING ELSE, AND THAT IS THE POINT. ***
 //   The pipe schedule method is heavily restricted. Commonly: new installations of 5,000 ft2 (465 m2) or
@@ -72,8 +76,8 @@ bool writeSizeBack = false;           // DEFAULT OFF. True = set the pipe diamet
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;   // version-proof: 1 ft is exactly 304.8 mm, no unit API
+Func<double, double> mm = v => v / 304.8;
 
 var missing = new List<string>();
 if (rootPipeIdInt == 0) missing.Add("rootPipeIdInt (the segment nearest the supply — there is no downstream without it)");
@@ -145,7 +149,10 @@ else
         nodes.AddRange(sprinklers);
 
         // connector origins per element — IsConnected is NOT trusted (trace-mep-circuits.cs lesson)
-        var conns = new Dictionary<int, List<XYZ>>();
+        // keyed by ElementId throughout: its GetHashCode returns the id, so it keys a Dictionary/HashSet
+        // directly and stays correct on 2024+ where an id no longer fits an int.
+        var rootId = new ElementId(rootPipeIdInt);
+        var conns = new Dictionary<ElementId, List<XYZ>>();
         foreach (var e in nodes)
         {
             ConnectorManager mgr = null;
@@ -155,17 +162,17 @@ else
             if (mgr == null) continue;
             var list = new List<XYZ>();
             foreach (Connector c in mgr.Connectors) { try { list.Add(c.Origin); } catch { } }
-            if (list.Count > 0) conns[e.Id.IntegerValue] = list;
+            if (list.Count > 0) conns[e.Id] = list;
         }
 
-        if (!conns.ContainsKey(rootPipeIdInt))
+        if (!conns.ContainsKey(rootId))
         {
             sb.AppendLine($"The root element (Id {rootPipeIdInt}) has no readable connectors — it cannot anchor the walk.");
         }
         else
         {
             var ids = conns.Keys.ToList();
-            var adj = ids.ToDictionary(i => i, i => new List<int>());
+            var adj = ids.ToDictionary(i => i, i => new List<ElementId>());
             for (int a = 0; a < ids.Count; a++)
                 for (int b = a + 1; b < ids.Count; b++)
                 {
@@ -175,23 +182,23 @@ else
                     adj[ids[b]].Add(ids[a]);
                 }
 
-            var sprinklerIds = new HashSet<int>(sprinklers.Select(s => s.Id.IntegerValue));
+            var sprinklerIds = new HashSet<ElementId>(sprinklers.Select(s => s.Id));
 
             // BFS out from the root: parents, order, and loop detection
-            var parent = new Dictionary<int, int>();
-            var order = new List<int>();
-            var seen = new HashSet<int> { rootPipeIdInt };
-            var q = new Queue<int>(); q.Enqueue(rootPipeIdInt);
-            parent[rootPipeIdInt] = 0;
+            var parent = new Dictionary<ElementId, ElementId>();
+            var order = new List<ElementId>();
+            var seen = new HashSet<ElementId> { rootId };
+            var q = new Queue<ElementId>(); q.Enqueue(rootId);
+            parent[rootId] = ElementId.InvalidElementId;   // the root has no parent
             int loopEdges = 0;
             while (q.Count > 0)
             {
-                int cur = q.Dequeue();
+                var cur = q.Dequeue();
                 order.Add(cur);
                 foreach (var nb in adj[cur])
                 {
                     if (!seen.Contains(nb)) { seen.Add(nb); parent[nb] = cur; q.Enqueue(nb); }
-                    else if (parent.ContainsKey(cur) && parent[cur] != nb) loopEdges++;
+                    else if (parent.ContainsKey(cur) && !parent[cur].Equals(nb)) loopEdges++;
                 }
             }
 
@@ -211,10 +218,10 @@ else
             var downstream = ids.ToDictionary(i => i, i => 0);
             for (int i = order.Count - 1; i >= 0; i--)
             {
-                int id = order[i];
+                var id = order[i];
                 if (sprinklerIds.Contains(id)) downstream[id] += 1;
-                int p = parent[id];
-                if (p != 0) downstream[p] += downstream[id];
+                var p = parent[id];
+                if (!p.Equals(ElementId.InvalidElementId)) downstream[p] += downstream[id];
             }
 
             // ---------- size each pipe ----------
@@ -229,7 +236,7 @@ else
 
             foreach (var e in pipeLike)
             {
-                int id = e.Id.IntegerValue;
+                var id = e.Id;
                 if (!downstream.ContainsKey(id) || !seen.Contains(id)) continue;
                 int heads = downstream[id];
                 if (heads == 0) continue;                       // feeds nothing — nothing to size from
@@ -276,7 +283,7 @@ else
             if (branchBreaches > 0)
                 sb.AppendLine($"  *** {branchBreaches:N0} apparent branch line(s) carry more than {maxSprinklersPerBranchSide} heads."
                     + " That is a SEPARATE rule from the size table and a segment can pass one and break the other.");
-            sb.AppendLine($"  total sprinklers on this network: {downstream[rootPipeIdInt]:N0}");
+            sb.AppendLine($"  total sprinklers on this network: {downstream[rootId]:N0}");
             sb.AppendLine("  NOTE: heads above AND below a ceiling both count on the branch that feeds them — if the ceiling void");
             sb.AppendLine("  is protected, this count includes it, but ONLY if those heads are modelled and connected.");
 

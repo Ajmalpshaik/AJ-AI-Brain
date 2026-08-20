@@ -26,7 +26,7 @@ double diameterMm = 0;                 // round types; 0 = keep type default
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 var sysTypes = new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Mechanical.MechanicalSystemType)).Cast<Autodesk.Revit.DB.Mechanical.MechanicalSystemType>().ToList();
@@ -64,7 +64,7 @@ else
                 // value you asked for, and the snap to the type's size table only happens at
                 // regeneration. Without this the SNAPPED note never fires (measured live 2026-08-07).
                 Document.Regenerate();
-                double gotMm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                double gotMm = p.AsDouble() * 304.8;
                 if (!ok) sizeNotes.Add($"{label} REFUSED {wantMm}mm — still {gotMm:0.##}mm");
                 else if (Math.Abs(gotMm - wantMm) > 0.5) sizeNotes.Add($"{label} SNAPPED {wantMm}mm -> {gotMm:0.##}mm (nearest size the type allows)");
             };
@@ -81,9 +81,9 @@ else
             var hNow = duct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM);
             var dNow = duct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM);
             string actualSize = (dNow != null && dNow.HasValue && (wNow == null || !wNow.HasValue))
-                ? $"{UnitUtils.ConvertFromInternalUnits(dNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm dia"
-                : $"{(wNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(wNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##}x{(hNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(hNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##} mm";
-            sb.AppendLine($"Created duct (Id {duct.Id.IntegerValue}) — type '{ductType.Name}', system '{sysType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+                ? $"{dNow.AsDouble() * 304.8:0.##} mm dia"
+                : $"{(wNow == null ? 0 : wNow.AsDouble() * 304.8):0.##}x{(hNow == null ? 0 : hNow.AsDouble() * 304.8):0.##} mm";
+            sb.AppendLine($"Created duct (Id {duct.Id}) — type '{ductType.Name}', system '{sysType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
             if (sizeNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", sizeNotes));
             if (skippedSizes.Count > 0) sb.AppendLine($"  Size(s) not applicable to this duct shape, skipped: {string.Join(", ", skippedSizes)}.");
         }

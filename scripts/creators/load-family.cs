@@ -57,7 +57,7 @@ using (var t = new Transaction(Document, "AJ Tools - Load Families"))
                 loaded++;
                 var symbols = fam.GetFamilySymbolIds().Select(id => Document.GetElement(id)).OfType<FamilySymbol>().ToList();
                 elements.AddRange(symbols);
-                sb.AppendLine($"Loaded family '{fam.Name}' (Id {fam.Id.IntegerValue}) — {symbols.Count} type(s): {string.Join(", ", symbols.Select(s => $"'{s.Name}' (Id {s.Id.IntegerValue})"))}");
+                sb.AppendLine($"Loaded family '{fam.Name}' (Id {fam.Id}) — {symbols.Count} type(s): {string.Join(", ", symbols.Select(s => $"'{s.Name}' (Id {s.Id})"))}");
             }
             else if (fam == null && !ok)
             {

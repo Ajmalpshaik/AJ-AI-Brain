@@ -45,8 +45,8 @@ double offsetMm = 0;                 // signed, along the ray: negative pulls ba
 double maxRayDistanceMm = 5000;      // ignore hits farther than this
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 double maxDistFeet = mm(maxRayDistanceMm);
 
 XYZ dir = null;
@@ -120,7 +120,7 @@ else
                                  .Where(h => h.Proximity <= maxDistFeet)
                                  .OrderBy(h => h.Proximity).FirstOrDefault();
                 }
-                catch (Exception exRay) { sb.AppendLine($"  Id {el.Id.IntegerValue}: ray failed — {exRay.Message}"); continue; }
+                catch (Exception exRay) { sb.AppendLine($"  Id {el.Id}: ray failed — {exRay.Message}"); continue; }
 
                 if (hit == null) { noHit++; continue; }
 
@@ -132,7 +132,7 @@ else
             sb.AppendLine($"Ray '{direction}'{(targetCategoryName != null ? $" -> {targetCategoryName}" : " -> nearest anything")}, offset {offsetMm} mm, in 3D view '{rayView.Name}':");
             sb.AppendLine($"  {plan.Count} element(s) would move, {noHit} found nothing within {maxRayDistanceMm} mm, {noPoint} had no insertion point (of {elements.Count}).");
             foreach (var p in plan.Take(20))
-                sb.AppendLine($"  - '{p.Item1.Name}' (Id {p.Item1.Id.IntegerValue}) moves {toMm(p.Item2.GetLength()):F0} mm to hit '{p.Item4?.Name ?? "?"}' (Id {p.Item4?.Id.IntegerValue}, {p.Item4?.Category?.Name ?? "?"}) at {toMm(p.Item3):F0} mm");
+                sb.AppendLine($"  - '{p.Item1.Name}' (Id {p.Item1.Id}) moves {toMm(p.Item2.GetLength()):F0} mm to hit '{p.Item4?.Name ?? "?"}' (Id {p.Item4?.Id}, {p.Item4?.Category?.Name ?? "?"}) at {toMm(p.Item3):F0} mm");
             if (plan.Count > 20) sb.AppendLine($"  ... +{plan.Count - 20} more");
 
             if (dryRun)

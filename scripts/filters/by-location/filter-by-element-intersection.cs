@@ -39,6 +39,6 @@ else
 
     elements = collector.Where(e => e.Id != targetElement.Id).ToList();
     string categoryLabel = useCategoryFilter ? targetCategory.ToString() : "all categories";
-    sb.AppendLine($"Filtered {elements.Count} element(s) physically intersecting '{targetElement.Name}' (Id {targetElement.Id.IntegerValue}), candidates: {categoryLabel}.");
+    sb.AppendLine($"Filtered {elements.Count} element(s) physically intersecting '{targetElement.Name}' (Id {targetElement.Id}), candidates: {categoryLabel}.");
 }
 // ---- continue with one or more action fragments below, or add return sb.ToString(); to stop here ----

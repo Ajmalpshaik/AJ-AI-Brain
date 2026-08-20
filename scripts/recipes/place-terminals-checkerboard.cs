@@ -41,14 +41,14 @@ var space = new FilteredElementCollector(Document)
 
 if (space == null) return "No Space found for this room — run set-space-airflow.cs first.";
 
-double supplyLs = UnitUtils.ConvertFromInternalUnits(space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM).AsDouble(), DisplayUnitType.DUT_LITERS_PER_SECOND);
-double returnLs = UnitUtils.ConvertFromInternalUnits(space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM).AsDouble(), DisplayUnitType.DUT_LITERS_PER_SECOND);
+double supplyLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM).AsDouble()) * 28.316846592;
+double returnLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM).AsDouble()) * 28.316846592;
 
 int count = Math.Max(minCount, (int)Math.Ceiling(supplyLs / maxLsPerTerminal)); // supply's count used for BOTH
 
 // Room bbox, shrunk by clearance.
 var bbox = room.get_BoundingBox(null);
-double clearanceFt = UnitUtils.ConvertToInternalUnits(wallClearanceMm, DisplayUnitType.DUT_MILLIMETERS);
+double clearanceFt = wallClearanceMm / 304.8;
 double xMin = bbox.Min.X + clearanceFt, xMax = bbox.Max.X - clearanceFt;
 double yMin = bbox.Min.Y + clearanceFt, yMax = bbox.Max.Y - clearanceFt;
 double xExtent = xMax - xMin, yExtent = yMax - yMin;
@@ -79,9 +79,9 @@ var ceiling = new FilteredElementCollector(Document)
     .Cast<Ceiling>()
     .FirstOrDefault(c => elementCenterIsInRoom(c));
 double heightMm = ceiling?.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM)?.AsDouble() != null
-    ? UnitUtils.ConvertFromInternalUnits(ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble(), DisplayUnitType.DUT_MILLIMETERS)
+    ? (ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble()) * 304.8
     : placementHeightMm;
-double z = bbox.Min.Z + UnitUtils.ConvertToInternalUnits(heightMm, DisplayUnitType.DUT_MILLIMETERS);
+double z = bbox.Min.Z + heightMm / 304.8;
 
 var sb = new System.Text.StringBuilder();
 sb.AppendLine($"Room {room.Name}: {count} supply + {count} return, {rows} row(s), near-square grid.");
@@ -136,8 +136,8 @@ using (var t = new Transaction(Document, "AJ Tools - Place Air Terminals"))
         t2.Start();
         try
         {
-            double supplyEach = UnitUtils.ConvertToInternalUnits(supplyLs / Math.Max(1, supplyTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
-            double returnEach = UnitUtils.ConvertToInternalUnits(returnLs / Math.Max(1, returnTerms.Count), DisplayUnitType.DUT_LITERS_PER_SECOND);
+            double supplyEach = supplyLs / Math.Max(1, supplyTerms.Count) / 28.316846592;
+            double returnEach = returnLs / Math.Max(1, returnTerms.Count) / 28.316846592;
             foreach (var fi in supplyTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(supplyEach);
             foreach (var fi in returnTerms) fi.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM)?.Set(returnEach);
             t2.Commit();

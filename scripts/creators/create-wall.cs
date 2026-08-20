@@ -21,7 +21,7 @@ bool structural = false;
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 var wallTypes = new FilteredElementCollector(Document).OfClass(typeof(WallType)).Cast<WallType>()
@@ -42,7 +42,7 @@ else
             var wall = Wall.Create(Document, line, wallType.Id, level.Id, mm(heightMm), 0, false, structural);
             elements.Add(wall);
             t.Commit();
-            sb.AppendLine($"Created wall (Id {wall.Id.IntegerValue}) — type '{wallType.Name}', level '{level.Name}', {startXMm},{startYMm} -> {endXMm},{endYMm} mm, height {heightMm} mm, structural: {structural}.");
+            sb.AppendLine($"Created wall (Id {wall.Id}) — type '{wallType.Name}', level '{level.Name}', {startXMm},{startYMm} -> {endXMm},{endYMm} mm, height {heightMm} mm, structural: {structural}.");
         }
         catch (Exception ex)
         {

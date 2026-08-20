@@ -7,6 +7,10 @@
 // STANDALONE — has its own sb and returns. Writes only when told to explicitly.
 // SOURCE: ../../knowledge/fire-sprinkler/hazard-classification.md  (the classes, and how the call is made)
 // SOURCE: ../../knowledge/fire-sprinkler/where-sprinklers-are-required.md (the sweep this pairs with)
+// VERSION-PROOF (2026-08-20, brought in line with the library-wide migration): unit conversion is
+//         plain arithmetic (1 ft = exactly 304.8 mm) and every id collection is keyed by ElementId,
+//         so this runs on Revit 2020 through 2027 from one source. The id INPUT is still declared
+//         int, matching the rest of the library — see knowledge/revit-version-compatibility.md.
 //
 // WHY THIS EXISTS: every other fragment in the chain takes ONE hazardLabel and applies it to everything it
 //   touches. On a real floor — office, plant room, store, car park ramp — that is three or four classes,
@@ -62,7 +66,7 @@ int maxListed = 80;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double, double> toM2 = v => v / 10.763910416709722;   // version-proof: no unit API to deprecate
 
 Level level = levelIdInt == 0 ? null : Document.GetElement(new ElementId(levelIdInt)) as Level;
 
@@ -155,11 +159,11 @@ else
             if (string.IsNullOrWhiteSpace(current))
             {
                 string hint = suggest(nm, aM2);
-                missingClass.Add($"{num} '{nm}' (Id {r.Id.IntegerValue}) {aM2:F1} m2"
+                missingClass.Add($"{num} '{nm}' (Id {r.Id}) {aM2:F1} m2"
                     + (string.IsNullOrEmpty(hint) ? "" : $"  [suggestion only, NOT written: {hint}]"));
             }
             else if (!string.IsNullOrWhiteSpace(current) && string.IsNullOrWhiteSpace(curStd))
-                conflicts.Add($"{num} '{nm}' (Id {r.Id.IntegerValue}) has class '{current}' but NO standard recorded —"
+                conflicts.Add($"{num} '{nm}' (Id {r.Id}) has class '{current}' but NO standard recorded —"
                     + " 'Ordinary Hazard' is ambiguous between NFPA 13 and BS EN 12845.");
 
             if (listed++ < maxListed && !string.IsNullOrWhiteSpace(current))
@@ -193,8 +197,10 @@ else
         // ---------- write ----------
         if (mode == "write" && hasHazard)
         {
+            // compare by ElementId, never by int — a 2024+ id does not fit an int (revit-version-compatibility.md)
+            var writeIdSet = new HashSet<ElementId>(roomIdsToWrite.Select(i => new ElementId(i)));
             var targets = roomIdsToWrite.Length > 0
-                ? placed.Where(r => roomIdsToWrite.Contains(r.Id.IntegerValue)).ToList()
+                ? placed.Where(r => writeIdSet.Contains(r.Id)).ToList()
                 : placed;
 
             sb.AppendLine();

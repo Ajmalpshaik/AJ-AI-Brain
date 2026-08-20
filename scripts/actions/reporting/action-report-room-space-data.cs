@@ -17,7 +17,7 @@
 // non-zero Volume returned for both a Room and a Space). Re-verified end-to-end on a real Room+Space pair.
 
 bool anyVolumeZero = false;
-var rows = new List<(int id, string name, string number, string level, double areaSqm, double volumeCum, string occupancy)>();
+var rows = new List<(ElementId id, string name, string number, string level, double areaSqm, double volumeCum, string occupancy)>();
 int skipped = 0;
 
 foreach (var e in elements)
@@ -25,15 +25,15 @@ foreach (var e in elements)
     var sp = e as SpatialElement;
     if (sp == null) { skipped++; continue; }
 
-    double areaSqm = UnitUtils.ConvertFromInternalUnits(sp.Area, DisplayUnitType.DUT_SQUARE_METERS);
+    double areaSqm = sp.Area / 10.763910416709722;
     double volumeInternal = sp.get_Parameter(BuiltInParameter.ROOM_VOLUME)?.AsDouble() ?? 0;
-    double volumeCum = UnitUtils.ConvertFromInternalUnits(volumeInternal, DisplayUnitType.DUT_CUBIC_METERS);
+    double volumeCum = volumeInternal / 35.314666721488595;
     if (volumeInternal <= 0) anyVolumeZero = true;
 
     string occupancy = sp.LookupParameter("Occupancy")?.AsString() ?? "";
     string levelName = sp.Level?.Name ?? "";
 
-    rows.Add((sp.Id.IntegerValue, sp.Name, sp.Number, levelName, areaSqm, volumeCum, occupancy));
+    rows.Add((sp.Id, sp.Name, sp.Number, levelName, areaSqm, volumeCum, occupancy));
 }
 
 sb.AppendLine($"Room/Space data for {rows.Count} element(s) ({skipped} skipped, not a Room/Space):");
