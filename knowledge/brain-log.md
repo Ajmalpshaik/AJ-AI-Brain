@@ -2685,3 +2685,11 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
   hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
   knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
+- 2026-08-21 — **asked whether a KV cache would help; the answer is nothing to build, and it is now on
+  disk.** Two different things wear that name: the model's own KV cache runs on the API side with no
+  setting to reach, and prompt caching — the configurable half — is already handled by the harness, on a
+  1-hour TTL, with `CLAUDE.md` + `START-HERE.md` (23.6 KB, ~6,000 tokens) sitting in the cached prefix.
+  The three Brain-side caches were already settled: fragment index cache built (426 ms -> 38 ms), warm
+  search server built (3,536 ms -> ~220 ms), query cache declined at a 0.6% hit rate. Recorded in
+  `semantic-index/rag-architecture-decisions.md`, not `knowledge/` — a file about the Brain's own
+  machinery costs retrieval accuracy when indexed, which that file itself proved on 2026-08-20.

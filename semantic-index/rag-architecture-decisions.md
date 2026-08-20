@@ -251,6 +251,82 @@ exactly what the agent does and what the auto-search hook already instructs on e
 the fallback exists and works — at the only layer that can see the evidence. Do not re-attempt it as a
 score threshold.
 
+## KV cache — asked 2026-08-21, and there is nothing to build
+
+**Asked:** *"Is there we need kv cache or someting like thta it will help ?"*
+
+**Answer: nothing to build.** "KV cache" names two different things, and every layer where either one
+pays is already on by default or already built and measured — three of the four items below are settled
+higher up in this same file. This section exists because the question will be asked again and the
+chat-side half of the answer was nowhere on disk.
+
+### 1. The model's own KV cache — not ours to install
+
+While the model generates, it holds the attention keys and values for tokens it has already processed so
+each new token does not re-read the whole prompt. It runs on the API side, on every request, always.
+There is no setting, no library and no file in this repo that switches it on. Nothing to do.
+
+### 2. Prompt caching — the configurable half, and the harness already does it
+
+This is the productised form: a stable prefix is marked, and repeat requests re-use it instead of paying
+full price to re-read it. **Claude Code handles it at the harness level — no code, no config, nothing in
+this repo.** The session this was checked in ran on a **1-hour** cache TTL.
+
+What it is worth, per the Claude API's published economics:
+
+| | Cost against one ordinary input token |
+|---|---|
+| Read from cache | **0.1x** |
+| Uncached | 1x |
+| Write, 5-minute TTL | 1.25x |
+| Write, 1-hour TTL | 2x |
+
+Break-even is 2 requests on the 5-minute TTL and 3 on the 1-hour one. Any real session clears that in its
+first few turns.
+
+**What gets cached here:** the auto-loaded prefix — `CLAUDE.md` (10.4 KB) and `START-HERE.md` (13.3 KB),
+23.6 KB together, roughly 6,000 tokens on the bytes-over-four estimate — sits with the tool definitions
+and the system prompt in the cacheable region. The minimum cacheable prefix is ~1,024 tokens, so it
+clears the bar many times over. The auto-search hook's injected results land at the *end* of the user's
+turn, so they never touch the prefix.
+
+**One mechanic worth knowing, deliberately not acted on.** Caching is a prefix match: one changed byte
+invalidates everything after it, and the render order is tools, then system, then messages. So **editing
+`CLAUDE.md` or `START-HERE.md` mid-session discards the cached prefix for the rest of that session** —
+and those two are exactly what `brain-self-maintain` edits as routine work. No other file does it;
+`knowledge/`, `scripts/` and `skills/` are not in the prefix. The obvious response is "batch edits to
+those two files to the end of a session", and it is **not** adopted, for the reason this whole file
+exists: **there is no measurement of what it costs here.** It is one prefix re-write per session, and a
+fussy habit with no number behind it is what this repo declines everywhere else. Recorded as a mechanic,
+not a rule. If it is ever worth measuring, the signal is `usage.cache_read_input_tokens` reading zero
+across repeated turns.
+
+Two neighbouring ideas are also **Skip**: pre-warming the cache pays only when first-request latency is
+user-visible and there is a quiet moment before traffic, and here the first real message warms it anyway;
+and choosing a different TTL is not exposed to us.
+
+### 3. The Brain's own caches — all three already settled above
+
+| Layer | Verdict | The number that decided it |
+|---|---|---|
+| Fragment index cache | **Built** | 426 ms -> 38 ms per query; identical results on 25/25 real questions |
+| Warm search server, model held once | **Built** | 3,536 ms cold per message; warm query 763 ms -> ~220 ms |
+| High-frequency query cache | **Declined** | 171 of 172 logged questions distinct — a 0.6% hit rate |
+
+### The four verdicts
+
+| Item | Verdict | Why |
+|---|---|---|
+| The model's KV cache | **Skip** | Always on, nothing to install |
+| Prompt caching in the chat | **Keep ours** | Automatic at the harness, 1-hour TTL; no repo change improves it |
+| Fragment index cache, warm server | **Keep ours** | Built, measured, invalidation verified |
+| A high-frequency query cache | **Skip** | 0.6% hit rate — there is no repeat traffic to cache |
+
+**"Keep ours" is the verdict to distrust, so what did his framing add?** Two things that were not written
+down anywhere: the prefix-invalidation mechanic above, and the plain fact that the chat-side caching is
+automatic and free. Neither changes the code. Both stop the question being re-derived from scratch, which
+is the same reason the de-duplication and ANN sections exist.
+
 ## Query understanding — the weak spot was misdiagnosed, and it is now half fixed
 
 **Limiter 2 in the list above said the measured failure class was "site vocabulary — a site word that
