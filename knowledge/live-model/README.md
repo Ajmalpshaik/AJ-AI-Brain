@@ -16,6 +16,7 @@ feet↔mm conversion every script needs.
 | "What actually connects to what" — tracing pipe/duct/equipment when names, tags or `IsConnected` can't be trusted | [`mep-trace.md`](mep-trace.md) |
 | "Mistake", "undo", "go back" — reversing something | [`undo.md`](undo.md) |
 | Space airflow params; how many air terminals; terminal grid layout; a terminal's Flow value | [`hvac-terminals.md`](hvac-terminals.md) |
+| Changing a family's CATEGORY (e.g. Duct Accessory → Air Terminal) — what survives, what is silently dropped, what to check first | [`family-category-change.md`](family-category-change.md) |
 | Drawing duct between points; branch duct (riser + elbow + takeoff); connecting to an existing open end; drawing FROM a connector | [`hvac-ducts.md`](hvac-ducts.md) |
 | Slicing a trunk into progressively smaller segments for duct sizing; why the trunk gets split; recovering an orphaned branch | [`hvac-duct-sizing.md`](hvac-duct-sizing.md) |
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
