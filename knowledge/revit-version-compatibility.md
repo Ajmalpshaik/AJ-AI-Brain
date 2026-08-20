@@ -106,10 +106,10 @@ the library** — no `#if`, no runtime feature check.
    a big model. `IntegerValue` → `Value` and `new ElementId(int)` → `new ElementId(long)`.
 3. **Prove one fragment end to end on the target Revit before trusting the batch** — this Brain's standing
    rule for anything unverified. One element, check the real result, then run the batch.
-4. **A fragment fixed for 2024+ stops working on 2020.** Because these are source, not a DLL, there is no
-   `#if` to lean on — the bridge compiles one text against one Revit. Decide whether this Brain still has
-   to support 2020 at all, or move the whole library forward to 2024+ and say so in `scripts/README.md`.
-   Do not leave the library half-migrated; that is the worst of both.
+4. **One fragment CAN serve every version — see the section below.** An earlier draft of this note said
+   you had to pick one Revit; that was wrong. `#if` is genuinely unavailable (the bridge defines no
+   `REVIT20XX` symbols), but plain arithmetic and runtime reflection both work, and between them they
+   cover everything this library does.
 5. **Re-scan rather than trust this note.** The counts here are from 2026-08-20 against 282 fragments:
 
    ```
@@ -119,3 +119,60 @@ the library** — no `#if`, no runtime feature check.
 
 Version rules themselves (what changed when, .NET per release, helper patterns) belong to the
 `revit-version-matrix` skill, not here. This note only records **what this Brain's own library uses**.
+
+## Writing one fragment that runs on every version
+
+`#if REVIT2024` does **not** work here. The bridge compiles a bare source string with no version symbols
+defined, so every `#if` silently takes the `#else` branch. That is not a reason to fork the library —
+there are two techniques that need no compile symbols at all.
+
+### Units — delete the API call, don't guard it
+
+Revit's internal length unit is decimal feet, and 1 foot is **exactly** 304.8 mm by definition. So the
+whole unit problem disappears if the conversion is written as arithmetic instead of an API call. There is
+no API left to deprecate.
+
+| Was | Count | Version-proof |
+|---|---|---|
+| `DUT_MILLIMETERS` | 184 | `mm / 304.8` |
+| `DUT_SQUARE_METERS` | 12 | `m2 * 10.763910416709722` |
+| `DUT_LITERS_PER_SECOND` | 5 | `ls / 28.316846592` |
+| `DUT_CUBIC_FEET_PER_MINUTE` | 3 | `cfm / 60.0` |
+| `DUT_CUBIC_METERS` | 2 | `m3 * 35.314666721488595` |
+| `DUT_VOLTS`, `DUT_VOLT_AMPERES` | 2 | **needs verification** — electrical internals are not a plain factor |
+
+That is 206 of 208 conversions solved with no version code whatsoever.
+
+### ElementId — ask at runtime, the same trick the Python side uses
+
+Reflection looks the member up by name instead of naming it in code, so the source compiles even on the
+version where the member does not exist:
+
+```csharp
+static long IdOf(ElementId id) {
+    var p = typeof(ElementId).GetProperty("Value");          // exists 2024+
+    if (p != null) return (long)p.GetValue(id);
+    return (int)typeof(ElementId).GetProperty("IntegerValue").GetValue(id);
+}
+static ElementId MakeId(long v) {
+    var c = typeof(ElementId).GetConstructor(new[]{typeof(long)});   // exists 2024+
+    if (c != null) return (ElementId)c.Invoke(new object[]{v});
+    return (ElementId)typeof(ElementId).GetConstructor(new[]{typeof(int)}).Invoke(new object[]{(int)v});
+}
+```
+
+Feature detection beats a version number, exactly as `revit-version-matrix` says for pyRevit: it keeps
+working when the version list grows.
+
+### The constructor was never the real problem — the INPUT DECLARATIONS are
+
+`new ElementId(myInt)` already compiles on 2024+, because C# widens an `int` to a `long` implicitly. The
+actual defect is that this library declares its id inputs as `int`:
+
+    int viewIdInt   x11
+    int roomIdInt   x11
+    int levelIdInt  x11
+
+An `int` cannot hold a 2024+ id regardless of what it is passed to. **Change the declaration to `long`**
+and build the id with `MakeId`. Passing a `long` to `new ElementId(...)` directly would break 2020, which
+is exactly what `MakeId` exists to avoid.
