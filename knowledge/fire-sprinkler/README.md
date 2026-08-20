@@ -16,6 +16,7 @@ about head placement only.
 | **The Z dimension**: how far below the ceiling, how far below the slab when there is no ceiling, sloped ceilings, ceiling pockets, clearance above stored goods | [`deflector-and-ceiling-height.md`](deflector-and-ceiling-height.md) |
 | **Beams, columns, ducts, light fittings** — the three-times rule, the beam table, wide obstructions, obstructions against a wall, what may be ignored | [`obstructions.md`](obstructions.md) |
 | **The ceiling void** — does it need its own sprinklers, upright above and pendent below, and why the 800 mm figure is not an NFPA number | [`concealed-spaces.md`](concealed-spaces.md) |
+| **Which rulebook is this job on** — where NFPA 13 and BS EN 12845 agree, where they quietly don't, and what to change when the spec says EN | [`nfpa-vs-en12845.md`](nfpa-vs-en12845.md) |
 | **The actual method** — room boundary in, head positions out, in the order the decisions have to be made | [`layout-method.md`](layout-method.md) |
 | Doing it in Revit — which categories hold the beams and columns, how to read the ceiling, how head height is really controlled, which fragment to run | [`revit-modelling.md`](revit-modelling.md) |
 

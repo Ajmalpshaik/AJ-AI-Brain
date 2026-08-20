@@ -2118,3 +2118,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   question. The pattern worth keeping is bigger than the fact: **he remembered the number correctly and
   the standard incorrectly**, which is the normal shape of site knowledge — so "which standard is this
   project on" now belongs in the opening questions of a sprinkler job, not in an assumption.
+
+- **2026-08-20 — "is there anything like that?" — yes, and the reason it catches people is the agreement,
+  not the disagreement.** Following the ceiling-void finding, Ajmal asked whether there were more rules of
+  the same shape. Searched, and the answer has a pattern worth more than the list: **NFPA 13 and BS EN
+  12845 agree almost exactly on the headline number and diverge on everything around it.** Max area per
+  head, light hazard: NFPA 225 ft² = 20.9 m², EN 21 m². Ordinary: 12.1 m² against 12 m². That near-identity
+  is *why* people treat the two as interchangeable — the first number they check does match. Then:
+  deflector below a smooth ceiling is **25–305 mm (NFPA) against 75–150 mm (EN)**, so a habit of "250 below"
+  is legal under one and not the other and nobody re-checks a mounting height that has worked for years;
+  minimum spacing is 1,829 mm against **2,000 mm**, so a layout at 1.9 m passes NFPA and fails EN; and the
+  hazard classes **do not map** — EN splits Ordinary into OH1–OH4 and adds HHP/HHS, so reading "OH3" and
+  laying out to NFPA "Ordinary Hazard" is a guess, not a translation. New chunk
+  `knowledge/fire-sprinkler/nfpa-vs-en12845.md`. `sprinkler-nfpa-grid.cs` and
+  `sprinkler-compliance-audit.cs` now take a **required `standardLabel`** and print it on every report —
+  the grid refuses to run without it, the audit prints NOT STATED in the clear. A head count with no
+  standard named is the same failure as one with no hazard class named, and this session produced the
+  evidence for that in one question.

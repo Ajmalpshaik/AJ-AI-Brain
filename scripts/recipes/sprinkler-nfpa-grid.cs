@@ -8,6 +8,7 @@
 // STANDALONE — has its own sb and returns; not filter+action shaped. Read-only unless drawCircles is on.
 // SOURCE: ../../knowledge/fire-sprinkler/layout-method.md  (the method, step by step)
 // SOURCE: ../../knowledge/nfpa13-sprinkler-spacing.md      (where the numbers come from)
+// SOURCE: ../../knowledge/fire-sprinkler/nfpa-vs-en12845.md (feeding it EN 12845 numbers instead — same fragment)
 //
 // WHY THIS EXISTS ALONGSIDE recipes/generate-room-coverage-layout.cs:
 //   That one answers "no gaps at radius r" — the smoke-detector / CCTV / WiFi question. It is the right
@@ -61,6 +62,10 @@ int roomIdInt = 0;                    // the room to lay out (must be PLACED —
 // --- the code limits. Take them from knowledge/nfpa13-sprinkler-spacing.md, converted from the FOOT
 //     value, for the hazard class and construction type of THIS room. 0 means "not stated" and the
 //     recipe refuses to run rather than assume.
+string standardLabel = "";           // e.g. "NFPA 13 (2022)" or "BS EN 12845". REQUIRED: the two standards agree
+                                      // on area per head and differ on almost everything around it, so a check
+                                      // table that does not name its rulebook is not a check table.
+                                      // See knowledge/fire-sprinkler/nfpa-vs-en12845.md.
 string hazardLabel = "";              // e.g. "Ordinary Hazard Group I" — printed on every line of the report
 string constructionLabel = "";        // e.g. "unobstructed, noncombustible" — the other half of the answer
 double maxAreaPerHeadM2 = 0;          // NFPA: light 225 ft2 = 20.90 | ordinary 130 ft2 = 12.08 | extra >=0.25 gpm/ft2 100 ft2 = 9.29
@@ -103,6 +108,7 @@ if (maxAreaPerHeadM2 <= 0) missing.Add("maxAreaPerHeadM2");
 if (maxSpacingMm <= 0) missing.Add("maxSpacingMm");
 if (string.IsNullOrWhiteSpace(hazardLabel)) missing.Add("hazardLabel");
 if (string.IsNullOrWhiteSpace(constructionLabel)) missing.Add("constructionLabel");
+if (string.IsNullOrWhiteSpace(standardLabel)) missing.Add("standardLabel");
 
 if (missing.Count > 0)
 {
@@ -139,7 +145,7 @@ else
     double bboxM2 = toM2(W * H);
 
     sb.AppendLine($"ROOM '{room.Name}' (Id {roomIdInt}) — {roomM2:F1} m2, bounding box {toMm(W):N0} x {toMm(H):N0} mm");
-    sb.AppendLine($"HAZARD: {hazardLabel}  |  CONSTRUCTION: {constructionLabel}");
+    sb.AppendLine($"STANDARD: {standardLabel}  |  HAZARD: {hazardLabel}  |  CONSTRUCTION: {constructionLabel}");
     sb.AppendLine($"LIMITS USED — area/head {maxAreaPerHeadM2:F2} m2 | max spacing {maxSpacingMm:N0} mm | "
         + $"min spacing {(minSpacingMm > 0 ? minSpacingMm.ToString("N0") + " mm" : "NOT CHECKED")} | "
         + $"wall {minWallDistanceMm:N0}..{wallLimitMm:N0} mm{(wallDerived ? " (max derived as half the spacing)" : "")}"
