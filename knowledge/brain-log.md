@@ -2169,3 +2169,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   now, while it is fresh, that sprinkler pipe sizing splits into a tractable **pipe-schedule** method and a
   **hydraulic** method that belongs with a licensed engineer. Establishing which one a project uses is the
   first move when the gate opens, not an afterthought.
+
+- 2026-08-20 — Search retrieval: swapped the embedding model from `all-MiniLM-L6-v2` to
+  `bge-small-en-v1.5` (new `semantic-index/embed_bge.py`, ONNX on the existing `onnxruntime` — no new
+  dependency, same pattern `rerank.py` established). Reason from the score card, not taste: 7 of 14 test
+  questions had the right file ABSENT from the whole 80-chunk candidate pool, which no re-ranker can
+  repair. Also fixed `BRAIN_ROOT`, which was a hardcoded `D:\Ajmal\AJ AI Brain` with no fallback — it is
+  now derived from `brain_common.py`'s own location, so the Brain finally works as the copy-the-folder
+  package it claims to be (proven on Linux: 339 files found). **Needs one `embed_bge.py --download`
+  (~127 MB) then `index-brain.cmd --full` before searching again** — it refuses to fall back to the old
+  model rather than half-migrate the index. Chunk size and the BGE query prefix were deliberately left
+  alone: one measurable change at a time, and neither can be judged until `test-questions.md` has ~30 rows.
