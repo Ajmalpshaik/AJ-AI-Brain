@@ -2239,3 +2239,19 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   an unexamined design option each make a query quietly return LESS than the truth, and metres-not-mm
   makes every figure wrong by 1000. None of them throws. Every section is independently guarded so one
   unreadable part cannot take down the report. Unproven — never run.
+
+- 2026-08-20 — Ajmal asked for the whole Revit API from `revitapidocs.com` to be pulled into the Brain.
+  **Declined for the main index, with numbers, and replaced with something better.** The API is ~1,700
+  classes and **30,000+ documented members** against this Brain's **3,786 chunks** — indexing it leaves
+  the Brain as ~11% of its own index and every question lands on a reference page. It is the 604-chunk
+  external-standards mistake (2026-08-13, reverted the same hour) eight times over. Also: the site is
+  unreachable from the session environment, and it is a community site rather than a primary source.
+  **What replaced it:** new generated `knowledge/revit-api-surface.md` + `tools/api-surface.mjs` — the
+  **229 types, 68 BuiltInParameters and 41 BuiltInCategories the 283 fragments actually use**, each row
+  naming fragments that use it correctly. The argument that settles it: a reference page gives a
+  signature, but it does not tell you `FilteredElementCollector.UnionWith()` silently drops quick filters
+  or that `RBS_START_LEVEL_PARAM` is the only level parameter an MEP curve has — this Brain knows both
+  because it learned them the hard way. Generated, never hand-edited, so it cannot drift from `scripts/`.
+  Recorded in START-HERE's "deliberately does NOT cover" beside the standards decision. **If the full API
+  is ever genuinely wanted it goes in a SEPARATE index the Brain's own search never touches** — Ajmal's
+  own instinct ("keep it in a separate section") was the right half of the idea.
