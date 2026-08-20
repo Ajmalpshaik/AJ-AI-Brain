@@ -14,7 +14,7 @@ var sb = new System.Text.StringBuilder();
 
 Func<double, string> fmt = ft =>
 {
-    double mmV = UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);
+    double mmV = ft * 304.8;
     return $"{mmV / 1000.0:F3} m ({mmV:F0} mm)";
 };
 
@@ -33,7 +33,7 @@ foreach (var bp in basePoints)
         var p = bp.get_Parameter(bip);
         return p == null ? "(n/a)" : fmt(p.AsDouble());
     };
-    sb.AppendLine($"{kind} (Id {bp.Id.IntegerValue}) — E/W: {rd(BuiltInParameter.BASEPOINT_EASTWEST_PARAM)}, N/S: {rd(BuiltInParameter.BASEPOINT_NORTHSOUTH_PARAM)}, Elev: {rd(BuiltInParameter.BASEPOINT_ELEVATION_PARAM)}"
+    sb.AppendLine($"{kind} (Id {bp.Id}) — E/W: {rd(BuiltInParameter.BASEPOINT_EASTWEST_PARAM)}, N/S: {rd(BuiltInParameter.BASEPOINT_NORTHSOUTH_PARAM)}, Elev: {rd(BuiltInParameter.BASEPOINT_ELEVATION_PARAM)}"
         + (bp.IsShared ? "" : $", Angle to True North: {(bp.get_Parameter(BuiltInParameter.BASEPOINT_ANGLETON_PARAM) != null ? (bp.get_Parameter(BuiltInParameter.BASEPOINT_ANGLETON_PARAM).AsDouble() * 180.0 / Math.PI).ToString("F3") + "°" : "(n/a)")}"));
 }
 

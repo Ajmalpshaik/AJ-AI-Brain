@@ -81,8 +81,8 @@ bool listPassesToo = false;           // false = only report the pairs that need
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 var room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
 
@@ -126,7 +126,7 @@ else
             var lp = h.Location as LocationPoint;
             if (lp == null) continue;
             if (!insideRoom(lp.Point)) continue;
-            heads.Add(Tuple.Create($"Id {h.Id.IntegerValue}", lp.Point));
+            heads.Add(Tuple.Create($"Id {h.Id}", lp.Point));
         }
         sb.AppendLine($"HEADS: {heads.Count} existing sprinkler(s) found inside this room (category Sprinklers, host document).");
         if (heads.Count == 0)
@@ -224,7 +224,7 @@ else
                 string nm = null;
                 try { nm = e.Name; } catch { }
                 obstructions.Add(Tuple.Create(kind,
-                    $"{(e.Category != null ? e.Category.Name : "?")} '{nm ?? "?"}' (Id {e.Id.IntegerValue})",
+                    $"{(e.Category != null ? e.Category.Name : "?")} '{nm ?? "?"}' (Id {e.Id})",
                     soffit, Math.Min(wx, wy), dist, sloped));
             }
         };

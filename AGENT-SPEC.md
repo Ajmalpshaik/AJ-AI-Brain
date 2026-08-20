@@ -157,7 +157,7 @@ the agent and executed *through* `run_csharp` — see §3.5.
 | **Inputs** | None. |
 | **Outputs** | Success/failure. On failure: an explicit message that the bridge isn't connected. |
 | **Constraints** | Single connection only — see §1.4. |
-| **Best practice** | Call first if it's been a while since the last confirmed call in this session. Follow every successful ping with the session-snapshot pattern (§3.5, `context-active-view.cs`) — a bare "pong" with no snapshot is an incomplete report to the user. |
+| **Best practice** | Call first if it's been a while since the last confirmed call in this session. Follow every successful ping with the session-snapshot pattern (§3.5, `context-session-start.cs`) — a bare "pong" with no snapshot is an incomplete report to the user. |
 | **Common mistakes** | Treating a failed ping as "Revit crashed" — it usually just means the toggle is off or Revit is closed. Ask the user to reconnect rather than escalating. |
 | **Performance** | Cheap — safe to call defensively. |
 
@@ -220,8 +220,8 @@ document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 282 real C# fragments in `scripts/` (49 filters, 145
-actions, 33 creators, 8 commands, 33 recipes, 3 examples, 10 read-only `context/` fragments, 1 shared
+now also have a native tool above), and the 283 real C# fragments in `scripts/` (49 filters, 145
+actions, 33 creators, 8 commands, 33 recipes, 3 examples, 11 read-only `context/` fragments, 1 shared
 `lib/` prelude — count re-verified 2026-08-20, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
 silently again), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the
 matching fragment(s), fills in real values, pastes them together, and sends the composed text through
@@ -466,7 +466,10 @@ exception naming the real unclear parameter. Three steps, no memorized guessing.
 
 ### 7.1 Fastest methods
 - `model_summary` over a composed script for plain counts/single-parameter breakdowns.
-- Session snapshot (`context-active-view.cs`) once per ping, not re-derived per request.
+- Session snapshot (`context-session-start.cs`) once per ping, not re-derived per request. It is the
+  fuller opening check: Revit version AND which API generation is live, document, units, size, unloaded
+  links, closed worksets, warnings, active view. `context-active-view.cs` remains the lighter
+  view-only snapshot for re-checking the view mid-session.
 - Compose from existing fragments — writing fresh C# every time is strictly slower and more error-prone
   than filling an already-correct template's `INPUTS`.
 

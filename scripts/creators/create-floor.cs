@@ -22,7 +22,7 @@ double[,] boundaryMm = new double[,] { { 0, 0 }, { 4000, 0 }, { 4000, 3000 }, { 
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 if (level == null)
@@ -68,7 +68,7 @@ else
                 var floor = Document.Create.NewFloor(curves, floorType, level, structural);
                 elements.Add(floor);
                 t.Commit();
-                sb.AppendLine($"Created floor (Id {floor.Id.IntegerValue}), type '{floorType.Name}', on level '{level.Name}', {n} boundary points, structural: {structural}.");
+                sb.AppendLine($"Created floor (Id {floor.Id}), type '{floorType.Name}', on level '{level.Name}', {n} boundary points, structural: {structural}.");
             }
             catch (Exception ex)
             {

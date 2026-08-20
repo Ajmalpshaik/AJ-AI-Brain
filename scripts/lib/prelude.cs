@@ -4,10 +4,12 @@
 //          rollback, mm/feet conversion, view targeting, parameter lookup, level resolution. Paste this
 //          ONCE at the very top of a composed script, before the filter fragment.
 //
-//          The point is NOT shorter code, it is ONE PLACE TO BE WRONG. Today 80 fragments each name
-//          `DisplayUnitType` directly, so supporting Revit 2021+ (where it is deprecated, and 2022+
-//          where it is gone) means editing 80 files and getting all 80 right. Below it is named twice,
-//          in one place, with the replacement line sitting right next to it.
+//          The point is NOT shorter code, it is ONE PLACE TO BE WRONG.
+//
+//          2026-08-20: the whole library is now version-proof without this file. Units became plain
+//          arithmetic and element ids stayed as ElementId, so no fragment names a version-specific API
+//          any more and one source runs on Revit 2020 through 2027. That removes the porting job this
+//          prelude was written to contain - it stays for the transaction, parameter and level helpers.
 //
 // COMPOSITION ORDER: prelude → filter (or creator) → action(s) → `return sb.ToString();`
 //          This is ADDITIVE. It declares no name any existing fragment declares — in particular it does
@@ -35,21 +37,21 @@
 
 
 // ---- UNITS ---------------------------------------------------------------------------------------
-// THE ONE PLACE the whole library names a Revit unit API. Revit 2020 uses DisplayUnitType; 2021
-// deprecated it in favour of ForgeTypeId/UnitTypeId and 2022 removed it outright. Porting the library
-// to a newer Revit = editing these two lambdas, not 80 fragments.
-//
-//   Revit 2021+ replacement (swap both lines, nothing else in the library changes):
-//     Func<double, ForgeTypeId, double> ToInternal = (v, u) => UnitUtils.ConvertToInternalUnits(v, u);
-//     Func<double, ForgeTypeId, double> FromInternal = (v, u) => UnitUtils.ConvertFromInternalUnits(v, u);
-//     ... and pass UnitTypeId.Millimeters where DisplayUnitType.DUT_MILLIMETERS is passed today.
-Func<double, DisplayUnitType, double> ToInternal = (value, unit) => UnitUtils.ConvertToInternalUnits(value, unit);
-Func<double, DisplayUnitType, double> FromInternal = (value, unit) => UnitUtils.ConvertFromInternalUnits(value, unit);
+// NO Revit unit API is named here any more. Revit's internal length unit is decimal feet and 1 ft is
+// EXACTLY 304.8 mm by definition, so the conversion is arithmetic and cannot be deprecated. This is why
+// the library needs no #if and no per-version copy.
+const double MM_PER_FOOT = 304.8;
 
 // The user speaks mm, Revit's API is feet — convert explicitly both ways, never leave raw feet in a
-// reply (START-HERE.md rule 3). These two cover 144 of the library's 160 unit calls.
-Func<double, double> ToFeet = mm => ToInternal(mm, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> ToMm = ft => FromInternal(ft, DisplayUnitType.DUT_MILLIMETERS);
+// reply (START-HERE.md rule 3).
+Func<double, double> ToFeet = mm => mm / MM_PER_FOOT;
+Func<double, double> ToMm = ft => ft * MM_PER_FOOT;
+
+// Version-proof id value, for the few places that genuinely need a NUMBER rather than an ElementId
+// (testing for a built-in negative id, casting to BuiltInParameter). The property is looked up ONCE and
+// captured, so this costs a field read per call, not a reflection lookup per call.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
 
 
 // ---- TRANSACTIONS --------------------------------------------------------------------------------
@@ -103,10 +105,11 @@ Action<System.Text.StringBuilder, string, Action> InTransactionGroup = (outSb, n
 // AGENT-SPEC §3.5: view is a variable, never hardcoded, on every graphics/visibility action — null
 // means the active view, an Id targets any view including one not currently on screen. Returns null if
 // the Id exists but is not a View, so the caller can report that rather than throwing.
-// (`new ElementId(long)` does not compile on this API surface — the int overload is the only one.)
-Func<int?, View> ResolveView = viewIdInt =>
-    viewIdInt.HasValue
-        ? Document.GetElement(new ElementId(viewIdInt.Value)) as View
+// Takes an ElementId rather than an int so it is version-proof: `new ElementId(long)` does not compile
+// on Revit 2020 (int overload only) and an int cannot hold a 2024+ id. Pass null for the active view.
+Func<ElementId, View> ResolveView = viewId =>
+    viewId != null
+        ? Document.GetElement(viewId) as View
         : Document.ActiveView;
 
 
@@ -136,7 +139,7 @@ Func<Element, string, string> ParamText = (e, name) =>
         case StorageType.String: return p.AsString() ?? "(blank)";
         case StorageType.Integer: return p.AsInteger().ToString();
         case StorageType.Double: return p.AsValueString() ?? p.AsDouble().ToString();
-        case StorageType.ElementId: return p.AsValueString() ?? p.AsElementId().IntegerValue.ToString();
+        case StorageType.ElementId: return p.AsValueString() ?? p.AsElementId().ToString();
         default: return p.AsValueString() ?? "(unreadable)";
     }
 };

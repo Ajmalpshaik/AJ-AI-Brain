@@ -103,13 +103,13 @@ else
                         existing.SetCategories(categoryIds);
                         existing.SetElementFilter(elemFilter);
                         t.Commit();
-                        sb.AppendLine($"Updated existing View Filter '{filterName}' (Id {existing.Id.IntegerValue}) — rule: {parameterName} {matchMode} {ruleLabel}.");
+                        sb.AppendLine($"Updated existing View Filter '{filterName}' (Id {existing.Id}) — rule: {parameterName} {matchMode} {ruleLabel}.");
                     }
                     else
                     {
                         var pfe = ParameterFilterElement.Create(Document, filterName, categoryIds, elemFilter);
                         t.Commit();
-                        sb.AppendLine($"Created View Filter '{filterName}' (Id {pfe.Id.IntegerValue}) — rule: {parameterName} {matchMode} {ruleLabel}. Not yet applied to any view — run action-apply-view-filter.cs next.");
+                        sb.AppendLine($"Created View Filter '{filterName}' (Id {pfe.Id}) — rule: {parameterName} {matchMode} {ruleLabel}. Not yet applied to any view — run action-apply-view-filter.cs next.");
                     }
                 }
                 catch (Exception ex)

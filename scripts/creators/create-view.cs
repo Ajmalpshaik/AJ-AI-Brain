@@ -72,7 +72,7 @@ using (var t = new Transaction(Document, "AJ Tools - Create View"))
                 // BasisY = up, which for a normal vertical section is global Z
                 // BasisZ = the direction the camera looks, and it MUST equal BasisX cross BasisY
                 //          or Revit throws with an EMPTY exception Message (views.md again).
-                Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+                Func<double, double> mm = v => v / 304.8;
 
                 double minX = mm(sectionMinXMm), maxX = mm(sectionMaxXMm);
                 double minY = mm(sectionMinYMm), maxY = mm(sectionMaxYMm);
@@ -122,7 +122,7 @@ using (var t = new Transaction(Document, "AJ Tools - Create View"))
             // is the whole question — a section looking down the Z axis is a plan-shaped slice, not a
             // section, and the old message could not tell the two apart.
             var vd = newView.ViewDirection;
-            sb.AppendLine($"Created {viewKind} view '{newView.Name}' (Id {newView.Id.IntegerValue}), looking ({vd.X:0.##}, {vd.Y:0.##}, {vd.Z:0.##}).");
+            sb.AppendLine($"Created {viewKind} view '{newView.Name}' (Id {newView.Id}), looking ({vd.X:0.##}, {vd.Y:0.##}, {vd.Z:0.##}).");
             if (viewKind == "section" && Math.Abs(vd.Z) > 0.9)
                 sb.AppendLine("  WARNING: this 'section' is looking almost straight up/down — that is a plan-shaped cut, not a section. Check the section box extents.");
         }

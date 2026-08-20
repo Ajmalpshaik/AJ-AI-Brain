@@ -53,9 +53,9 @@ else
                 foreach (var (xMm, yMm, zMm) in pointsMm)
                 {
                     var pt = new XYZ(
-                        UnitUtils.ConvertToInternalUnits(xMm, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(yMm, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(zMm, DisplayUnitType.DUT_MILLIMETERS));
+                        xMm / 304.8,
+                        yMm / 304.8,
+                        zMm / 304.8);
                     var fi = Document.Create.NewFamilyInstance(pt, symbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
                     elements.Add(fi);
                 }

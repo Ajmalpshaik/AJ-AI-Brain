@@ -12,13 +12,13 @@ var levels = new FilteredElementCollector(Document).OfClass(typeof(Level)).Cast<
 sb.AppendLine($"Levels ({levels.Count}):");
 foreach (var l in levels)
 {
-    double elevMm = UnitUtils.ConvertFromInternalUnits(l.Elevation, DisplayUnitType.DUT_MILLIMETERS);
-    sb.AppendLine($"  - {l.Name} (Id {l.Id.IntegerValue}, elevation {elevMm:F0}mm)");
+    double elevMm = l.Elevation * 304.8;   // feet -> mm. 1 ft is exactly 304.8 mm, so no units API is needed
+    sb.AppendLine($"  - {l.Name} (Id {l.Id}, elevation {elevMm:F0}mm)");
 }
 
 var grids = new FilteredElementCollector(Document).OfClass(typeof(Grid)).Cast<Grid>().OrderBy(g => g.Name).ToList();
 sb.AppendLine($"Grids ({grids.Count}):");
 foreach (var g in grids)
-    sb.AppendLine($"  - {g.Name} (Id {g.Id.IntegerValue})");
+    sb.AppendLine($"  - {g.Name} (Id {g.Id})");
 
 return sb.ToString();

@@ -46,10 +46,10 @@ var ceiling = new FilteredElementCollector(Document)
     .Cast<Ceiling>()
     .FirstOrDefault(c => elementCenterIsInRoom(c));
 double ceilingHeightMm = ceiling?.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM)?.AsDouble() != null
-    ? UnitUtils.ConvertFromInternalUnits(ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble(), DisplayUnitType.DUT_MILLIMETERS)
+    ? (ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble()) * 304.8
     : 2400;
 
-double zFt = UnitUtils.ConvertToInternalUnits(ceilingHeightMm + heightAboveCeilingMm, DisplayUnitType.DUT_MILLIMETERS);
+double zFt = (ceilingHeightMm + heightAboveCeilingMm) / 304.8;
 XYZ placePt = new XYZ(roomCenter.X, roomCenter.Y, roomCenter.Z + zFt);
 
 var sb = new System.Text.StringBuilder();
@@ -91,10 +91,10 @@ if (doorInsetMm > 0)
         var doorPt = (door.Location as LocationPoint)?.Point ?? roomCenter;
 
         // Test which normal direction points into the room; flip if needed.
-        var testPt = doorPt + normal * UnitUtils.ConvertToInternalUnits(200, DisplayUnitType.DUT_MILLIMETERS);
+        var testPt = doorPt + normal * 200 / 304.8;
         if (!room.IsPointInRoom(new XYZ(testPt.X, testPt.Y, roomCenter.Z))) normal = -normal;
 
-        double insetFt = UnitUtils.ConvertToInternalUnits(doorInsetMm, DisplayUnitType.DUT_MILLIMETERS);
+        double insetFt = doorInsetMm / 304.8;
         double tangentialComponent = (roomCenter - doorPt).DotProduct(wallDir);
         XYZ finalXY = doorPt + normal * insetFt + wallDir * tangentialComponent;
         XYZ newPt = new XYZ(finalXY.X, finalXY.Y, placePt.Z);

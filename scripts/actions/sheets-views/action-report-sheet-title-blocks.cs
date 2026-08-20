@@ -15,7 +15,7 @@ var allTitleBlocks = new FilteredElementCollector(Document)
     .Cast<FamilyInstance>()
     .ToList();
 
-var rows = new List<(string sheetNumber, string sheetName, string family, string type, int? tbId)>();
+var rows = new List<(string sheetNumber, string sheetName, string family, string type, ElementId tbId)>();
 int missing = 0;
 
 foreach (var el in elements)
@@ -31,7 +31,7 @@ foreach (var el in elements)
     }
     else
     {
-        rows.Add((sheet.SheetNumber, sheet.Name, tb.Symbol.Family.Name, tb.Symbol.Name, tb.Id.IntegerValue));
+        rows.Add((sheet.SheetNumber, sheet.Name, tb.Symbol.Family.Name, tb.Symbol.Name, tb.Id));
     }
 }
 
@@ -39,5 +39,5 @@ sb.AppendLine($"Title block report for {rows.Count} sheet(s), {missing} with NO 
 sb.AppendLine("Sheet Number | Sheet Name | Title Block Family | Title Block Type | Instance Id");
 sb.AppendLine("--- | --- | --- | --- | ---");
 foreach (var r in rows.OrderBy(r => r.sheetNumber))
-    sb.AppendLine($"{r.sheetNumber} | {r.sheetName} | {r.family} | {r.type} | {(r.tbId.HasValue ? r.tbId.Value.ToString() : "-")}");
+    sb.AppendLine($"{r.sheetNumber} | {r.sheetName} | {r.family} | {r.type} | {(r.tbId != null ? r.tbId.ToString() : "-")}");
 // ---- continue with another action fragment below, or add return sb.ToString(); to finish ----

@@ -40,8 +40,8 @@ else
             foreach (var (xMm, yMm, name, number) in roomsToCreate)
             {
                 var uv = new UV(
-                    UnitUtils.ConvertToInternalUnits(xMm, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(yMm, DisplayUnitType.DUT_MILLIMETERS));
+                    xMm / 304.8,
+                    yMm / 304.8);
                 var room = Document.Create.NewRoom(level, uv);
 
                 // `?.Set(...)` swallowed two different failures at once: the null-conditional made "this
@@ -53,14 +53,14 @@ else
                 if (!string.IsNullOrEmpty(name))
                 {
                     var pName = room.get_Parameter(BuiltInParameter.ROOM_NAME);
-                    if (pName == null) nameNotes.Add($"Id {room.Id.IntegerValue}: no ROOM_NAME parameter");
-                    else if (!pName.Set(name)) nameNotes.Add($"Id {room.Id.IntegerValue}: Name '{name}' REFUSED, still '{pName.AsString()}'");
+                    if (pName == null) nameNotes.Add($"Id {room.Id}: no ROOM_NAME parameter");
+                    else if (!pName.Set(name)) nameNotes.Add($"Id {room.Id}: Name '{name}' REFUSED, still '{pName.AsString()}'");
                 }
                 if (!string.IsNullOrEmpty(number))
                 {
                     var pNum = room.get_Parameter(BuiltInParameter.ROOM_NUMBER);
-                    if (pNum == null) nameNotes.Add($"Id {room.Id.IntegerValue}: no ROOM_NUMBER parameter");
-                    else if (!pNum.Set(number)) nameNotes.Add($"Id {room.Id.IntegerValue}: Number '{number}' REFUSED (already taken?), still '{pNum.AsString()}'");
+                    if (pNum == null) nameNotes.Add($"Id {room.Id}: no ROOM_NUMBER parameter");
+                    else if (!pNum.Set(number)) nameNotes.Add($"Id {room.Id}: Number '{number}' REFUSED (already taken?), still '{pNum.AsString()}'");
                 }
 
                 elements.Add(room);
@@ -71,7 +71,7 @@ else
             // "always report the Element ID for specific elements" rule.
             sb.AppendLine($"Created {elements.Count} room(s) on level '{level?.Name}':");
             foreach (var madeRoom in elements)
-                sb.AppendLine($"  Id {madeRoom.Id.IntegerValue} — Number '{madeRoom.LookupParameter("Number")?.AsString()}', Name '{madeRoom.LookupParameter("Name")?.AsString()}'");
+                sb.AppendLine($"  Id {madeRoom.Id} — Number '{madeRoom.LookupParameter("Number")?.AsString()}', Name '{madeRoom.LookupParameter("Name")?.AsString()}'");
             if (nameNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", nameNotes));
             if (unbounded > 0)
             {

@@ -95,7 +95,7 @@ else
 
                     newSheetIds.Add(newSheet.Id);
                     done++;
-                    sb.AppendLine($"  - '{sheet.SheetNumber}' -> '{newSheet.SheetNumber}' (Id {newSheet.Id.IntegerValue}){(copyViews ? $", {viewsCopied} view(s)/schedule(s) placed, {viewsSkipped} skipped" : ", empty")}");
+                    sb.AppendLine($"  - '{sheet.SheetNumber}' -> '{newSheet.SheetNumber}' (Id {newSheet.Id}){(copyViews ? $", {viewsCopied} view(s)/schedule(s) placed, {viewsSkipped} skipped" : ", empty")}");
                 }
                 catch (Exception exOne)
                 {
@@ -106,7 +106,7 @@ else
                     if (newSheet != null)
                     {
                         try { Document.Delete(newSheet.Id); cleanup = " (the part-built sheet was removed)"; }
-                        catch (Exception exDel) { cleanup = $" (WARNING: could not remove the part-built sheet Id {newSheet.Id.IntegerValue} — {exDel.Message})"; }
+                        catch (Exception exDel) { cleanup = $" (WARNING: could not remove the part-built sheet Id {newSheet.Id} — {exDel.Message})"; }
                     }
                     sb.AppendLine($"  - '{sheet.SheetNumber}' FAILED: {exOne.Message}{cleanup}");
                 }

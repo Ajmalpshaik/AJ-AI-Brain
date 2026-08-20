@@ -11,7 +11,7 @@ int maxRows = 50;
 bool reportCombined = true;
 // ---- END INPUTS ----
 
-Func<double, double> mm = ft => UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = ft => ft * 304.8;
 
 BoundingBoxXYZ combined = null;
 sb.AppendLine($"Bounding box for {Math.Min(elements.Count, maxRows)} of {elements.Count} element(s), in mm:");
@@ -19,10 +19,10 @@ sb.AppendLine($"Bounding box for {Math.Min(elements.Count, maxRows)} of {element
 foreach (var e in elements.Take(maxRows))
 {
     var bb = e.get_BoundingBox(null);
-    if (bb == null) { sb.AppendLine($"  Id {e.Id.IntegerValue}: no bounding box available."); continue; }
+    if (bb == null) { sb.AppendLine($"  Id {e.Id}: no bounding box available."); continue; }
 
     double w = mm(bb.Max.X - bb.Min.X), d = mm(bb.Max.Y - bb.Min.Y), h = mm(bb.Max.Z - bb.Min.Z);
-    sb.AppendLine($"  Id {e.Id.IntegerValue}: size {w:F0} x {d:F0} x {h:F0} mm, min ({mm(bb.Min.X):F0}, {mm(bb.Min.Y):F0}, {mm(bb.Min.Z):F0})");
+    sb.AppendLine($"  Id {e.Id}: size {w:F0} x {d:F0} x {h:F0} mm, min ({mm(bb.Min.X):F0}, {mm(bb.Min.Y):F0}, {mm(bb.Min.Z):F0})");
 
     if (reportCombined)
     {

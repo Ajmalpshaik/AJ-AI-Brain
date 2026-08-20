@@ -20,7 +20,7 @@
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string systemNameContains = "DXS";  // e.g. "DXS" (refrigerant), "CDP" (condensate), "WSP" (water supply)
-double clusterToleranceFt = UnitUtils.ConvertToInternalUnits(50, DisplayUnitType.DUT_MILLIMETERS); // ~50mm worked well
+double clusterToleranceFt = 50 / 304.8; // ~50mm worked well
 int maxHops = 60; // guard against a runaway geometric coincidence that isn't a real path
 // ---- END INPUTS ----
 
@@ -125,7 +125,7 @@ foreach (var circuit in circuits)
         string equipName = nearestEquip?.LookupParameter("Equipment Tag")?.AsString()
             ?? nearestEquip?.get_Parameter(BuiltInParameter.ALL_MODEL_MARK)?.AsString()
             ?? nearestEquip?.Name ?? "unknown";
-        sb.AppendLine($"  Open end near {equipName} (Id {nearestEquip?.Id}), distance {UnitUtils.ConvertFromInternalUnits(best, DisplayUnitType.DUT_MILLIMETERS):F0}mm.");
+        sb.AppendLine($"  Open end near {equipName} (Id {nearestEquip?.Id}), distance {best * 304.8:F0}mm.");
     }
 }
 

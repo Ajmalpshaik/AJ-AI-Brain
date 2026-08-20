@@ -35,7 +35,7 @@ string axis = "x";              // "x" | "y" — direction the dimension string 
 double offsetMm = 1000;         // how far off the elements the dimension line sits (perpendicular)
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var dimView = Document.GetElement(new ElementId(viewIdInt)) as View;
 
@@ -80,7 +80,7 @@ else
                 if (refs != null && refs.Count > 0) { chosen = refs.First(); break; }
             }
         }
-        if (chosen == null) { notes.Add($"Id {el.Id.IntegerValue}: no usable reference"); continue; }
+        if (chosen == null) { notes.Add($"Id {el.Id}: no usable reference"); continue; }
         refArray.Append(chosen);
         used.Add(el);
     }
@@ -111,8 +111,8 @@ else
 
                 var dim = Document.Create.NewDimension(dimView, dimLine, refArray);
                 t.Commit();
-                sb.AppendLine($"Created aligned dimension (Id {dim.Id.IntegerValue}) across {refArray.Size} element(s) along {axis.ToUpper()} in view '{dimView.Name}', offset {offsetMm} mm.");
-                sb.AppendLine($"  Dimensioned: {string.Join(", ", used.Take(20).Select(e => $"Id {e.Id.IntegerValue}"))}{(used.Count > 20 ? ", ..." : "")}");
+                sb.AppendLine($"Created aligned dimension (Id {dim.Id}) across {refArray.Size} element(s) along {axis.ToUpper()} in view '{dimView.Name}', offset {offsetMm} mm.");
+                sb.AppendLine($"  Dimensioned: {string.Join(", ", used.Take(20).Select(e => $"Id {e.Id}"))}{(used.Count > 20 ? ", ..." : "")}");
                 if (notes.Count > 0) sb.AppendLine("  Skipped: " + string.Join("; ", notes.Take(15)));
             }
             catch (Exception ex)

@@ -51,7 +51,7 @@ else
     }
     else
     {
-        double marginFt = UnitUtils.ConvertToInternalUnits(marginMm, DisplayUnitType.DUT_MILLIMETERS);
+        double marginFt = marginMm / 304.8;
         box.Min -= new XYZ(marginFt, marginFt, 0);
         box.Max += new XYZ(marginFt, marginFt, 0);
 

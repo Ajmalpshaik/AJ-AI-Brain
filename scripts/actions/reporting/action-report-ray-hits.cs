@@ -52,8 +52,8 @@ string sampleMode = "centre";       // "centre" = 1 ray per direction from the i
 int maxElementsReported = 25;       // detail cap; the summary always covers the whole set
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-double maxDistFeet = UnitUtils.ConvertToInternalUnits(maxRayDistanceMm, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+double maxDistFeet = maxRayDistanceMm / 304.8;
 
 // --- build the direction list ---
 var dirs = new List<KeyValuePair<string, XYZ>>();
@@ -140,7 +140,7 @@ else
                 if (origin == null) { noPoint++; continue; }
 
                 if (reported >= maxElementsReported) continue;
-                sb.AppendLine($"- '{el.Name}' (Id {el.Id.IntegerValue}) from ({toMm(origin.X):F0}, {toMm(origin.Y):F0}, {toMm(origin.Z):F0}) mm:");
+                sb.AppendLine($"- '{el.Name}' (Id {el.Id}) from ({toMm(origin.X):F0}, {toMm(origin.Y):F0}, {toMm(origin.Z):F0}) mm:");
 
                 var elBox = el.get_BoundingBox(null);
 
@@ -214,7 +214,7 @@ else
                     {
                         var hitEl = Document.GetElement(h.GetReference().ElementId);
                         var gp = h.GetReference().GlobalPoint;
-                        sb.AppendLine($"    {d.Key,-8} {toMm(h.Proximity):F0} mm -> '{hitEl?.Name ?? "?"}' (Id {h.GetReference().ElementId.IntegerValue}, {hitEl?.Category?.Name ?? "?"}) at ({toMm(gp.X):F0}, {toMm(gp.Y):F0}, {toMm(gp.Z):F0})");
+                        sb.AppendLine($"    {d.Key,-8} {toMm(h.Proximity):F0} mm -> '{hitEl?.Name ?? "?"}' (Id {h.GetReference().ElementId}, {hitEl?.Category?.Name ?? "?"}) at ({toMm(gp.X):F0}, {toMm(gp.Y):F0}, {toMm(gp.Z):F0})");
                         totalHits++;
                     }
                 }

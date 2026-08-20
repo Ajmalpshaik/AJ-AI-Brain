@@ -45,7 +45,7 @@ else
             }
             sourceView.ViewTemplateId = newTemplate.Id; // explicit — don't rely on undocumented auto-apply behavior
             t.Commit();
-            sb.AppendLine($"Created View Template '{newTemplate?.Name ?? newTemplateName}' (Id {newTemplate.Id.IntegerValue}) from '{sourceView.Name}', and applied it back to that view.");
+            sb.AppendLine($"Created View Template '{newTemplate?.Name ?? newTemplateName}' (Id {newTemplate.Id}) from '{sourceView.Name}', and applied it back to that view.");
         }
         catch (Exception ex)
         {
