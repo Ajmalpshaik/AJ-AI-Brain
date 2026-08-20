@@ -36,6 +36,7 @@ just quietly worse, which is the exact fault the fingerprint exists to prevent.
 Reads only. Never touches Revit.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -101,7 +102,7 @@ def embed(texts):
     if not available():
         raise RuntimeError(
             "Embedding model not found at " + str(MODEL_DIR) + "\n"
-            "Run:  venv\\Scripts\\python.exe embed_bge.py --download"
+            "Run:  " + _setup_hint()
         )
 
     _load()
@@ -192,6 +193,15 @@ class BGESmallEmbeddingFunction(_base_class()):
         )
 
 
+def _setup_hint():
+    """The right command for THIS platform. The hardcoded Windows one was the message a
+    Linux user actually saw (2026-08-20), which is how a fixable setup looked like a dead end."""
+    if os.name == "nt":
+        return "venv\\Scripts\\python.exe embed_bge.py --download   (~127 MB, once)"
+    return ("bash semantic-index/setup.sh   (does everything, and falls back to "
+            "all-MiniLM-L6-v2 if huggingface.co is blocked)")
+
+
 def download():
     """Fetch the ONNX model into model-cache/. ~127 MB, needs internet once.
 
@@ -225,7 +235,7 @@ if __name__ == "__main__":
     if not available():
         raise SystemExit(
             "Model not found at " + str(MODEL_DIR) + "\n"
-            "Run:  venv\\Scripts\\python.exe embed_bge.py --download"
+            "Run:  " + _setup_hint()
         )
 
     _load()

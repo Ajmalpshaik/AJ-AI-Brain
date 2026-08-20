@@ -19,6 +19,7 @@ that one file — don't read the whole folder.**
 | **Which Revit API class/parameter/category does this Brain already use, and which fragment shows it working** — reach for this before looking anything up online: 283 proven examples beat a signature | [`revit-api-surface.md`](revit-api-surface.md) (generated — `node tools/api-surface.mjs`) |
 | How to format a reply (counts, tables, the Final Report) | [`reply-style.md`](reply-style.md) |
 | A change to the Brain itself (new skill, split file, retired script) — recording it, not making it | [`brain-log.md`](brain-log.md) |
+| **Should we rebuild the search / "do RAG properly"** — what the retrieval layer already has, the six standard upgrades that measured worse here, and the two conditions that would justify a rewrite | [`../semantic-index/rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md) |
 | How this Brain's bridge compares to the bought alternative (NonicaTab A.I. Connector) — what it costs, what they have that we don't, which to reach for | [`tool-landscape-nonicatab.md`](tool-landscape-nonicatab.md) |
 
 ## Adding new knowledge

@@ -2373,3 +2373,54 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `CS0308/0030/0019/0029/1503/1501`), and six fail on **both** 2020 and 2024 — the one that matters most
   being `recipes/mep-grayout.cs`, Ajmal's own standing "do the grayout" job. Full list and the fix order
   are in `docs/HANDOVER.md`.
+- 2026-08-20 — Ajmal asked whether the project should be **re-architected "as per the best RAG"**. Answer
+  written up as `knowledge/rag-architecture-decisions.md` and routed from `knowledge/INDEX.md`: **no** —
+  the pipeline already has hybrid dense+BM25 with RRF, structure-aware chunking, kind and path weighting,
+  live query expansion, file-level re-ranking, incremental indexing and an eval harness, and **six
+  standard "best practice" upgrades have already been measured here, four of them neutral or negative**
+  (contextual-retrieval prefixes twice, a confidence floor, a bigger candidate pool). The file collects
+  those results in one place so a rewrite is not proposed again from a diagram. The real bottleneck is
+  the **14-row test set** — two finished features are switched off waiting on it — plus site vocabulary
+  and the fact that `job-log/questions.jsonl` is not being written yet. One genuine refactor identified:
+  `api-index/` is a *copy* of the pipeline rather than a second config of it, and a shared corpus module
+  is what "easy to do all kinds of RAG working" actually costs. Second gap: the search is Windows-only,
+  so it is dark on Claude Code for web.
+
+- 2026-08-20 — **The search now sets up and runs off Windows.** New `semantic-index/setup.sh` builds the
+  venv, installs chromadb, fetches the model and indexes, in one command. Proven end to end on a wiped
+  venv in a Linux container — **the first time the search has ever run in a web session**. Three real
+  faults were found by running it rather than reading it: `huggingface.co` is blocked from the container,
+  so it now falls back to the chromadb-shipped `all-MiniLM-L6-v2` instead of dying with a traceback; the
+  fallback was exported into a shell that died, leaving every later search defaulting to BGE against a
+  MiniLM index, so the choice is now persisted in `semantic-index/embed-model.txt` (`brain_common.py`,
+  precedence env > file > BGE); and `.gitignore`'s `semantic-index/*` would have silently dropped
+  `setup.sh` from the commit. `embed_bge.py`'s "not downloaded" message no longer prints Windows-only
+  commands to a Linux user.
+
+- 2026-08-20 — **Folder structure: leave it.** Recorded in `semantic-index/rag-architecture-decisions.md`.
+  The layout is load-bearing — the path becomes each chunk's `category`, and 610 markdown path references
+  plus 73 `// SOURCE:` lines point at it. Four untidy spots noted, none urgent.
+
+- 2026-08-20 — **A knowledge note about the search cost the search a point, and chasing it found
+  something better.** Writing the RAG decision record into `knowledge/` dropped the score 3/14 → 2/14
+  (`what does duck mean`: `glossary.md` #1 → #6). Stripping its verbatim test questions did nothing;
+  moving it out of the indexed folders did nothing; reverting this session's own log entries did nothing.
+  **The score still sat at 2/14 with a corpus 2 chunks larger than baseline** — one `INDEX.md` row and one
+  edited `START-HERE.md` line. Re-swept `glossary.md`'s weight 0.85→1.00 on the current corpus: **no value
+  returns it to #1 any more**; the sprinkler files beat it outright. **The weight was left at 0.93** —
+  moving it to 0.96 scores better by a different route, which is fitting the sample. Three conclusions:
+  documents about the search go in `semantic-index/` (outside `INDEX_TARGETS`, like `docs/`), the
+  `what does duck mean` guard row is flagged BROKEN in `test-questions.md` so nobody re-chases it, and
+  **one knife-edge row is 7% of a 14-row score** — the score card will cry wolf until the test set grows.
+  Third time a file describing the Brain's own machinery has cost it accuracy; first time caught before
+  shipping, because the score card ran.
+
+- 2026-08-20 — **`docs/superpowers/` retired.** Two implementation plans and one design spec from
+  2026-08-13, carrying 60 unticked checkboxes describing work that is entirely built (score card,
+  reindex hooks, `search_brain`, compact context, auto-search hook, three agents). They read as 60 open
+  jobs. Deleted — git history has them — after folding the five genuinely live items forward into
+  `semantic-index/rag-architecture-decisions.md`, including the spec's **refuted** theory that splitting
+  oversized files improves retrieval, which now sits with the other measured-and-reverted experiments.
+  Also fixed on the way: `START-HERE.md` and the `search_brain` tool description both still claimed
+  search accuracy was "~3 in 4 at #1" — 75%, one of the three discredited figures `CLAUDE.md` warns
+  about two paragraphs below, against a measured 3/14. Both now quote `score-history.md`.
