@@ -41,9 +41,12 @@ know the keyword. Use whichever fits: keyword when you know the term, this when 
 Each result shows `found by: meaning #3 + words #1` — **high in both is the strong signal; only one firing
 means check before trusting it.** Setup and limits: [`semantic-index/README.md`](semantic-index/README.md).
 
-**Read the top 3–5, never just #1.** Measured 2026-08-06 against 24 questions written by independent
-testers in a modeller's own words: #1 was right or useful in about three-quarters, and wrong in the rest —
-the correct file was usually still in the top 3. It fails on **site vocabulary the files don't use**:
+**Read the top 3–5, never just #1.** The one place this is measured is
+[`semantic-index/score-history.md`](semantic-index/score-history.md) — every line stamped since
+2026-08-20 with the model and settings that produced it. **Last reproducible run: 3/14 at #1, 5/14 in
+top 3, 6/14 in top 5, 11 of 14 answers retrievable at all.** Quote that file, never a remembered figure:
+three different numbers (75%, 60%, 29%) were once in circulation here because the earlier scores recorded
+no model, no chunk size and no corpus size, and the Brain grew underneath them. It fails on **site vocabulary the files don't use**:
 "add 4 more floor levels" returns `create-floor.cs` (the slab creator) instead of `create-levels.cs`, and
 "how many light fitting" matches "light hazard". [`knowledge/glossary.md`](knowledge/glossary.md) is the
 site-word → Revit-word map; when a search looks off, say the Revit word and re-run.

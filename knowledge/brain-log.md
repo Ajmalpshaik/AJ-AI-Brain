@@ -2180,3 +2180,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (~127 MB) then `index-brain.cmd --full` before searching again** — it refuses to fall back to the old
   model rather than half-migrate the index. Chunk size and the BGE query prefix were deliberately left
   alone: one measurable change at a time, and neither can be judged until `test-questions.md` has ~30 rows.
+
+- 2026-08-20 — Search, measured properly for the first time. The embedding model is now **selectable**
+  (`AJ_BRAIN_EMBED_MODEL`), because replacing it outright made the change impossible to A/B. Found and
+  fixed a real retrieval bug: RRF was fusing **chunk** ranks while ranking **files**, so a correct answer
+  sitting behind one long note scored as rank 40 instead of rank 5 purely because that note is split into
+  many chunks — 80 retrieved chunks were yielding only 32-37 distinct files. `_rank_files()` renumbers
+  over files: MRR 0.299 -> 0.323, retrievable 10 -> 11, top-3 3 -> 5, **top-5 6 <- 7 (one regressed)**.
+  `score_brain.py` now reports **retrievable-at-all vs ranked-below-5** — the split that says whether to
+  fix retrieval or ranking — plus MRR, and stamps every history line with model/chunk/corpus/fingerprint.
+  Two ideas measured and REJECTED, written down so they are not rebuilt from intuition: a **confidence
+  floor** (correct top-1 closeness 35.5-65.1, wrong 27.8-56.6 — they overlap, no threshold works) and a
+  **skill-area prior** (peaks at 1.1-1.2 but only moves wins between halves of a 7/7 test set — fitting
+  the sample). Over-fetching chunks also measured neutral. Docs: the three circulating accuracy figures
+  (75%, 60%, 29%) are gone; `score-history.md` is now the single stamped source.
