@@ -71,12 +71,12 @@ using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
 
     foreach (var room in rooms)
     {
-        double areaSqm = UnitUtils.ConvertFromInternalUnits(room.Area, DisplayUnitType.DUT_SQUARE_METERS);
+        double areaSqm = room.Area / 10.763910416709722;
         double tons = areaSqm / sqmPerTon;
         double supplyCfm = tons * cfmPerTon;
-        double supplyLs = UnitUtils.ConvertToInternalUnits(supplyCfm, DisplayUnitType.DUT_CUBIC_FEET_PER_MINUTE);
+        double supplyLs = supplyCfm / 60.0;
         double returnCfm = supplyCfm * returnAirflowFraction;
-        double returnLsInternal = UnitUtils.ConvertToInternalUnits(returnCfm, DisplayUnitType.DUT_CUBIC_FEET_PER_MINUTE);
+        double returnLsInternal = returnCfm / 60.0;
 
         // Find or create the Space at this room's location.
         var existingSpace = new FilteredElementCollector(Document)
@@ -119,7 +119,7 @@ using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
         int refreshed = 0;
         Action<IEnumerable<FamilyInstance>, double> setFlow = (targetTerminals, cfmEach) =>
         {
-            double internalFlow = UnitUtils.ConvertToInternalUnits(cfmEach, DisplayUnitType.DUT_CUBIC_FEET_PER_MINUTE);
+            double internalFlow = cfmEach / 60.0;
             foreach (var term in targetTerminals)
             {
                 var flowParam = term.get_Parameter(BuiltInParameter.RBS_DUCT_FLOW_PARAM);

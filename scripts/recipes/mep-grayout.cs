@@ -234,7 +234,7 @@ using (var t = new Transaction(doc, "AJ Tools - MEP grayout"))
     }
 }
 
-sb.AppendLine($"MEP grayout applied to view '{view.Name}' (Id {view.Id.IntegerValue}, 1:{view.Scale}, {view.DisplayStyle}).");
+sb.AppendLine($"MEP grayout applied to view '{view.Name}' (Id {view.Id}, 1:{view.Scale}, {view.DisplayStyle}).");
 sb.AppendLine($"  categories written {written} | shown {shown} | hidden {hidden} | not controllable here {notControllable}");
 sb.AppendLine($"  sub-categories written {subsWritten} (line colour + weight only — they never hold fill or transparency)");
 sb.AppendLine($"  categories where Revit discarded at least one slot: {lostSlots.Count} — expected, see the header");

@@ -80,7 +80,7 @@ using (var t = new Transaction(Document, "AJ Tools - Add Parameter Prefix/Suffix
                     candidate = oldValue.Replace(findText, replaceText);
                     break;
                 default:
-                    failures.Add($"{target.source} owner Id {target.owner.Id.IntegerValue}: unknown mode '{mode}'");
+                    failures.Add($"{target.source} owner Id {target.owner.Id}: unknown mode '{mode}'");
                     skipped++;
                     continue;
             }
@@ -95,7 +95,7 @@ using (var t = new Transaction(Document, "AJ Tools - Add Parameter Prefix/Suffix
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"{target.source} owner Id {target.owner.Id.IntegerValue} ('{oldValue}' -> '{candidate}'): {exOne.Message}");
+                failures.Add($"{target.source} owner Id {target.owner.Id} ('{oldValue}' -> '{candidate}'): {exOne.Message}");
             }
         }
         t.Commit();

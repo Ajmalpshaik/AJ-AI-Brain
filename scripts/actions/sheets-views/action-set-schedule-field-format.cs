@@ -40,7 +40,7 @@ using (var t = new Transaction(Document, "AJ Tools - Set Schedule Field Format")
                 if (newHeading != null) field.ColumnHeading = newHeading;
                 if (isHidden.HasValue) field.IsHidden = isHidden.Value;
                 if (!string.IsNullOrEmpty(alignment) && Enum.TryParse<ScheduleHorizontalAlignment>(alignment, true, out var ha)) field.HorizontalAlignment = ha;
-                if (columnWidthMm.HasValue) field.SheetColumnWidth = UnitUtils.ConvertToInternalUnits(columnWidthMm.Value, DisplayUnitType.DUT_MILLIMETERS);
+                if (columnWidthMm.HasValue) field.SheetColumnWidth = columnWidthMm.Value / 304.8;
                 updated++;
             }
             catch (Exception ex)

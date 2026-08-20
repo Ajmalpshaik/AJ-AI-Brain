@@ -76,7 +76,7 @@ Func<Element, string, string> getValue = (e, name) =>
 {
     if (string.Equals(name, "ElementId", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(name, "Id", StringComparison.OrdinalIgnoreCase))
-        return e.Id.IntegerValue.ToString();
+        return e.Id.ToString();
 
     if (string.Equals(name, "Category", StringComparison.OrdinalIgnoreCase))
         return e.Category?.Name ?? "";

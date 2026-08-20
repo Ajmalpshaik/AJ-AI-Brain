@@ -58,9 +58,9 @@ string writeRadiusToParameter = ""; // optional — write the radius (mm) into t
 int maxRowsListed = 30;             // per-element detail cap; the statistics always cover everything
 // ---- END INPUTS ----
 
-Func<double,double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double,double> mmToFt = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double,double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double,double> toMm = v => v * 304.8;
+Func<double,double> mmToFt = v => v / 304.8;
+Func<double,double> toM2 = v => v / 10.763910416709722;
 
 Func<Element,XYZ> centreOf = el =>
 {
@@ -94,7 +94,7 @@ else
             var p = e.LookupParameter(flowParameterName);
             if (p == null) { var te = Document.GetElement(e.GetTypeId()); p = te?.LookupParameter(flowParameterName); }
             double lps = (p != null && p.HasValue)
-                ? UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_LITERS_PER_SECOND) : 0;
+                ? p.AsDouble() * 28.316846592 : 0;
             double m2 = lps / designFlowPerM2;
             r = mmToFt(Math.Sqrt(m2 / Math.PI) * 1000.0);   // equivalent circular radius
         }
@@ -194,7 +194,7 @@ else
                         try {
                             var g = Document.Create.NewGroup(made);
                             if (!string.IsNullOrEmpty(drawnGroupName)) { try { g.GroupType.Name = drawnGroupName; } catch { } }
-                            sb.AppendLine($"  Grouped the circles as '{g.GroupType.Name}' (Id {g.Id.IntegerValue}).");
+                            sb.AppendLine($"  Grouped the circles as '{g.GroupType.Name}' (Id {g.Id}).");
                         } catch (Exception exG) { sb.AppendLine($"  Grouping failed ({exG.Message}) — circles are still drawn."); }
                     }
                     t.Commit();

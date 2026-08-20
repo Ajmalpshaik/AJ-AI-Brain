@@ -59,8 +59,8 @@ using (var t = new Transaction(Document, "AJ Tools - Rotate Elements"))
             if (pivotXmm.HasValue && pivotYmm.HasValue)
             {
                 pivot = new XYZ(
-                    UnitUtils.ConvertToInternalUnits(pivotXmm.Value, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pivotYmm.Value, DisplayUnitType.DUT_MILLIMETERS),
+                    pivotXmm.Value / 304.8,
+                    pivotYmm.Value / 304.8,
                     0);
             }
             else if (e.Location is LocationPoint lp)

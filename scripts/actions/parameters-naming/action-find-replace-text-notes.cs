@@ -41,7 +41,7 @@ else if (mode == "find")
         var owner = Document.GetElement(n.OwnerViewId) as View;
         var preview = n.Text.Replace("\r", " ").Replace("\n", " ");
         if (preview.Length > 60) preview = preview.Substring(0, 60) + "...";
-        sb.AppendLine($"  - Id {n.Id.IntegerValue} in view '{owner?.Name ?? "?"}': \"{preview}\"");
+        sb.AppendLine($"  - Id {n.Id} in view '{owner?.Name ?? "?"}': \"{preview}\"");
     }
     if (hits.Count > 30) sb.AppendLine($"  ... +{hits.Count - 30} more");
 }

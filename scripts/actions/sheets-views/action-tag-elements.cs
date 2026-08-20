@@ -59,8 +59,8 @@ else
         };
 
         XYZ offset = new XYZ(
-            UnitUtils.ConvertToInternalUnits(offsetXmm, DisplayUnitType.DUT_MILLIMETERS),
-            UnitUtils.ConvertToInternalUnits(offsetYmm, DisplayUnitType.DUT_MILLIMETERS),
+            offsetXmm / 304.8,
+            offsetYmm / 304.8,
             0);
 
         var newElementIds = new List<ElementId>();

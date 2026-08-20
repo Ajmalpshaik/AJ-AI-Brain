@@ -82,7 +82,7 @@ var nearEquipEnd = ductEndConns.OrderBy(c => c.Origin.DistanceTo(equipConn.Origi
 var farEnd = ductEndConns.OrderBy(c => c.Origin.DistanceTo(equipConn.Origin)).Last();
 
 XYZ dir = (farEnd.Origin - nearEquipEnd.Origin).Normalize();
-double gapFt = UnitUtils.ConvertToInternalUnits(gapMm, DisplayUnitType.DUT_MILLIMETERS);
+double gapFt = gapMm / 304.8;
 XYZ breakPt = nearEquipEnd.Origin + dir * gapFt;
 sb.AppendLine($"Reference (near-equipment) duct end: ({nearEquipEnd.Origin.X:F3},{nearEquipEnd.Origin.Y:F3},{nearEquipEnd.Origin.Z:F3})");
 sb.AppendLine($"Break point: {gapMm}mm downstream -> ({breakPt.X:F3},{breakPt.Y:F3},{breakPt.Z:F3})");

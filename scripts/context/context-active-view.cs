@@ -20,7 +20,7 @@ sb.AppendLine($"Open documents ({openDocs.Count}): {string.Join(", ", openDocs)}
 
 View view = UIDocument.ActiveView;
 
-sb.AppendLine($"Active view: '{view.Name}' (Id {view.Id.IntegerValue}, {view.ViewType})");
+sb.AppendLine($"Active view: '{view.Name}' (Id {view.Id}, {view.ViewType})");
 sb.AppendLine($"Scale: 1:{view.Scale}");
 
 var genLevel = (view as ViewPlan)?.GenLevel;
@@ -32,7 +32,7 @@ if (right != null) sb.AppendLine($"Screen Right direction: ({right.X:F3}, {right
 if (up != null) sb.AppendLine($"Screen Up direction: ({up.X:F3}, {up.Y:F3}, {up.Z:F3})");
 
 var openViews = UIDocument.GetOpenUIViews();
-var openNames = openViews.Select(v => (Document.GetElement(v.ViewId) as View)?.Name ?? v.ViewId.IntegerValue.ToString());
+var openNames = openViews.Select(v => (Document.GetElement(v.ViewId) as View)?.Name ?? v.ViewId.ToString());
 sb.AppendLine($"Open views ({openViews.Count}): {string.Join(", ", openNames)}");
 
 int selCount = UIDocument.Selection.GetElementIds().Count;

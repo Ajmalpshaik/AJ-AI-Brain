@@ -17,9 +17,9 @@ double offsetZmm = 0.0;
 // ---- END INPUTS ----
 
 XYZ translation = new XYZ(
-    UnitUtils.ConvertToInternalUnits(offsetXmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(offsetYmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(offsetZmm, DisplayUnitType.DUT_MILLIMETERS));
+    offsetXmm / 304.8,
+    offsetYmm / 304.8,
+    offsetZmm / 304.8);
 
 var newElementIds = new List<ElementId>();
 int copied = 0, skipped = 0;

@@ -66,7 +66,7 @@ using (var t = new Transaction(Document, "AJ Tools - Duplicate Type"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Type '{srcType.Name}' (Id {srcType.Id.IntegerValue}) -> '{candidate}': {exOne.Message}");
+                failures.Add($"Type '{srcType.Name}' (Id {srcType.Id}) -> '{candidate}': {exOne.Message}");
             }
         }
         t.Commit();

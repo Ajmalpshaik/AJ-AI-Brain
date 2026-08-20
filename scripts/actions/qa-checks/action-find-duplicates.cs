@@ -21,7 +21,7 @@ Func<Element, XYZ> getPoint = e =>
     return null;
 };
 
-double toleranceFeet = UnitUtils.ConvertToInternalUnits(toleranceMm, DisplayUnitType.DUT_MILLIMETERS);
+double toleranceFeet = toleranceMm / 304.8;
 var points = elements.Select(e => (el: e, pt: getPoint(e))).Where(x => x.pt != null).ToList();
 
 var groups = new List<List<Element>>();

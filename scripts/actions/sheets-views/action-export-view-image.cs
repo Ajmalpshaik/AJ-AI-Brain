@@ -45,7 +45,7 @@ else
         Document.ExportImage(options);
         sb.AppendLine($"Image export: {views.Count} view(s)/sheet(s) written as PNG ({pixelWidth}px wide) to '{exportFolder}' with prefix '{fileNamePrefix}':");
         foreach (var v in views.Take(20))
-            sb.AppendLine($"  - '{v.Name}' (Id {v.Id.IntegerValue})");
+            sb.AppendLine($"  - '{v.Name}' (Id {v.Id})");
         if (views.Count > 20) sb.AppendLine($"  ... +{views.Count - 20} more");
     }
     catch (Exception ex)

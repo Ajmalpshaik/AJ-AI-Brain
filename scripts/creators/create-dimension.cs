@@ -57,7 +57,7 @@ else
     }
     else
     {
-        Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+        Func<double, double> mm = v => v / 304.8;
         var p1 = new XYZ(mm(lineP1XMm), mm(lineP1YMm), 0);
         var p2 = new XYZ(mm(lineP2XMm), mm(lineP2YMm), 0);
 

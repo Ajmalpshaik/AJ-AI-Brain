@@ -136,7 +136,7 @@ Func<Element, string, string> ParamText = (e, name) =>
         case StorageType.String: return p.AsString() ?? "(blank)";
         case StorageType.Integer: return p.AsInteger().ToString();
         case StorageType.Double: return p.AsValueString() ?? p.AsDouble().ToString();
-        case StorageType.ElementId: return p.AsValueString() ?? p.AsElementId().IntegerValue.ToString();
+        case StorageType.ElementId: return p.AsValueString() ?? p.AsElementId().ToString();
         default: return p.AsValueString() ?? "(unreadable)";
     }
 };

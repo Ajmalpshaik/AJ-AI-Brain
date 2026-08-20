@@ -49,7 +49,7 @@ try
 
     foreach (var el in elements)
     {
-        var cells = new List<string> { el.Id.IntegerValue.ToString() };
+        var cells = new List<string> { el.Id.ToString() };
         if (includeElementName) cells.Add(csvQ(el.Name));
         foreach (var pn in parameterNames) cells.Add(csvQ(readParam(el, pn)));
         lines.Add(string.Join(",", cells));

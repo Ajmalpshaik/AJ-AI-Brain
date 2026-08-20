@@ -24,7 +24,7 @@ double offsetMm = 500; // signed — flip the sign to flip the side, see GOTCHA 
 bool copy = true;      // true = new offset copy alongside the original; false = move the original itself
 // ---- END INPUTS ----
 
-double offsetFt = UnitUtils.ConvertToInternalUnits(offsetMm, DisplayUnitType.DUT_MILLIMETERS);
+double offsetFt = offsetMm / 304.8;
 var newElementIds = new List<ElementId>();
 int done = 0, skipped = 0;
 var failures = new List<string>();
@@ -37,7 +37,7 @@ using (var t = new Transaction(Document, "AJ Tools - Offset Elements"))
         foreach (var e in elements)
         {
             var lc = e.Location as LocationCurve;
-            if (lc == null) { skipped++; failures.Add($"Id {e.Id.IntegerValue}: no LocationCurve"); continue; }
+            if (lc == null) { skipped++; failures.Add($"Id {e.Id}: no LocationCurve"); continue; }
 
             try
             {
@@ -58,7 +58,7 @@ using (var t = new Transaction(Document, "AJ Tools - Offset Elements"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Id {e.Id.IntegerValue}: {exOne.Message}");
+                failures.Add($"Id {e.Id}: {exOne.Message}");
             }
         }
         t.Commit();

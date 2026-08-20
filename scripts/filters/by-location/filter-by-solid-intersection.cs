@@ -22,7 +22,7 @@ BuiltInCategory targetCategory = BuiltInCategory.OST_DuctCurves;
 
 var sb = new System.Text.StringBuilder();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 XYZ p0 = new XYZ(mm(minXmm), mm(minYmm), mm(minZmm));
 double dx = mm(maxXmm) - mm(minXmm);

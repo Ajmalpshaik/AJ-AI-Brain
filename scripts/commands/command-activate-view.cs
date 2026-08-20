@@ -23,7 +23,7 @@ else
     try
     {
         UIDocument.ActiveView = view;
-        sb.AppendLine($"Active view set to '{view.Name}' (Id {view.Id.IntegerValue}).");
+        sb.AppendLine($"Active view set to '{view.Name}' (Id {view.Id}).");
     }
     catch (Exception ex)
     {

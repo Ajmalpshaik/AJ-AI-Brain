@@ -30,8 +30,8 @@ string heightParamName = "Height";
 
 var sb = new System.Text.StringBuilder();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
+Func<double, double> toMm = v => v * 304.8;
 
 // --- collect the MEP curves ---
 var mepCurves = new List<MEPCurve>();
@@ -87,7 +87,7 @@ if (mepCurves.Count > 0 && walls.Count > 0)
     if (curvedWallsSkipped > 0) sb.AppendLine($"  {curvedWallsSkipped} curved-wall pairing(s) skipped (centerline method is straight-only).");
     if (nonLinearRunsSkipped > 0) sb.AppendLine($"  {nonLinearRunsSkipped} non-straight run(s) skipped.");
     foreach (var c in crossings.Take(30))
-        sb.AppendLine($"  - {mepKind} Id {c.Item1.Id.IntegerValue} x wall Id {c.Item2.Id.IntegerValue} at ({toMm(c.Item3.X):F0}, {toMm(c.Item3.Y):F0}, {toMm(c.Item3.Z):F0}) mm");
+        sb.AppendLine($"  - {mepKind} Id {c.Item1.Id} x wall Id {c.Item2.Id} at ({toMm(c.Item3.X):F0}, {toMm(c.Item3.Y):F0}, {toMm(c.Item3.Z):F0}) mm");
     if (crossings.Count > 30) sb.AppendLine($"  ... +{crossings.Count - 30} more");
 }
 else if (mepCurves.Count == 0) sb.AppendLine($"No {mepKind}s in the model — nothing to check.");

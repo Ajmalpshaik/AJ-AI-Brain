@@ -75,7 +75,7 @@ else
 {
     sb.AppendLine($"Mode '{mode}': {targets.Count} unused element(s) found" + (dryRun ? " (DRY RUN — nothing deleted)." : "."));
     foreach (var el in targets.Take(50))
-        sb.AppendLine($"  '{el.Name}' (Id {el.Id.IntegerValue})");
+        sb.AppendLine($"  '{el.Name}' (Id {el.Id})");
     if (targets.Count > 50) sb.AppendLine($"  ... and {targets.Count - 50} more.");
 
     if (!dryRun && targets.Count > 0)

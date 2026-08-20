@@ -40,6 +40,6 @@ else
         .Where(e => e != null)
         .ToList();
 
-    sb.AppendLine($"Filtered {elements.Count} member element(s) of assembly '{assembly.Name}' (Id {assembly.Id.IntegerValue}).");
+    sb.AppendLine($"Filtered {elements.Count} member element(s) of assembly '{assembly.Name}' (Id {assembly.Id}).");
 }
 // ---- continue with one or more action fragments below, or add return sb.ToString(); to stop here ----

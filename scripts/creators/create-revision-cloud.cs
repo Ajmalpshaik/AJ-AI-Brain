@@ -22,7 +22,7 @@ double maxXMm = 2000, maxYMm = 1000;
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var view = Document.GetElement(new ElementId(viewIdInt)) as View;
 var revision = new FilteredElementCollector(Document).OfClass(typeof(Revision)).Cast<Revision>()
@@ -51,7 +51,7 @@ else
             var cloud = RevisionCloud.Create(Document, view, revision.Id, curves);
             elements.Add(cloud);
             t.Commit();
-            sb.AppendLine($"Created revision cloud (Id {cloud.Id.IntegerValue}) in view '{view.Name}' for Revision seq {revisionSequenceNumber} ('{revision.Description}'), {maxXMm - minXMm}x{maxYMm - minYMm} mm.");
+            sb.AppendLine($"Created revision cloud (Id {cloud.Id}) in view '{view.Name}' for Revision seq {revisionSequenceNumber} ('{revision.Description}'), {maxXMm - minXMm}x{maxYMm - minYMm} mm.");
         }
         catch (Exception ex)
         {

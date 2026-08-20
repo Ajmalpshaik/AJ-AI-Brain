@@ -15,9 +15,9 @@ double offsetZmm = 0.0;
 // ---- END INPUTS ----
 
 XYZ translation = new XYZ(
-    UnitUtils.ConvertToInternalUnits(offsetXmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(offsetYmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(offsetZmm, DisplayUnitType.DUT_MILLIMETERS));
+    offsetXmm / 304.8,
+    offsetYmm / 304.8,
+    offsetZmm / 304.8);
 
 // A position we can compare before and after. NOT for reporting — only for answering
 // "did this element actually move?", which MoveElement itself will not tell you.
@@ -29,7 +29,7 @@ Func<Element, XYZ> probePoint = e =>
     return null;
 };
 
-double verifyTolFt = UnitUtils.ConvertToInternalUnits(1.0, DisplayUnitType.DUT_MILLIMETERS); // 1mm
+double verifyTolFt = 1.0 / 304.8; // 1mm
 
 int moved = 0, skipped = 0, blocked = 0, partial = 0, unverified = 0;
 var blockedIds = new List<int>();

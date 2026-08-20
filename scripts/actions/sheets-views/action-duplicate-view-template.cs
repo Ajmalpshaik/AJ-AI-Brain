@@ -70,7 +70,7 @@ else
             }
 
             var newTemplate = Document.GetElement(newId) as View;
-            if (newTemplate == null) throw new InvalidOperationException($"Copied element {newId.IntegerValue} is not a View.");
+            if (newTemplate == null) throw new InvalidOperationException($"Copied element {newId} is not a View.");
             string autoName = newTemplate.Name;   // read it back — the suffix is Revit's choice, not ours
 
             using (var t = new Transaction(Document, "AJ Tools - Rename Copied View Template"))
@@ -81,7 +81,7 @@ else
             }
 
             tg.Assimilate();
-            sb.AppendLine($"Duplicated View Template '{sourceTemplateName}' as '{newTemplate.Name}' (Id {newId.IntegerValue}). " +
+            sb.AppendLine($"Duplicated View Template '{sourceTemplateName}' as '{newTemplate.Name}' (Id {newId}). " +
                           $"Revit first named the copy '{autoName}'; it was renamed after the copy committed. " +
                           "The source template and every view using it are unaffected.");
         }

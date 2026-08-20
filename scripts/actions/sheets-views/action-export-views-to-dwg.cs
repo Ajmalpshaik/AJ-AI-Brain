@@ -56,7 +56,7 @@ else
             catch (Exception exOne)
             {
                 failed++;
-                sb.AppendLine($"  FAILED '{v.Name}' (Id {v.Id.IntegerValue}): {exOne.Message}");
+                sb.AppendLine($"  FAILED '{v.Name}' (Id {v.Id}): {exOne.Message}");
             }
         }
         sb.AppendLine($"DWG export: {done} of {views.Count} view(s)/sheet(s) written to '{exportFolder}', {failed} failed.");

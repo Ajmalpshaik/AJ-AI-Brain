@@ -61,8 +61,8 @@ double positionValue = 0.5;        // 0.5 = midpoint; or mm when positionMode = 
 bool matchAccessorySizeToRun = true; // leave true — see the SIZE MISMATCH gotcha above
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
+Func<double, double> toMm = v => v * 304.8;
 
 var newAccessoryIds = new List<ElementId>();
 
@@ -83,7 +83,7 @@ else if (runs.Count == 0)
 }
 else
 {
-    var catId = symbol.Category != null ? (BuiltInCategory)symbol.Category.Id.IntegerValue : BuiltInCategory.INVALID;
+    var catId = symbol.Category != null ? (BuiltInCategory)symbol.Category.Id : BuiltInCategory.INVALID;
     bool isDuctAcc = catId == BuiltInCategory.OST_DuctAccessory || catId == BuiltInCategory.OST_DuctFitting;
     bool isPipeAcc = catId == BuiltInCategory.OST_PipeAccessory || catId == BuiltInCategory.OST_PipeFitting;
     if (!isDuctAcc && !isPipeAcc)
@@ -103,16 +103,16 @@ else
             {
                 bool runIsDuct = run is Autodesk.Revit.DB.Mechanical.Duct;
                 if ((runIsDuct && isPipeAcc) || (!runIsDuct && isDuctAcc))
-                { skipped++; notes.Add($"Id {run.Id.IntegerValue}: domain mismatch"); continue; }
+                { skipped++; notes.Add($"Id {run.Id}: domain mismatch"); continue; }
 
                 var line = (run.Location as LocationCurve)?.Curve as Line;
-                if (line == null) { skipped++; notes.Add($"Id {run.Id.IntegerValue}: not a straight line"); continue; }
+                if (line == null) { skipped++; notes.Add($"Id {run.Id}: not a straight line"); continue; }
 
                 double length = line.Length;
                 double along = positionMode == "mm_from_start" ? mm(positionValue) : length * positionValue;
                 double margin = Math.Min(mm(50), length * 0.1);
                 if (along < margin || along > length - margin)
-                { skipped++; notes.Add($"Id {run.Id.IntegerValue}: {toMm(along):F0} mm too close to an end"); continue; }
+                { skipped++; notes.Add($"Id {run.Id}: {toMm(along):F0} mm too close to an end"); continue; }
 
                 var point = line.GetEndPoint(0) + line.Direction.Normalize() * along;
 
@@ -185,7 +185,7 @@ else
                                 {
                                     var mate = accCons.OrderBy(c => c.Origin.DistanceTo(freeEnd.Origin)).First();
                                     try { freeEnd.ConnectTo(mate); }
-                                    catch (Exception exJoin) { notes.Add($"Id {halfId.IntegerValue}: join failed — {exJoin.Message}"); }
+                                    catch (Exception exJoin) { notes.Add($"Id {halfId}: join failed — {exJoin.Message}"); }
                                 }
                             }
                             t.Commit();
@@ -196,17 +196,17 @@ else
                     int joined = (Document.GetElement(instId) as FamilyInstance)
                         .MEPModel.ConnectorManager.Connectors.Cast<Connector>().Count(c => c.IsConnected);
                     if (joined < 2)
-                        notes.Add($"Id {runId.IntegerValue}: accessory {instId.IntegerValue} joined only {joined}/2");
+                        notes.Add($"Id {runId}: accessory {instId} joined only {joined}/2");
                     newAccessoryIds.Add(instId);
                     placed++;
                 }
-                catch (Exception exOne) { skipped++; notes.Add($"Id {runId.IntegerValue}: {exOne.Message}"); }
+                catch (Exception exOne) { skipped++; notes.Add($"Id {runId}: {exOne.Message}"); }
             }
 
             tg.Assimilate();
             sb.AppendLine($"Placed {placed} accessor{(placed == 1 ? "y" : "ies")} into {runs.Count} run(s), {skipped} skipped.");
             if (newAccessoryIds.Count > 0)
-                sb.AppendLine($"  New accessory Ids: {string.Join(", ", newAccessoryIds.Take(30).Select(i => i.IntegerValue.ToString()))}");
+                sb.AppendLine($"  New accessory Ids: {string.Join(", ", newAccessoryIds.Take(30).Select(i => i.ToString()))}");
             if (notes.Count > 0)
                 sb.AppendLine("  Notes: " + string.Join("; ", notes.Take(20)));
             sb.AppendLine("  Each run is now TWO segments joined by its accessory — the ids changed, re-filter before chaining.");

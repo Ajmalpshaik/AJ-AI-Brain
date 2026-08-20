@@ -70,8 +70,8 @@ XYZ refPoint = startCurve.GetEndPoint(0);
 double widthFt = startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble()
     ?? startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble() ?? 0;
 double halfWidthFt = widthFt / 2.0;
-double marginFt = UnitUtils.ConvertToInternalUnits(marginMm, DisplayUnitType.DUT_MILLIMETERS);
-double groupToleranceFt = UnitUtils.ConvertToInternalUnits(groupToleranceMm, DisplayUnitType.DUT_MILLIMETERS);
+double marginFt = marginMm / 304.8;
+double groupToleranceFt = groupToleranceMm / 304.8;
 double offsetFt = halfWidthFt + marginFt;
 
 // Find every collinear trunk piece (same INFINITE line as the starting piece) so multi-piece trunks

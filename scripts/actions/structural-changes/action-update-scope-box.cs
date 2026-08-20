@@ -48,7 +48,7 @@ else
         .Where(v => v.get_Parameter(BuiltInParameter.VIEWER_VOLUME_OF_INTEREST_CROP)?.AsElementId() == existing.Id)
         .ToList();
 
-    sb.AppendLine($"Found Scope Box '{scopeBoxName}' (Id {existing.Id.IntegerValue}), referenced by {dependentViews.Count} view(s): " +
+    sb.AppendLine($"Found Scope Box '{scopeBoxName}' (Id {existing.Id}), referenced by {dependentViews.Count} view(s): " +
         string.Join(", ", dependentViews.Select(v => v.Name)));
     sb.AppendLine($"Requested new extents ({newMinXMm},{newMinYMm},{newMinZMm}) to ({newMaxXMm},{newMaxYMm},{newMaxZMm}) mm NOT applied — Revit's public API has no Scope Box creation method on this Revit version, so the delete+recreate resize workaround this fragment used to attempt is impossible to complete safely (see CONFIRMED IMPOSSIBLE note above). Resize manually by selecting the Scope Box in a plan view and dragging its corner/edge grips, or editing its Properties.");
 }

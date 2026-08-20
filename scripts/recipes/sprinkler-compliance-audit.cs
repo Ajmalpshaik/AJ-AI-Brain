@@ -55,9 +55,9 @@ int maxListed = 60;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
+Func<double, double> toM2 = v => v / 10.763910416709722;
 
 var room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
 

@@ -37,7 +37,7 @@ Func<ElementId, string> resolveParamName = id =>
     }
     catch { }
     var pe = Document.GetElement(id) as ParameterElement;
-    return pe?.Name ?? $"(Id {id.IntegerValue})";
+    return pe?.Name ?? $"(Id {id})";
 };
 
 int withTemplate = 0, withoutTemplate = 0;
@@ -46,19 +46,19 @@ foreach (var v in targetViews)
 {
     if (v.IsTemplate)
     {
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): is itself a View Template, not a real view.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): is itself a View Template, not a real view.");
         continue;
     }
 
     if (v.ViewTemplateId == ElementId.InvalidElementId)
     {
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): NO View Template applied.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): NO View Template applied.");
         withoutTemplate++;
     }
     else
     {
         var template = Document.GetElement(v.ViewTemplateId) as View;
-        string templateName = template?.Name ?? $"(Id {v.ViewTemplateId.IntegerValue}, unresolved)";
+        string templateName = template?.Name ?? $"(Id {v.ViewTemplateId}, unresolved)";
 
         var excludedIds = v.GetNonControlledTemplateParameterIds();
         string excludedLabel = "none — fully controlled by the template";
@@ -67,7 +67,7 @@ foreach (var v in targetViews)
             excludedLabel = string.Join(", ", excludedIds.Select(resolveParamName));
         }
 
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): View Template = '{templateName}' (Id {v.ViewTemplateId.IntegerValue}). Excluded from control: {excludedLabel}.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): View Template = '{templateName}' (Id {v.ViewTemplateId}). Excluded from control: {excludedLabel}.");
         withTemplate++;
     }
 }

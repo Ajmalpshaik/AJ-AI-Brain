@@ -58,7 +58,7 @@ using (var t = new Transaction(Document, "AJ Tools - Create Sheet List"))
 
         elements.Add(schedule);
         t.Commit();
-        sb.AppendLine($"Created sheet list '{schedule.Name}' (Id {schedule.Id.IntegerValue}) with {added.Count} column(s): {string.Join(", ", added)}{(string.IsNullOrEmpty(sortByField) ? "" : $"; sorted by {sortByField}")}.");
+        sb.AppendLine($"Created sheet list '{schedule.Name}' (Id {schedule.Id}) with {added.Count} column(s): {string.Join(", ", added)}{(string.IsNullOrEmpty(sortByField) ? "" : $"; sorted by {sortByField}")}.");
         if (missing.Count > 0)
         {
             sb.AppendLine($"  NOT added (not schedulable on a sheet list): {string.Join(", ", missing)}");
