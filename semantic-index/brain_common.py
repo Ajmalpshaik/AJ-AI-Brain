@@ -57,8 +57,9 @@ COLLECTION_NAME = "aj_brain"
 # outright, which made the change impossible to A/B: you cannot ask "is the new
 # one actually better" if the old one no longer exists in the code.
 #
-#   bge-small-en-v1.5   default. 512 word-pieces, 2024-era, ONNX via embed_bge.py
-#   all-MiniLM-L6-v2    the previous model. 256 word-pieces, 2021, shipped by chromadb
+#   bge-small-en-v1.5   opt-in. 512 word-pieces, 2024-era, ONNX via embed_bge.py
+#                       needs embed_bge.py --download (~127 MB) before first use
+#   all-MiniLM-L6-v2    default. 256 word-pieces, 2021, shipped inside chromadb
 #
 # Switching changes build_fingerprint(), so index-brain.cmd rebuilds by itself.
 # To compare the two honestly:
@@ -71,7 +72,13 @@ COLLECTION_NAME = "aj_brain"
 EMBED_MODEL_BGE = "bge-small-en-v1.5"
 EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
 
-EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_BGE
+# Default is MiniLM because it ships inside chromadb and therefore always works.
+# BGE was briefly the default (2026-08-20) and broke search outright on the
+# Windows PC: its ONNX weights are a separate ~127 MB download, so every query
+# died with "model has not been downloaded yet" until it was fetched. A default
+# that needs a download before the tool runs at all is not a default. BGE stays
+# one env var away, which is all the A/B above ever needed.
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_MINILM
 
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.
