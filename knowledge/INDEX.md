@@ -9,7 +9,8 @@ that one file — don't read the whole folder.**
 |---|---|
 | Any live-model / AJ AI Bridge task at all — running scripts, view visibility, MEP tracing, undo, HVAC terminals/ducts, tagging, revisions, families | [`live-model/README.md`](live-model/README.md) **← its own index, route from there** |
 | "What actions are available" / a plain-language menu of universal Revit actions | [`universal-actions-reference.md`](universal-actions-reference.md) |
-| Fire sprinkler spacing rules — head count, spacing, distance to walls, area per head, hazard class, obstructions | [`nfpa13-sprinkler-spacing.md`](nfpa13-sprinkler-spacing.md) (the workflow is [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../skills/ajtools-fire-sprinkler-layout/SKILL.md)) |
+| Fire sprinkler spacing rules — head count, spacing, distance to walls, area per head, hazard class | [`nfpa13-sprinkler-spacing.md`](nfpa13-sprinkler-spacing.md) (the workflow is [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../skills/ajtools-fire-sprinkler-layout/SKILL.md)) |
+| **Anything else about sprinklers** — pendent vs upright vs sidewall, how far below the ceiling, how far below the slab when there is no ceiling, what a beam or a column does to the layout, the method end to end | [`fire-sprinkler/README.md`](fire-sprinkler/README.md) **← its own index, route from there** |
 | Building a family from a supplier's PDF submittal — which page to trust for sizes vs positions, how many families the product range needs, and how to get text/images out of the PDF on this machine | [`reading-manufacturer-datasheets.md`](reading-manufacturer-datasheets.md) |
 | An ambiguous or misheard term in a request | [`glossary.md`](glossary.md) |
 | A search missed because the site word isn't the Revit word ("floor levels", "light fitting", "out to excel") — **add a row, it works immediately, no rebuild** | [`site-vocabulary.md`](site-vocabulary.md) (data, read live by `semantic-index\ask-brain-hybrid.cmd`) |

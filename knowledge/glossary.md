@@ -13,6 +13,19 @@ these files, so a word only exists to a future session if it was written here. R
 phrasing on the left, the Revit meaning on the right — a term that read as obvious the day it was said
 is exactly the one a fresh session cannot route.
 
+> **split-review: kept whole** (reviewed 2026-08-20, at 309 lines). Past the ~300-line rule and staying
+> that way. The rule is a split candidate, not a mandate, and its purpose is to cut the cost of *reading a
+> file whole* — but **nobody reads a glossary whole.** It is a lookup: you arrive with one word and leave
+> with one meaning. There is a visible seam (the term list, then the dated `### Log`), and splitting on it
+> would still be wrong: both halves answer the same question — *what does Ajmal mean by this word* — so a
+> split just means guessing which file a word landed in, and the semantic index would have to get that
+> guess right too. That is the "splitting adds hops" case the rule names.
+>
+> It will keep growing, by design — his standing rule is that his words get written down every session.
+> Growth alone is not a reason to revisit this. **Re-open the decision only if a genuinely different
+> subject starts accumulating here** — a body of entries that someone would look up *without* having heard
+> Ajmal say the word first. That would be a different question, and it would deserve its own file.
+
 - **Element ID (Revit)** → a unique number Revit assigns to every single element in a project — walls,
   doors, pipes, rooms, views, sheets, everything. No two elements share the same ID in one model. Used to
   find, select, or track an element individually (e.g. Add-ins → Select by ID, `filter-by-id-list.cs`,
@@ -286,3 +299,23 @@ is exactly the one a fresh session cannot route.
   **"CRAC Unit Outdoor"**. From BL006A the same day: `PackagedAirConditioner` → **"Packaged Unit"**,
   `TCM_ACU_T002_AirCooledCondensingUnit` → **"Split Outdoor"**, `TCM_ECF_ExhaustCentrifugalFan` →
   **"Exhaust Fan for Inertial Air Filter"** (named by what it serves, not what it is).
+- 2026-08-20 — **his fire-fighting wording, from the message that started the sprinkler build.** Written
+  down in his phrasing, per his rule that the words matter as much as the conclusion. The spellings also
+  went into [`site-vocabulary.md`](site-vocabulary.md) so a search finds the files whichever way he types.
+
+  | His words | What it means |
+  |---|---|
+  | "srinkler" | sprinkler — his consistent spelling, in the same message four times |
+  | "pendend sprinkler" | **pendent** head, pointing down below a ceiling |
+  | "upraght sprinkler" | **upright** head, pointing up, used where there is no ceiling |
+  | "wall sprinkler" | **sidewall** head — its own spacing table, not a pendent turned sideways |
+  | "beem" / "colom" | beam (Structural Framing) / column (Structural Columns and Columns) |
+  | "with celling how, without celling how" | the two deflector-height cases: below a ceiling, or below the slab and beams where there is none. This is the question [`fire-sprinkler/deflector-and-ceiling-height.md`](fire-sprinkler/deflector-and-ceiling-height.md) exists to answer |
+  | "how mcuh from the wall" | the distance-to-wall rule — max half the allowable spacing, min 4 in (102 mm) |
+  | "if upraght howmcuh from the slab" | the upright deflector rule — 25–305 mm below a flat soffit, or 25–152 mm below the **beam** where beams hang below the deck |
+  | "room boundy" | the room's real boundary, as opposed to its bounding box — and he is right that it is the thing to lay out from |
+
+  His framing of the whole job, worth keeping verbatim because it is the routing sentence a future session
+  has to recognise: *"main aim to add sprinklers in the room with room boundy and if any beem or colom is
+  there in the room as per that need to place"*. That is: room boundary in, obstruction-aware head
+  positions out — the chain in [`fire-sprinkler/layout-method.md`](fire-sprinkler/layout-method.md).
