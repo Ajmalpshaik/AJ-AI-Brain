@@ -33,7 +33,7 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 342 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 343 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already

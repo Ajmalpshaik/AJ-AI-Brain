@@ -39,3 +39,11 @@ __pycache__/
 # checkout and merge. The data still travels with the Brain, because the Brain travels as a
 # FOLDER - see job-log/README.md. Only the README is tracked.
 job-log/*.jsonl
+
+# SEPARATE Revit API index — the reflected API corpus and its own vector database.
+# Both are large, version-specific and rebuildable (harvest-revit-api.cs -> index-api.cmd), and the
+# corpus is Autodesk's API surface rather than this Brain's own work, so neither travels with the repo.
+# Deliberately a different database from semantic-index/chroma-db: the Brain's search must never read it.
+api-index/corpus/
+api-index/chroma-db-api/
+api-index/run-temp/
