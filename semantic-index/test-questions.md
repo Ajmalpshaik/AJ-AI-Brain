@@ -60,6 +60,43 @@ quality measure once there are 20+ rows written by a person.
 | is that this model contail spaces | skills/ajtools-live-model/SKILL.md |
 | what is the biggest space | skills/ajtools-live-model/SKILL.md |
 | now tell me what is in this how meny airterminal is there | skills/ajtools-live-model/SKILL.md |
+| not all the assessory isulate only vcd | scripts/filters/by-identity/filter-by-category-and-family.cs |
+| i pressed stop, check the model state | knowledge/live-model/undo.md |
+| how you can try chek the all duct and as per the widh make one visual report | skills/ajtools-visual-report/SKILL.md |
+| nice color by size and give me same like this and show the widget | skills/ajtools-visual-report/SKILL.md |
+| Change the 250x250 ducts to RGB(185,193,186) in view 1 - Mech. Leave every other size as it is. | scripts/actions/color-graphics/action-set-color-uniform.cs |
+| we will try frist now in the model there is 3 duct is there change the clor difrent colors let me see | scripts/actions/color-graphics/action-color-by-group.cs |
+| did you grmeber grayout for the mcp in the active view | skills/ajtools-mep-grayout/SKILL.md |
+| MM_V03 THERE IS ONE SHEDULE CAN YOU FINS AND CHEK THAT WHAT ARE THE PARAMTERS ARE USE FOR THIS | scripts/actions/sheets-views/action-report-schedule-fields.cs |
+| NOW CAN YOU CREATE WIH THIS ALL PARAMETERS FOR AIRTRIMINAL SHEDULE IN THE MODEL AND DONOT ADD FILTERS FOR THAT OKKEY | scripts/creators/create-schedule.cs |
+| MM_NP System Type FOR ALL AIRTERMAIL CAN YOU CHEKK THAT PARAMETER WATES THE VALUE IF NO VALLUE FOR ALL ADD "NPD" | scripts/filters/by-property/filter-by-parameter-exists.cs |
+| IN WCH MODEL YOU CREATED THERE IS 2 MODEL IS POEN | knowledge/live-model/core.md |
+| WHY YOU CANT EDIT BECOSE THIS IS TYPE PARAMETER NOT INSTAND PARAMTER | knowledge/live-model/core.md |
+| no am talking bout the biggest space how mey airterminal is there | scripts/filters/by-location/filter-by-space.cs |
+| TCM_SAG_T200_SupplyAirGrille_Single-Deflection_Rectangular_WithPlenum CAN YOU SELECT THIS ANY ONE AIRTERMINAL LET ME CHEK | scripts/filters/by-identity/filter-by-family-type.cs |
+
+## The 14 rows added 2026-08-21 — from Ajmal's own log, answers drafted by the assistant
+
+**Where the questions came from:** `job-log/questions.jsonl`, which has been recording every question
+asked of the search since 2026-08-13. These are **Ajmal's real questions, in his own spelling**, picked
+because each represents a job no existing row covers — isolating one family inside a category, reading a
+schedule's fields, creating a schedule, finding elements with an empty parameter, colouring per group,
+the grayout, the visual report, checking model state after a cancel, and working out which of two open
+models is being written to.
+
+**Where the expected answers came from, and the one rule that mattered:** the assistant chose them **by
+reading the library** — `fragment-index.mjs --find`, the folder listings and each fragment's PURPOSE card
+— and deliberately **never by running the search and taking what it returned.** A test whose expected
+answer is whatever the search already says is a test that can only ever pass; it marks its own homework.
+Every target was confirmed to exist before being written down.
+
+**So these are the assistant's reading of the routing rules, not Ajmal's judgement.** Same status as the
+seven rows above it, and the same request: correct any that are wrong. The ones the search gets wrong
+today are the most valuable rows in the file, not a reason to change the expected answer to match.
+
+Two pairs deliberately share a target — the two visual-report questions, and the two that should reach
+`live-model/core.md`. If the Brain cannot return the right file for two different phrasings of the same
+job, that is a finding rather than a weak test.
 
 ## Where each seeded row came from
 

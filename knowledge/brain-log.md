@@ -2639,101 +2639,25 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   trip"** section: `IsDeterminedByFormula` lives on `FamilyParameter`, not `Parameter`, and
   `MechanicalSystem` needs its full `Autodesk.Revit.DB.Mechanical.` namespace — both cost a wasted Revit
   round trip this session.
-- 2026-08-20 — **the index now stamps its own build.** `semantic-index/index-manifest.json` gains
-  `built_at` and `git_commit` ([`brain_common.py`](../semantic-index/brain_common.py) `write_manifest`),
-  and [`brain-status.mjs`](../tools/brain-status.mjs) reads them instead of guessing. Until now nothing
-  recorded *when* an index was built, only *what from*, so the session-start age came from folder mtime
-  — which its own comments admit reads backwards on a fresh checkout, where a never-built index and a
-  current one look identical. A `~` in the report now means the date is still inferred; no `~` means the
-  build wrote it down. Both fields are labels only — `build_fingerprint()` still decides rebuilds and
-  `check_staleness()` still compares contents, so a wrong clock or a missing git cannot cause a wrong
-  rebuild. Cost one deliberate full rebuild (125 s), which is the documented trade for touching
-  `brain_common.py`.
-- 2026-08-20 — **corrected a live wrong claim about the embedding model.**
-  [`semantic-index/README.md`](../semantic-index/README.md) said *"the model is `bge-small-en-v1.5` …
-  retrieves measurably better"*, and the RAG ledger listed BGE in its already-have table. Neither is
-  true: BGE was made default earlier the same day, killed every search because its ~127 MB weights had
-  never been downloaded, and was reverted — the live model is `all-MiniLM-L6-v2`, and `model-cache/`
-  holds no BGE at all. "Measurably better" was never measured: `score-history.md` has no BGE line. Both
-  files now say what actually runs and how to ask the code instead of trusting the sentence. Found by
-  checking the hybrid-retrieval stage against the code rather than against the documentation — which is
-  the failure mode `CLAUDE.md` opens by naming.
-- 2026-08-21 — **two checks added by combining Ajmal's RAG list with what was already here**, on his
-  instruction that "we have it already" is not a finish: look for the merge. (1) `brain_index.py` gains
-  `find_duplicates` — a near-duplicate report over `card` and `section` chunks on **every** build, 0.4 s,
-  with an `ACCEPTED_DUPLICATES` allow-list so it stays silent until something new appears. Duplication was
-  already prevented at write time and measured at 0.26%, but that measurement was taken once by hand and
-  nothing would have repeated it. (2) `brain_search_hybrid.py` prints a `CAUTION` when a result came from
-  one retriever alone. **Measured first, and the measurement changed the design**: over 60 real questions
-  one-sided results are 0 of 300 at top-5, 1.3% at top-20, 27.6% at top-50 — so a label on every result
-  would have said "both agree" 300 times running. It now warns only on the exception, and
-  [`CLAUDE.md`](../CLAUDE.md) was corrected, since it told every session to apply a rule by hand for a
-  case that cannot occur in a top-5 answer. Worth keeping as a result in its own right: **the fusion
-  demonstrably sinks one-sided hits**, which is what it is for.
-- 2026-08-21 — **the cross-encoder is not inert, and the record said it was.** `rerank.py` had been read
-  for months as "3/5 -> 3/5, no change, and slow". Measured over 40 real questions from
-  `job-log/questions.jsonl`, ON vs OFF changes the **#1 answer on 35 of 40 (88%)** and the **top-3 set on
-  40 of 40**, costing +902 ms. The two settings are not a tuning apart — they are different search
-  engines that tied on five questions by coincidence. It stays OFF, and the decision is now much better
-  founded. General lesson worth more than the file it is in: **"the score did not move" never means
-  "nothing moved"** — on a small test set two entirely different result sets land on the same number
-  routinely, so judge a retrieval change by how much output it changes as well as by the score.
-- 2026-08-21 — **the ANN index was checked properly and needs nothing.** Hypothesis was that
-  `ef_search`=100 while the search asks Chroma for 240 chunks was silently costing recall. Measured
-  against exhaustive numpy search: 98.7% at depth 80, 96.4% at 240. But sweeping `ef_search` to 800
-  changed recall by zero, and the "missed" chunks differ in similarity by **0.00002** — they are
-  boundary ties, not lost quality. Brute-force search over all 3,888 vectors takes **0.2 ms** against
-  HNSW's 2.1 ms, both dwarfed by 23 ms of embedding. Recorded in
-  [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md) as a do-not-tune,
-  with the rule that matters: check the similarity gap before acting on a recall percentage, or you
-  optimise ties.
-- 2026-08-21 — **the search now fixes typing mistakes by itself**, and the weak spot it was built for
-  turned out to be misdiagnosed. The RAG ledger said the measured failure class was *site vocabulary*;
-  measured over 170 real questions, **65% contain a word in no file**, and the expensive part is not
-  jargon — it is ordinary Revit words typed fast. A misspelling is worth nothing at all to the exact-word
-  half of the search, so the most important term in the question is simply lost. New
-  `brain_common.py` -> `correct_spelling`, with the corpus's own 10,307 words written out by the indexer.
-  Three safety rules: only words absent from every file, **a unique match or nothing** (so the typed forms
-  of *colour* and *many* are left alone rather than guessed at), and corrections are ADDED not
-  substituted, so a wrong one can never remove a good term. Fires on 44% of real questions for 4.4 ms.
-  Scores **exactly zero** on the 14-row test set — A/B'd, not one row moved — which is a fact about the
-  test set, not the feature. Also corrected [`site-vocabulary.md`](site-vocabulary.md), whose rules said
-  rows are "added, never substituted" when `expand_query` has always REPLACED the matched phrase — the
-  opposite, and the difference between a row that widens a search and one that changes its answer.
-- 2026-08-21 — **never write a misspelling into a file in this repo, not even as an example.**
-  `skills/`, `knowledge/` and `scripts/` are the dictionary the new spelling corrector checks against, so
-  spelling a word wrong here promotes the typo to a real word and switches off its own correction. Proved
-  within one rebuild: an example typo added to `site-vocabulary.md` while documenting the feature stopped
-  that exact typo being corrected. Same shape as documenting the diffuser failure making `brain-log.md`
-  the top answer for the diffuser question. Describe the mistake, never spell it out.
-- 2026-08-21 — **the biggest cost in a search was a Node subprocess nobody had timed.**
-  `load_fragment_index()` in [`brain_search_hybrid.py`](../semantic-index/brain_search_hybrid.py) re-ran
-  `tools/fragment-index.mjs --json` on **every query**, re-parsing all 290 fragments for data that only
-  changes when a fragment changes — larger than embedding the question and the vector lookup put
-  together. Now cached to disk (not just memory: nearly every search is its own short-lived process),
-  keyed by a stat-only signature of `scripts/`. **426 ms -> 38 ms**, identical results on 25/25 real
-  questions, and invalidation verified by touching a fragment. Note the deliberate inconsistency with
-  `index-manifest.json`, which hashes contents: there a false miss costs a 92-second rebuild, here it
-  costs one subprocess, so the cheaper signature is the right trade in one place and the wrong one in
-  the other.
-- 2026-08-21 — **four RAG features declined with numbers, so they are not re-proposed on instinct.**
-  A query cache would hit **0.6%** of the time (172 logged questions, 171 distinct). Freshness scoring
-  would demote proven technique in favour of changelogs, which are already discounted. Per-chunk
-  timestamps duplicate git, worse. Adversarial eval rows are the right idea at the wrong time — the test
-  set is 14 rows, and adding them makes it *less* able to measure ordinary retrieval. All recorded in
-  [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md) with the working.
-- 2026-08-21 — **a rebuild could mark itself finished before it had finished, and did.**
-  [`brain_index.py`](../semantic-index/brain_index.py) wrote `index-manifest.json` *before* calling
-  `collection.count()`. A rebuild crashed on that count having already written the manifest, and the next
-  run reported **"UP TO DATE — nothing has changed"** over an index holding **1,200 chunks of 3,895** — a
-  third of the Brain, answering every question, with nothing looking wrong. Exactly the fault the
-  build-fingerprint machinery exists to prevent, through the back door. Both build paths now count first,
-  refuse to write the manifest when the count is wrong, and exit non-zero. **Rule worth carrying beyond
-  this file: write the "this is finished" record LAST, after the thing it vouches for has been checked.**
-  Found only because the score card cried regression and the cause was chased rather than accepted.
-- 2026-08-21 — **derived files are now written atomically.** `corpus-vocabulary.txt`,
-  `index-manifest.json` and the new fragment cache all write to a temp file and rename
-  (`cfg.atomic_write_text`). A search running while the Stop hook re-indexed could read a **half-written
-  dictionary**, which makes ordinary words look unknown and changes which ones get spell-corrected — it
-  surfaced as one unreproducible score run (2/14, MRR 0.252) between two identical ones (3/14, MRR 0.314)
-  on the same corpus. Two processes touching this Brain at once is normal here, not exotic.
+- 2026-08-20 — the vector index now stamps `built_at` and `git_commit` into its manifest, so its age is
+  a fact rather than an mtime guess. [`brain_common.py`](../semantic-index/brain_common.py),
+  [`brain-status.mjs`](../tools/brain-status.mjs).
+- 2026-08-21 — **the search corrects misspellings by itself.** 65% of real logged questions contain a
+  word in no file, mostly ordinary Revit words typed fast, which are worth nothing to exact-word search.
+  New `correct_spelling`; fires on 44% of real questions. Working and limits:
+  [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md).
+- 2026-08-21 — **never write a misspelling into any file here, not even as an example.** These folders
+  are the dictionary the corrector checks against, so a typo written here becomes a real word and
+  switches off its own correction. Rules in [`site-vocabulary.md`](site-vocabulary.md).
+- 2026-08-21 — **a rebuild could mark itself finished before it had.** The manifest was written before
+  the build was verified, so a crash left 1,200 chunks of 3,895 reporting "UP TO DATE". Both paths now
+  count first. **Write the "this is finished" record last** — the general rule, worth more than the fix.
+- 2026-08-21 — derived files (`index-manifest.json`, `corpus-vocabulary.txt`, the fragment cache) now
+  write-then-rename. A search running during a re-index could read a half-written dictionary.
+- 2026-08-21 — the fragment index is cached to disk instead of spawning Node on every query: **426 ms ->
+  38 ms**, the largest single cost in a search. A near-duplicate check now runs on every build (0.4 s).
+- 2026-08-21 — **claims about the search that were wrong, now corrected**: the live embedding model
+  (docs said BGE, it is MiniLM and BGE has never been scored), the cross-encoder (read as inert, it
+  changes 88% of answers), and `site-vocabulary.md` rows (documented as additive, they replace).
+  All measurements in [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md),
+  which lives outside the index on purpose — writing about the search inside it costs retrieval.
