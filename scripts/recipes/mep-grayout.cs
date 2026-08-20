@@ -119,7 +119,7 @@ var insIds   = new HashSet<ElementId>(insulation.Select(IdOf).Where(i => i != El
 var equipIds = new HashSet<ElementId>(equipmentSolid.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
 var grey80Ids = new HashSet<ElementId>(keepGreyAt80.Select(IdOf).Where(i => i != ElementId.InvalidElementId));
 ElementId wallId = IdOf(BuiltInCategory.OST_Walls), floorId = IdOf(BuiltInCategory.OST_Floors);
-int doorId = IdOf(BuiltInCategory.OST_Doors), windowId = IdOf(BuiltInCategory.OST_Windows);
+ElementId doorId = IdOf(BuiltInCategory.OST_Doors), windowId = IdOf(BuiltInCategory.OST_Windows);
 
 var cats = doc.Settings.Categories.Cast<Category>()
     .Where(c => c.CategoryType == CategoryType.Model).OrderBy(c => c.Name).ToList();

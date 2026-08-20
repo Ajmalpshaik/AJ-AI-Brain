@@ -99,11 +99,35 @@ as `int`. Use `long`, or a string.
 
 Deprecated at 2022 in favour of `SpecTypeId`. Small enough to fix by hand.
 
+**Still not done as of 2026-08-20**, and the compiler now names the three:
+`actions/parameters-naming/action-add-project-parameter.cs`,
+`recipes/create-equipment-family-from-datasheet.cs` (which also uses `DisplayUnitType`), and
+`recipes/create-parametric-box-family-with-duct-connector.cs`. All three compile on 2020 and fail on
+2024 with `CS0122: 'ParameterType' is inaccessible due to its protection level`.
+
+### 4. Three more the scan missed — found by compiling, 2026-08-20
+
+The table below said `IndependentTag` affected **0 fragments**. It affects **two**, and two other
+removed APIs were not listed at all. This is the same lesson the repo keeps relearning: a scan of the
+source is a guess, compiling against the real `RevitAPI.dll` is a measurement.
+
+| Fragment | Uses | Gone since |
+|---|---|---|
+| `filters/by-view-and-sheet/filter-by-tag-status.cs` | `IndependentTag.TaggedLocalElementId` | 2022 — use `GetTaggedLocalElementIds()` |
+| `recipes/tag-elements-in-active-view.cs` | `TaggedLocalElementId`, `LeaderElbow` | 2022 — also `GetLeaderElbow(reference)` |
+| `context/context-project-units.cs` | `UnitType`, `DisplayUnits`, `UnitSymbol`, `UnitSymbolType` | 2021/22 — `ForgeTypeId` / `UnitTypeId` |
+| `creators/create-floor.cs` | `Document.NewFloor` | 2022 — use `Floor.Create` |
+
+These are **real API removals, not migration slips** — which is why they compile happily on 2020. Each
+needs the reflection dispatch described above so one source keeps serving 2020 *and* 2024, and each
+needs a live run afterwards: swapping to a differently-shaped API can compile and still tag the wrong
+element.
+
 ## What else lands later
 
 | Revit | Change | Does this Brain use it? |
 |---|---|---|
-| 2022 | `IndependentTag` tag members renamed for multi-reference | **No** — scanned, 0 fragments |
+| 2022 | `IndependentTag` tag members renamed for multi-reference | **YES — 2 fragments.** The original "0" was wrong; see §4 |
 | 2025 | `Dimension` split into `LinearDimension` / `RadialDimension` / `ArcLengthDimension`; exact-type checks fail | **No** — scanned, 0 fragments |
 | 2026 | Add-in isolation via `<ManifestSettings>` | Bridge-side only |
 | 2027 | .NET 10; all-user add-ins move to `Program Files` (needs admin) | Bridge-side only |

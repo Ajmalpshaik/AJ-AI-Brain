@@ -11,6 +11,11 @@
 string categoryKeyword = null;   // e.g. "Duct" — leave null only if a full list was actually requested
 // ---- END INPUTS ----
 
+// Version-proof id value: ElementId.IntegerValue (pre-2024) vs .Value (2024+). Looked up once.
+// A BuiltInCategory is an enum over that NUMBER, so the cast needs the number, not the ElementId.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 var sb = new System.Text.StringBuilder();
 var categories = Document.Settings.Categories.Cast<Category>()
     .Where(c => c.CategoryType == CategoryType.Model)
@@ -20,6 +25,6 @@ var categories = Document.Settings.Categories.Cast<Category>()
 
 sb.AppendLine($"Model categories matching {(string.IsNullOrEmpty(categoryKeyword) ? "(no keyword — full list)" : $"'{categoryKeyword}'")}: {categories.Count}");
 foreach (var c in categories)
-    sb.AppendLine($"  - {c.Name} (Id {c.Id}, BuiltInCategory {(BuiltInCategory)c.Id})");
+    sb.AppendLine($"  - {c.Name} (Id {c.Id}, BuiltInCategory {(BuiltInCategory)IdValue(c.Id)})");
 
 return sb.ToString();

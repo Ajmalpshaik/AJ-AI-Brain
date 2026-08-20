@@ -79,7 +79,7 @@ foreach (var el in elements)
                         var id = f.GetElementIdValue();
                         Category fc = null;
                         try { fc = Category.GetCategory(Document, id); } catch { }
-                        if (fc != null) val = $"{fc.Name} [{(BuiltInCategory)id}]";
+                        if (fc != null) val = $"{fc.Name} [{(BuiltInCategory)IdValue(id)}]";
                         else { var e2 = Document.GetElement(id); val = e2 != null ? e2.Name : id.ToString(); }
                     }
                     catch { val = "(no value — e.g. HasValue / HasNoValue)"; }

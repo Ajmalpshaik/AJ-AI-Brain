@@ -64,6 +64,11 @@ bool matchAccessorySizeToRun = true; // leave true — see the SIZE MISMATCH got
 Func<double, double> mm = v => v / 304.8;
 Func<double, double> toMm = v => v * 304.8;
 
+// Version-proof id value: ElementId.IntegerValue (pre-2024) vs .Value (2024+). Looked up once.
+// A BuiltInCategory is an enum over that NUMBER, so the cast needs the number, not the ElementId.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 var newAccessoryIds = new List<ElementId>();
 
 var symbol = new FilteredElementCollector(Document).OfClass(typeof(FamilySymbol)).Cast<FamilySymbol>()
@@ -83,7 +88,7 @@ else if (runs.Count == 0)
 }
 else
 {
-    var catId = symbol.Category != null ? (BuiltInCategory)symbol.Category.Id : BuiltInCategory.INVALID;
+    var catId = symbol.Category != null ? (BuiltInCategory)IdValue(symbol.Category.Id) : BuiltInCategory.INVALID;
     bool isDuctAcc = catId == BuiltInCategory.OST_DuctAccessory || catId == BuiltInCategory.OST_DuctFitting;
     bool isPipeAcc = catId == BuiltInCategory.OST_PipeAccessory || catId == BuiltInCategory.OST_PipeFitting;
     if (!isDuctAcc && !isPipeAcc)

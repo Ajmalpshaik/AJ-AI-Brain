@@ -2424,3 +2424,30 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Also fixed on the way: `START-HERE.md` and the `search_brain` tool description both still claimed
   search accuracy was "~3 in 4 at #1" — 75%, one of the three discredited figures `CLAUDE.md` warns
   about two paragraphs below, against a measured 3/14. Both now quote `score-history.md`.
+
+
+- 2026-08-20 — **Revit 2020 is now 287/287, and five of the six failures were one word each.** The
+  version-proofing pass had left `int` where its own new code returned `ElementId`:
+  `mep-grayout.cs` declared `int doorId = IdOf(...)` on the line directly below a correct
+  `ElementId wallId = IdOf(...)`, and that single mismatch produced all five of its errors. Same shape in
+  `connect-equipment-to-air-terminals.cs` (`List<Tuple<int, ...>>` one line after a migrated
+  `List<Tuple<ElementId, ...>>`). The three `CS0030` casts were the documented case the prelude already
+  solves: a `BuiltInCategory` is an enum over the id's NUMBER, so it needs `(BuiltInCategory)IdValue(id)`,
+  not `(BuiltInCategory)id`. **Lesson: the migration's misses cluster on the line *after* a correctly
+  migrated one** — worth grepping for, not just compiling for.
+
+- 2026-08-20 — **`sprinkler-layout-options.cs` had never compiled on any Revit version**, and that is a
+  different bug from the rest. It packed **9 fields into a `System.Tuple`, which stops at 8** — so both
+  `Tuple<...>` and `Tuple.Create(...)` were errors on 2020 as much as on 2027. Rewritten to a named
+  ValueTuple, which fixes the limit and retires 38 unreadable `o.Item7`-style reads at the same time.
+  First fragment in the library to use named ValueTuple; it compiles on 2020 and 2024, so the technique
+  is available to the rest. Still not live-run.
+
+- 2026-08-20 — **`knowledge/revit-version-compatibility.md` under-counted, and compiling is what caught
+  it.** The note claimed `IndependentTag` affected **0 fragments, "scanned"**. It affects **two**
+  (`filter-by-tag-status.cs`, `tag-elements-in-active-view.cs`), and two further removed APIs were absent
+  from the note altogether — `UnitType`/`DisplayUnitType`/`UnitSymbolType` in `context-project-units.cs`,
+  and `Document.NewFloor` in `create-floor.cs`. Note corrected with a new §4. **A source scan is a guess;
+  compiling against the real RevitAPI.dll is a measurement** — the same lesson this repo keeps relearning,
+  now with the tool that makes it cheap. Those 7, plus the 3 known `ParameterType` ones, are the whole of
+  what still fails on 2024; all are real API removals needing reflection dispatch, not migration slips.

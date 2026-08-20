@@ -74,10 +74,40 @@ error text lands in `fragment-compile-failures.txt` at the repo root (gitignored
 
 ### So the next job, in order
 
-1. Fix `recipes/mep-grayout.cs` on 2020 and 2024 — most-used recipe, currently would not compile.
-2. Fix the other 5 both-version failures, then the 7 that are 2024-only.
-3. Teach `verify-fragments-compile.ps1` the .NET 10 reference set so 2027 gives a real answer.
-4. Step 2 below (live Revit run) is still untouched and still the thing that proves correctness.
+**Done on the PC, 2026-08-20 — Revit 2020 is now 287/287, Revit 2024 is 280/287.**
+
+The six that failed on both versions are fixed and compile-verified on 2020 and 2024. Five were a single
+wrong word left by the migration — `int` where its own new code returns `ElementId`, each time on the line
+*directly after* a correctly migrated one (`mep-grayout.cs` is the clearest: `ElementId wallId = IdOf(...)`
+then `int doorId = IdOf(...)`). The three `(BuiltInCategory)someId` casts became
+`(BuiltInCategory)IdValue(id)`, which is what the prelude's helper exists for. `sprinkler-layout-options.cs`
+was a different bug entirely — 9 fields in a `System.Tuple`, which stops at 8, so it had **never compiled
+on any version**; it is now a named ValueTuple.
+
+**What is left is 7 fragments on Revit 2024, and they are NOT the same kind of problem.** They compile on
+2020 precisely because they use APIs Autodesk removed afterwards, so they need reflection dispatch to keep
+one source serving both — and a live run after, because a differently-shaped API can compile and still act
+on the wrong element:
+
+| Fragment | Removed API | Replacement |
+|---|---|---|
+| `action-add-project-parameter.cs` | `ParameterType` | `SpecTypeId` |
+| `create-equipment-family-from-datasheet.cs` | `ParameterType`, `DisplayUnitType` | `SpecTypeId`, `UnitTypeId` |
+| `create-parametric-box-family-with-duct-connector.cs` | `ParameterType` | `SpecTypeId` |
+| `filter-by-tag-status.cs` | `IndependentTag.TaggedLocalElementId` | `GetTaggedLocalElementIds()` |
+| `tag-elements-in-active-view.cs` | `TaggedLocalElementId`, `LeaderElbow` | + `GetLeaderElbow(reference)` |
+| `context-project-units.cs` | `UnitType`, `DisplayUnits`, `UnitSymbol` | `ForgeTypeId` / `UnitTypeId` |
+| `creators/create-floor.cs` | `Document.NewFloor` | `Floor.Create` |
+
+`knowledge/revit-version-compatibility.md` had said `IndependentTag` affected **0 fragments** and did not
+mention `UnitType` or `NewFloor` at all. Corrected — see its §4. **A source scan is a guess; compiling
+against the real `RevitAPI.dll` is a measurement.**
+
+Still outstanding, unchanged:
+
+1. Teach `verify-fragments-compile.ps1` the .NET 10 reference set so Revit 2027 gives a real answer
+   (currently reports 283 false failures — a harness fault, not the fragments).
+2. Step 2 below (live Revit run) is still untouched and is what actually proves correctness.
 
 **Still true and unchanged: compiling is a floor, not a ceiling.** None of the 2026-08-20 work has been
 run against a real model yet.

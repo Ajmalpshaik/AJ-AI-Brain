@@ -105,7 +105,7 @@ XYZ s = sup.Origin;
 XYZ d = sup.CoordinateSystem.BasisZ;                        // real outward direction of the supply connector
 double mainZ = s.Z;
 double maxAlong = 0;
-var routes = new List<Tuple<int, Connector, XYZ, XYZ>>();   // id, termConn, branchStart, branchEnd
+var routes = new List<Tuple<ElementId, Connector, XYZ, XYZ>>();   // id, termConn, branchStart, branchEnd
 foreach (var t in terms)
 {
     XYZ tp = t.Item2.Origin;

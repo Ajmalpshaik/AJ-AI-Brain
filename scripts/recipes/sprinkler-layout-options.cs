@@ -44,6 +44,10 @@
 //   in recipes/generate-room-coverage-layout.cs 2026-07-27); the enumeration and ranking are plain C#.
 //   Run it on one room alongside the grid recipe and check that the grid's answer appears in this list —
 //   if it does not, one of the two is wrong and that is worth knowing before either is trusted.
+//   2026-08-20, on the PC: this file had never compiled on ANY Revit version. It packed 9 fields into a
+//   System.Tuple, which stops at 8, so `Tuple<...9...>` and `Tuple.Create(...9...)` were both errors.
+//   Rewritten to a named ValueTuple (nx, ny, count, sxMm, syMm, asM2, marginPct, squareness, bayAligned)
+//   — which also retires 38 mystery `o.Item7` reads. Compiles clean on 2020 and 2024. Still NOT live-run.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -136,7 +140,7 @@ else
 
     // --- enumerate everything that passes EVERY limit ---
     // fields: nx, ny, count, sxMm, syMm, asM2, marginPct, squareness, bayAligned
-    var passing = new List<Tuple<int, int, int, double, double, double, double, double, bool>>();
+    var passing = new List<(int nx, int ny, int count, double sxMm, double syMm, double asM2, double marginPct, double squareness, bool bayAligned)>();
     for (int nx = 1; nx <= maxGridSteps; nx++)
         for (int ny = 1; ny <= maxGridSteps; ny++)
         {
@@ -164,7 +168,7 @@ else
                 double along = bayAxis == "x" ? sx : sy;
                 bayOk = Math.Abs(along - baySpacingMm) <= bayToleranceMm;
             }
-            passing.Add(Tuple.Create(nx, ny, count, sx, sy, asM2, marginPct, squareness, bayOk));
+            passing.Add((nx, ny, count, sx, sy, asM2, marginPct, squareness, bayOk));
         }
 
     if (passing.Count == 0)
@@ -178,18 +182,18 @@ else
     {
         // --- collapse options that are the same decision ---
         // same count AND same branch direction AND same margin band AND same bay alignment = one option
-        Func<Tuple<int, int, int, double, double, double, double, double, bool>, string> key = o =>
+        Func<(int nx, int ny, int count, double sxMm, double syMm, double asM2, double marginPct, double squareness, bool bayAligned), string> key = o =>
         {
-            string dir = Math.Abs(o.Item4 - o.Item5) < 1 ? "sq" : (o.Item4 > o.Item5 ? "X" : "Y");
-            return $"{o.Item3}|{dir}|{Math.Round(o.Item7 / 5.0)}|{o.Item9}";
+            string dir = Math.Abs(o.sxMm - o.syMm) < 1 ? "sq" : (o.sxMm > o.syMm ? "X" : "Y");
+            return $"{o.count}|{dir}|{Math.Round(o.marginPct / 5.0)}|{o.bayAligned}";
         };
-        var distinct = passing.GroupBy(key).Select(g => g.OrderByDescending(o => o.Item8).First()).ToList();
+        var distinct = passing.GroupBy(key).Select(g => g.OrderByDescending(o => o.squareness).First()).ToList();
 
-        IEnumerable<Tuple<int, int, int, double, double, double, double, double, bool>> ordered;
-        if (rankBy == "margin") ordered = distinct.OrderByDescending(o => o.Item7).ThenBy(o => o.Item3);
-        else if (rankBy == "square") ordered = distinct.OrderByDescending(o => o.Item8).ThenBy(o => o.Item3);
-        else if (rankBy == "bay") ordered = distinct.OrderByDescending(o => o.Item9).ThenBy(o => o.Item3);
-        else ordered = distinct.OrderBy(o => o.Item3).ThenByDescending(o => o.Item7);
+        IEnumerable<(int nx, int ny, int count, double sxMm, double syMm, double asM2, double marginPct, double squareness, bool bayAligned)> ordered;
+        if (rankBy == "margin") ordered = distinct.OrderByDescending(o => o.marginPct).ThenBy(o => o.count);
+        else if (rankBy == "square") ordered = distinct.OrderByDescending(o => o.squareness).ThenBy(o => o.count);
+        else if (rankBy == "bay") ordered = distinct.OrderByDescending(o => o.bayAligned).ThenBy(o => o.count);
+        else ordered = distinct.OrderBy(o => o.count).ThenByDescending(o => o.marginPct);
         var list = ordered.ToList();
 
         sb.AppendLine($"{passing.Count:N0} grid(s) satisfy every limit; {list.Count:N0} are genuinely different decisions.");
@@ -206,15 +210,15 @@ else
         {
             if (shown >= maxOptions) break;
             shown++;
-            string dir = Math.Abs(o.Item4 - o.Item5) < 1 ? "square cells"
-                : (o.Item4 > o.Item5 ? "branches along Y, wider spacing on X" : "branches along X, wider spacing on Y");
-            sb.AppendLine($"  OPTION {shown}: {o.Item1} x {o.Item2} = {o.Item3:N0} heads   [{dir}]"
-                + (o.Item9 ? "  [BAY ALIGNED]" : ""));
-            sb.AppendLine($"     spacing {o.Item4:N0} x {o.Item5:N0} mm | A_s {o.Item6:F2} m2 of {maxAreaPerHeadM2:F2} "
-                + $"({o.Item7:F0}% margin) | wall inset {o.Item4 / 2:N0} / {o.Item5 / 2:N0} mm | cells {o.Item8:F2} square");
-            if (o.Item7 < 5)
+            string dir = Math.Abs(o.sxMm - o.syMm) < 1 ? "square cells"
+                : (o.sxMm > o.syMm ? "branches along Y, wider spacing on X" : "branches along X, wider spacing on Y");
+            sb.AppendLine($"  OPTION {shown}: {o.nx} x {o.ny} = {o.count:N0} heads   [{dir}]"
+                + (o.bayAligned ? "  [BAY ALIGNED]" : ""));
+            sb.AppendLine($"     spacing {o.sxMm:N0} x {o.syMm:N0} mm | A_s {o.asM2:F2} m2 of {maxAreaPerHeadM2:F2} "
+                + $"({o.marginPct:F0}% margin) | wall inset {o.sxMm / 2:N0} / {o.syMm / 2:N0} mm | cells {o.squareness:F2} square");
+            if (o.marginPct < 5)
             {
-                sb.AppendLine($"     NOTE: only {o.Item7:F0}% under the area cap. Legal, and fine to issue — just be ready");
+                sb.AppendLine($"     NOTE: only {o.marginPct:F0}% under the area cap. Legal, and fine to issue — just be ready");
                 sb.AppendLine("     to show the number, because it is the first thing a reviewer measures.");
             }
         }
@@ -225,9 +229,9 @@ else
         if (showCentresFor && optionToDetail >= 1 && optionToDetail <= list.Count)
         {
             var pick = list[optionToDetail - 1];
-            var pts = build(pick.Item1, pick.Item2);
+            var pts = build(pick.nx, pick.ny);
             sb.AppendLine();
-            sb.AppendLine($"HEAD CENTRES for OPTION {optionToDetail} ({pick.Item1} x {pick.Item2} = {pick.Item3:N0} heads), mm project coordinates:");
+            sb.AppendLine($"HEAD CENTRES for OPTION {optionToDetail} ({pick.nx} x {pick.ny} = {pick.count:N0} heads), mm project coordinates:");
             int n = 0;
             foreach (var c in pts.OrderBy(p => p.Y).ThenBy(p => p.X))
                 sb.AppendLine($"  {++n,3}. {toMm(c.X):N0}, {toMm(c.Y):N0}");
