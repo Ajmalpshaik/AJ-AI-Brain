@@ -2349,3 +2349,16 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   code, which is slow and goes wrong") is answered in CLAUDE.md as a habit rather than a tool: search
   before writing, and **compile-check fresh C# before he runs it** — a round trip through Revit costs his
   attention, a compile costs a minute of nobody's.
+
+- 2026-08-20 — Ajmal asked whether the project should be **re-architected "as per the best RAG"**. Answer
+  written up as `knowledge/rag-architecture-decisions.md` and routed from `knowledge/INDEX.md`: **no** —
+  the pipeline already has hybrid dense+BM25 with RRF, structure-aware chunking, kind and path weighting,
+  live query expansion, file-level re-ranking, incremental indexing and an eval harness, and **six
+  standard "best practice" upgrades have already been measured here, four of them neutral or negative**
+  (contextual-retrieval prefixes twice, a confidence floor, a bigger candidate pool). The file collects
+  those results in one place so a rewrite is not proposed again from a diagram. The real bottleneck is
+  the **14-row test set** — two finished features are switched off waiting on it — plus site vocabulary
+  and the fact that `job-log/questions.jsonl` is not being written yet. One genuine refactor identified:
+  `api-index/` is a *copy* of the pipeline rather than a second config of it, and a shared corpus module
+  is what "easy to do all kinds of RAG working" actually costs. Second gap: the search is Windows-only,
+  so it is dark on Claude Code for web.
