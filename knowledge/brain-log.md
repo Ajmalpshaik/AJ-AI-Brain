@@ -2284,3 +2284,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `GetEndPoint` / `Tessellate` only, which exist on every targeted version, rather than any
   flex-specific member. Counts `Connector.AllRefs`, never `IsConnected`, per the hvac-ducts.md gotcha.
   Unproven — written without Revit.
+
+- 2026-08-20 — Ajmal stated his two standing problems plainly, and said he is **not a coder** — so every
+  programming decision is the assistant's to make, not his to choose between. Recorded in `CLAUDE.md`
+  with his own words. Problem 2 ("proven in 2020, errors in a newer Revit") turned out to be **already
+  solved and simply undiscoverable**: `tools/verify-fragments-compile.ps1` has always compile-checked the
+  whole library against a chosen Revit's real API DLLs **without opening Revit**, and it was mentioned in
+  exactly two places — one line of a tools list, and a footnote about `%TEMP%`. New
+  `tools/check-scripts.cmd` + `.ps1` wraps it: finds **every** Revit on the PC, checks all 285 fragments
+  against each, and prints one plain-language line per version (SAFE / n scripts would error). Routed
+  from START-HERE's table, the version note's opening line, and CLAUDE.md, because the lesson of the
+  original tool is that a good tool nobody can find is worth nothing. Problem 1 ("not covered, so fresh
+  code, which is slow and goes wrong") is answered in CLAUDE.md as a habit rather than a tool: search
+  before writing, and **compile-check fresh C# before he runs it** — a round trip through Revit costs his
+  attention, a compile costs a minute of nobody's.

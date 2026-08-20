@@ -62,6 +62,25 @@ site-word → Revit-word map; when a search looks off, say the Revit word and re
 > telling you the Brain has moved on since. It warns rather than blocks, so the results underneath are
 > still the old picture.
 
+## When a script errors, or Revit changes version
+
+**Ajmal is not a coder** (his own words, 2026-08-20: *"am not a coder or programmer i dont know the
+programing side anything but i know how to work in revit"*). Every programming decision is yours to
+make — do not ask him to choose between technical options he has no way to judge. Ask him Revit
+questions; make the code decisions yourself and tell him what you did.
+
+He named two problems. Both have an answer that already exists:
+
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 285 fragments against
+  every Revit installed on the PC **without opening Revit**, in about a minute. Offer it the moment a
+  version change is mentioned. It catches the whole "worked in 2020, errors in 2024" class before he
+  hits it mid-job.
+- **"It's not covered, so fresh code gets written, and that is slow and goes wrong."** Search first —
+  `node tools/fragment-index.mjs --find <word>` then `semantic-index\ask-brain-hybrid.cmd`. When fresh
+  C# genuinely is needed, **compile-check it before he runs it** (same tool, `-DryRun` builds the
+  wrapper) rather than discovering the mistake through him. Each round trip through Revit costs him
+  real time; a compile costs a minute and no attention.
+
 ## Maintaining this repo (the Brain itself)
 
 - Every file edit in this repo triggers a PostToolUse hook ([`.claude/settings.json`](.claude/settings.json)

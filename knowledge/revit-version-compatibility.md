@@ -7,6 +7,11 @@ on a newer Revit, measured by scanning all 282 fragments on 2026-08-20 — not e
 Nothing here is unfixable, and the fixes are mechanical. What matters is knowing *which* failures shout
 and which stay quiet.
 
+> **THE ONE COMMAND, if you read nothing else here:** `tools\check-scripts.cmd`. It compile-checks the whole
+> library against every Revit installed on the PC, **without opening Revit**, in about a minute, and says in
+> plain words which versions are safe. Run it after installing a new Revit — that is the whole worry,
+> answered before you start rather than in the middle of a job.
+>
 > **DONE, 2026-08-20.** The migration below was applied to the whole library in one pass. What is left
 > is listed under "The three deliberate exceptions". The counts in the older sections are kept as the
 > record of what was found, not as a to-do list.
