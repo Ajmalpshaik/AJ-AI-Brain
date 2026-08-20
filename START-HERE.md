@@ -64,7 +64,7 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
 | Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 341 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 342 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
@@ -104,6 +104,17 @@ background.
 Editing the Revit add-in's own compiled source code (the thing that provides the bridge listener on the
 Revit side) is a different codebase and a different kind of work — out of scope here. This Brain is about
 using the bridge to work on Revit *models*, not building the add-in that provides the bridge.
+
+**The Revit API reference itself** — `revitapidocs.com`, `rvtdocs.com`, the SDK's `.chm` — is out of
+the main index too, decided 2026-08-20 when Ajmal asked for all of it to be pulled in. The instinct was
+right; the scale is the problem. The API is **~1,700 classes and 30,000+ documented members** against
+this Brain's **3,786 chunks**, so indexing it would leave the Brain as roughly **11% of its own index**
+and every question would land on a reference page. It is the 604-chunk standards mistake, eight times
+over. Two things replace it, and they are better: [`knowledge/revit-api-surface.md`](knowledge/revit-api-surface.md)
+lists the **229 types this library actually uses** and names a working fragment for each — because a
+signature does not tell you that `UnionWith()` silently drops quick filters, and a proven fragment does.
+If the full API is ever genuinely needed it goes in a **separate index the Brain's own search never
+touches**, never in the same collection.
 
 **External standards documents** — Ashghal/PWA CAD standards manuals, QCS, NFPA, manufacturer
 catalogues — are also out of scope, decided 2026-08-13 in the user's own words: *"we are making a Revit
