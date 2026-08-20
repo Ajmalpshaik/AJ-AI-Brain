@@ -44,6 +44,24 @@ returned it at all - while scoring **exactly zero** here. The test rows' own typ
 ambiguous kind the correction deliberately refuses to guess at. A change can be real and invisible to a
 14-row score at the same time; that is a fact about the score, not the change.
 
+## THE TEST SET GREW TO 28 ROWS ON 2026-08-21 — lines above and below are NOT comparable
+
+Fourteen rows were added from `job-log/questions.jsonl` — Ajmal's own real questions, expected answers
+drafted by the assistant from the library and marked as such in `test-questions.md`. **A 14-row score and
+a 28-row score measure different things**, so do not read the step in these numbers as a change in the
+search. Nothing about retrieval changed in that run.
+
+First 28-row baseline: **5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267.**
+
+The step is worth understanding rather than smoothing over. On the old 14 rows the score was 3 at #1; the
+28-row set has 5, so **the new rows are answered better than the seeded ones** — expected, because three
+of the four surviving 2026-08-06 rows were deliberately chosen as documented *failures*. MRR fell
+(0.313 -> 0.267) because the denominator doubled while the hard seeded rows stayed hard.
+
+What this set now buys, which 14 rows could not: **8 rows fail outright and 10 more rank below #5.** That
+is the material the parked decisions have been waiting for — the cross-encoder, BGE against MiniLM, the
+meaning-versus-words balance, and `RRF_K`. Re-sweep those against this set, not against the old one.
+
 One line per `score-brain` run, oldest first. Written automatically. **`score_brain.py` appends to
 the END of this file, so any explanation you add goes ABOVE this line, never below it** — prose put
 after the list gets buried one run at a time, and this is the file `CLAUDE.md` tells people to quote.
@@ -99,3 +117,7 @@ after the list gets buried one run at a time, and this is the file `CLAUDE.md` t
 - 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3897 fp=dc35e3a2759240e4
 - 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3897 fp=dc35e3a2759240e4
 - 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3899 fp=dc35e3a2759240e4
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
+- 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4
+- 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=dc35e3a2759240e4

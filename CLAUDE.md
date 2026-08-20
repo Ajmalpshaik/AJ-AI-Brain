@@ -47,9 +47,9 @@ warning only matters once you ask for more results than usual. Setup and limits:
 
 **Read the top 3–5, never just #1.** The one place this is measured is
 [`semantic-index/score-history.md`](semantic-index/score-history.md) — every line stamped since
-2026-08-20 with the model and settings that produced it. **Last reproducible run (2026-08-21, confirmed
-twice back to back): 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10 of 14 answers retrievable at all,
-MRR 0.313.** Quote that file, never a remembered figure:
+2026-08-20 with the model and settings that produced it. **Last run, on the 28-row set (2026-08-21):
+5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20 of 28 answers retrievable at all, MRR 0.267.** The set
+doubled that day, so those numbers are not comparable to any 14-row line above them. Quote that file, never a remembered figure:
 three different numbers (75%, 60%, 29%) were once in circulation here because the earlier scores recorded
 no model, no chunk size and no corpus size, and the Brain grew underneath them. It fails on **site vocabulary the files don't use**:
 "add 4 more floor levels" returns `create-floor.cs` (the slab creator) instead of `create-levels.cs`, and
