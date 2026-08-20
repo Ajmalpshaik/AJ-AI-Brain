@@ -42,7 +42,7 @@ else
                 case StorageType.Double: v = p.AsDouble().ToString("F4"); break;
                 case StorageType.ElementId:
                     var id = p.AsElementId();
-                    v = id.IntegerValue < 0 ? "(none)" : (Document.GetElement(id)?.Name ?? id.IntegerValue.ToString());
+                    v = id.IntegerValue < 0 ? "(none)" : (Document.GetElement(id)?.Name ?? id.ToString());
                     break;
             }
         }
@@ -79,8 +79,8 @@ else
         }
     }
 
-    var header = "Parameter | " + string.Join(" | ", compare.Select(e => $"Id {e.Id.IntegerValue}"));
-    sb.AppendLine($"Comparing {compare.Count} elements: {string.Join(", ", compare.Select(e => $"'{e.Name}' (Id {e.Id.IntegerValue})"))}");
+    var header = "Parameter | " + string.Join(" | ", compare.Select(e => $"Id {e.Id}"));
+    sb.AppendLine($"Comparing {compare.Count} elements: {string.Join(", ", compare.Select(e => $"'{e.Name}' (Id {e.Id})"))}");
     sb.AppendLine(header);
 
     int shown = 0;

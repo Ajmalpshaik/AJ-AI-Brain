@@ -45,8 +45,8 @@ if (!Document.IsFamilyDocument) return "Active document is not a family document
 // already supplies that namespace (every other fragment names FilteredElementCollector unqualified),
 // so the line was pure breakage. Caught by tools\verify-fragments-compile.ps1 on 2026-08-04.
 var fm = Document.FamilyManager;
-double LFt(double mm) => UnitUtils.ConvertToInternalUnits(mm, DisplayUnitType.DUT_MILLIMETERS);
-double MM(double ft) => UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);
+double LFt(double mm) => mm / 304.8;
+double MM(double ft) => ft * 304.8;
 var sb = new System.Text.StringBuilder();
 
 var view = new FilteredElementCollector(Document).OfClass(typeof(ViewPlan)).Cast<ViewPlan>()

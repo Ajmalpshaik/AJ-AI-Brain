@@ -112,8 +112,8 @@ int maxNodesFor2Opt = 2500;        // above this the 2-opt polish is skipped and
 int maxSegmentsListed = 40;        // detail cap; totals always cover every segment
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mmToFt = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mmToFt = v => v / 304.8;
 
 Func<Element, XYZ> centreOf = el =>
 {
@@ -155,7 +155,7 @@ else
                 var space = c as Autodesk.Revit.DB.Mechanical.Space;
                 try { if (room != null) inside = room.IsPointInRoom(probe); else if (space != null) inside = space.IsPointInSpace(probe); }
                 catch { }
-                if (inside) { key = $"{c.Name} ({c.Id.IntegerValue})"; break; }
+                if (inside) { key = $"{c.Name} ({c.Id})"; break; }
             }
             groupOf[el.Id.IntegerValue] = key;
         }
@@ -165,7 +165,7 @@ else
         foreach (var el in nodes)
         {
             var lvl = Document.GetElement(el.LevelId);
-            groupOf[el.Id.IntegerValue] = lvl != null ? $"{lvl.Name} ({lvl.Id.IntegerValue})" : "(no level)";
+            groupOf[el.Id.IntegerValue] = lvl != null ? $"{lvl.Name} ({lvl.Id})" : "(no level)";
         }
     }
     else if (groupBy == "parameter")
@@ -326,12 +326,12 @@ else
             for (int i = 0; i < bestPath.Count - 1; i++)
                 allSegments.Add(Tuple.Create(bestPath[i], bestPath[i + 1], D(bestPath[i], bestPath[i + 1])));
             inside += seqLen(bestPath);
-            sb.AppendLine($"  {gk,-24} enter {entry.Id.IntegerValue}, {ms.Count} element(s), {toMm(seqLen(bestPath))/1000.0:F1} m, exit {bestExit.Id.IntegerValue}");
+            sb.AppendLine($"  {gk,-24} enter {entry.Id}, {ms.Count} element(s), {toMm(seqLen(bestPath))/1000.0:F1} m, exit {bestExit.Id}");
             if (bestNextEntry != null)
             {
                 allSegments.Add(Tuple.Create(bestExit, bestNextEntry, bestHop));
                 hopTotal += bestHop; hopCount++;
-                sb.AppendLine($"      -> jump {toMm(bestHop):N0} mm to {bestNextEntry.Id.IntegerValue} in {groupOf[bestNextEntry.Id.IntegerValue]} (nearest of {remaining.SelectMany(r => byGroup[r]).Count()} remaining)");
+                sb.AppendLine($"      -> jump {toMm(bestHop):N0} mm to {bestNextEntry.Id} in {groupOf[bestNextEntry.Id.IntegerValue]} (nearest of {remaining.SelectMany(r => byGroup[r]).Count()} remaining)");
                 entry = bestNextEntry;
             }
         }
@@ -393,7 +393,7 @@ else
         sb.AppendLine($"  Longest single run: {toMm(allSegments.Max(s => s.Item3)):N0} mm");
         sb.AppendLine("  Runs:");
         foreach (var s in allSegments.Take(maxSegmentsListed))
-            sb.AppendLine($"    Id {s.Item1.Id.IntegerValue} -> Id {s.Item2.Id.IntegerValue} : {toMm(s.Item3):N0} mm");
+            sb.AppendLine($"    Id {s.Item1.Id} -> Id {s.Item2.Id} : {toMm(s.Item3):N0} mm");
         if (allSegments.Count > maxSegmentsListed)
             sb.AppendLine($"    ... +{allSegments.Count - maxSegmentsListed} more (raise maxSegmentsListed — NOT silently dropped)");
     }
@@ -444,7 +444,7 @@ else
                         var grp = Document.Create.NewGroup(drawnIds);
                         if (!string.IsNullOrEmpty(drawnGroupName))
                         { try { grp.GroupType.Name = drawnGroupName; } catch { } } // name collision — keeps the default
-                        sb.AppendLine($"  Grouped the {drawnIds.Count} segment(s) into ONE selectable group '{grp.GroupType.Name}' (Id {grp.Id.IntegerValue}).");
+                        sb.AppendLine($"  Grouped the {drawnIds.Count} segment(s) into ONE selectable group '{grp.GroupType.Name}' (Id {grp.Id}).");
                     }
                     catch (Exception exG) { sb.AppendLine($"  Grouping failed ({exG.Message}) — the lines are still there as separate joined segments."); }
                 }

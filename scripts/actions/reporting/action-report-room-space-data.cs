@@ -25,9 +25,9 @@ foreach (var e in elements)
     var sp = e as SpatialElement;
     if (sp == null) { skipped++; continue; }
 
-    double areaSqm = UnitUtils.ConvertFromInternalUnits(sp.Area, DisplayUnitType.DUT_SQUARE_METERS);
+    double areaSqm = sp.Area / 10.763910416709722;
     double volumeInternal = sp.get_Parameter(BuiltInParameter.ROOM_VOLUME)?.AsDouble() ?? 0;
-    double volumeCum = UnitUtils.ConvertFromInternalUnits(volumeInternal, DisplayUnitType.DUT_CUBIC_METERS);
+    double volumeCum = volumeInternal / 35.314666721488595;
     if (volumeInternal <= 0) anyVolumeZero = true;
 
     string occupancy = sp.LookupParameter("Occupancy")?.AsString() ?? "";

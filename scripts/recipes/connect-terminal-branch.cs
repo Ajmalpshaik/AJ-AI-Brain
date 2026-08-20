@@ -97,7 +97,7 @@ using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
     var riserTopConn = riserConns.OrderBy(c => c.Origin.DistanceTo(riserTop)).First();
     termConn.ConnectTo(riserBottom);
 
-    double minLengthFt = UnitUtils.ConvertToInternalUnits(3, DisplayUnitType.DUT_MILLIMETERS); // ~1/10 inch guard
+    double minLengthFt = 3 / 304.8; // ~1/10 inch guard
 
     if (distToTermXY < minLengthFt)
     {

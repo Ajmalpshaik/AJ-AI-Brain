@@ -62,8 +62,8 @@ foreach (var fam in families.OrderBy(f => f.FamilyCategory?.Name).ThenBy(f => f.
     if (wholeFamiliesOnly && !wholeFamilyUnused) continue;
 
     unusedSymbolIds.AddRange(unusedHere);
-    var names = unusedHere.Select(id => Document.GetElement(id)?.Name ?? id.IntegerValue.ToString());
-    lines.Add($"  - [{fam.FamilyCategory?.Name ?? "?"}] '{fam.Name}' (Id {fam.Id.IntegerValue}) — {unusedHere.Count}/{symbolIds.Count} type(s) unused{(wholeFamilyUnused ? "  [WHOLE FAMILY]" : "")}: {string.Join(", ", names.Take(6))}{(unusedHere.Count > 6 ? ", ..." : "")}");
+    var names = unusedHere.Select(id => Document.GetElement(id)?.Name ?? id.ToString());
+    lines.Add($"  - [{fam.FamilyCategory?.Name ?? "?"}] '{fam.Name}' (Id {fam.Id}) — {unusedHere.Count}/{symbolIds.Count} type(s) unused{(wholeFamilyUnused ? "  [WHOLE FAMILY]" : "")}: {string.Join(", ", names.Take(6))}{(unusedHere.Count > 6 ? ", ..." : "")}");
 }
 
 sb.AppendLine($"Unused loadable family types: {unusedSymbolIds.Count} of {totalSymbols} across {families.Count} famil{(families.Count == 1 ? "y" : "ies")}; {fullyUnusedFamilyIds.Count} famil{(fullyUnusedFamilyIds.Count == 1 ? "y is" : "ies are")} entirely unused.{(wholeFamiliesOnly ? " (whole-families-only mode)" : "")}");

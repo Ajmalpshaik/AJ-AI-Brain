@@ -18,7 +18,7 @@
 bool onlyOpenConnectors = false;   // true = report only unconnected connectors (the "open ends" question)
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
 Func<XYZ, string> fmtPt = p => $"({toMm(p.X):F0}, {toMm(p.Y):F0}, {toMm(p.Z):F0})";
 Func<XYZ, string> fmtDir = d => $"({d.X:F2}, {d.Y:F2}, {d.Z:F2})";
 
@@ -48,7 +48,7 @@ foreach (var el in elements)
             if (refC.Owner == null || refC.Owner.Id == el.Id) continue;
             if (refC.Owner is MEPSystem) continue;
             physicallyConnected = true;
-            partners.Add($"{refC.Owner.Name} (Id {refC.Owner.Id.IntegerValue})");
+            partners.Add($"{refC.Owner.Name} (Id {refC.Owner.Id})");
         }
 
         if (onlyOpenConnectors && physicallyConnected) continue;
@@ -69,7 +69,7 @@ foreach (var el in elements)
 
     if (lines.Count > 0)
     {
-        sb.AppendLine($"- '{el.Name}' (Id {el.Id.IntegerValue}) — {lines.Count} connector(s){(onlyOpenConnectors ? " open" : "")}:");
+        sb.AppendLine($"- '{el.Name}' (Id {el.Id}) — {lines.Count} connector(s){(onlyOpenConnectors ? " open" : "")}:");
         foreach (var l in lines) sb.AppendLine(l);
         reported++;
     }

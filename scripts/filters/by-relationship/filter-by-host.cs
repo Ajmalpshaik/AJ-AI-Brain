@@ -49,6 +49,6 @@ else
         .ToList();
 
     string categoryLabel = useCategoryFilter ? targetCategory.ToString() : "all categories";
-    sb.AppendLine($"Filtered {elements.Count} element(s) hosted on '{hostElement.Name}' (Id {hostElement.Id.IntegerValue}), candidates: {categoryLabel}.");
+    sb.AppendLine($"Filtered {elements.Count} element(s) hosted on '{hostElement.Name}' (Id {hostElement.Id}), candidates: {categoryLabel}.");
 }
 // ---- continue with one or more action fragments below, or add return sb.ToString(); to stop here ----

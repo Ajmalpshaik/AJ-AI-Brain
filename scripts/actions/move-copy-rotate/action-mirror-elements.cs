@@ -25,7 +25,7 @@ double axisP2XMm = 1000, axisP2YMm = 0; // the mirror axis runs through these tw
 bool mirrorCopy = true; // true = keep originals, create mirrored copies; false = mirror in place
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 XYZ p1 = new XYZ(mm(axisP1XMm), mm(axisP1YMm), 0);
 XYZ p2 = new XYZ(mm(axisP2XMm), mm(axisP2YMm), 0);
 

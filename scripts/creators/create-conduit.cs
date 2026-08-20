@@ -20,7 +20,7 @@ double diameterMm = 25;         // 0 = keep type default
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 var condTypes = new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Electrical.ConduitType)).Cast<Autodesk.Revit.DB.Electrical.ConduitType>().ToList();
@@ -54,7 +54,7 @@ else
                     // Regenerate BEFORE reading back — straight after Set() the parameter still reports
                     // the requested value; the snap to the type's size table happens at regeneration.
                     Document.Regenerate();
-                    double gotMm = UnitUtils.ConvertFromInternalUnits(pD.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                    double gotMm = pD.AsDouble() * 304.8;
                     if (!ok) diaNote = $"Diameter REFUSED {diameterMm}mm — still {gotMm:0.##}mm";
                     else if (Math.Abs(gotMm - diameterMm) > 0.5) diaNote = $"Diameter SNAPPED {diameterMm}mm -> {gotMm:0.##}mm (nearest size '{condType.Name}' allows)";
                 }
@@ -65,8 +65,8 @@ else
             t.Commit();
 
             var dFinal = conduit.get_Parameter(BuiltInParameter.RBS_CONDUIT_DIAMETER_PARAM);
-            string actualDia = dFinal == null ? "unknown" : $"{UnitUtils.ConvertFromInternalUnits(dFinal.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm";
-            sb.AppendLine($"Created conduit (Id {conduit.Id.IntegerValue}) — type '{condType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            string actualDia = dFinal == null ? "unknown" : $"{dFinal.AsDouble() * 304.8:0.##} mm";
+            sb.AppendLine($"Created conduit (Id {conduit.Id}) — type '{condType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
             if (diaNote != null) sb.AppendLine("  " + diaNote);
         }
         catch (Exception ex)

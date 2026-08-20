@@ -69,8 +69,8 @@ int maxListed = 100;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 var room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
 
@@ -101,7 +101,7 @@ else
         {
             var lp = h.Location as LocationPoint;
             if (lp == null || !insideRoom(lp.Point)) continue;
-            heads.Add(lp.Point); headElems.Add(h); headLabels.Add($"Id {h.Id.IntegerValue}");
+            heads.Add(lp.Point); headElems.Add(h); headLabels.Add($"Id {h.Id}");
         }
     }
     else
@@ -181,7 +181,7 @@ else
                     };
                 }
                 string nm = null; try { nm = e.Name; } catch { }
-                obs.Add(Tuple.Create(kind, $"{(e.Category != null ? e.Category.Name : "?")} '{nm ?? "?"}' (Id {e.Id.IntegerValue})",
+                obs.Add(Tuple.Create(kind, $"{(e.Category != null ? e.Category.Name : "?")} '{nm ?? "?"}' (Id {e.Id})",
                     b.Min.Z, Math.Min(wx, wy), dist));
             }
         };

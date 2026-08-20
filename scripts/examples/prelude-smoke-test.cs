@@ -45,7 +45,7 @@ if (elements.Count > 0)
 
     ElementId lvl = LevelIdOf(sample);
     Element lvlElem = lvl == ElementId.InvalidElementId ? null : Document.GetElement(lvl);
-    sb.AppendLine($"PASS  level      Id {sample.Id.IntegerValue} -> level '{(lvlElem == null ? "none resolved" : lvlElem.Name)}'");
+    sb.AppendLine($"PASS  level      Id {sample.Id} -> level '{(lvlElem == null ? "none resolved" : lvlElem.Name)}'");
 }
 else
 {

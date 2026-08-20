@@ -65,7 +65,7 @@ else
                     }
                     elements.Add(newLegend);
                     t.Commit();
-                    sb.AppendLine($"Created legend '{newLegend.Name}' (Id {newLegend.Id.IntegerValue}) by duplicating '{source.Name}'{(withContents ? " with its contents" : " as an empty frame")}.");
+                    sb.AppendLine($"Created legend '{newLegend.Name}' (Id {newLegend.Id}) by duplicating '{source.Name}'{(withContents ? " with its contents" : " as an empty frame")}.");
                     sb.AppendLine("  Edit its text via action-find-replace-text-notes.cs — placing NEW legend components has no API (see header).");
                 }
                 catch (Exception ex)

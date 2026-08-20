@@ -39,17 +39,17 @@ using (var t = new Transaction(Document, "AJ Tools - Split Elements"))
         {
             bool isDuct = e is Autodesk.Revit.DB.Mechanical.Duct;
             bool isPipe = e is Autodesk.Revit.DB.Plumbing.Pipe;
-            if (!isDuct && !isPipe) { skipped++; failures.Add($"Id {e.Id.IntegerValue}: not a Duct or Pipe"); continue; }
+            if (!isDuct && !isPipe) { skipped++; failures.Add($"Id {e.Id}: not a Duct or Pipe"); continue; }
 
             var line = (e.Location as LocationCurve)?.Curve as Line;
-            if (line == null) { skipped++; failures.Add($"Id {e.Id.IntegerValue}: no straight LocationCurve"); continue; }
+            if (line == null) { skipped++; failures.Add($"Id {e.Id}: no straight LocationCurve"); continue; }
 
             double lengthFt = line.Length;
             double distFt = positionMode == "distance_mm_from_start"
-                ? UnitUtils.ConvertToInternalUnits(positionValue, DisplayUnitType.DUT_MILLIMETERS)
+                ? positionValue / 304.8
                 : lengthFt * positionValue;
 
-            if (distFt <= 0 || distFt >= lengthFt) { skipped++; failures.Add($"Id {e.Id.IntegerValue}: break point falls outside the element's own length"); continue; }
+            if (distFt <= 0 || distFt >= lengthFt) { skipped++; failures.Add($"Id {e.Id}: break point falls outside the element's own length"); continue; }
 
             XYZ breakPt = line.GetEndPoint(0) + line.Direction * distFt;
 
@@ -77,7 +77,7 @@ using (var t = new Transaction(Document, "AJ Tools - Split Elements"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Id {e.Id.IntegerValue}: {exOne.Message}");
+                failures.Add($"Id {e.Id}: {exOne.Message}");
             }
         }
         t.Commit();

@@ -27,8 +27,8 @@ double? bottomOffsetMm = null;      int bottomLevelIdInt = 0;
 double? depthOffsetMm = null;       int depthLevelIdInt = 0;
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
+Func<double, double> toMm = v => v * 304.8;
 
 // Revit encodes three special planes as SENTINEL ElementIds, not real levels — decode them by name or
 // the report prints a meaningless "Id -2" (found live 2026-07-26 on a ceiling plan).
@@ -38,7 +38,7 @@ Func<ElementId, string> levelName = id =>
     if (id == PlanViewRange.Unlimited) return "(unlimited)";
     if (id == PlanViewRange.LevelAbove) return "(level above)";
     if (id == PlanViewRange.LevelBelow) return "(level below)";
-    return Document.GetElement(id)?.Name ?? $"Id {id.IntegerValue}";
+    return Document.GetElement(id)?.Name ?? $"Id {id}";
 };
 
 var views = viewIdInts.Select(i => Document.GetElement(new ElementId(i))).OfType<ViewPlan>()
@@ -54,7 +54,7 @@ else if (mode == "report")
     foreach (var v in views)
     {
         var r = v.GetViewRange();
-        sb.AppendLine($"- '{v.Name}' (Id {v.Id.IntegerValue}, {v.ViewType}):");
+        sb.AppendLine($"- '{v.Name}' (Id {v.Id}, {v.ViewType}):");
         sb.AppendLine($"    Top:    {levelName(r.GetLevelId(PlanViewPlane.TopClipPlane))} {toMm(r.GetOffset(PlanViewPlane.TopClipPlane)):+0;-0;0} mm");
         sb.AppendLine($"    Cut:    {levelName(r.GetLevelId(PlanViewPlane.CutPlane))} {toMm(r.GetOffset(PlanViewPlane.CutPlane)):+0;-0;0} mm");
         sb.AppendLine($"    Bottom: {levelName(r.GetLevelId(PlanViewPlane.BottomClipPlane))} {toMm(r.GetOffset(PlanViewPlane.BottomClipPlane)):+0;-0;0} mm");
@@ -85,7 +85,7 @@ else if (mode == "set")
 
                 v.SetViewRange(r); // throws if the plane order is invalid — caught below, whole set rolls back
                 changed++;
-                sb.AppendLine($"  - '{v.Name}' (Id {v.Id.IntegerValue}) updated.");
+                sb.AppendLine($"  - '{v.Name}' (Id {v.Id}) updated.");
             }
             t.Commit();
             sb.AppendLine($"View range set on {changed} plan view(s){(notPlan > 0 ? $"; {notPlan} given Id(s) were not plan views" : "")}.");

@@ -40,7 +40,7 @@ double extendPastLastBranchMm = 500; // extra main length past the last branch c
 bool placeEndCap = true;             // close the main's open end with a PartType=Cap fitting
 // ---- END INPUTS ----
 
-Func<double, double> toFt = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toFt = v => v / 304.8;
 var sb = new System.Text.StringBuilder();
 
 // ---- STEP 1+2: the equipment and its supply connector (check first, draw later) ----

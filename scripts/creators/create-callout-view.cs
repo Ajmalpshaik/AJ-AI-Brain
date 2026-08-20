@@ -25,7 +25,7 @@ int scaleDenominator = 0;       // 0 = inherit the parent's scale; else e.g. 20 
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var parent = Document.GetElement(new ElementId(parentViewIdInt)) as View;
 
@@ -85,7 +85,7 @@ else
             t.Commit();
 
             // Read the scale back off the view rather than echoing the request.
-            sb.AppendLine($"Created callout '{callout.Name}' (Id {callout.Id.IntegerValue}) in parent view '{parent.Name}', covering {maxXMm - minXMm}x{maxYMm - minYMm} mm, ACTUAL scale 1:{callout.Scale}{(scaleDenominator > 0 ? "" : " (inherited)")}.");
+            sb.AppendLine($"Created callout '{callout.Name}' (Id {callout.Id}) in parent view '{parent.Name}', covering {maxXMm - minXMm}x{maxYMm - minYMm} mm, ACTUAL scale 1:{callout.Scale}{(scaleDenominator > 0 ? "" : " (inherited)")}.");
             if (scaleNote != null) sb.AppendLine("  " + scaleNote);
         }
         catch (Exception ex)

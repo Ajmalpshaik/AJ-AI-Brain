@@ -39,8 +39,8 @@ bool excludeSameElement = true;             // never match a source to itself
 int maxRowsReported = 40;                   // detail cap; the summary always covers every source
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 // --- build the target set ---
 var targets = new List<Element>();
@@ -129,11 +129,11 @@ else
 
         if (rows < maxRowsReported)
         {
-            var parts = best.Select(b => $"'{b.Value.Name}' (Id {b.Value.Id.IntegerValue}, {b.Value.Category?.Name}) {toMm(b.Key):F0} mm");
-            sb.AppendLine($"  '{src.Name}' (Id {src.Id.IntegerValue}) -> {string.Join("  |  ", parts)}");
+            var parts = best.Select(b => $"'{b.Value.Name}' (Id {b.Value.Id}, {b.Value.Category?.Name}) {toMm(b.Key):F0} mm");
+            sb.AppendLine($"  '{src.Name}' (Id {src.Id}) -> {string.Join("  |  ", parts)}");
             rows++;
         }
-        summary.Add($"{src.Id.IntegerValue}->{best[0].Value.Id.IntegerValue}");
+        summary.Add($"{src.Id}->{best[0].Value.Id}");
     }
 
     sb.Insert(0, $"Nearest search — {elements.Count} source(s) against {targets.Count} target(s), metric '{metric}'"

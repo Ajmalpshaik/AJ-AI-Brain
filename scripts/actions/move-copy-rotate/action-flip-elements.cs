@@ -43,7 +43,7 @@ using (var t = new Transaction(Document, "AJ Tools - Flip Elements"))
                 if (fi.CanFlipHand)
                 {
                     try { fi.flipHand(); handFlipped++; }
-                    catch (Exception ex) { failures.Add($"Id {fi.Id.IntegerValue} hand: {ex.Message}"); }
+                    catch (Exception ex) { failures.Add($"Id {fi.Id} hand: {ex.Message}"); }
                 }
                 else { skipped++; }
             }
@@ -52,7 +52,7 @@ using (var t = new Transaction(Document, "AJ Tools - Flip Elements"))
                 if (fi.CanFlipFacing)
                 {
                     try { fi.flipFacing(); facingFlipped++; }
-                    catch (Exception ex) { failures.Add($"Id {fi.Id.IntegerValue} facing: {ex.Message}"); }
+                    catch (Exception ex) { failures.Add($"Id {fi.Id} facing: {ex.Message}"); }
                 }
                 else { skipped++; }
             }

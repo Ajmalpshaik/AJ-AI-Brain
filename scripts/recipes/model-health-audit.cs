@@ -54,7 +54,7 @@ if (warnings.Count > 0)
 // --- 3. In-place families ---
 var inPlace = new FilteredElementCollector(Document).OfClass(typeof(Family)).Cast<Family>().Where(f => f.IsInPlace).ToList();
 sb.AppendLine($"\n--- In-place families: {inPlace.Count} ---");
-foreach (var f in inPlace.Take(maxIdsPerList)) sb.AppendLine($"  - '{f.Name}' (Id {f.Id.IntegerValue})");
+foreach (var f in inPlace.Take(maxIdsPerList)) sb.AppendLine($"  - '{f.Name}' (Id {f.Id})");
 if (inPlace.Count > maxIdsPerList) sb.AppendLine($"  ... +{inPlace.Count - maxIdsPerList} more");
 
 // --- 4. CAD imports (imported = embedded bloat; linked = fine) ---
@@ -62,13 +62,13 @@ var importInstances = new FilteredElementCollector(Document).OfClass(typeof(Impo
 int importedCad = importInstances.Count(ii => !ii.IsLinked);
 sb.AppendLine($"\n--- CAD files: {importInstances.Count} instance(s) — {importedCad} IMPORTED (embedded), {importInstances.Count - importedCad} linked ---");
 foreach (var ii in importInstances.Where(i => !i.IsLinked).Take(maxIdsPerList))
-    sb.AppendLine($"  - imported: '{ii.Category?.Name ?? "?"}' (Id {ii.Id.IntegerValue})");
+    sb.AppendLine($"  - imported: '{ii.Category?.Name ?? "?"}' (Id {ii.Id})");
 
 // --- 5. Unenclosed / unplaced Rooms & Spaces ---
 var spatial = new FilteredElementCollector(Document).OfClass(typeof(SpatialElement)).Cast<SpatialElement>()
     .Where(s => (s is Autodesk.Revit.DB.Architecture.Room || s is Autodesk.Revit.DB.Mechanical.Space) && s.Area <= 0).ToList();
 sb.AppendLine($"\n--- Unenclosed/unplaced Rooms+Spaces (zero area): {spatial.Count} ---");
-foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id.IntegerValue})");
+foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id})");
 if (spatial.Count > maxIdsPerList) sb.AppendLine($"  ... +{spatial.Count - maxIdsPerList} more");
 if (spatial.Count > 0) sb.AppendLine("  -> as an element set: filters/by-location/filter-by-unenclosed-spatial-elements.cs");
 

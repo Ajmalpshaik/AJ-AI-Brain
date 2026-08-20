@@ -40,7 +40,7 @@ if (mode == "report")
         foreach (var s in allSets.OrderBy(s => s.Name))
         {
             var members = s.Views.Cast<View>().ToList();
-            sb.AppendLine($"  - '{s.Name}' (Id {s.Id.IntegerValue}) — {members.Count} view(s)/sheet(s): {string.Join(", ", members.Take(15).Select(v => $"'{v.Name}'"))}{(members.Count > 15 ? ", ..." : "")}");
+            sb.AppendLine($"  - '{s.Name}' (Id {s.Id}) — {members.Count} view(s)/sheet(s): {string.Join(", ", members.Take(15).Select(v => $"'{v.Name}'"))}{(members.Count > 15 ? ", ..." : "")}");
         }
     }
 }
@@ -48,7 +48,7 @@ else if (mode == "create")
 {
     var views = elements.OfType<View>().ToList();
     if (views.Count == 0) sb.AppendLine("Nothing to save — `elements` holds no Views/ViewSheets.");
-    else if (allSets.Any(s => s.Name == setName)) sb.AppendLine($"A set named '{setName}' already exists (Id {allSets.First(s => s.Name == setName).Id.IntegerValue}) — delete or rename it first.");
+    else if (allSets.Any(s => s.Name == setName)) sb.AppendLine($"A set named '{setName}' already exists (Id {allSets.First(s => s.Name == setName).Id}) — delete or rename it first.");
     else
     {
         using (var t = new Transaction(Document, "AJ Tools - Create Sheet Set"))

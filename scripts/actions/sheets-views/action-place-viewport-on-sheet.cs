@@ -60,8 +60,8 @@ else
                 {
                     // Explicit point: every viewport lands here, stacked. That is the caller's choice.
                     point = new XYZ(
-                        UnitUtils.ConvertToInternalUnits(pointXmm.Value, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pointYmm.Value, DisplayUnitType.DUT_MILLIMETERS),
+                        pointXmm.Value / 304.8,
+                        pointYmm.Value / 304.8,
                         0);
                 }
                 else
@@ -77,7 +77,7 @@ else
 
                 Viewport.Create(Document, targetSheet.Id, view.Id, point);
                 placed++;
-                positions.Add($"'{view.Name}' at ({UnitUtils.ConvertFromInternalUnits(point.X, DisplayUnitType.DUT_MILLIMETERS):F0}, {UnitUtils.ConvertFromInternalUnits(point.Y, DisplayUnitType.DUT_MILLIMETERS):F0})mm");
+                positions.Add($"'{view.Name}' at ({point.X * 304.8:F0}, {point.Y * 304.8:F0})mm");
             }
             t.Commit();
             sb.AppendLine($"Placed {placed} viewport(s) on sheet '{targetSheet.SheetNumber} - {targetSheet.Name}', skipped {skipped} (already placed elsewhere, or not a placeable view type).");

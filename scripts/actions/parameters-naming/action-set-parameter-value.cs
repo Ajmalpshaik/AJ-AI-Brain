@@ -55,7 +55,7 @@ using (var t = new Transaction(Document, "AJ Tools - Set Parameter Value"))
             bool ok;
             if (numericValueMm.HasValue && p.StorageType == StorageType.Double)
             {
-                ok = p.Set(UnitUtils.ConvertToInternalUnits(numericValueMm.Value, DisplayUnitType.DUT_MILLIMETERS));
+                ok = p.Set(numericValueMm.Value / 304.8);
                 if (ok) { if (source == "Type") updatedType++; else updatedInstance++; }
             }
             else if (stringValue != null && (p.StorageType == StorageType.String))

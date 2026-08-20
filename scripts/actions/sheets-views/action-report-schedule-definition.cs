@@ -36,9 +36,9 @@ foreach (var el in elements)
     Category cat = null;
     try { cat = Category.GetCategory(Document, def.CategoryId); } catch { }
     string catName = cat != null ? cat.Name
-        : (def.CategoryId.IntegerValue == -1 ? "<Multi-Category>" : def.CategoryId.IntegerValue.ToString());
+        : (def.CategoryId.IntegerValue == -1 ? "<Multi-Category>" : def.CategoryId.ToString());
 
-    sb.AppendLine($"Schedule '{schedule.Name}' (Id {schedule.Id.IntegerValue})");
+    sb.AppendLine($"Schedule '{schedule.Name}' (Id {schedule.Id})");
     sb.AppendLine($"  Category     : {catName}");
     sb.AppendLine($"  Key schedule : {def.IsKeySchedule}");
     sb.AppendLine($"  Itemized     : {def.IsItemized}   (false = one row per group, totals only)");
@@ -70,8 +70,8 @@ foreach (var el in elements)
                         var id = f.GetElementIdValue();
                         Category fc = null;
                         try { fc = Category.GetCategory(Document, id); } catch { }
-                        if (fc != null) val = $"{fc.Name} [{(BuiltInCategory)id.IntegerValue}]";
-                        else { var e2 = Document.GetElement(id); val = e2 != null ? e2.Name : id.IntegerValue.ToString(); }
+                        if (fc != null) val = $"{fc.Name} [{(BuiltInCategory)id}]";
+                        else { var e2 = Document.GetElement(id); val = e2 != null ? e2.Name : id.ToString(); }
                     }
                     catch { val = "(no value — e.g. HasValue / HasNoValue)"; }
                 }
