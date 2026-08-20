@@ -16,8 +16,23 @@ handle it. This file only says which words to also search for. A term can sensib
 
 - **Left column: what you actually type.** Lowercase. Multi-word phrases are fine and are matched before
   single words, so `floor level` wins over `floor`.
-- **Right column: extra words to search for**, space-separated. These are *added*, never substituted —
-  your original words still count, so a row can only widen a search, never break one.
+- **Right column: the words to search for instead**, space-separated. **Your phrase is REPLACED, not
+  added to** — so a row can change an answer, not only widen it. Write rows carefully. (This line used to
+  say the opposite. Adding alone was tried and was not enough: "add 4 more floor levels" kept the word
+  "floor" and went on returning `create-floor.cs`, the slab creator, however much weight "level" got.
+  A row exists *because* the site word actively misleads, so leaving it in place defeats the row.
+  See `expand_query` in [`../semantic-index/brain_common.py`](../semantic-index/brain_common.py).)
+- **Only the left-hand phrase is replaced.** Every other word you typed is untouched, and a longer phrase
+  is consumed before its own shorter substring, so `floor level` is taken before a bare `floor`.
+- **Do not add a row for a simple misspelling.** Since 2026-08-21 the search corrects those by itself,
+  against the words the Brain actually contains: a word in no file that sits one letter from exactly one
+  real word is corrected automatically, with no row needed. Rows are for when the *right* word is a
+  **different word**, not a different spelling of the same one.
+- **Never write a misspelling into a file in this repo — not even as an example.** These folders are the
+  dictionary the corrector checks against, so spelling a word wrong here promotes the typo to a real word
+  and switches the correction off for it. Proved the hard way on 2026-08-21: an example typo written into
+  this very file stopped that typo being corrected, within one rebuild. Describe the mistake, never spell
+  it out.
 - **Do not add a row for a word that is already in the files.** "duct" needs no row. Rows earn their place
   by covering a gap.
 - **Be careful with words that mean something else in Revit.** `floor` alone must NOT map to `level` —
@@ -70,6 +85,10 @@ handle it. This file only says which words to also search for. A term can sensib
 | sealing void | ceiling void concealed space | as above — and it is the concealed-space question |
 | ceiling void | concealed space void sprinkler | the void between ceiling and slab; NFPA calls it a concealed space |
 | print sprinkler | upright sprinkler | dictation near-miss for "upright", 2026-08-20 |
+| lovers | louvre air terminal | his spelling, 2026-08-20 — "there is lovers but this we need to add in the airterminal" |
+| lover | louvre | singular of the above; safe because nothing else in a Revit model is called this |
+| highlate | highlight colour override | his spelling, 2026-08-20 — "can you highlate all of this remaning all keep gray" |
+| paramters | parameters | recurring typing near-miss, recorded 2026-08-20 |
 
 ### Rows deliberately removed — a record, so they are not re-added
 

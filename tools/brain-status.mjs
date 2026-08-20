@@ -185,12 +185,32 @@ const ALWAYS_CHANGING = new Set(["brain-log.md", "score-history.md"]);
 const judgeable = sourceFiles.filter((f) => !ALWAYS_CHANGING.has(path.basename(f)));
 
 const DAY = 24 * 60 * 60 * 1000;
-function layerState(name, buildPath, extra = {}) {
-  const builtMs = buildTimeOf(buildPath);
-  if (builtMs === null) return { name, present: false, ...extra };
+
+// The vector index is the one derived layer that can state its own age as a FACT rather than infer
+// it: since 2026-08-20 `semantic-index/brain_common.py` stamps `built_at` and `git_commit` into
+// index-manifest.json every time a build succeeds. Prefer that over mtime - the comment above spells
+// out why mtime is only a hint, and a fresh checkout is precisely the case it reads backwards.
+// An index built before the stamp existed has no `built_at`, and falls back to mtime unchanged.
+function manifestStamp() {
+  try {
+    const raw = fs.readFileSync(
+      path.join(brainRoot, "semantic-index", "index-manifest.json"), "utf8");
+    const m = JSON.parse(raw);
+    const ms = m.built_at ? Date.parse(m.built_at) : NaN;
+    return { ms: Number.isFinite(ms) ? ms : null, commit: m.git_commit || "" };
+  } catch {
+    return { ms: null, commit: "" };
+  }
+}
+
+function layerState(name, buildPath, extra = {}, stampedMs = null) {
+  const mtimeMs = buildTimeOf(buildPath);
+  if (mtimeMs === null) return { name, present: false, ...extra };
+  const builtMs = stampedMs ?? mtimeMs;
   return {
     name,
     present: true,
+    dated: stampedMs === null ? "mtime" : "stamped",
     built: new Date(builtMs).toISOString().slice(0, 10),
     ageDays: Math.floor((Date.now() - builtMs) / DAY),
     changedSince: judgeable.filter((f) => {
@@ -213,9 +233,10 @@ if (fs.existsSync(graphOut)) {
   }
 }
 
+const stamp = manifestStamp();
 const derived = [
   layerState("vector index", path.join(brainRoot, "semantic-index", "chroma-db"),
-    { rebuild: "semantic-index\\index-brain.cmd" }),
+    { rebuild: "semantic-index\\index-brain.cmd", commit: stamp.commit }, stamp.ms),
   layerState("knowledge graph", path.join(graphOut, "graph.json"),
     { rebuild: "/graphify . --update" }),
   vaultDir
@@ -299,11 +320,20 @@ if (!derivedPresent.length) {
     }
     const age = d.ageDays === 0 ? "today" : `${d.ageDays} d ago`;
     const notes = d.notes ? ` · ${d.notes} notes` : "";
+    const commit = d.commit ? ` @ ${d.commit}` : "";
+    const how = d.dated === "stamped" ? "" : " ~";
     const stale = d.changedSince ? `  <- ${d.changedSince} source file(s) newer than it` : "";
-    console.log(`  ${d.name.padEnd(15)} built ${d.built} (${age})${notes}${stale}`);
+    console.log(`  ${d.name.padEnd(15)} built${how} ${d.built} (${age})${commit}${notes}${stale}`);
   }
-  console.log("  Dates are mtime — a hint, not a verdict. Confirm with the STALE INDEX banner");
-  console.log("  ask-brain-hybrid prints, and `python tools/graph-rebuild.py --check` for the graph.");
+  const anyMtime = derivedPresent.some((d) => d.dated === "mtime");
+  if (anyMtime) {
+    console.log("  A ~ means the date is mtime — a hint, not a verdict. Dates without it are stamped");
+    console.log("  by the build itself. Confirm either with the STALE INDEX banner ask-brain-hybrid");
+    console.log("  prints, and `python tools/graph-rebuild.py --check` for the graph.");
+  } else {
+    console.log("  Dates are stamped by the build itself. Confirm with the STALE INDEX banner");
+    console.log("  ask-brain-hybrid prints, and `python tools/graph-rebuild.py --check` for the graph.");
+  }
 }
 
 if (openGroups.length) {

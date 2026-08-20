@@ -29,6 +29,21 @@ that is still owed.
 
 Full working: `semantic-index/rag-architecture-decisions.md`.
 
+## The 2026-08-21 run — read before reading the 11 -> 10
+
+Automatic spelling correction was added that day (`brain_common.py` -> `correct_spelling`). The run
+below it shows retrievable falling 11 -> 10, and **that was not the spelling change.** A controlled A/B
+over every row in `test-questions.md`, spelling on versus off, gave **identical #1, identical top-5,
+identical retrievable, and not one row changing rank.** The move came from the corpus edits made in the
+same session - the third time a file written *about* the search has moved this score, which is the
+warning already recorded in `rag-architecture-decisions.md`.
+
+The useful lesson is the other way round. Spelling correction fires on **44% of real questions** and
+demonstrably fixes them - on one, it put the correct fragment at #1 where the typed version had not
+returned it at all - while scoring **exactly zero** here. The test rows' own typos happen to be the
+ambiguous kind the correction deliberately refuses to guess at. A change can be real and invisible to a
+14-row score at the same time; that is a fact about the score, not the change.
+
 One line per `score-brain` run, oldest first. Written automatically. **`score_brain.py` appends to
 the END of this file, so any explanation you add goes ABOVE this line, never below it** — prose put
 after the list gets buried one run at a time, and this is the file `CLAUDE.md` tells people to quote.
@@ -74,3 +89,13 @@ after the list gets buried one run at a time, and this is the file `CLAUDE.md` t
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.326  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4001 fp=a5fe51a07241db26
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.325  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4009 fp=5e2411794df50cea
 - 3/14 at #1, 4/14 in top 3, 7/14 in top 5, 11/14 retrievable, MRR 0.323  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3779 fp=5e2411794df50cea
+- 3/14 at #1, 4/14 in top 3, 7/14 in top 5, 11/14 retrievable, MRR 0.317  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3892 fp=5e2411794df50cea
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.314  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3888 fp=9a5e1f22e59b67ed
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.314  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3892 fp=a2722261e5266a63
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.314  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3895 fp=a2722261e5266a63
+- 2/14 at #1, 3/14 in top 3, 5/14 in top 5, 10/14 retrievable, MRR 0.252  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3895 fp=a2722261e5266a63
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.314  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3895 fp=a2722261e5266a63
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.314  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3895 fp=a2722261e5266a63
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3897 fp=dc35e3a2759240e4
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3897 fp=dc35e3a2759240e4
+- 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10/14 retrievable, MRR 0.313  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3899 fp=dc35e3a2759240e4

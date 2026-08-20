@@ -237,6 +237,35 @@ rather than just act on existing ones and don't fit the filter+action shape.
   - Two open projects from the same template will BOTH contain the same view and schedule names, so
     "I found MM_V03, therefore I'm in the right model" is not evidence of anything.
 
+- **`list_revit_instances` reports a STALE window title — do not use it to identify the open model.**
+  Proven live 2026-08-20: Ajmal closed BL006A and opened `4355-BHVD-3D-60P00-BL003A`, and the tool still
+  reported `windowTitle: "... 4355-BHVD-3D-60P00-BL006A.rvt ..."`. Acting on that would have written
+  colour overrides into the wrong project, and — exactly as the entry above warns — nothing would have
+  errored. The title is captured per Revit *process*, not refreshed per document swap, so it names
+  whatever was in front when the instance was first seen.
+  - **Ask the document itself**, in one cheap call, before any read that matters and every write:
+    `Document.Title` plus a walk of `Application.Documents`. One line of C#, and it is the only
+    authoritative answer.
+  - The same call exposes **linked models**, which matter for a different reason: `IsLinked == true`
+    documents are not yours to edit, and view graphic overrides never reach them. On BL003A six links
+    were open alongside the host — so "everything else went grey except these" was only ever true of
+    host elements, and saying so is part of an honest result line.
+
+## Writing bridge C# — API surface traps that cost a round trip
+
+Each of these is a real compile error hit while writing live bridge scripts. They fail at compile, not
+at runtime, so they cost a full round trip through Revit for nothing.
+
+- **`IsDeterminedByFormula` does not exist on `Parameter`** — it is a member of `FamilyParameter`, which
+  only exists inside a family document. Checking "is this value locked by a formula?" from the project
+  therefore cannot be done on the instance; open the family (`Document.EditFamily`) and read
+  `FamilyManager.Parameters` instead. Hit on Revit 2020, 2026-08-20.
+- **`MechanicalSystem` needs its full namespace** — `Autodesk.Revit.DB.Mechanical.MechanicalSystem`. The
+  bridge wrapper imports `Autodesk.Revit.DB` but not the `Mechanical` / `Plumbing` / `Electrical`
+  sub-namespaces, so the bare name is `CS0246: type or namespace not found`. Same applies to
+  `Autodesk.Revit.DB.Mechanical.Space` and `Duct`. `MEPSystem` itself is in the base namespace and needs
+  no prefix. Hit on Revit 2020, 2026-08-20.
+
 ## Revit version + unit conversion
 - **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`
   only exists from 2021 onward; on 2020 or earlier use

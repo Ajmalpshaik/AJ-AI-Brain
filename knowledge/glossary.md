@@ -279,6 +279,7 @@ is exactly the one a fresh session cannot route.
   | `HAB` | PRF fan | `TCM_PRF_T004_FAN` |
   | `HAH` | air handling unit | `AHU` |
   | `HGS` / `HGR` / `HSL` | supply / return air terminal, sand trap louvre | air terminals |
+  | `HSL` louvre families | `TCM_STL_T001_J004_SandTrapLouvre`, `…_J005_…` — seen correctly categorised on BL003A, 2026-08-20 | air terminals |
   | `HVD` / `HFD` / `HGD` / `HND` | volume / fire / gas-tight / non-return damper | duct accessories |
   | `HSA` | **sound attenuator** — the project's own code agrees with [[his "never silencer" rule]] | duct accessories |
   | `HAF` / `HWL` / `HEH` / `HID` / `DAD` | air filter / weather louvre / electric heater / — / duct access door | duct accessories |

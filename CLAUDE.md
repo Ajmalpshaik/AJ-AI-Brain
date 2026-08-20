@@ -33,18 +33,23 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 350 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 352 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
 know the keyword. Use whichever fits: keyword when you know the term, this when you only know the job.
-Each result shows `found by: meaning #3 + words #1` — **high in both is the strong signal; only one firing
-means check before trusting it.** Setup and limits: [`semantic-index/README.md`](semantic-index/README.md).
+Each result shows `found by: meaning #3 + words #1`. **You no longer have to judge that yourself** — the
+search prints a `CAUTION` line when a file was found by one signal alone. Measured 2026-08-20 over 60 real
+questions, that never happens in a normal top-5 answer (**0 of 300**), rises to 1.3% at top-20 and 27.6% at
+top-50: the fusion is sinking one-sided hits on purpose, so silence there is the system working, and the
+warning only matters once you ask for more results than usual. Setup and limits:
+[`semantic-index/README.md`](semantic-index/README.md).
 
 **Read the top 3–5, never just #1.** The one place this is measured is
 [`semantic-index/score-history.md`](semantic-index/score-history.md) — every line stamped since
-2026-08-20 with the model and settings that produced it. **Last reproducible run: 3/14 at #1, 5/14 in
-top 3, 6/14 in top 5, 11 of 14 answers retrievable at all.** Quote that file, never a remembered figure:
+2026-08-20 with the model and settings that produced it. **Last reproducible run (2026-08-21, confirmed
+twice back to back): 3/14 at #1, 4/14 in top 3, 6/14 in top 5, 10 of 14 answers retrievable at all,
+MRR 0.313.** Quote that file, never a remembered figure:
 three different numbers (75%, 60%, 29%) were once in circulation here because the earlier scores recorded
 no model, no chunk size and no corpus size, and the Brain grew underneath them. It fails on **site vocabulary the files don't use**:
 "add 4 more floor levels" returns `create-floor.cs` (the slab creator) instead of `create-levels.cs`, and

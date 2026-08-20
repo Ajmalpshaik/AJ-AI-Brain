@@ -40,6 +40,26 @@ five questions. That cannot be tuned on five questions - it needs the 20+ in
 test-questions.md. Until then, shipping this on would be exactly the blind change the score
 card was built to prevent.
 
+HOW BIG A CHANGE IT ACTUALLY IS — MEASURED 2026-08-21, AND IT CORRECTS THE LINE ABOVE
+-------------------------------------------------------------------------------------
+"3/5 -> 3/5, no change" was read here for months as *this thing is inert, and slow*. It is
+not inert. Run over 40 real questions from `job-log/questions.jsonl`, ON versus OFF:
+
+    same #1 answer          5/40   (12%)   -> the top answer CHANGES on 88% of questions
+    same top-3 file set     0/40   ( 0%)   -> the shortlist changes on every question
+    latency               1254 ms -> 2156 ms  (+902 ms/query)
+
+So the two configurations are not a tuning apart, they are **different search engines that
+scored the same on five questions by coincidence.** That is the single most useful thing to
+know about it, and it makes the decision to leave it off much stronger rather than weaker:
+switching it on is a wholesale replacement of nearly every answer the Brain gives, and the
+evidence for doing that cannot come from a test set of 14 rows.
+
+It also generalises past this file: **"the score did not move" never means "nothing moved."**
+On a small test set two completely different result sets land on the same number routinely.
+Judge a retrieval change by how much output it changes AND by the score, never the score
+alone.
+
 NO NEW DEPENDENCY either way: onnxruntime, tokenizers and numpy all arrive with chromadb.
 
 NO NEW DEPENDENCY. onnxruntime, tokenizers and numpy all arrive with chromadb already, so
