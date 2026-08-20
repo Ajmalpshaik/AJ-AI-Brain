@@ -47,9 +47,13 @@ Ordered by what blocks "zero to finish" hardest.
 1. **A live run of the whole chain, once.** Three of the fragments need only a placed Room, which exists.
    Three need a beam and a column, which the API can build. One needs a ceiling. One needs a sprinkler
    family. See the open-items list in [`../brain-log.md`](../brain-log.md).
-2. **Hazard class per room.** Today it is one input applied to a whole run. A real floor is mixed, and
-   nothing in the model stores the class. Needs a project parameter on Rooms, written once and read by
-   every fragment — otherwise every run re-asks and every answer is un-auditable.
+2. ~~**Hazard class per room.**~~ **Built 2026-08-20** —
+   [`../../scripts/recipes/sprinkler-set-room-hazard.cs`](../../scripts/recipes/sprinkler-set-room-hazard.cs)
+   records the class, its source and its standard on each Room and reads them back, with the full class
+   reference in [`hazard-classification.md`](hazard-classification.md). **What remains:** the project
+   parameters have to be bound to Rooms once through the Revit UI (a script cannot create them), and the
+   other fragments still take `hazardLabel` as a typed input rather than reading the room's recorded
+   class — wiring that through is the next step and makes a mixed floor work end to end.
 3. **The head schedule.** Type, K-factor, temperature rating, response, finish, and the hazard class and
    standard the layout was computed for. `sprinkler-place-heads.cs` places geometry; it does not yet write
    the data that makes a placed head a designed head. The temperature-rating logic to drive it is written
