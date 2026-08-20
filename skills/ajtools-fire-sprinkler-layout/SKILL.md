@@ -21,6 +21,8 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 | a beam, a column, a wide duct in the room | [`knowledge/fire-sprinkler/obstructions.md`](../../knowledge/fire-sprinkler/obstructions.md) |
 | **does the ceiling void need its own heads** — upright above, pendent below, and the 800 mm figure that is not NFPA | [`knowledge/fire-sprinkler/concealed-spaces.md`](../../knowledge/fire-sprinkler/concealed-spaces.md) |
 | the spec says **BS EN 12845**, not NFPA | [`knowledge/fire-sprinkler/nfpa-vs-en12845.md`](../../knowledge/fire-sprinkler/nfpa-vs-en12845.md) |
+| does this space need heads at all, and what temperature rating | [`knowledge/fire-sprinkler/where-sprinklers-are-required.md`](../../knowledge/fire-sprinkler/where-sprinklers-are-required.md) |
+| what is still missing for a complete design, and why pipe sizing is gated | [`knowledge/fire-sprinkler/roadmap-zero-to-finish.md`](../../knowledge/fire-sprinkler/roadmap-zero-to-finish.md) |
 | the whole method, in order | [`knowledge/fire-sprinkler/layout-method.md`](../../knowledge/fire-sprinkler/layout-method.md) |
 | which category, which API call, which fragment | [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md) |
 
@@ -65,12 +67,21 @@ that is useful; guessing one and presenting it as the answer is not.
 Eight fragments, written for this job, that run in this order. Same discipline as every other skill here:
 a short numbered plan, one step, check the real result, then the next. Never one script that does it all.
 
+**Start at the scope he named.** All three routes join the same chain; only the entry point differs:
+
+| He says | Start with |
+|---|---|
+| *"the whole plan"* / *"this floor"* | [`scripts/recipes/sprinkler-floor-scope.cs`](../../scripts/recipes/sprinkler-floor-scope.cs) — sorts every room into needs-heads / special / ASK, then work the list room by room |
+| *"room one"* / one named room | step 1 below |
+| *"give me another layout"* / *"I don't like this one"* | [`scripts/recipes/sprinkler-layout-options.cs`](../../scripts/recipes/sprinkler-layout-options.cs) — several compliant layouts, ranked, with a check line each |
+
 | | Step | Fragment |
 |---|---|---|
 | 1 | **Look inside the room first** — ceiling or no ceiling, the deck, every beam and column, the bay module, wide services | [`scripts/recipes/sprinkler-obstruction-survey.cs`](../../scripts/recipes/sprinkler-obstruction-survey.cs) |
 | 2 | Say out loud whether this is **unobstructed or obstructed construction**, and why. Everything downstream hangs on that word | — |
 | 3 | State the **head-count floor** from the area rule alone (room area ÷ max area per head, rounded up) before laying anything out | — |
 | 4 | **Derive the grid from the limits** — smallest nx × ny satisfying area per head, spacing, wall distances and minimum separation at once | [`scripts/recipes/sprinkler-nfpa-grid.cs`](../../scripts/recipes/sprinkler-nfpa-grid.cs) |
+| 4b | **Or show him the field** — every compliant layout, ranked, so he can choose or ask for another. Use this whenever he might want a say, which is most of the time | [`scripts/recipes/sprinkler-layout-options.cs`](../../scripts/recipes/sprinkler-layout-options.cs) |
 | 5 | **Test those positions against the beams and columns** — four rules, in code order | [`scripts/recipes/sprinkler-obstruction-check.cs`](../../scripts/recipes/sprinkler-obstruction-check.cs) |
 | 6 | Move what fails, by the smallest amount that does not break something else — **then re-check step 4** | [`scripts/recipes/sprinkler-adjust-for-obstructions.cs`](../../scripts/recipes/sprinkler-adjust-for-obstructions.cs) |
 | 7 | **Set the height by reading what is really above each head**, not from a remembered ceiling void | [`scripts/recipes/sprinkler-deflector-height.cs`](../../scripts/recipes/sprinkler-deflector-height.cs) |
