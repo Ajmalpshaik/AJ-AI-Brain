@@ -2203,3 +2203,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   32 bits, so a small test model passes and a real project model does not. Also settles a recurring
   confusion: fragments are source compiled by the bridge at run time, so the .NET target is the BRIDGE's
   problem, never a fragment's. Tags (2022) and the Dimension split (2025) scanned clean, 0 fragments each.
+
+- 2026-08-20 — Corrected the same note within the hour. It had said a fragment fixed for 2024+ must stop
+  working on 2020, so the library had to fork. **Wrong.** `#if` really is unavailable (the bridge compiles
+  a bare string with no `REVIT20XX` symbols), but two techniques need no symbols: **units become plain
+  arithmetic** — 1 ft is exactly 304.8 mm, so `mm / 304.8` has no API to deprecate, killing 206 of 208
+  conversions outright — and **ElementId uses runtime reflection**, the C# twin of the `hasattr` pattern
+  `revit-version-matrix` already prescribes for pyRevit. Also found the sharper diagnosis: `new
+  ElementId(myInt)` compiles fine on 2024+ because C# widens int to long, so the constructor was never the
+  bug — the bug is 33 inputs **declared** `int` (`viewIdInt`, `roomIdInt`, `levelIdInt`), which cannot hold
+  a 64-bit id whatever they are passed to.
