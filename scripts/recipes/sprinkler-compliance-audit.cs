@@ -5,6 +5,7 @@
 //          value. Ajmal's "check my sprinkler spacing" in one call. READ-ONLY.
 // STANDALONE — has its own sb and returns.
 // SOURCE: ../../knowledge/nfpa13-sprinkler-spacing.md          (the limits)
+// SOURCE: ../../knowledge/fire-sprinkler/nfpa-vs-en12845.md     (auditing against EN 12845 instead)
 // SOURCE: ../../knowledge/fire-sprinkler/layout-method.md      (step 8, and the reply format)
 //
 // WHY THIS EXISTS SEPARATELY FROM recipes/sprinkler-nfpa-grid.cs: that one MAKES a regular grid and can
@@ -40,6 +41,8 @@
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int roomIdInt = 0;
+string standardLabel = "";           // "NFPA 13 (2022)" / "BS EN 12845" — an audit that does not name its
+                                      // rulebook is not an audit. knowledge/fire-sprinkler/nfpa-vs-en12845.md
 string hazardLabel = "";              // printed on the report — an audit without it means nothing
 string constructionLabel = "";
 double maxAreaPerHeadM2 = 0;          // 0 = don't check (and the report says the check was skipped)
@@ -85,6 +88,7 @@ else
     }
 
     sb.AppendLine($"SPRINKLER AUDIT — '{room.Name}' (Id {roomIdInt}), {roomM2:F1} m2");
+    sb.AppendLine($"STANDARD: {(string.IsNullOrWhiteSpace(standardLabel) ? "*** NOT STATED — say which rulebook these limits came from" : standardLabel)}");
     sb.AppendLine($"HAZARD: {(string.IsNullOrWhiteSpace(hazardLabel) ? "*** NOT STATED — this audit is unanchored without it" : hazardLabel)}"
         + $"  |  CONSTRUCTION: {(string.IsNullOrWhiteSpace(constructionLabel) ? "*** NOT STATED" : constructionLabel)}");
     sb.AppendLine($"HEADS FOUND: {heads.Count:N0} (category Sprinklers, host document, inside this room)");

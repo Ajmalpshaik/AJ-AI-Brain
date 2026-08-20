@@ -30,6 +30,11 @@ counts them that way.
    Run the grid one first and check its table against a hand calculation; the arithmetic is plain C# with
    no Revit call in it, so one room settles all three.
 
+3. `recipes/sprinkler-layout-options.cs` and `recipes/sprinkler-floor-scope.cs` (2026-08-20) — a placed
+   Room and a Level are all they need, both of which exist. Run the options one on Room 4 alongside
+   `sprinkler-nfpa-grid.cs` and check that the grid's single answer APPEARS in the options list: if it
+   does not, one of the two is wrong, and finding that out costs one run.
+
 (**Everything else in this group is closed.** 2026-08-14: `action-add-aligned-dimensions.cs`,
 `action-add-spot-elevations.cs`, `action-manage-sheet-sets.cs` and `action-add-remove-insulation.cs`
 verified live — several of their predicted CHECKs turned out wrong, see the Log entry for that date.
@@ -2102,3 +2107,65 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   All eight fragments are written but **not live-verified** — no Revit in that session. Every Revit call in
   them is proven elsewhere in this library and each header names which, so the honest route is one element
   first, check the real result, then the batch.
+
+- **2026-08-20 — the ceiling void, and a number remembered right with the wrong source.** Ajmal asked
+  whether NFPA requires sprinklers in the ceiling void once it is "more than eight hundred or something",
+  and flagged himself that he was not sure. Checked: the **800 mm is real but it is BS 5306-2 / BS EN
+  12845, not NFPA**. NFPA 13 has no depth trigger for a ceiling void — it tests whether the concealed
+  space is of combustible construction, and permits omission in a noncombustible/limited-combustible space
+  with minimal combustible loading. The two disagree **both ways**: a 900 mm noncombustible void may need
+  nothing under NFPA and heads under BS/EN; a 600 mm combustible void is the reverse. New chunk
+  `knowledge/fire-sprinkler/concealed-spaces.md` carries the two tests side by side, the NFPA omission
+  list, and the two-layer consequence (upright in the void, pendent below — and the void is usually
+  OBSTRUCTED construction, so its grid is not the ceiling grid copied upward, which is the standard
+  mistake). `sprinkler-obstruction-survey.cs` now measures the void (ceiling top to slab soffit) and flags
+  it against a settable threshold, while saying in the same breath that a depth flag cannot answer an NFPA
+  question. The pattern worth keeping is bigger than the fact: **he remembered the number correctly and
+  the standard incorrectly**, which is the normal shape of site knowledge — so "which standard is this
+  project on" now belongs in the opening questions of a sprinkler job, not in an assumption.
+
+- **2026-08-20 — "is there anything like that?" — yes, and the reason it catches people is the agreement,
+  not the disagreement.** Following the ceiling-void finding, Ajmal asked whether there were more rules of
+  the same shape. Searched, and the answer has a pattern worth more than the list: **NFPA 13 and BS EN
+  12845 agree almost exactly on the headline number and diverge on everything around it.** Max area per
+  head, light hazard: NFPA 225 ft² = 20.9 m², EN 21 m². Ordinary: 12.1 m² against 12 m². That near-identity
+  is *why* people treat the two as interchangeable — the first number they check does match. Then:
+  deflector below a smooth ceiling is **25–305 mm (NFPA) against 75–150 mm (EN)**, so a habit of "250 below"
+  is legal under one and not the other and nobody re-checks a mounting height that has worked for years;
+  minimum spacing is 1,829 mm against **2,000 mm**, so a layout at 1.9 m passes NFPA and fails EN; and the
+  hazard classes **do not map** — EN splits Ordinary into OH1–OH4 and adds HHP/HHS, so reading "OH3" and
+  laying out to NFPA "Ordinary Hazard" is a guess, not a translation. New chunk
+  `knowledge/fire-sprinkler/nfpa-vs-en12845.md`. `sprinkler-nfpa-grid.cs` and
+  `sprinkler-compliance-audit.cs` now take a **required `standardLabel`** and print it on every report —
+  the grid refuses to run without it, the audit prints NOT STATED in the clear. A head count with no
+  standard named is the same failure as one with no hazard class named, and this session produced the
+  evidence for that in one question.
+
+- **2026-08-20 — "can I design sprinklers from zero to finish?" — not yet, and now the gaps are a list
+  rather than a feeling.** Ajmal asked whether a plain architectural plan could be taken all the way, at
+  any scope ("the whole plan", "room one", "something specific"), and separately whether the Brain could
+  offer **several layout options** so he can reject one and get another. The second answer was a flat no:
+  8 of 8 sprinkler fragments took a single room Id, and nothing generated alternatives — the grid recipe
+  stops at the first passing grid by design, because it answers "what is the smallest compliant layout",
+  which is one question with one answer. Both gaps closed this session:
+  `recipes/sprinkler-layout-options.cs` enumerates every compliant nx × ny, collapses the ones that are
+  the same *decision*, and ranks them; and `recipes/sprinkler-floor-scope.cs` sweeps a whole level.
+  The idea worth keeping from the options work: **two layouts differ in ways no code check can see.** A
+  5 × 4 and a 4 × 5 can carry the same head count, pass identically, and run their branch lines at ninety
+  degrees to each other — one fights the structure, the other does not. So the fragment ranks on head
+  count, branch direction, margin under the area cap, and bay alignment, and states on every run that the
+  ranking is preference and not compliance. And if it returns more than about eight distinct options,
+  that is itself the finding: the code limits are not what decides that room.
+  The floor sweep is built to **over-report**: every space matching an omission rule goes in an ASK bucket
+  with the reason, never omitted, because a room silently dropped from a fire layout is the worst output
+  this Brain could produce. It classifies on room name and area, which is a prompt to look, not a finding —
+  every real omission rule turns on construction and combustible loading, which the model does not hold.
+  Also added `knowledge/fire-sprinkler/where-sprinklers-are-required.md` (the "zero" end: exempt locations,
+  and temperature-rating selection, which matters more in Qatar than the tables suggest — an unconditioned
+  soffit can sit well past the 38 °C ambient that ordinary-rated heads assume) and
+  `roadmap-zero-to-finish.md`, which states plainly what is still missing: hazard class per room, the head
+  schedule, a multi-room driver, drawing output, sloped ceilings, and above all **one live run of the whole
+  chain**. Pipe sizing is gated behind that live run, at Ajmal's own sequencing — and the note records
+  now, while it is fresh, that sprinkler pipe sizing splits into a tractable **pipe-schedule** method and a
+  **hydraulic** method that belongs with a licensed engineer. Establishing which one a project uses is the
+  first move when the gate opens, not an afterthought.

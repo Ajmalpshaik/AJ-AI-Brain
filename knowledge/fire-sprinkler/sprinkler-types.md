@@ -78,8 +78,9 @@ Plus the rules that come with the orientation:
    recessed depending on how the ceiling is meant to look.
 2. **Is there a void above the ceiling that itself needs protection?** Then there are *two* layers —
    pendent below and upright above — each laid out on its own, each with its own construction type.
-   Check the void's depth and combustibility against the concealed-space rules before assuming it needs
-   heads at all.
+   **Whether the void needs heads at all is a standards question with two different answers** — NFPA tests
+   what the void is made of, BS EN 12845 tests whether it is deeper than 800 mm. Settle that first:
+   [`concealed-spaces.md`](concealed-spaces.md).
 3. **Can pipe get above this space at all?** No → sidewall, and now check the throw across the room,
    not just the spacing along the wall.
 4. **Is the space unheated, or is the pipe in a different thermal zone?** → dry barrel, and the barrel
