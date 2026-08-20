@@ -29,7 +29,7 @@ else
     foreach (var e in elements.Take(maxRows))
     {
         OverrideGraphicSettings ogs;
-        try { ogs = view.GetElementOverrides(e.Id); } catch { sb.AppendLine($"  Id {e.Id.IntegerValue}: could not read overrides."); continue; }
+        try { ogs = view.GetElementOverrides(e.Id); } catch { sb.AppendLine($"  Id {e.Id}: could not read overrides."); continue; }
 
         // NOTE: IsSurfaceForegroundPatternVisible/IsCutForegroundPatternVisible default to TRUE even with
         // nothing overridden — they are not a signal of an actual override, only whether a pattern (if any
@@ -42,11 +42,11 @@ else
 
         if (!hasAnyOverride)
         {
-            sb.AppendLine($"  Id {e.Id.IntegerValue}: no overrides.");
+            sb.AppendLine($"  Id {e.Id}: no overrides.");
             continue;
         }
 
-        sb.AppendLine($"  Id {e.Id.IntegerValue}: projection line {colorText(ogs.ProjectionLineColor)}, cut line {colorText(ogs.CutLineColor)}, " +
+        sb.AppendLine($"  Id {e.Id}: projection line {colorText(ogs.ProjectionLineColor)}, cut line {colorText(ogs.CutLineColor)}, " +
             $"surface pattern color {colorText(ogs.SurfaceForegroundPatternColor)} (visible: {ogs.IsSurfaceForegroundPatternVisible}), " +
             $"transparency {ogs.Transparency}%, halftone {ogs.Halftone}.");
     }

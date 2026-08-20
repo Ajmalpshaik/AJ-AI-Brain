@@ -22,7 +22,7 @@ using (var t = new Transaction(Document, "AJ Tools - Group Elements"))
         Group group = Document.Create.NewGroup(ids);
         if (!string.IsNullOrEmpty(groupName)) group.GroupType.Name = groupName;
         t.Commit();
-        sb.AppendLine($"Grouped {ids.Count} element(s) into new group '{group.GroupType.Name}' (Id {group.Id.IntegerValue}).");
+        sb.AppendLine($"Grouped {ids.Count} element(s) into new group '{group.GroupType.Name}' (Id {group.Id}).");
     }
     catch (Exception ex)
     {

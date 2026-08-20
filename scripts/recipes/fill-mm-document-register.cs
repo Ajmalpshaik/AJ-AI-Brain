@@ -135,8 +135,8 @@ foreach (var j in fixedVals)
 var sheets = new FilteredElementCollector(doc).OfClass(typeof(ViewSheet)).Cast<ViewSheet>()
     .Where(s => candidateSheetNumbers.Contains(s.SheetNumber)).ToList();
 
-var map = new Dictionary<int,string>();
-var conflict = new Dictionary<int,List<string>>();
+var map = new Dictionary<ElementId,string>();
+var conflict = new Dictionary<ElementId,List<string>>();
 foreach (var sh in sheets.OrderBy(s => s.SheetNumber))
     foreach (var vid in sh.GetAllPlacedViews())
     {
@@ -146,7 +146,7 @@ foreach (var sh in sheets.OrderBy(s => s.SheetNumber))
         foreach (var id in new FilteredElementCollector(doc, vid).OfCategory(targetCategory)
             .WhereElementIsNotElementType().ToElementIds())
         {
-            int k = id.IntegerValue;
+            var k = id;
             if (map.ContainsKey(k) && map[k] != sh.SheetNumber)
             { if (!conflict.ContainsKey(k)) conflict[k] = new List<string> { map[k] }; conflict[k].Add(sh.SheetNumber); continue; }
             map[k] = sh.SheetNumber;
@@ -160,13 +160,13 @@ if (conflict.Count > 0)
         + " element(s) appear on more than one candidate sheet. Decide the rule first:");
     foreach (var k in conflict.Take(10))
     {
-        var fi = doc.GetElement(new ElementId(k.Key)) as FamilyInstance;
+        var fi = doc.GetElement(k.Key) as FamilyInstance;
         sb.AppendLine("     Id " + k.Key + (fi != null ? "  " + fi.Symbol.FamilyName : "") + " -> " + string.Join(" + ", k.Value));
     }
 }
 else
 {
-    int set = 0, noSheet = 0; var orphans = new List<int>();
+    int set = 0, noSheet = 0; var orphans = new List<ElementId>();
     using (var t = new Transaction(doc, "AJ Tools - Set " + drawingNumberParam))
     {
         t.Start();
@@ -174,10 +174,10 @@ else
         {
             foreach (var e in els)
             {
-                if (!map.ContainsKey(e.Id.IntegerValue)) { noSheet++; orphans.Add(e.Id.IntegerValue); continue; }
+                if (!map.ContainsKey(e.Id)) { noSheet++; orphans.Add(e.Id); continue; }
                 var p = e.LookupParameter(drawingNumberParam);
                 if (p == null || p.IsReadOnly) continue;
-                if (p.Set(map[e.Id.IntegerValue])) set++;
+                if (p.Set(map[e.Id])) set++;
             }
             t.Commit();
         }
@@ -187,7 +187,7 @@ else
     // an orphan is a QUESTION, not a failure — it is usually documented on a different discipline's sheet
     foreach (var o in orphans.Take(20))
     {
-        var fi = doc.GetElement(new ElementId(o)) as FamilyInstance;
+        var fi = doc.GetElement(o) as FamilyInstance;
         sb.AppendLine("     orphan Id " + o + (fi != null ? "  " + fi.Symbol.FamilyName + " :: " + fi.Symbol.Name : ""));
     }
     if (orphans.Count > 0)

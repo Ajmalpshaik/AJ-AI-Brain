@@ -16,7 +16,7 @@ var scoped = errorsOnly ? warnings.Where(w => w.GetSeverity() == FailureSeverity
 sb.AppendLine($"Total warnings: {warnings.Count}" + (errorsOnly ? $" ({scoped.Count} at Error severity shown)" : ""));
 foreach (var w in scoped)
 {
-    var ids = w.GetFailingElements().Select(id => id.IntegerValue.ToString());
+    var ids = w.GetFailingElements().Select(id => id.ToString());
     Guid guid;
     try { guid = w.GetFailureDefinitionId().Guid; } catch { guid = Guid.Empty; }
     sb.AppendLine($"[{w.GetSeverity()}] {w.GetDescriptionText()} (guid {guid}) — element(s): {string.Join(", ", ids)}");

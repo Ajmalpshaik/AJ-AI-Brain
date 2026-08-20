@@ -60,7 +60,7 @@ using (var t = new Transaction(Document, "AJ Tools - Purge Unused View Templates
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"'{e.Name}' (Id {e.Id.IntegerValue}): {exOne.Message}");
+                failures.Add($"'{e.Name}' (Id {e.Id}): {exOne.Message}");
             }
         }
         t.Commit();

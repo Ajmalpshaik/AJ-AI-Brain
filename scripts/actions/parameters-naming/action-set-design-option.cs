@@ -98,7 +98,7 @@ else
                 t.Commit();
                 sb.AppendLine($"Copied {copied.Count} element(s) into Design Option '{targetOption.Name}'" +
                     (deleteOriginals ? $", deleted {deleted} Main Model original(s)." : " — Main Model originals left untouched."));
-                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
             }
             catch (Exception ex)
             {

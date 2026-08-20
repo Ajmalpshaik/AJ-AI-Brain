@@ -57,7 +57,7 @@ else
             t.Start();
             try
             {
-                Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+                Func<double, double> mm = v => v / 304.8;
                 var pts = boundaryPoints.Select(p => new XYZ(mm(p.xMm), mm(p.yMm), 0)).ToList();
                 var curves = new List<Curve>();
                 for (int i = 0; i < pts.Count; i++)
@@ -67,7 +67,7 @@ else
                 var region = FilledRegion.Create(Document, typeId, view.Id, new List<CurveLoop> { loop });
                 elements.Add(region);
                 t.Commit();
-                sb.AppendLine($"Created filled region Id {region.Id.IntegerValue} in view '{view.Name}'.");
+                sb.AppendLine($"Created filled region Id {region.Id} in view '{view.Name}'.");
             }
             catch (Exception ex)
             {

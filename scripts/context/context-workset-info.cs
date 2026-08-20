@@ -13,7 +13,7 @@ if (shared)
     var worksets = new FilteredWorksetCollector(Document).OfKind(WorksetKind.UserWorkset).ToWorksets();
     sb.AppendLine($"User worksets ({worksets.Count}):");
     foreach (var ws in worksets)
-        sb.AppendLine($"  - {ws.Name} (Id {ws.Id.IntegerValue}, {(ws.IsOpen ? "open" : "closed")}, owner: {ws.Owner})");
+        sb.AppendLine($"  - {ws.Name} (Id {ws.Id}, {(ws.IsOpen ? "open" : "closed")}, owner: {ws.Owner})");
 }
 else
 {

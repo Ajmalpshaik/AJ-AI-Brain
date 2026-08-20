@@ -24,7 +24,7 @@ sb.AppendLine($"{(unitsOk ? "PASS" : "FAIL")}  units      1000mm -> {ft:F5} ft -
 
 // ---- VIEW TARGETING ----
 View activeView = ResolveView(null);
-View byId = activeView == null ? null : ResolveView(activeView.Id.IntegerValue);
+View byId = activeView == null ? null : ResolveView(activeView.Id);
 bool viewOk = activeView != null && byId != null && byId.Id == activeView.Id;
 sb.AppendLine($"{(viewOk ? "PASS" : "FAIL")}  view       active='{(activeView == null ? "none" : activeView.Name)}', by-Id resolves to the same view");
 
@@ -45,7 +45,7 @@ if (elements.Count > 0)
 
     ElementId lvl = LevelIdOf(sample);
     Element lvlElem = lvl == ElementId.InvalidElementId ? null : Document.GetElement(lvl);
-    sb.AppendLine($"PASS  level      Id {sample.Id.IntegerValue} -> level '{(lvlElem == null ? "none resolved" : lvlElem.Name)}'");
+    sb.AppendLine($"PASS  level      Id {sample.Id} -> level '{(lvlElem == null ? "none resolved" : lvlElem.Name)}'");
 }
 else
 {

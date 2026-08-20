@@ -56,7 +56,7 @@ int maxListedPerBucket = 60;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double, double> toM2 = v => v / 10.763910416709722;
 
 var missing = new List<string>();
 if (maxAreaPerHeadM2 <= 0) missing.Add("maxAreaPerHeadM2");
@@ -117,7 +117,7 @@ else
                 totalArea += aM2;
                 int heads = (int)Math.Ceiling(aM2 / maxAreaPerHeadM2);
                 string lower = nm.ToLowerInvariant();
-                string tag = $"{num} '{nm}' (Id {r.Id.IntegerValue}) {aM2:F1} m2";
+                string tag = $"{num} '{nm}' (Id {r.Id}) {aM2:F1} m2";
 
                 string askHit = askNames.FirstOrDefault(k => lower.Contains(k));
                 string specialHit = specialNames.FirstOrDefault(k => lower.Contains(k));

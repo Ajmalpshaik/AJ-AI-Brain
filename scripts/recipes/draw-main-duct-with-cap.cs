@@ -64,7 +64,7 @@ if (terminals.Count == 0) return "No terminals in this room yet — nothing to r
 var bbox = room.get_BoundingBox(null);
 double xExtent = bbox.Max.X - bbox.Min.X, yExtent = bbox.Max.Y - bbox.Min.Y;
 bool xIsLong = xExtent >= yExtent;
-double clearanceFt = UnitUtils.ConvertToInternalUnits(wallClearanceMm, DisplayUnitType.DUT_MILLIMETERS);
+double clearanceFt = wallClearanceMm / 304.8;
 
 XYZ fcuOrigin = supplyConn.Origin;
 var farthestTerm = terminals.OrderByDescending(t2 => fcuOrigin.DistanceTo((t2.Location as LocationPoint).Point)).First();
@@ -116,7 +116,7 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
             supplyConn.ConnectTo(fcuEndConn);
             t.Commit();
         }
-        sb.AppendLine($"Drew main duct, FCU end connected. Size {UnitUtils.ConvertFromInternalUnits(supplyConn.Width, DisplayUnitType.DUT_MILLIMETERS):F0}x{UnitUtils.ConvertFromInternalUnits(supplyConn.Height, DisplayUnitType.DUT_MILLIMETERS):F0}mm.");
+        sb.AppendLine($"Drew main duct, FCU end connected. Size {supplyConn.Width * 304.8:F0}x{supplyConn.Height * 304.8:F0}mm.");
 
         // --- Cap the open far end: get type from Routing Preferences, duplicate a sized type, place,
         // --- size, move, rotate, re-move, connect. See ../../knowledge/live-model/hvac-ducts.md for why every step is needed.
@@ -131,8 +131,8 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
             throw new Exception("No cap type found in this duct type's Routing Preferences.");
         }
 
-        double widthMm = UnitUtils.ConvertFromInternalUnits(supplyConn.Width, DisplayUnitType.DUT_MILLIMETERS);
-        double heightMm = UnitUtils.ConvertFromInternalUnits(supplyConn.Height, DisplayUnitType.DUT_MILLIMETERS);
+        double widthMm = supplyConn.Width * 304.8;
+        double heightMm = supplyConn.Height * 304.8;
         string sizedTypeName = $"{capFamilyTypeNamePrefix}{widthMm:F0}x{heightMm:F0}mm";
 
         var existingSizedType = new FilteredElementCollector(Document)

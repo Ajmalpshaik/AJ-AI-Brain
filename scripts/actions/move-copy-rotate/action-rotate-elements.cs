@@ -38,7 +38,7 @@ double normalisedDeg = Math.Abs(angleDegrees % 360.0);
 bool askedForNothing = normalisedDeg < 1e-6 || Math.Abs(normalisedDeg - 360.0) < 1e-6;
 
 int rotated = 0, skipped = 0, blocked = 0, unverified = 0;
-var blockedIds = new List<int>();
+var blockedIds = new List<ElementId>();
 
 using (var t = new Transaction(Document, "AJ Tools - Rotate Elements"))
 {
@@ -59,8 +59,8 @@ using (var t = new Transaction(Document, "AJ Tools - Rotate Elements"))
             if (pivotXmm.HasValue && pivotYmm.HasValue)
             {
                 pivot = new XYZ(
-                    UnitUtils.ConvertToInternalUnits(pivotXmm.Value, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pivotYmm.Value, DisplayUnitType.DUT_MILLIMETERS),
+                    pivotXmm.Value / 304.8,
+                    pivotYmm.Value / 304.8,
                     0);
             }
             else if (e.Location is LocationPoint lp)
@@ -90,7 +90,7 @@ using (var t = new Transaction(Document, "AJ Tools - Rotate Elements"))
             string now = probeOrientation(e);
             if (askedForNothing) { rotated++; continue; }
             if (now == null || !before.TryGetValue(e.Id, out was)) { unverified++; continue; }
-            if (now == was) { blocked++; blockedIds.Add(e.Id.IntegerValue); }
+            if (now == was) { blocked++; blockedIds.Add(e.Id); }
             else rotated++;
         }
 

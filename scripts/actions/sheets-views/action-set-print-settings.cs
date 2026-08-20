@@ -32,7 +32,7 @@ if (mode == "report")
     foreach (PaperSize psz in pm.PaperSizes) sizes.Add(psz.Name);
     sb.AppendLine($"Paper sizes this driver offers ({sizes.Count}): {string.Join(", ", sizes)}");
     var settings = new FilteredElementCollector(Document).OfClass(typeof(PrintSetting)).ToList();
-    sb.AppendLine($"Saved print settings ({settings.Count}): {string.Join(", ", settings.Select(s => $"'{s.Name}' (Id {s.Id.IntegerValue})"))}");
+    sb.AppendLine($"Saved print settings ({settings.Count}): {string.Join(", ", settings.Select(s => $"'{s.Name}' (Id {s.Id})"))}");
 }
 else if (mode == "save")
 {

@@ -59,8 +59,8 @@ else
         };
 
         XYZ offset = new XYZ(
-            UnitUtils.ConvertToInternalUnits(offsetXmm, DisplayUnitType.DUT_MILLIMETERS),
-            UnitUtils.ConvertToInternalUnits(offsetYmm, DisplayUnitType.DUT_MILLIMETERS),
+            offsetXmm / 304.8,
+            offsetYmm / 304.8,
             0);
 
         var newElementIds = new List<ElementId>();
@@ -90,7 +90,7 @@ else
                 }
                 t.Commit();
                 sb.AppendLine($"Tagged {tagged} element(s) in view '{view.Name}', skipped {skipped}.");
-                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+                if (newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
             }
             catch (Exception ex)
             {

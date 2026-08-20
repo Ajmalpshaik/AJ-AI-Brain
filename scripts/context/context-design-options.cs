@@ -17,6 +17,6 @@ else
 {
     sb.AppendLine($"Design Options ({options.Count}):");
     foreach (var o in options.OrderBy(o => o.Name))
-        sb.AppendLine($"  - {o.Name} (Id {o.Id.IntegerValue}){(o.IsPrimary ? " [Primary]" : "")}");
+        sb.AppendLine($"  - {o.Name} (Id {o.Id}){(o.IsPrimary ? " [Primary]" : "")}");
 }
 return sb.ToString();

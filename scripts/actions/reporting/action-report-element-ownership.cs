@@ -39,11 +39,11 @@ else
             else free++;
 
             if (rows.Count < maxRows)
-                rows.Add($"  - Id {el.Id.IntegerValue} '{el.Name}' — {status}; created by {info.Creator}, owner: {(string.IsNullOrEmpty(info.Owner) ? "(none)" : info.Owner)}, last changed by {info.LastChangedBy}");
+                rows.Add($"  - Id {el.Id} '{el.Name}' — {status}; created by {info.Creator}, owner: {(string.IsNullOrEmpty(info.Owner) ? "(none)" : info.Owner)}, last changed by {info.LastChangedBy}");
         }
         catch (Exception exOne)
         {
-            rows.Add($"  - Id {el.Id.IntegerValue}: lookup failed — {exOne.Message}");
+            rows.Add($"  - Id {el.Id}: lookup failed — {exOne.Message}");
         }
     }
 

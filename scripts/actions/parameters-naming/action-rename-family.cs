@@ -88,7 +88,7 @@ using (var t = new Transaction(Document, "AJ Tools - Rename Family"))
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Family '{oldName}' (Id {fam.Id.IntegerValue}) -> '{candidate}': {exOne.Message}");
+                failures.Add($"Family '{oldName}' (Id {fam.Id}) -> '{candidate}': {exOne.Message}");
             }
         }
         t.Commit();

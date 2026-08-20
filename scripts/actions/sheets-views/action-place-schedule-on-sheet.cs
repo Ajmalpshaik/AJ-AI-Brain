@@ -37,8 +37,8 @@ else
                 if (pointXmm.HasValue && pointYmm.HasValue)
                 {
                     point = new XYZ(
-                        UnitUtils.ConvertToInternalUnits(pointXmm.Value, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pointYmm.Value, DisplayUnitType.DUT_MILLIMETERS),
+                        pointXmm.Value / 304.8,
+                        pointYmm.Value / 304.8,
                         0);
                 }
                 else

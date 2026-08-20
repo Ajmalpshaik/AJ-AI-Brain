@@ -22,7 +22,7 @@ double diameterMm = 50;         // 0 = keep type default
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 var sysTypes = new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Plumbing.PipingSystemType)).Cast<Autodesk.Revit.DB.Plumbing.PipingSystemType>().ToList();
@@ -60,7 +60,7 @@ else
                     // 77mm; it only becomes 80mm at regeneration. Without this the SNAPPED note, which
                     // is the entire point of this fragment's fix, never fires.
                     Document.Regenerate();
-                    double gotMm = UnitUtils.ConvertFromInternalUnits(pD.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                    double gotMm = pD.AsDouble() * 304.8;
                     if (!ok) diaNote = $"Diameter REFUSED {diameterMm}mm — still {gotMm:0.##}mm";
                     else if (Math.Abs(gotMm - diameterMm) > 0.5) diaNote = $"Diameter SNAPPED {diameterMm}mm -> {gotMm:0.##}mm (nearest size '{pipeType.Name}' allows)";
                 }
@@ -71,8 +71,8 @@ else
             t.Commit();
 
             var dFinal = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
-            string actualDia = dFinal == null ? "unknown" : $"{UnitUtils.ConvertFromInternalUnits(dFinal.AsDouble(), DisplayUnitType.DUT_MILLIMETERS):0.##} mm";
-            sb.AppendLine($"Created pipe (Id {pipe.Id.IntegerValue}) — type '{pipeType.Name}', system '{sysType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            string actualDia = dFinal == null ? "unknown" : $"{dFinal.AsDouble() * 304.8:0.##} mm";
+            sb.AppendLine($"Created pipe (Id {pipe.Id}) — type '{pipeType.Name}', system '{sysType.Name}', ACTUAL dia {actualDia}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
             if (diaNote != null) sb.AppendLine("  " + diaNote);
         }
         catch (Exception ex)

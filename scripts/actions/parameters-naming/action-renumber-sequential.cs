@@ -63,7 +63,7 @@ using (var t = new Transaction(Document, "AJ Tools - Renumber Sequential"))
             // as renumbered would report a clean 101..105 sequence that the model does not have.
             bool ok = p.Set($"{prefix}{numberText}{suffix}");
             if (ok) updated++;
-            else { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add($"{e.Id.IntegerValue} wanted '{prefix}{numberText}{suffix}'"); }
+            else { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add($"{e.Id} wanted '{prefix}{numberText}{suffix}'"); }
             n += increment;
         }
         t.Commit();

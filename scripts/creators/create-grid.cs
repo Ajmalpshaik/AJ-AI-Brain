@@ -17,7 +17,7 @@ List<(double p1XMm, double p1YMm, double p2XMm, double p2YMm, string name)> grid
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 using (var t = new Transaction(Document, "AJ Tools - Create Grids"))
 {

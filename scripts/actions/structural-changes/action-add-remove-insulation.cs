@@ -29,7 +29,7 @@ string insulationTypeName = null; // add only — exact type name; null = first 
 double thicknessMm = 25;        // add only
 // ---- END INPUTS ----
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 if (mode == "add")
 {
@@ -53,13 +53,13 @@ if (mode == "add")
             {
                 bool isDuct = el is Autodesk.Revit.DB.Mechanical.Duct;
                 bool isPipe = el is Autodesk.Revit.DB.Plumbing.Pipe;
-                if (!isDuct && !isPipe) { skipped++; notes.Add($"Id {el.Id.IntegerValue}: not a Duct/Pipe"); continue; }
+                if (!isDuct && !isPipe) { skipped++; notes.Add($"Id {el.Id}: not a Duct/Pipe"); continue; }
 
                 // one insulation/lining per element — skip if it already has one of the requested kind
                 bool hasAlready = new FilteredElementCollector(Document).OfClass(typeof(InsulationLiningBase))
                     .Cast<InsulationLiningBase>().Any(i => i.HostElementId == el.Id &&
                         (kind == "lining") == (i is Autodesk.Revit.DB.Mechanical.DuctLining));
-                if (hasAlready) { skipped++; notes.Add($"Id {el.Id.IntegerValue}: already has {kind}"); continue; }
+                if (hasAlready) { skipped++; notes.Add($"Id {el.Id}: already has {kind}"); continue; }
 
                 try
                 {
@@ -84,9 +84,9 @@ if (mode == "add")
                         Autodesk.Revit.DB.Mechanical.DuctLining.Create(Document, el.Id, ty.Id, mm(thicknessMm));
                         added++;
                     }
-                    else { skipped++; notes.Add($"Id {el.Id.IntegerValue}: lining is duct-only"); }
+                    else { skipped++; notes.Add($"Id {el.Id}: lining is duct-only"); }
                 }
-                catch (Exception exOne) { skipped++; notes.Add($"Id {el.Id.IntegerValue}: {exOne.Message}"); }
+                catch (Exception exOne) { skipped++; notes.Add($"Id {el.Id}: {exOne.Message}"); }
             }
             t.Commit();
             sb.AppendLine($"Added {kind} ({thicknessMm} mm) to {added} element(s), {skipped} skipped, of {elements.Count}.");
@@ -101,10 +101,10 @@ if (mode == "add")
 }
 else if (mode == "remove")
 {
-    var hostIds = new HashSet<int>(elements.Select(e => e.Id.IntegerValue));
+    var hostIds = new HashSet<ElementId>(elements.Select(e => e.Id));
     var toDelete = new FilteredElementCollector(Document).OfClass(typeof(InsulationLiningBase))
         .Cast<InsulationLiningBase>()
-        .Where(i => hostIds.Contains(i.HostElementId.IntegerValue))
+        .Where(i => hostIds.Contains(i.HostElementId))
         .Where(i => kind == "lining" ? i is Autodesk.Revit.DB.Mechanical.DuctLining : !(i is Autodesk.Revit.DB.Mechanical.DuctLining))
         .Select(i => i.Id)
         .ToList();

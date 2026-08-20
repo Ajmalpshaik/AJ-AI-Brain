@@ -21,7 +21,7 @@ Func<Element, XYZ> getPoint = e =>
     return null;
 };
 
-double toleranceFeet = UnitUtils.ConvertToInternalUnits(toleranceMm, DisplayUnitType.DUT_MILLIMETERS);
+double toleranceFeet = toleranceMm / 304.8;
 var points = elements.Select(e => (el: e, pt: getPoint(e))).Where(x => x.pt != null).ToList();
 
 var groups = new List<List<Element>>();
@@ -46,7 +46,7 @@ for (int i = 0; i < points.Count; i++)
 var flagged = groups.SelectMany(g => g).ToList();
 sb.AppendLine($"Checked {elements.Count} element(s) within {toleranceMm}mm tolerance: {groups.Count} duplicate cluster(s), {flagged.Count} element(s) flagged.");
 foreach (var g in groups)
-    sb.AppendLine("  Cluster: " + string.Join(", ", g.Select(e => e.Id.IntegerValue)));
+    sb.AppendLine("  Cluster: " + string.Join(", ", g.Select(e => e.Id)));
 
 if (selectFlagged && flagged.Count > 0)
 {

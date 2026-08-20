@@ -35,7 +35,7 @@ if (wantBreakdownTable && elements.Count > 0)
             var p = e.LookupParameter(pName);
             if (p != null && p.StorageType == StorageType.Double)
             {
-                double mm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                double mm = p.AsDouble() * 304.8;
                 sizeLabel = $"{Math.Round(mm)}mm ({pName})";
                 break;
             }

@@ -44,7 +44,7 @@ using (var t = new Transaction(Document, "AJ Tools - Create Levels"))
         int n = 1;
         foreach (var elevMm in elevationsMm)
         {
-            double elevFt = UnitUtils.ConvertToInternalUnits(elevMm, DisplayUnitType.DUT_MILLIMETERS);
+            double elevFt = elevMm / 304.8;
             var level = Level.Create(Document, elevFt);
 
             string candidateName = $"{namePrefix}{n}";
@@ -62,7 +62,7 @@ using (var t = new Transaction(Document, "AJ Tools - Create Levels"))
         // broke this README's own "always report the Element ID for specific elements" rule.
         sb.AppendLine($"Created {elements.Count} level(s):");
         foreach (Level madeLevel in elements.Cast<Level>())
-            sb.AppendLine($"  '{madeLevel.Name}' (Id {madeLevel.Id.IntegerValue}) at {UnitUtils.ConvertFromInternalUnits(madeLevel.Elevation, DisplayUnitType.DUT_MILLIMETERS):0.##} mm");
+            sb.AppendLine($"  '{madeLevel.Name}' (Id {madeLevel.Id}) at {madeLevel.Elevation * 304.8:0.##} mm");
     }
     catch (Exception ex)
     {

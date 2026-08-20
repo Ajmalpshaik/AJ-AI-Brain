@@ -2169,3 +2169,73 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   now, while it is fresh, that sprinkler pipe sizing splits into a tractable **pipe-schedule** method and a
   **hydraulic** method that belongs with a licensed engineer. Establishing which one a project uses is the
   first move when the gate opens, not an afterthought.
+
+- 2026-08-20 — Search retrieval: swapped the embedding model from `all-MiniLM-L6-v2` to
+  `bge-small-en-v1.5` (new `semantic-index/embed_bge.py`, ONNX on the existing `onnxruntime` — no new
+  dependency, same pattern `rerank.py` established). Reason from the score card, not taste: 7 of 14 test
+  questions had the right file ABSENT from the whole 80-chunk candidate pool, which no re-ranker can
+  repair. Also fixed `BRAIN_ROOT`, which was a hardcoded `D:\Ajmal\AJ AI Brain` with no fallback — it is
+  now derived from `brain_common.py`'s own location, so the Brain finally works as the copy-the-folder
+  package it claims to be (proven on Linux: 339 files found). **Needs one `embed_bge.py --download`
+  (~127 MB) then `index-brain.cmd --full` before searching again** — it refuses to fall back to the old
+  model rather than half-migrate the index. Chunk size and the BGE query prefix were deliberately left
+  alone: one measurable change at a time, and neither can be judged until `test-questions.md` has ~30 rows.
+
+- 2026-08-20 — Search, measured properly for the first time. The embedding model is now **selectable**
+  (`AJ_BRAIN_EMBED_MODEL`), because replacing it outright made the change impossible to A/B. Found and
+  fixed a real retrieval bug: RRF was fusing **chunk** ranks while ranking **files**, so a correct answer
+  sitting behind one long note scored as rank 40 instead of rank 5 purely because that note is split into
+  many chunks — 80 retrieved chunks were yielding only 32-37 distinct files. `_rank_files()` renumbers
+  over files: MRR 0.299 -> 0.323, retrievable 10 -> 11, top-3 3 -> 5, **top-5 6 <- 7 (one regressed)**.
+  `score_brain.py` now reports **retrievable-at-all vs ranked-below-5** — the split that says whether to
+  fix retrieval or ranking — plus MRR, and stamps every history line with model/chunk/corpus/fingerprint.
+  Two ideas measured and REJECTED, written down so they are not rebuilt from intuition: a **confidence
+  floor** (correct top-1 closeness 35.5-65.1, wrong 27.8-56.6 — they overlap, no threshold works) and a
+  **skill-area prior** (peaks at 1.1-1.2 but only moves wins between halves of a 7/7 test set — fitting
+  the sample). Over-fetching chunks also measured neutral. Docs: the three circulating accuracy figures
+  (75%, 60%, 29%) are gone; `score-history.md` is now the single stamped source.
+
+- 2026-08-20 — New note `knowledge/revit-version-compatibility.md`: what happens to the fragment library on
+  Revit 2024+. Measured, not estimated — **200 of 282 fragments (71%) touch an API that changed after 2020**,
+  and there is **not one version guard anywhere**. The important distinction it records: unit conversion
+  (`DisplayUnitType`, 93 files) fails LOUD as a bridge compile error, while `ElementId.IntegerValue` /
+  `new ElementId(int)` (168 files) fails SILENT — compiles and runs on 2024+, throws only once ids exceed
+  32 bits, so a small test model passes and a real project model does not. Also settles a recurring
+  confusion: fragments are source compiled by the bridge at run time, so the .NET target is the BRIDGE's
+  problem, never a fragment's. Tags (2022) and the Dimension split (2025) scanned clean, 0 fragments each.
+
+- 2026-08-20 — Corrected the same note within the hour. It had said a fragment fixed for 2024+ must stop
+  working on 2020, so the library had to fork. **Wrong.** `#if` really is unavailable (the bridge compiles
+  a bare string with no `REVIT20XX` symbols), but two techniques need no symbols: **units become plain
+  arithmetic** — 1 ft is exactly 304.8 mm, so `mm / 304.8` has no API to deprecate, killing 206 of 208
+  conversions outright — and **ElementId uses runtime reflection**, the C# twin of the `hasattr` pattern
+  `revit-version-matrix` already prescribes for pyRevit. Also found the sharper diagnosis: `new
+  ElementId(myInt)` compiles fine on 2024+ because C# widens int to long, so the constructor was never the
+  bug — the bug is 33 inputs **declared** `int` (`viewIdInt`, `roomIdInt`, `levelIdInt`), which cannot hold
+  a 64-bit id whatever they are passed to.
+
+- 2026-08-20 — **The whole fragment library is now version-proof, 2020 through 2027, from one source.**
+  202 unit conversions became arithmetic; 195 id prints dropped `.IntegerValue`; ~80 id collections,
+  GroupBy/OrderBy keys and tuples now carry the `ElementId` itself (its `GetHashCode` returns the id, so
+  it keys a Dictionary/HashSet directly — version-proof with **no reflection**, which matters because
+  several sit in loops over every element). Only 8 genuinely numeric sites use a cached-lookup helper.
+  **No `#if`, no fork, no per-version copy.** Three deliberate exceptions, all annotated in place: 2
+  electrical conversions (Revit does not store voltage as volts and the doc hosts were blocked — verify
+  the factor first), 1 `WorksetId` (a different class, not affected), and `prelude.cs ResolveView` which
+  now takes an `ElementId`. A post-sweep scan for `new ElementId(x)` where `x` had itself become an
+  `ElementId` caught **2 real bugs** — worth repeating after any similar mass edit. **Not compiled, not
+  run**: the brain-status proven-counts describe the pre-migration state.
+
+- 2026-08-20 — New `scripts/context/context-session-start.cs`: the opening check, one bridge call, wired
+  into the ping rule (`live-model/core.md`, `AGENT-SPEC.md` §1 + §3.5, the live-model SKILL). Ajmal's
+  words: *"everytime while pinging or connection to revit check the all things like what is the version
+  of revit what is the model."* It reports Revit version/build **and which API generation is actually
+  live** (64-bit ElementId? ForgeTypeId units? split Dimension classes?) — the confirmation the
+  2026-08-20 migration needs, since one source now serves 2020-2027 and the version number alone is an
+  inference. Also: document + path + central, project name/number/client, **what unit the project really
+  displays** (read off a Level's own AsValueString, so it names no version-specific unit API), size,
+  unloaded links, closed worksets, design options, phases, warnings, active view, selection. Four of
+  those catch a **silently wrong answer** rather than an error — an unloaded link, a closed workset and
+  an unexamined design option each make a query quietly return LESS than the truth, and metres-not-mm
+  makes every figure wrong by 1000. None of them throws. Every section is independently guarded so one
+  unreadable part cannot take down the report. Unproven — never run.

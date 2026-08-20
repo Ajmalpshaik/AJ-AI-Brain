@@ -34,9 +34,9 @@ using (var t = new Transaction(Document, "AJ Tools - Array Elements"))
         if (mode == "linear")
         {
             XYZ step = new XYZ(
-                UnitUtils.ConvertToInternalUnits(spacingXmm, DisplayUnitType.DUT_MILLIMETERS),
-                UnitUtils.ConvertToInternalUnits(spacingYmm, DisplayUnitType.DUT_MILLIMETERS),
-                UnitUtils.ConvertToInternalUnits(spacingZmm, DisplayUnitType.DUT_MILLIMETERS));
+                spacingXmm / 304.8,
+                spacingYmm / 304.8,
+                spacingZmm / 304.8);
 
             for (int i = 1; i <= count; i++)
             {
@@ -58,8 +58,8 @@ using (var t = new Transaction(Document, "AJ Tools - Array Elements"))
         else if (mode == "radial")
         {
             XYZ center = new XYZ(
-                UnitUtils.ConvertToInternalUnits(centerXMm, DisplayUnitType.DUT_MILLIMETERS),
-                UnitUtils.ConvertToInternalUnits(centerYMm, DisplayUnitType.DUT_MILLIMETERS),
+                centerXMm / 304.8,
+                centerYMm / 304.8,
                 0);
             Line axis = Line.CreateBound(center, center + XYZ.BasisZ);
             double stepRadians = (totalSweepDegrees / count) * (Math.PI / 180.0);

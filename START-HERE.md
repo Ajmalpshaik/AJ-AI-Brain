@@ -64,7 +64,7 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
 | Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 339 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 341 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
@@ -111,7 +111,7 @@ AJ AI RAG, it's not connected with Ashghal standards or something like that — 
 skill, or we will create one."* Indexing them was built and then reverted the same hour. Three measured
 reasons, so nobody has to re-derive them: the PWA manuals are **CAD drafting** rules (layers, title
 blocks, drawing numbers), not Revit modelling; they would have added **604 chunks, a 20% increase** to a
-search that is currently right 3 times in 5, with **no way to measure the damage** until the test set
+search whose measured accuracy is in `semantic-index/score-history.md`, with **no way to measure the damage** until the test set
 grows; and **nothing has ever asked for them** — `job-log/` records what is really needed, so wait for
 evidence. If one standards rule genuinely matters, write it as a knowledge note **in your own words,
 having read it** — higher signal than 600 unchecked chunks, and it cannot look authoritative while being

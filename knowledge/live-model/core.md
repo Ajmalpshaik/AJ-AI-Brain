@@ -46,6 +46,19 @@ rather than just act on existing ones and don't fit the filter+action shape.
   multi-parameter, geometry, and model-changing work.
 - Always `mcp__aj-tools-aj-ai__ping` first if it's been a while — if it fails, Revit is closed or
   the AJ AI pane's Connect AJ AI Bridge toggle is off. Ask the user to reconnect rather than guessing.
+- **Follow the first successful ping of a session with `scripts/context/context-session-start.cs`** —
+  one call, and it answers everything a session would otherwise assume (Ajmal's rule, 2026-08-20:
+  *"everytime while pinging or connection to revit check the all things like what is the version of
+  revit what is the model"*). It reports the Revit version **and which API generation is actually live**
+  (64-bit ElementId? ForgeTypeId units? split Dimension classes?), the document and its path, whether it
+  is workshared and where the central sits, project name/number/client, **what unit the project really
+  displays**, model size, **links that are NOT loaded**, **worksets that are CLOSED**, design options,
+  phases, warning count, the active view and the current selection.
+  Four of those lines exist to catch a *silently wrong answer* rather than an error:
+  an unloaded link, a closed workset and an unexamined design option each make a query quietly return
+  LESS than the truth, and a project displaying metres rather than millimetres makes every figure wrong
+  by a thousand. None of them throws; all of them are invisible unless you look at the start.
+  `context-active-view.cs` stays as the lighter view-only re-check for mid-session use.
 - **Whenever reporting a successful ping, always also report the session snapshot** — the user wants this
   every time, not just on request (rule extended 2026-07-16: active view added to the original
   version+model rule). Get it in one follow-up `run_csharp` call by running

@@ -71,7 +71,7 @@ else
 
             elements.Add(schedule);
             t.Commit();
-            sb.AppendLine($"Created key schedule '{schedule.Name}' (Id {schedule.Id.IntegerValue}) for {categoryName}, key parameter '{keyName}', {added.Count} column(s): {string.Join(", ", added)}.");
+            sb.AppendLine($"Created key schedule '{schedule.Name}' (Id {schedule.Id}) for {categoryName}, key parameter '{keyName}', {added.Count} column(s): {string.Join(", ", added)}.");
             sb.AppendLine($"  Every {categoryName} element now has a '{keyName}' parameter — that is a model-wide change (see header).");
             if (missing.Count > 0)
             {

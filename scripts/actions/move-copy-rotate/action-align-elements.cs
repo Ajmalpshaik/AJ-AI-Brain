@@ -69,7 +69,7 @@ else
             }
             t.Commit();
             string axisLabel = string.Join("/", new[] { alignX ? "X" : null, alignY ? "Y" : null, alignZ ? "Z" : null }.Where(s => s != null));
-            sb.AppendLine($"Aligned {moved} element(s) to '{reference.Name}' (Id {reference.Id.IntegerValue}) on axis/axes: {axisLabel}, skipped {skipped} (already aligned, or no resolvable position).");
+            sb.AppendLine($"Aligned {moved} element(s) to '{reference.Name}' (Id {reference.Id}) on axis/axes: {axisLabel}, skipped {skipped} (already aligned, or no resolvable position).");
         }
         catch (Exception ex)
         {
