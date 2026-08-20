@@ -2255,3 +2255,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Recorded in START-HERE's "deliberately does NOT cover" beside the standards decision. **If the full API
   is ever genuinely wanted it goes in a SEPARATE index the Brain's own search never touches** — Ajmal's
   own instinct ("keep it in a separate section") was the right half of the idea.
+
+- 2026-08-20 — **The full Revit API is now available, in a genuinely separate index** — Ajmal reaffirmed
+  he wanted it after seeing the numbers, and his own instinct ("keep it in a separate section") is what
+  makes it safe. New `api-index/` (own `api_common/api_index/api_search`, `index-api.cmd`, `ask-api.cmd`,
+  README) plus `scripts/context/harvest-revit-api.cs`. **Source is reflection over the RevitAPI.dll the
+  running Revit actually loaded**, not `revitapidocs.com`: it gives YOUR version rather than a website's
+  copy (which is the whole point after the 2020-2027 migration), needs no scraping or third-party
+  dependency, works offline, and the site is unreachable from the session environment anyway. Picks up
+  `RevitAPI.xml` descriptions when Autodesk ships them; signatures regardless.
+  **Separation checked live, not assumed:** different database dir (`chroma-db-api` vs `chroma-db`),
+  different collection (`revit_api` vs `aj_brain`), each client lists only its own, and `api-index/` sits
+  outside `INDEX_TARGETS` so the Brain's indexer never reads it — **0 of 343 indexed files come from
+  it**, and the Brain stayed at 3,786 chunks. Indexing + search proven end to end on a synthetic corpus
+  that matches reflection's output shape; the real harvest is unproven until run on a live Revit.
