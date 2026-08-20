@@ -92,6 +92,7 @@ const result = spawnSync(python, [path.join(semanticRoot, "score_brain.py")], {
   encoding: "utf8",
   cwd: semanticRoot,
   timeout: 300000,
+  windowsHide: true, // else Windows 11 flashes a Terminal window over Revit
 });
 
 // Record the fingerprint even on failure, so a broken scorer does not re-run every single turn.

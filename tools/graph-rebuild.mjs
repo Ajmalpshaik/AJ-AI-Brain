@@ -105,6 +105,7 @@ try {
     encoding: "utf8",
     cwd: root,
     timeout: 300000,
+    windowsHide: true, // else Windows 11 flashes a Terminal window over Revit
   });
 
   // Record the fingerprint either way, so a broken rebuild does not retry every single turn.

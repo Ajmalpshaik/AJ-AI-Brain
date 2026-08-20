@@ -49,6 +49,34 @@ def _ask(info, payload, timeout):
     return json.loads(data.decode("utf-8"))
 
 
+def windowless_python():
+    """
+    The interpreter that is never handed a console window on Windows.
+
+    WHY THIS IS NOT sys.executable. This venv's python.exe is a LAUNCHER SHIM over the
+    Microsoft Store Python (pyvenv.cfg points at WindowsApps): it re-executes the base
+    interpreter as a SECOND process, and that second process never saw the creation flags
+    given to the first. So DETACHED_PROCESS below is honoured by the shim and lost by the
+    real interpreter, which then allocates a console of its own - and on Windows 11, where
+    Windows Terminal is the default console host, that console is a black window sitting on
+    top of whatever Ajmal was actually looking at.
+
+    Measured 2026-08-21, with the server started this way: conhost.exe parented directly to
+    the server's python3.11.exe, and a WindowsTerminal.exe created in the same second.
+    Ajmal's words: "evry time i chat what is this coming ??" - and closing that window kills
+    the server, so the next message starts another one, and it looks like it comes back
+    forever.
+
+    pythonw.exe is a GUI-subsystem binary, so Windows allocates no console for it at all,
+    and the shim re-executes the base pythonw - nothing has to survive a flag handoff. Same
+    fix, same shim, as the voice layer made on 2026-08-11; see tools/voice/say.mjs.
+    """
+    if os.name != "nt":
+        return sys.executable
+    windowless = Path(sys.executable).with_name("pythonw.exe")
+    return str(windowless) if windowless.exists() else sys.executable
+
+
 def start_server_detached():
     """
     Launch a server that outlives this process. Best effort, never raises.
@@ -60,12 +88,13 @@ def start_server_detached():
         kwargs = {"cwd": str(HERE), "stdin": subprocess.DEVNULL,
                   "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
         if os.name == "nt":
-            # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP - no console window appears,
-            # and Ctrl-C in the parent terminal does not reach it.
+            # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP - this process gets no console of
+            # its own, and Ctrl-C in the parent terminal does not reach it. It is NOT what
+            # keeps the window away on its own: see windowless_python() above for the reason.
             kwargs["creationflags"] = 0x00000008 | 0x00000200
         else:
             kwargs["start_new_session"] = True
-        subprocess.Popen([sys.executable, str(HERE / "brain_server.py")], **kwargs)
+        subprocess.Popen([windowless_python(), str(HERE / "brain_server.py")], **kwargs)
         return True
     except Exception:
         return False
