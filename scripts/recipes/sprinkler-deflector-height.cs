@@ -71,8 +71,8 @@ int maxListed = 100;
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 Autodesk.Revit.DB.Architecture.Room room = null;
 if (roomIdInt != 0) room = Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
@@ -135,7 +135,7 @@ else
             {
                 var lp = h.Location as LocationPoint;
                 if (lp == null || !insideRoom(lp.Point)) continue;
-                heads.Add(Tuple.Create($"Id {h.Id.IntegerValue}", lp.Point, h));
+                heads.Add(Tuple.Create($"Id {h.Id}", lp.Point, h));
             }
         }
         else

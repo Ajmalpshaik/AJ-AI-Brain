@@ -108,8 +108,8 @@ var fm  = doc.FamilyManager;
 if (fm.Types.Size > 0) return "Family already has " + fm.Types.Size + " type(s) - stopping rather than overwriting.";
 if (new FilteredElementCollector(doc).OfClass(typeof(Extrusion)).GetElementCount() > 0) return "Family already has extrusions - stopping.";
 
-double LFt(double mm) => UnitUtils.ConvertToInternalUnits(mm, DisplayUnitType.DUT_MILLIMETERS);
-double MM(double ft) => UnitUtils.ConvertFromInternalUnits(ft, DisplayUnitType.DUT_MILLIMETERS);
+double LFt(double mm) => mm / 304.8;
+double MM(double ft) => ft * 304.8;
 var sb = new System.Text.StringBuilder();
 
 var view = new FilteredElementCollector(doc).OfClass(typeof(ViewPlan)).Cast<ViewPlan>()

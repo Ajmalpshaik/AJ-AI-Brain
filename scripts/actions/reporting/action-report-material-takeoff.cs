@@ -36,8 +36,8 @@ foreach (var e in elements)
         try { areaFt2 = e.GetMaterialArea(matId, false); } catch { }
         try { volumeFt3 = e.GetMaterialVolume(matId); } catch { }
 
-        double areaSqm = UnitUtils.ConvertFromInternalUnits(areaFt2, DisplayUnitType.DUT_SQUARE_METERS);
-        double volumeCum = UnitUtils.ConvertFromInternalUnits(volumeFt3, DisplayUnitType.DUT_CUBIC_METERS);
+        double areaSqm = areaFt2 / 10.763910416709722;
+        double volumeCum = volumeFt3 / 35.314666721488595;
 
         totals.TryGetValue(name, out var existing);
         totals[name] = (existing.areaSqm + areaSqm, existing.volumeCum + volumeCum);

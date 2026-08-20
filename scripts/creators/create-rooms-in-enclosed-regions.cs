@@ -33,7 +33,7 @@ string namePrefix = "";             // optional — rename each placed room to p
 
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
-Func<double,double> toM2 = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_SQUARE_METERS);
+Func<double,double> toM2 = v => v / 10.763910416709722;
 
 var level = levelIdInt != 0
     ? Document.GetElement(new ElementId(levelIdInt)) as Level
@@ -47,7 +47,7 @@ else
 {
     var unplaced = new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_Rooms)
         .WhereElementIsNotElementType().Cast<Autodesk.Revit.DB.Architecture.Room>()
-        .Where(r => r.Area <= 0).OrderBy(r => r.Id.IntegerValue).ToList();
+        .Where(r => r.Area <= 0).OrderBy(r => r.Id).ToList();
 
     using (var t = new Transaction(Document, "AJ Tools - Fill Enclosed Regions With Rooms"))
     {
@@ -92,7 +92,7 @@ else
             foreach (var e in elements)
             {
                 var rm = e as Autodesk.Revit.DB.Architecture.Room;
-                sb.AppendLine($"  - '{rm.Name}' (Id {rm.Id.IntegerValue}) {toM2(rm.Area):F1} m2");
+                sb.AppendLine($"  - '{rm.Name}' (Id {rm.Id}) {toM2(rm.Area):F1} m2");
             }
             if (reuseUnplacedRooms && nextUnplaced < unplaced.Count)
                 sb.AppendLine($"  {unplaced.Count - nextUnplaced} unplaced room(s) still left over — more rooms than enclosed regions.");

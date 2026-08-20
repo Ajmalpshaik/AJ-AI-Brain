@@ -56,7 +56,7 @@ using (var t = new Transaction(Document, "AJ Tools - Find/Replace Element Name")
                     candidate = oldName + suffix;
                     break;
                 default:
-                    failures.Add($"Id {e.Id.IntegerValue}: unknown mode '{mode}'");
+                    failures.Add($"Id {e.Id}: unknown mode '{mode}'");
                     skipped++;
                     continue;
             }
@@ -71,7 +71,7 @@ using (var t = new Transaction(Document, "AJ Tools - Find/Replace Element Name")
             catch (Exception exOne)
             {
                 skipped++;
-                failures.Add($"Id {e.Id.IntegerValue} ('{oldName}' -> '{candidate}'): {exOne.Message}");
+                failures.Add($"Id {e.Id} ('{oldName}' -> '{candidate}'): {exOne.Message}");
             }
         }
         t.Commit();

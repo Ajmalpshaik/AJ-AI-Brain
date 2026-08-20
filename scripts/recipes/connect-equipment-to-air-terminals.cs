@@ -40,7 +40,7 @@ double extendPastLastBranchMm = 500; // extra main length past the last branch c
 bool placeEndCap = true;             // close the main's open end with a PartType=Cap fitting
 // ---- END INPUTS ----
 
-Func<double, double> toFt = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toFt = v => v / 304.8;
 var sb = new System.Text.StringBuilder();
 
 // ---- STEP 1+2: the equipment and its supply connector (check first, draw later) ----
@@ -70,14 +70,14 @@ if (sup == null)                                            // fallback: any fre
 if (sup == null) return "No free SupplyAir connector on the equipment - stopped.";
 
 // ---- STEP 2 (terminals): every free air-terminal duct connector ----
-var terms = new List<Tuple<int, Connector>>();
+var terms = new List<Tuple<ElementId, Connector>>();
 foreach (var at in new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctTerminal)
          .WhereElementIsNotElementType().Cast<FamilyInstance>())
 {
     if (at.MEPModel == null || at.MEPModel.ConnectorManager == null) continue;
     foreach (Connector c in at.MEPModel.ConnectorManager.Connectors)
         if (c.Domain == Domain.DomainHvac && !c.IsConnected)
-            terms.Add(Tuple.Create(at.Id.IntegerValue, c));
+            terms.Add(Tuple.Create(at.Id, c));
 }
 if (terms.Count == 0) return "No free air-terminal connectors found - nothing to connect.";
 

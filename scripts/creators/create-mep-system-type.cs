@@ -47,7 +47,7 @@ else if (string.IsNullOrWhiteSpace(newTypeName))
 }
 else if (systemTypes.Any(s => s.Name == newTypeName))
 {
-    sb.AppendLine($"A {domain} system type named '{newTypeName}' already exists (Id {systemTypes.First(s => s.Name == newTypeName).Id.IntegerValue}) — pick another name.");
+    sb.AppendLine($"A {domain} system type named '{newTypeName}' already exists (Id {systemTypes.First(s => s.Name == newTypeName).Id}) — pick another name.");
 }
 else
 {
@@ -85,7 +85,7 @@ else
 
                 elements.Add(newType);
                 t.Commit();
-                sb.AppendLine($"Created {domain} system type '{newType.Name}' (Id {newType.Id.IntegerValue}) from '{sourceTypeName}'{(applied.Count > 0 ? " — " + string.Join(", ", applied) : "")}.");
+                sb.AppendLine($"Created {domain} system type '{newType.Name}' (Id {newType.Id}) from '{sourceTypeName}'{(applied.Count > 0 ? " — " + string.Join(", ", applied) : "")}.");
                 sb.AppendLine("  Settings inherited from the source (calculation, fluid, material) — check them if the source wasn't close.");
             }
         }

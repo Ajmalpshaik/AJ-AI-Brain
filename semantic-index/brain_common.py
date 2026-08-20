@@ -22,7 +22,16 @@ from pathlib import Path
 # --------------------------------------------------------------------------
 
 # The AJ AI Brain repo being indexed (read-only — nothing here is ever written).
-BRAIN_ROOT = Path(r"D:\Ajmal\AJ AI Brain")
+#
+# Derived from this file's OWN location — semantic-index/ always sits directly
+# inside the Brain — because the Brain is meant to travel as a folder you copy to
+# the next machine, and a hardcoded absolute path silently broke that everywhere
+# except one PC. Found 2026-08-20: on Claude Code for web the repo lives at
+# /home/user/AJ-AI-Brain, so the search could not run there at all.
+#
+# Set AJ_BRAIN_ROOT to override, for the one case this cannot infer: running these
+# scripts from a copy that sits outside the Brain they are meant to index.
+BRAIN_ROOT = Path(os.environ.get("AJ_BRAIN_ROOT") or Path(__file__).resolve().parent.parent)
 
 # Everything this layer creates lives under here, and nowhere else.
 SEMANTIC_ROOT = BRAIN_ROOT / "semantic-index"
@@ -40,6 +49,29 @@ MANIFEST_PATH = SEMANTIC_ROOT / "index-manifest.json"
 VOCABULARY_PATH = BRAIN_ROOT / "knowledge" / "site-vocabulary.md"
 
 COLLECTION_NAME = "aj_brain"
+
+# --------------------------------------------------------------------------
+# WHICH EMBEDDING MODEL — the one setting that decides retrieval quality
+# --------------------------------------------------------------------------
+# Selectable on purpose (2026-08-20). The previous swap replaced the model
+# outright, which made the change impossible to A/B: you cannot ask "is the new
+# one actually better" if the old one no longer exists in the code.
+#
+#   bge-small-en-v1.5   default. 512 word-pieces, 2024-era, ONNX via embed_bge.py
+#   all-MiniLM-L6-v2    the previous model. 256 word-pieces, 2021, shipped by chromadb
+#
+# Switching changes build_fingerprint(), so index-brain.cmd rebuilds by itself.
+# To compare the two honestly:
+#
+#   set AJ_BRAIN_EMBED_MODEL=all-MiniLM-L6-v2  &&  index-brain.cmd --full  &&  score-brain.cmd
+#   set AJ_BRAIN_EMBED_MODEL=bge-small-en-v1.5 &&  index-brain.cmd --full  &&  score-brain.cmd
+#
+# score-history.md stamps every run with the model, so the two lines are
+# comparable afterwards instead of being two bare numbers nobody can interpret.
+EMBED_MODEL_BGE = "bge-small-en-v1.5"
+EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
+
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_BGE
 
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.
@@ -79,9 +111,15 @@ FILE_EXTENSIONS = {".md", ".cs"}
 # --------------------------------------------------------------------------
 # CHUNK SIZE
 # --------------------------------------------------------------------------
-# The embedding model (all-MiniLM-L6-v2) only reads about 256 word-pieces,
-# which is roughly 1,000 characters of English. Text past that point is
-# silently ignored, so chunks are kept under it rather than sent oversized.
+# These were sized for all-MiniLM-L6-v2, which read only about 256 word-pieces —
+# roughly 1,000 characters of English — and silently ignored anything past that.
+#
+# The model is now bge-small-en-v1.5, which reads 512, so the ceiling that forced
+# these numbers is gone and roughly 1,800 characters would now fit. They are
+# LEFT ALONE ON PURPOSE (2026-08-20): the model swap is already one unmeasurable
+# change, and stacking a chunking change on top would make it impossible to tell
+# which one moved the score. Raising them is the next experiment, once
+# test-questions.md has ~30 rows to judge it with.
 CHUNK_TARGET = 900   # aim for this
 CHUNK_MAX = 1100     # never exceed this
 CHUNK_OVERLAP = 150  # repeat this much between consecutive body chunks
@@ -110,18 +148,39 @@ def prepare_environment() -> None:
 
 def get_embedding_function():
     """
-    Return the local embedding model, with its cache forced into MODEL_DIR.
+    Return the local embedding model. See embed_bge.py for what it is and why.
 
-    By default chromadb caches this model in C:\\Users\\<you>\\.cache\\chroma.
-    DOWNLOAD_PATH is a class attribute, so overriding it here moves the whole
-    download inside our one confirmed folder.
+    It lives in MODEL_DIR like everything else this layer downloads, so nothing
+    lands in C:\\Users\\<you>\\.cache and nothing lands in %TEMP%.
+
+    It raises rather than falling back to the old model when the download is
+    missing. Vectors from two models are not comparable, and a collection holding
+    both would answer every question — just quietly worse. A loud failure naming
+    the exact command costs one minute; a silent one costs months.
     """
-    from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import (
-        ONNXMiniLM_L6_V2,
-    )
+    if EMBED_MODEL == EMBED_MODEL_MINILM:
+        from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import (
+            ONNXMiniLM_L6_V2,
+        )
+        ONNXMiniLM_L6_V2.DOWNLOAD_PATH = MODEL_DIR / ONNXMiniLM_L6_V2.MODEL_NAME
+        return ONNXMiniLM_L6_V2()
 
-    ONNXMiniLM_L6_V2.DOWNLOAD_PATH = MODEL_DIR / ONNXMiniLM_L6_V2.MODEL_NAME
-    return ONNXMiniLM_L6_V2()
+    if EMBED_MODEL != EMBED_MODEL_BGE:
+        raise SystemExit(
+            "Unknown AJ_BRAIN_EMBED_MODEL: " + EMBED_MODEL + "\n"
+            "Valid values: " + EMBED_MODEL_BGE + ", " + EMBED_MODEL_MINILM
+        )
+
+    import embed_bge
+
+    if not embed_bge.available():
+        raise SystemExit(
+            "The embedding model has not been downloaded yet.\n"
+            "  Run:  venv\\Scripts\\python.exe embed_bge.py --download   (~127 MB, once)\n"
+            "  Then: index-brain.cmd --full\n"
+            "Expected at: " + str(embed_bge.MODEL_DIR)
+        )
+    return embed_bge.BGESmallEmbeddingFunction()
 
 
 def get_client():
@@ -282,7 +341,7 @@ def build_fingerprint() -> str:
     parts = [
         str(CHUNK_TARGET), str(CHUNK_MAX), str(CHUNK_OVERLAP),
         repr(sorted(FILE_EXTENSIONS)), repr(INDEX_TARGETS), repr(ROOT_DOCS),
-        "all-MiniLM-L6-v2",
+        EMBED_MODEL,
     ]
     for src in (SEMANTIC_ROOT / "brain_common.py",
                 SEMANTIC_ROOT / "brain_index.py"):

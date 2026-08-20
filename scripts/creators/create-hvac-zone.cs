@@ -64,7 +64,7 @@ else
 
             elements.Add(zone);
             t.Commit();
-            sb.AppendLine($"Created zone '{zone.Name}' (Id {zone.Id.IntegerValue}) on level '{level.Name}', phase '{phase.Name}' — {added} space(s) added, {rejected} rejected.");
+            sb.AppendLine($"Created zone '{zone.Name}' (Id {zone.Id}) on level '{level.Name}', phase '{phase.Name}' — {added} space(s) added, {rejected} rejected.");
             if (notes.Count > 0) sb.AppendLine("  " + string.Join("; ", notes));
         }
         catch (Exception ex)

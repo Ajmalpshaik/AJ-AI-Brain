@@ -21,7 +21,7 @@ var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
 var toVisit = new Queue<ElementId>(parentIdInts.Select(i => new ElementId(i)));
-var seen = new HashSet<int>();
+var seen = new HashSet<ElementId>();
 int invalidParents = 0;
 
 while (toVisit.Count > 0)
@@ -32,7 +32,7 @@ while (toVisit.Count > 0)
 
     foreach (var subId in fi.GetSubComponentIds())
     {
-        if (!seen.Add(subId.IntegerValue)) continue;
+        if (!seen.Add(subId)) continue;
         var sub = Document.GetElement(subId);
         if (sub == null) continue;
         elements.Add(sub);
@@ -42,6 +42,6 @@ while (toVisit.Count > 0)
 
 sb.AppendLine($"Sub-components: {elements.Count} found under {parentIdInts.Length} parent(s){(recursive ? " (recursive)" : "")}{(invalidParents > 0 ? $"; {invalidParents} input Id(s) were not FamilyInstances" : "")}.");
 foreach (var e in elements.Take(30))
-    sb.AppendLine($"  - '{e.Name}' (Id {e.Id.IntegerValue}) — {e.Category?.Name ?? "?"}");
+    sb.AppendLine($"  - '{e.Name}' (Id {e.Id}) — {e.Category?.Name ?? "?"}");
 if (elements.Count > 30) sb.AppendLine($"  ... +{elements.Count - 30} more");
 // ---- continue with an action fragment below, or add return sb.ToString(); to stop here ----

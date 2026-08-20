@@ -381,10 +381,10 @@ def main():
         reason = "chunking rules or settings changed"
 
     client = cfg.get_client()
-    cached = (cfg.MODEL_DIR / "all-MiniLM-L6-v2" / "onnx" / "model.onnx").exists()
-    print("  loading embedding model"
-          + (" from local cache (offline)..." if cached
-             else " — downloading it once, ~80 MB..."))
+    # The model is never downloaded on demand any more: get_embedding_function()
+    # refuses to run without it, rather than risk an index built half in one
+    # vector space and half in another. See embed_bge.py.
+    print("  model        : " + cfg.EMBED_MODEL)
     embedder = cfg.get_embedding_function()
 
     collection = None

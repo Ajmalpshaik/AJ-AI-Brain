@@ -39,8 +39,8 @@ bool excludeSameElement = true;             // never match a source to itself
 int maxRowsReported = 40;                   // detail cap; the summary always covers every source
 // ---- END INPUTS ----
 
-Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> toMm = v => v * 304.8;
+Func<double, double> mm = v => v / 304.8;
 
 // --- build the target set ---
 var targets = new List<Element>();
@@ -76,12 +76,12 @@ else
         var b = el.get_BoundingBox(null);
         return b == null ? null : (b.Min + b.Max) / 2.0;
     };
-    var tCentre = new Dictionary<int, XYZ>();
-    var tBox = new Dictionary<int, BoundingBoxXYZ>();
+    var tCentre = new Dictionary<ElementId, XYZ>();
+    var tBox = new Dictionary<ElementId, BoundingBoxXYZ>();
     foreach (var t in targets)
     {
-        tCentre[t.Id.IntegerValue] = centreOf(t);
-        tBox[t.Id.IntegerValue] = t.get_BoundingBox(null);
+        tCentre[t.Id] = centreOf(t);
+        tBox[t.Id] = t.get_BoundingBox(null);
     }
 
     // gap between two axis-aligned boxes: 0 on any axis where they overlap
@@ -111,10 +111,10 @@ else
             if (excludeSameElement && tgt.Id == src.Id) continue;
             comparisons++;
             double d;
-            if (metric == "gap") d = boxGap(sbx, tBox[tgt.Id.IntegerValue]);
+            if (metric == "gap") d = boxGap(sbx, tBox[tgt.Id]);
             else
             {
-                var tc = tCentre[tgt.Id.IntegerValue];
+                var tc = tCentre[tgt.Id];
                 if (sc == null || tc == null) continue;
                 d = metric == "manhattan"
                     ? Math.Abs(sc.X - tc.X) + Math.Abs(sc.Y - tc.Y) + Math.Abs(sc.Z - tc.Z)
@@ -129,11 +129,11 @@ else
 
         if (rows < maxRowsReported)
         {
-            var parts = best.Select(b => $"'{b.Value.Name}' (Id {b.Value.Id.IntegerValue}, {b.Value.Category?.Name}) {toMm(b.Key):F0} mm");
-            sb.AppendLine($"  '{src.Name}' (Id {src.Id.IntegerValue}) -> {string.Join("  |  ", parts)}");
+            var parts = best.Select(b => $"'{b.Value.Name}' (Id {b.Value.Id}, {b.Value.Category?.Name}) {toMm(b.Key):F0} mm");
+            sb.AppendLine($"  '{src.Name}' (Id {src.Id}) -> {string.Join("  |  ", parts)}");
             rows++;
         }
-        summary.Add($"{src.Id.IntegerValue}->{best[0].Value.Id.IntegerValue}");
+        summary.Add($"{src.Id}->{best[0].Value.Id}");
     }
 
     sb.Insert(0, $"Nearest search — {elements.Count} source(s) against {targets.Count} target(s), metric '{metric}'"

@@ -7,6 +7,15 @@
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — operates on VIEWS, not model elements.
 // ============================================================
 
+
+// Version-proof id VALUE, for the few places that need a number rather than an ElementId (testing for a
+// built-in negative id, casting to BuiltInParameter). Revit 2024 renamed IntegerValue -> Value and made
+// it 64-bit; naming either one directly fails to compile on the other version, so it is looked up by
+// name instead. The lookup happens ONCE and is captured, so each call is a field read, not a reflection
+// search - safe to use in a loop.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int[] targetViewIdInts = { }; // empty = active view only (unless checkAllViews is true)
 bool checkAllViews = false; // true = report every real view in the project instead of just targetViewIdInts/active view
@@ -33,11 +42,11 @@ Func<ElementId, string> resolveParamName = id =>
 {
     try
     {
-        if (id.IntegerValue < 0) return LabelUtils.GetLabelFor((BuiltInParameter)id.IntegerValue);
+        if (IdValue(id) < 0) return LabelUtils.GetLabelFor((BuiltInParameter)IdValue(id));
     }
     catch { }
     var pe = Document.GetElement(id) as ParameterElement;
-    return pe?.Name ?? $"(Id {id.IntegerValue})";
+    return pe?.Name ?? $"(Id {id})";
 };
 
 int withTemplate = 0, withoutTemplate = 0;
@@ -46,19 +55,19 @@ foreach (var v in targetViews)
 {
     if (v.IsTemplate)
     {
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): is itself a View Template, not a real view.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): is itself a View Template, not a real view.");
         continue;
     }
 
     if (v.ViewTemplateId == ElementId.InvalidElementId)
     {
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): NO View Template applied.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): NO View Template applied.");
         withoutTemplate++;
     }
     else
     {
         var template = Document.GetElement(v.ViewTemplateId) as View;
-        string templateName = template?.Name ?? $"(Id {v.ViewTemplateId.IntegerValue}, unresolved)";
+        string templateName = template?.Name ?? $"(Id {v.ViewTemplateId}, unresolved)";
 
         var excludedIds = v.GetNonControlledTemplateParameterIds();
         string excludedLabel = "none — fully controlled by the template";
@@ -67,7 +76,7 @@ foreach (var v in targetViews)
             excludedLabel = string.Join(", ", excludedIds.Select(resolveParamName));
         }
 
-        sb.AppendLine($"'{v.Name}' (Id {v.Id.IntegerValue}): View Template = '{templateName}' (Id {v.ViewTemplateId.IntegerValue}). Excluded from control: {excludedLabel}.");
+        sb.AppendLine($"'{v.Name}' (Id {v.Id}): View Template = '{templateName}' (Id {v.ViewTemplateId}). Excluded from control: {excludedLabel}.");
         withTemplate++;
     }
 }

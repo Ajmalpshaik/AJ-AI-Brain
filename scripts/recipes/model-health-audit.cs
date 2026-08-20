@@ -54,7 +54,7 @@ if (warnings.Count > 0)
 // --- 3. In-place families ---
 var inPlace = new FilteredElementCollector(Document).OfClass(typeof(Family)).Cast<Family>().Where(f => f.IsInPlace).ToList();
 sb.AppendLine($"\n--- In-place families: {inPlace.Count} ---");
-foreach (var f in inPlace.Take(maxIdsPerList)) sb.AppendLine($"  - '{f.Name}' (Id {f.Id.IntegerValue})");
+foreach (var f in inPlace.Take(maxIdsPerList)) sb.AppendLine($"  - '{f.Name}' (Id {f.Id})");
 if (inPlace.Count > maxIdsPerList) sb.AppendLine($"  ... +{inPlace.Count - maxIdsPerList} more");
 
 // --- 4. CAD imports (imported = embedded bloat; linked = fine) ---
@@ -62,37 +62,37 @@ var importInstances = new FilteredElementCollector(Document).OfClass(typeof(Impo
 int importedCad = importInstances.Count(ii => !ii.IsLinked);
 sb.AppendLine($"\n--- CAD files: {importInstances.Count} instance(s) — {importedCad} IMPORTED (embedded), {importInstances.Count - importedCad} linked ---");
 foreach (var ii in importInstances.Where(i => !i.IsLinked).Take(maxIdsPerList))
-    sb.AppendLine($"  - imported: '{ii.Category?.Name ?? "?"}' (Id {ii.Id.IntegerValue})");
+    sb.AppendLine($"  - imported: '{ii.Category?.Name ?? "?"}' (Id {ii.Id})");
 
 // --- 5. Unenclosed / unplaced Rooms & Spaces ---
 var spatial = new FilteredElementCollector(Document).OfClass(typeof(SpatialElement)).Cast<SpatialElement>()
     .Where(s => (s is Autodesk.Revit.DB.Architecture.Room || s is Autodesk.Revit.DB.Mechanical.Space) && s.Area <= 0).ToList();
 sb.AppendLine($"\n--- Unenclosed/unplaced Rooms+Spaces (zero area): {spatial.Count} ---");
-foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id.IntegerValue})");
+foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id})");
 if (spatial.Count > maxIdsPerList) sb.AppendLine($"  ... +{spatial.Count - maxIdsPerList} more");
 if (spatial.Count > 0) sb.AppendLine("  -> as an element set: filters/by-location/filter-by-unenclosed-spatial-elements.cs");
 
 // --- 6. Views not on any sheet ---
-var placedViewIds = new HashSet<int>(new FilteredElementCollector(Document).OfClass(typeof(Viewport)).Cast<Viewport>().Select(vp => vp.ViewId.IntegerValue));
+var placedViewIds = new HashSet<ElementId>(new FilteredElementCollector(Document).OfClass(typeof(Viewport)).Cast<Viewport>().Select(vp => vp.ViewId));
 var looseViews = new FilteredElementCollector(Document).OfClass(typeof(View)).Cast<View>()
-    .Where(v => !v.IsTemplate && !(v is ViewSheet) && !(v is ViewSchedule) && v.CanBePrinted && !placedViewIds.Contains(v.Id.IntegerValue))
+    .Where(v => !v.IsTemplate && !(v is ViewSheet) && !(v is ViewSchedule) && v.CanBePrinted && !placedViewIds.Contains(v.Id))
     .ToList();
 sb.AppendLine($"\n--- Printable views NOT on any sheet: {looseViews.Count} ---");
 
 // --- 7. Model groups ---
 var groupInstances = new FilteredElementCollector(Document).OfClass(typeof(Group)).Cast<Group>().ToList();
-sb.AppendLine($"\n--- Model group instances: {groupInstances.Count} ({groupInstances.Select(g => g.GetTypeId().IntegerValue).Distinct().Count()} distinct group type(s)) ---");
+sb.AppendLine($"\n--- Model group instances: {groupInstances.Count} ({groupInstances.Select(g => g.GetTypeId()).Distinct().Count()} distinct group type(s)) ---");
 
 // --- 8. Purgeable (dry-run counts, same definitions as action-purge-unused.cs) ---
 var allViews = new FilteredElementCollector(Document).OfClass(typeof(View)).Cast<View>().ToList();
-var usedTemplateIds = new HashSet<int>(allViews.Where(v => !v.IsTemplate && v.ViewTemplateId.IntegerValue > 0).Select(v => v.ViewTemplateId.IntegerValue));
-int unusedTemplates = allViews.Count(v => v.IsTemplate && !usedTemplateIds.Contains(v.Id.IntegerValue));
-var usedFilterIds = new HashSet<int>();
+var usedTemplateIds = new HashSet<ElementId>(allViews.Where(v => !v.IsTemplate && v.ViewTemplateId != ElementId.InvalidElementId).Select(v => v.ViewTemplateId));
+int unusedTemplates = allViews.Count(v => v.IsTemplate && !usedTemplateIds.Contains(v.Id));
+var usedFilterIds = new HashSet<ElementId>();
 foreach (var v in allViews.Where(v => !v.IsTemplate))
 {
-    try { foreach (var fid in v.GetFilters()) usedFilterIds.Add(fid.IntegerValue); } catch { } // view kind without filters
+    try { foreach (var fid in v.GetFilters()) usedFilterIds.Add(fid); } catch { } // view kind without filters
 }
-int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(FilterElement)).Count(f => !usedFilterIds.Contains(f.Id.IntegerValue));
+int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(FilterElement)).Count(f => !usedFilterIds.Contains(f.Id));
 sb.AppendLine($"\n--- Unused, removable later: {unusedTemplates} view template(s), {unusedFilters} filter(s) ---");
 sb.AppendLine("  -> see actions/structural-changes/action-purge-unused.cs (dry-run first, per its own rule)");
 

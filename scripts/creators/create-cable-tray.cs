@@ -20,7 +20,7 @@ double widthMm = 300, heightMm = 100;  // 0 = keep type default
 var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
-Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => v / 304.8;
 
 var level = Document.GetElement(new ElementId(levelIdInt)) as Level;
 var trayTypes = new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Electrical.CableTrayType)).Cast<Autodesk.Revit.DB.Electrical.CableTrayType>().ToList();
@@ -54,7 +54,7 @@ else
                 // Regenerate BEFORE reading back — straight after Set() the parameter still reports the
                 // requested value; the snap to the type's size table happens at regeneration.
                 Document.Regenerate();
-                double gotMm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+                double gotMm = p.AsDouble() * 304.8;
                 if (!ok) sizeNotes.Add($"{label} REFUSED {wantMm}mm — still {gotMm:0.##}mm");
                 else if (Math.Abs(gotMm - wantMm) > 0.5) sizeNotes.Add($"{label} SNAPPED {wantMm}mm -> {gotMm:0.##}mm (nearest size the type allows)");
             };
@@ -67,8 +67,8 @@ else
 
             var wNow = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_WIDTH_PARAM);
             var hNow = tray.get_Parameter(BuiltInParameter.RBS_CABLETRAY_HEIGHT_PARAM);
-            string actualSize = $"{(wNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(wNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##}x{(hNow == null ? 0 : UnitUtils.ConvertFromInternalUnits(hNow.AsDouble(), DisplayUnitType.DUT_MILLIMETERS)):0.##} mm";
-            sb.AppendLine($"Created cable tray (Id {tray.Id.IntegerValue}) — type '{trayType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
+            string actualSize = $"{(wNow == null ? 0 : wNow.AsDouble() * 304.8):0.##}x{(hNow == null ? 0 : hNow.AsDouble() * 304.8):0.##} mm";
+            sb.AppendLine($"Created cable tray (Id {tray.Id}) — type '{trayType.Name}', ACTUAL size {actualSize}, {startXMm},{startYMm},{startZMm} -> {endXMm},{endYMm},{endZMm} mm.");
             if (sizeNotes.Count > 0) sb.AppendLine("  " + string.Join("; ", sizeNotes));
             if (skippedSizes.Count > 0) sb.AppendLine($"  Size(s) not settable on this tray type, skipped: {string.Join(", ", skippedSizes)}.");
         }

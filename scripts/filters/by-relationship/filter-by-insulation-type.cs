@@ -37,8 +37,8 @@ if (kind == "any" || kind == "ductlining")
 if (kind == "any" || kind == "pipeinsulation")
     candidates.AddRange(new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Plumbing.PipeInsulation)).Cast<Autodesk.Revit.DB.InsulationLiningBase>());
 
-double minThicknessFt = UnitUtils.ConvertToInternalUnits(minThicknessMm, DisplayUnitType.DUT_MILLIMETERS);
-double maxThicknessFt = maxThicknessMm > 0 ? UnitUtils.ConvertToInternalUnits(maxThicknessMm, DisplayUnitType.DUT_MILLIMETERS) : double.MaxValue;
+double minThicknessFt = minThicknessMm / 304.8;
+double maxThicknessFt = maxThicknessMm > 0 ? maxThicknessMm / 304.8 : double.MaxValue;
 
 var matched = candidates.Where(il =>
 {

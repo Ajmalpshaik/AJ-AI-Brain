@@ -63,7 +63,7 @@ else
                     }
                     t.Commit();
                     sb.AppendLine($"Copied {newIds.Count} element(s) from link '{linkDoc.Title}' into this model{(missing > 0 ? $" ({missing} input Id(s) not found in the link, skipped)" : "")}.");
-                    sb.AppendLine($"  New host Ids: {string.Join(", ", elements.Take(30).Select(e => e.Id.IntegerValue.ToString()))}{(elements.Count > 30 ? ", ..." : "")}");
+                    sb.AppendLine($"  New host Ids: {string.Join(", ", elements.Take(30).Select(e => e.Id.ToString()))}{(elements.Count > 30 ? ", ..." : "")}");
                     sb.AppendLine("  NOTE: these copies will NOT update when the link updates — they're independent host elements now.");
                 }
                 catch (Exception ex)

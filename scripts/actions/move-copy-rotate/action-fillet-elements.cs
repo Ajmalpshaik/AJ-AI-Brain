@@ -83,7 +83,7 @@ else if (mode == "elbow")
                 {
                     var elbow = Document.Create.NewElbowFitting(connA, connB);
                     t.Commit();
-                    sb.AppendLine($"Inserted elbow fitting Id {elbow.Id.IntegerValue} between Id {elements[0].Id.IntegerValue} and Id {elements[1].Id.IntegerValue} (connectors were {UnitUtils.ConvertFromInternalUnits(best, DisplayUnitType.DUT_MILLIMETERS):F1}mm apart).");
+                    sb.AppendLine($"Inserted elbow fitting Id {elbow.Id} between Id {elements[0].Id} and Id {elements[1].Id} (connectors were {best * 304.8:F1}mm apart).");
                 }
                 catch (Exception ex)
                 {
@@ -133,7 +133,7 @@ else if (mode == "arc")
             XYZ dirB = (farB - corner).Normalize();
 
             double theta = dirA.AngleTo(dirB);
-            double radiusFt = UnitUtils.ConvertToInternalUnits(radiusMm, DisplayUnitType.DUT_MILLIMETERS);
+            double radiusFt = radiusMm / 304.8;
 
             if (theta < 1e-6 || Math.PI - theta < 1e-6)
             {
@@ -144,7 +144,7 @@ else if (mode == "arc")
                 double tangentLen = radiusFt / Math.Tan(theta / 2.0);
                 if (tangentLen > lineA.Length || tangentLen > lineB.Length)
                 {
-                    sb.AppendLine($"Radius {radiusMm}mm needs a {UnitUtils.ConvertFromInternalUnits(tangentLen, DisplayUnitType.DUT_MILLIMETERS):F0}mm tangent length, longer than one of the lines — reduce radiusMm.");
+                    sb.AppendLine($"Radius {radiusMm}mm needs a {tangentLen * 304.8:F0}mm tangent length, longer than one of the lines — reduce radiusMm.");
                 }
                 else
                 {
@@ -196,7 +196,7 @@ else if (mode == "arc")
                             }
 
                             t.Commit();
-                            sb.AppendLine($"Filleted corner with a {radiusMm}mm-radius arc, Id {newArcElement.Id.IntegerValue}. Both source lines recreated at their tangent points: new Id {newElementA.Id.IntegerValue} (was {idA.IntegerValue}), new Id {newElementB.Id.IntegerValue} (was {idB.IntegerValue}).");
+                            sb.AppendLine($"Filleted corner with a {radiusMm}mm-radius arc, Id {newArcElement.Id}. Both source lines recreated at their tangent points: new Id {newElementA.Id} (was {idA}), new Id {newElementB.Id} (was {idB}).");
                         }
                         catch (Exception ex)
                         {

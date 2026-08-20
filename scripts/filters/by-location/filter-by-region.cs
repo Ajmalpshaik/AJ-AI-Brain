@@ -20,13 +20,13 @@ double maxXmm = 5000, maxYmm = 5000, maxZmm = 3000;
 var sb = new System.Text.StringBuilder();
 
 XYZ minPt = new XYZ(
-    UnitUtils.ConvertToInternalUnits(minXmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(minYmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(minZmm, DisplayUnitType.DUT_MILLIMETERS));
+    minXmm / 304.8,
+    minYmm / 304.8,
+    minZmm / 304.8);
 XYZ maxPt = new XYZ(
-    UnitUtils.ConvertToInternalUnits(maxXmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(maxYmm, DisplayUnitType.DUT_MILLIMETERS),
-    UnitUtils.ConvertToInternalUnits(maxZmm, DisplayUnitType.DUT_MILLIMETERS));
+    maxXmm / 304.8,
+    maxYmm / 304.8,
+    maxZmm / 304.8);
 
 var outline = new Outline(minPt, maxPt);
 var bboxFilter = new BoundingBoxIntersectsFilter(outline);

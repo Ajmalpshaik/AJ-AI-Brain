@@ -46,7 +46,7 @@ else
                 catch { skipped++; } // some element pairs can't be joined (no touching geometry, etc.) — skip, don't fail the batch
             }
             t.Commit();
-            sb.AppendLine($"{(mode == "unjoin" ? "Unjoined" : "Joined")} {done} element(s) with '{target.Name}' (Id {target.Id.IntegerValue}), skipped {skipped} (already in that state, or geometry doesn't support it).");
+            sb.AppendLine($"{(mode == "unjoin" ? "Unjoined" : "Joined")} {done} element(s) with '{target.Name}' (Id {target.Id}), skipped {skipped} (already in that state, or geometry doesn't support it).");
         }
         catch (Exception ex)
         {

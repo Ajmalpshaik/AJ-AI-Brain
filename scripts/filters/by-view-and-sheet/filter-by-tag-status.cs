@@ -27,16 +27,16 @@ if (view == null)
 }
 else
 {
-    var taggedIds = new HashSet<int>();
+    var taggedIds = new HashSet<ElementId>();
     foreach (IndependentTag tag in new FilteredElementCollector(Document, view.Id).OfClass(typeof(IndependentTag)))
     {
-        try { taggedIds.Add(tag.TaggedLocalElementId.IntegerValue); } catch { }
+        try { taggedIds.Add(tag.TaggedLocalElementId); } catch { }
     }
 
     elements = new FilteredElementCollector(Document, view.Id)
         .OfCategory(targetCategory)
         .WhereElementIsNotElementType()
-        .Where(e => taggedIds.Contains(e.Id.IntegerValue) == wantTagged)
+        .Where(e => taggedIds.Contains(e.Id) == wantTagged)
         .ToList();
 
     sb.AppendLine($"Filtered {elements.Count} element(s) in view '{view.Name}', category {targetCategory}, {(wantTagged ? "already tagged" : "NOT tagged")}.");

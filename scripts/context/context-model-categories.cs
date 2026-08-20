@@ -20,6 +20,6 @@ var categories = Document.Settings.Categories.Cast<Category>()
 
 sb.AppendLine($"Model categories matching {(string.IsNullOrEmpty(categoryKeyword) ? "(no keyword — full list)" : $"'{categoryKeyword}'")}: {categories.Count}");
 foreach (var c in categories)
-    sb.AppendLine($"  - {c.Name} (Id {c.Id.IntegerValue}, BuiltInCategory {(BuiltInCategory)c.Id.IntegerValue})");
+    sb.AppendLine($"  - {c.Name} (Id {c.Id}, BuiltInCategory {(BuiltInCategory)c.Id})");
 
 return sb.ToString();

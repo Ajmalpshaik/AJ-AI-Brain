@@ -43,7 +43,7 @@ else
 {
     var ceilingFilter = new ElementCategoryFilter(BuiltInCategory.OST_Ceilings);
     var intersector = new ReferenceIntersector(ceilingFilter, FindReferenceTarget.Face, rayView);
-    double maxDistFeet = UnitUtils.ConvertToInternalUnits(maxRayDistanceMm, DisplayUnitType.DUT_MILLIMETERS);
+    double maxDistFeet = maxRayDistanceMm / 304.8;
 
     int snapped = 0, noHit = 0, skipped = 0;
 

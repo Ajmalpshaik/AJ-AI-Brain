@@ -45,7 +45,7 @@ else
         if (diameterMm <= 0) return false;
         var p = e.LookupParameter("Diameter");
         if (p == null || p.StorageType != StorageType.Double) return false;
-        double vMm = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+        double vMm = p.AsDouble() * 304.8;
         return Math.Abs(vMm - diameterMm) <= toleranceMm;
     };
 
@@ -55,9 +55,9 @@ else
         var pw = e.LookupParameter("Width");
         var ph = e.LookupParameter("Height");
         bool widthOk = widthMm <= 0 || (pw != null && pw.StorageType == StorageType.Double &&
-            Math.Abs(UnitUtils.ConvertFromInternalUnits(pw.AsDouble(), DisplayUnitType.DUT_MILLIMETERS) - widthMm) <= toleranceMm);
+            Math.Abs(pw.AsDouble() * 304.8 - widthMm) <= toleranceMm);
         bool heightOk = heightMm <= 0 || (ph != null && ph.StorageType == StorageType.Double &&
-            Math.Abs(UnitUtils.ConvertFromInternalUnits(ph.AsDouble(), DisplayUnitType.DUT_MILLIMETERS) - heightMm) <= toleranceMm);
+            Math.Abs(ph.AsDouble() * 304.8 - heightMm) <= toleranceMm);
         bool anyChecked = (widthMm > 0 && pw != null) || (heightMm > 0 && ph != null);
         return anyChecked && widthOk && heightOk;
     };

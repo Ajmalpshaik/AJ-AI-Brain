@@ -51,8 +51,8 @@ else
                 foreach (var (xMm, yMm, text) in notesToCreate)
                 {
                     var origin = new XYZ(
-                        UnitUtils.ConvertToInternalUnits(xMm, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(yMm, DisplayUnitType.DUT_MILLIMETERS),
+                        xMm / 304.8,
+                        yMm / 304.8,
                         0);
                     var note = TextNote.Create(Document, view.Id, origin, text, textTypeId);
                     elements.Add(note);

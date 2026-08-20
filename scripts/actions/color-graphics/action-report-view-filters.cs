@@ -38,6 +38,6 @@ foreach (var f in filters)
     string kind = f is ParameterFilterElement ? "View Filter (rule-based)" : f is SelectionFilterElement ? "Selection Filter (explicit list)" : f.GetType().Name;
     var usedInViews = allRealViews.Where(v => { try { return v.IsFilterApplied(f.Id); } catch { return false; } }).Select(v => v.Name).ToList();
     string usageLabel = usedInViews.Count > 0 ? string.Join(", ", usedInViews) : "(not applied to any view)";
-    sb.AppendLine($"  '{f.Name}' (Id {f.Id.IntegerValue}) — {kind} — used in: {usageLabel}");
+    sb.AppendLine($"  '{f.Name}' (Id {f.Id}) — {kind} — used in: {usageLabel}");
 }
 return sb.ToString();

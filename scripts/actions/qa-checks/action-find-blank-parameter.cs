@@ -50,7 +50,7 @@ foreach (var e in elements)
 
 sb.AppendLine($"Checked {elements.Count} element(s) for blank '{parameterName}': {flagged.Count} blank, {notFound} don't even have this parameter.");
 if (flagged.Count > 0)
-    sb.AppendLine("Blank on Id: " + string.Join(", ", flagged.Select(e => e.Id.IntegerValue)));
+    sb.AppendLine("Blank on Id: " + string.Join(", ", flagged.Select(e => e.Id)));
 
 if (selectFlagged && flagged.Count > 0)
 {

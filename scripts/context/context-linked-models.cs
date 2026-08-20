@@ -26,7 +26,7 @@ else
             var ws = new FilteredWorksetCollector(Document).OfKind(WorksetKind.UserWorkset).FirstOrDefault(w => w.Id == li.WorksetId);
             workset = ws?.Name ?? "(unknown)";
         }
-        sb.AppendLine($"  - '{li.Name}' (Id {li.Id.IntegerValue}) — status: {status}, pinned: {li.Pinned}, workset: {workset}");
+        sb.AppendLine($"  - '{li.Name}' (Id {li.Id}) — status: {status}, pinned: {li.Pinned}, workset: {workset}");
     }
 }
 return sb.ToString();
