@@ -21,6 +21,9 @@ semantic-index/*
 !semantic-index/*.cmd
 !semantic-index/*.md
 !semantic-index/requirements.txt
+!semantic-index/setup.sh
+# NOT un-ignored, deliberately: semantic-index/embed-model.txt records which embedding
+# model THIS machine fell back to. It is local state, like venv/ and chroma-db/.
 
 
 # Python bytecode from tools/voice/drainer.py.

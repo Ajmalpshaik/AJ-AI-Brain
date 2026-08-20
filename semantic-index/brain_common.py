@@ -71,7 +71,29 @@ COLLECTION_NAME = "aj_brain"
 EMBED_MODEL_BGE = "bge-small-en-v1.5"
 EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
 
-EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or EMBED_MODEL_BGE
+# Where a non-default choice is remembered between runs. Written by setup.sh when
+# huggingface.co cannot be reached and it falls back to the chromadb-shipped model.
+#
+# WHY IT EXISTS (2026-08-20): setup.sh exported AJ_BRAIN_EMBED_MODEL and built a
+# MiniLM index, but the export died with its shell. Every search afterwards fell
+# back to the BGE default, found no BGE model, and refused to run - against an
+# index that was perfectly good. An install that silently disagrees with itself is
+# worse than one that fails loudly, so the choice is persisted rather than exported.
+#
+# Precedence is env var > this file > BGE. The env var still wins, so the documented
+# A/B (set AJ_BRAIN_EMBED_MODEL, rebuild, score) behaves exactly as it always did.
+EMBED_MODEL_PATH = SEMANTIC_ROOT / "embed-model.txt"
+
+
+def _pinned_model():
+    try:
+        name = EMBED_MODEL_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return name if name in (EMBED_MODEL_BGE, EMBED_MODEL_MINILM) else None
+
+
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or _pinned_model() or EMBED_MODEL_BGE
 
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.

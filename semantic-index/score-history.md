@@ -42,3 +42,26 @@ One line per `score-brain` run, oldest first. Written automatically.
 - 3/14 at #1, 3/14 in top 3, 7/14 in top 5, 10/14 retrievable, MRR 0.299  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3786 fp=ab19d3a62e3514a5
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.323  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3786 fp=ab19d3a62e3514a5
 - 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.321  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3786 fp=ab19d3a62e3514a5
+- 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4018 fp=ab19d3a62e3514a5
+- 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.325  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3996 fp=ab19d3a62e3514a5
+- 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4018 fp=ab19d3a62e3514a5
+- 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.325  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3996 fp=ab19d3a62e3514a5
+- 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4018 fp=ab19d3a62e3514a5
+- 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4001 fp=ab19d3a62e3514a5
+- 2/14 at #1, 4/14 in top 3, 5/14 in top 5, 11/14 retrievable, MRR 0.265  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3998 fp=ab19d3a62e3514a5
+
+## The 2026-08-20 cluster — read this before comparing those lines
+
+Eight runs that day alternate between 3/14 and 2/14. They are **not** eight different search
+configurations. They are the same search, measured while one question sat on a knife edge.
+
+The runs at `chunks=3996` are the corpus at `main`; `chunks=3998-4018` add one knowledge file, one
+`INDEX.md` table row and one edited line of `START-HERE.md`. The whole 3/14 -> 2/14 difference is
+`what does duck mean` moving `glossary.md` from #1 to #6 — **on a corpus 2 chunks larger.**
+
+Also note these were the first runs ever made off Windows, on `all-MiniLM-L6-v2`, using
+`semantic-index/setup.sh`. `bge-small-en-v1.5` — the current default — still has **no score line at
+all**: `huggingface.co` is blocked from the container the runs happened in. That measurement is still
+owed, and it is step 3 of the handover.
+
+Full working: `semantic-index/rag-architecture-decisions.md`.
