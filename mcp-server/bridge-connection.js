@@ -36,6 +36,12 @@ let selectedPid = null;
 // command silently going to the first one.
 let selectedWasExplicit = false;
 
+// Which PROJECT inside that Revit, by title. Null = whichever is in front, which is what every call
+// did before 2026-08-20. Choosing the Revit is only half the problem: one Revit can hold several open
+// projects, and `Document` on the Revit side is `ActiveUIDocument.Document` - the front window, which
+// changes when Ajmal clicks another project. So a job could start in one and finish in another.
+let selectedDocument = null;
+
 const NOT_CONNECTED =
   'AJ AI Bridge is not connected. In Revit, open the AJ AI pane and click "Connect AJ AI Bridge", then try again.';
 
@@ -108,6 +114,9 @@ export function selectBridgeInstance(pid) {
         : NOT_CONNECTED
     );
   }
+  // Switching Revit drops any project pin: a title that was open in one Revit means nothing in
+  // another, and carrying it over would silently target the wrong thing or fail confusingly.
+  if (selectedPid !== Number(match.pid)) selectedDocument = null;
   selectedPid = Number(match.pid);
   selectedWasExplicit = true;
   return match;
@@ -115,6 +124,20 @@ export function selectBridgeInstance(pid) {
 
 export function getSelectedPid() {
   return selectedPid;
+}
+
+/**
+ * Pin every later call to one open project by title, inside the Revit already chosen. Pass null to go
+ * back to "whichever is in front". The title is NOT validated here on purpose - Revit is the only thing
+ * that knows what is open right now, and it answers with the real list if the name is wrong.
+ */
+export function selectDocument(title) {
+  selectedDocument = title && String(title).trim() ? String(title).trim() : null;
+  return selectedDocument;
+}
+
+export function getSelectedDocument() {
+  return selectedDocument;
 }
 
 function readDiscoveryInfo() {
@@ -317,7 +340,7 @@ async function getConnection(info) {
   return createConnection(info);
 }
 
-function sendRequest(connection, info, code, allowDestructive) {
+function sendRequest(connection, info, code, allowDestructive, documentTitle) {
   if (connection.closed || connection.socket.destroyed || !connection.socket.writable) {
     return Promise.reject(new Error("The AJ AI bridge connection is no longer available."));
   }
@@ -333,7 +356,11 @@ function sendRequest(connection, info, code, allowDestructive) {
 
     connection.pending = { resolve, reject, timer };
     try {
-      connection.socket.write(JSON.stringify({ token: info.token, code, allowDestructive: !!allowDestructive }) + "\n");
+      // `document` is omitted entirely when nothing is pinned, so an OLDER AJ Tools that has never
+      // heard of the field sees exactly the payload it always saw.
+      const payload = { token: info.token, code, allowDestructive: !!allowDestructive };
+      if (documentTitle) payload.document = documentTitle;
+      connection.socket.write(JSON.stringify(payload) + "\n");
     } catch (err) {
       closeConnection(connection, err.message);
     }
@@ -343,7 +370,7 @@ function sendRequest(connection, info, code, allowDestructive) {
 async function callBridgeNow(code, allowDestructive) {
   const info = readDiscoveryInfo();
   const connection = await getConnection(info);
-  return sendRequest(connection, info, code, allowDestructive);
+  return sendRequest(connection, info, code, allowDestructive, selectedDocument);
 }
 
 // Revit runs API work on one ExternalEvent at a time. Serializing calls preserves that contract while

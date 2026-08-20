@@ -14,8 +14,9 @@ tool is registered from `../index.js`; nothing here runs on its own.
 | `model_summary` | [`model-summary.js`](model-summary.js) | Fast count/breakdown for a fixed set of common MEP categories |
 | `list_revit_instances` | [`list-revit-instances.js`](list-revit-instances.js) | Show every connected Revit session, by version and open document |
 | `use_revit_instance` | [`use-revit-instance.js`](use-revit-instance.js) | Pin this chat to one Revit session, by pid |
+| `use_revit_document` | [`use-revit-document.js`](use-revit-document.js) | Pin this chat to one open project inside that Revit, by title |
 
-**About the last two (added 2026-08-20).** More than one Revit can host a bridge now: each session owns a
+**About the last three (added 2026-08-20).** More than one Revit can host a bridge now: each session owns a
 pipe named by its process id and publishes itself in `%APPDATA%\AJToolsridges\<pid>.json`. They are
 the only tools here that do **not** talk to Revit — they read that folder and set which session the rest
 of the tools use.
@@ -27,6 +28,19 @@ separately, because they must behave differently when the world changes: opening
 re-opens the question if the client merely took the only session going, but not if he chose it; and if
 the session he chose closes, everything stops rather than sliding onto another project. Rules and their
 reasons: [`../test/multi-instance.test.js`](../test/multi-instance.test.js).
+
+**Two halves, two tools.** Picking the Revit is not the same as picking the project, and solving one
+does not solve the other. One Revit can hold several projects open, and on the Revit side `Document`
+has always meant `ActiveUIDocument.Document` — *the front window*, which moves when Ajmal clicks
+another project between two calls of the same job. `use_revit_document` names the project explicitly,
+so it stops mattering which window is in front. Same rule as above: a title that is not open is an
+**error listing what is open**, never a fall back to the front window. Switching Revit clears the
+project pin, because a title open in one Revit means nothing in another. What actually goes on the
+wire: [`../test/document-targeting.test.js`](../test/document-targeting.test.js).
+
+**Needs AJ Tools 1.56.0 or newer on the Revit side.** Against an older add-in the field is simply
+ignored and everything behaves as it did before — the client omits it entirely when nothing is pinned,
+so the payload is unchanged for callers that never use this.
 
 ## Native tools (typed, schema-validated — added 2026-07-22)
 Each generates the same proven C# pattern as the matching `../../scripts/` fragment, via the shared

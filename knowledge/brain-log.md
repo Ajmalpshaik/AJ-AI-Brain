@@ -2546,3 +2546,24 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   as live. **A false skip costs one test run; a false "not live" costs 354 ducts.** Same lesson in the
   test itself: `%APPDATA%` must be redirected before anything imports `bridge-connection.js`, because ES
   modules are cached — an earlier draft redirected it too late and sent its probe to the real Revit.
+
+
+- 2026-08-20 — **"Which Revit?" and "which project inside it?" are two problems, and the second one was
+  still open.** The morning's fix gave each Revit session its own pipe; that says nothing about a Revit
+  holding several projects. `RevitExecutionService` has always built its globals from
+  `app.ActiveUIDocument`, so `Document` means **the front window** — which moves when Ajmal clicks
+  another project, between two calls of one job. The bridge request now takes an optional `document`
+  title (AJ Tools 1.56.0), resolved against `app.Application.Documents` with links skipped, plus a
+  `use_revit_document` tool (native tools 19 → 20). **Same rule as the pid lookup: a name that does not
+  resolve is an ERROR listing the real choices, never a fall back to whatever is in front** — falling
+  back IS the failure. Backward compatibility is by **omission**: the field is left out of the JSON
+  entirely when nothing is pinned, and a test asserts it is *absent* rather than empty, because "" and
+  missing are different things to a deserialiser. Known limit, recorded rather than hidden: a
+  `UIDocument` for a background project still carries THAT project's active view, so view-scoped work
+  (isolate, colour, crop) follows Revit; model work is unaffected.
+
+- 2026-08-20 — **A test whose checks all pass can still fail the file, and the reason is worth keeping:**
+  `document-targeting.test.js` stands up a real named pipe, and the client deliberately holds its
+  connection OPEN between calls (that is what makes a long job fast). Closing only the server left a
+  live socket holding the event loop up, so the run hung to the runner's timeout — 7 green checks and a
+  failed file. Keep every accepted socket and destroy them in `after()`.
