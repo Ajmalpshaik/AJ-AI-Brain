@@ -27,6 +27,19 @@ The .NET target belongs to the **AJ AI Bridge add-in** — the compiled thing on
 
 A DLL built for one family will not load in another, so 2020-2024 / 2025-2026 / 2027 are three separate
 builds. **If the bridge does not load, no fragment runs at all** — check that before blaming a script.
+
+**The check is one call, not an investigation.** Open the model in the new Revit and run the native
+`ping` tool (`mcp__aj-tools-aj-ai__ping`):
+
+- **It answers** → the add-in loaded, so the .NET target is right for this Revit. Forget .NET entirely and
+  move on to the API changes below; nothing in `scripts/` is affected by it.
+- **It does not answer** → stop. This is not a script problem and no fragment will run. The add-in needs
+  rebuilding for that Revit's .NET family, which is a different codebase and out of this Brain's scope
+  (`START-HERE.md`). Whether a retarget alone is enough, or the bridge's run-time C# compilation needs
+  work too, is a bridge-side question — **verify, do not assume.**
+
+So .NET is not 282 problems. It is one yes/no question, asked once per Revit upgrade, before anything
+else.
 Building the add-in is deliberately out of this Brain's scope (see `START-HERE.md`); the version rules
 live in the `revit-version-matrix` skill.
 
