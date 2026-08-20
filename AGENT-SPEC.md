@@ -213,9 +213,11 @@ All 13 element-targeting tools share one input shape: `elementIds` (exact Ids, t
 hide/unhide/isolate/set_color/reset_graphic_overrides/set_transparency) also take `targetViewId`
 (optional, defaults to active view — same view-targeting fix as the 11 graphics fragments in §3.5), and
 `reset_isolation` takes only `targetViewId` (it has no element filter). A structural regression test
-(`npm test` from `mcp-server/`, added 2026-07-23) proves all 17 tools register with correct
+(`npm test` from `mcp-server/`, added 2026-07-23) proves all 17 of those tools register with correct
 names/schemas and that every handler's C#-generation runs to completion and fails gracefully with no
-bridge connected. **Still not live-verified against a running Revit** — the test can't reach a real
+bridge connected. **It walks a hardcoded list, so a new tool is not covered by it merely by existing** —
+`search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
+for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools

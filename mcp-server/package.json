@@ -1,8 +1,8 @@
 {
   "name": "aj-tools-aj-ai-mcp",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
-  "description": "MCP server that lets an AI agent run C# against a live Revit document through the AJ Tools AJ AI bridge, for automated tool testing/debugging. v1.3.0 adds 14 typed, schema-validated native tools (list/count/hide/isolate/unhide/reset-isolation/set-color/reset-overrides/transparency/select/set-parameter/report-parameters/move/delete) alongside the original run_csharp/ping/model_summary. v1.3.1 adds the npm-test smoke suite, set_parameter_value input validation, and discovery-file error hardening.",
+  "description": "MCP server that lets an AI agent run C# against a live Revit document through the AJ Tools AJ AI bridge, for automated tool testing/debugging. v1.3.0 adds 14 typed, schema-validated native tools (list/count/hide/isolate/unhide/reset-isolation/set-color/reset-overrides/transparency/select/set-parameter/report-parameters/move/delete) alongside the original run_csharp/ping/model_summary. v1.3.1 adds the npm-test smoke suite, set_parameter_value input validation, and discovery-file error hardening. v1.5.0 supports more than one Revit at a time: each session hosts its own pipe and is discovered from %APPDATA%/AJTools/bridges, with list_revit_instances and use_revit_instance to see and choose between them. One Revit open behaves exactly as before; with two or more nothing is sent until one is chosen.",
   "type": "module",
   "main": "index.js",
   "scripts": {

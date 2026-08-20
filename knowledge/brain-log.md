@@ -2502,3 +2502,35 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   capability removal, not a rename, so `creators/create-hvac-zone.cs` now compiles on 2027 and reports in
   plain words that the job must be done in the Revit UI there. Use this tool before assuming a missing
   member was merely renamed.
+
+
+- 2026-08-20 — **Two Revit sessions can now be connected at once, and the bridge was single-instance by
+  construction rather than by oversight.** `McpBridgeService` hosted a FIXED pipe name with
+  `maxNumberOfServerInstances: 2`, and those two are not spare capacity: one Revit needs both, one
+  servicing the chat and one already listening so preemption stays instant. **Measured before changing
+  anything** — a standalone test creating four servers on one name got two, then
+  `All pipe instances are busy` twice. Each Revit now owns a pipe named by its process id (the
+  named-pipe equivalent of pyRevit's one-port-per-instance) and publishes itself in
+  `%APPDATA%\AJToolsridges\<pid>.json`. `ajai-bridge.json` is still written unchanged, so an older
+  client keeps working. New tools `list_revit_instances` / `use_revit_instance` (native tools: 17 → 19).
+
+- 2026-08-20 — **The rule Ajmal chose for two open sessions: ask, don't guess** — and the distinction
+  that makes it safe was found by a failing test, not by review. Auto-picking the only session and being
+  *told* which session to use are different facts and must be tracked separately: auto-picked then a
+  second Revit opens → **ask**, because he never chose this one; auto-picked and it closes → quietly take
+  the survivor; he chose it and more open → keep his choice; **he chose it and it closes → stop and say
+  so**, never slide onto another project. The first draft had no such flag, so opening a second Revit
+  mid-chat left every later command silently going to the first — precisely the failure the feature
+  exists to prevent. Rules and reasons live in `mcp-server/test/multi-instance.test.js`.
+
+- 2026-08-20 — **The destructive-test safety gate was failing OPEN, and it fired.** `smoke.test.js`
+  invokes every handler including `delete_elements` with `confirm: true`; since 2026-08-13 a `ping`
+  probe was supposed to skip it whenever a live bridge is connected. But the rule was "ping errored → not
+  live", and a bridge that is merely BUSY answers *"Another script is still running"* — read as "no
+  bridge". The suite duly ran against a live Revit; nothing was destroyed only because Revit's OWN
+  busy-guard rejected the first call and the assertion aborted the test before `delete_elements`. The
+  audit log is what proved it. Now inverted to fail CLOSED: only an explicit not-connected / pipe-missing
+  answer counts as proof the bridge is down; any other error, exception or unreadable result is treated
+  as live. **A false skip costs one test run; a false "not live" costs 354 ducts.** Same lesson in the
+  test itself: `%APPDATA%` must be redirected before anything imports `bridge-connection.js`, because ES
+  modules are cached — an earlier draft redirected it too late and sent its probe to the real Revit.

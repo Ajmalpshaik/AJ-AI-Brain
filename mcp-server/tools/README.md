@@ -12,6 +12,21 @@ tool is registered from `../index.js`; nothing here runs on its own.
 | `run_csharp` | [`run-csharp.js`](run-csharp.js) | Run any C# against the live document — the fallback for anything the native tools below don't cover |
 | `ping` | [`ping.js`](ping.js) | Check the bridge is connected |
 | `model_summary` | [`model-summary.js`](model-summary.js) | Fast count/breakdown for a fixed set of common MEP categories |
+| `list_revit_instances` | [`list-revit-instances.js`](list-revit-instances.js) | Show every connected Revit session, by version and open document |
+| `use_revit_instance` | [`use-revit-instance.js`](use-revit-instance.js) | Pin this chat to one Revit session, by pid |
+
+**About the last two (added 2026-08-20).** More than one Revit can host a bridge now: each session owns a
+pipe named by its process id and publishes itself in `%APPDATA%\AJToolsridges\<pid>.json`. They are
+the only tools here that do **not** talk to Revit — they read that folder and set which session the rest
+of the tools use.
+
+**With one Revit open nothing changes and neither tool is needed.** With two or more, every other tool
+refuses and says so, naming the sessions, until `use_revit_instance` picks one — Ajmal's rule, asked and
+answered on 2026-08-20: *ask, don't guess.* An auto-picked session and a session he named are tracked
+separately, because they must behave differently when the world changes: opening a second Revit
+re-opens the question if the client merely took the only session going, but not if he chose it; and if
+the session he chose closes, everything stops rather than sliding onto another project. Rules and their
+reasons: [`../test/multi-instance.test.js`](../test/multi-instance.test.js).
 
 ## Native tools (typed, schema-validated — added 2026-07-22)
 Each generates the same proven C# pattern as the matching `../../scripts/` fragment, via the shared

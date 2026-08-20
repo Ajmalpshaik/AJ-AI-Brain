@@ -109,14 +109,29 @@ test("every tool module registers exactly one well-formed tool", () => {
 // 354 ducts, with `confirm: true` already supplied.
 //
 // So the premise is now enforced instead of assumed. A read-only `ping` decides it.
+//
+// UPDATED 2026-08-20, because the gate FAILED OPEN and this suite ran against a live Revit.
+// The old rule was "ping errored -> not live". But an error is not proof the bridge is dead: a bridge
+// that is merely BUSY answers "Another script is still running", and a bridge mid-reconnect answers
+// something else again. Both were read as "no bridge", which is the one way this gate must never fail.
+// Caught by the audit log, which recorded the probe reaching Revit and being rejected by Revit's OWN
+// busy-guard - the last line of defence, not this one.
+//
+// So the logic is inverted: only an explicit not-connected / pipe-missing answer counts as proof the
+// bridge is down. Anything else - any other error, a thrown exception, an unreadable result - is treated
+// as LIVE and skips the destructive suite. A false skip costs one test run; a false "not live" costs
+// 354 ducts.
+const NOT_LIVE_PROOF = /not connected|pipe not found|Reconnect from the AJ AI pane/i;
+
 async function bridgeIsLive() {
   try {
     const probe = createFakeServer();
     registerPing(probe);
     const result = await probe.registrations[0].handler({});
-    return result?.isError === false;
-  } catch {
-    return false;   // cannot tell -> treat as not live, the same as before this gate existed
+    if (result?.isError === false) return true;
+    return !NOT_LIVE_PROOF.test(JSON.stringify(result ?? ""));
+  } catch (err) {
+    return !NOT_LIVE_PROOF.test(String((err && err.message) || err || ""));
   }
 }
 

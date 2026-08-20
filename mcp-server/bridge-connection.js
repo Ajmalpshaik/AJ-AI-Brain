@@ -6,7 +6,12 @@ import net from "node:net";
 import fs from "node:fs";
 import path from "node:path";
 
-const DISCOVERY_FILE = path.join(process.env.APPDATA || "", "AJTools", "ajai-bridge.json");
+const AJTOOLS_DIR = path.join(process.env.APPDATA || "", "AJTools");
+// Legacy single-instance pointer. Revit still writes it, so an older client keeps working; this one
+// only falls back to it when the per-instance folder is missing entirely (an older AJ Tools build).
+const DISCOVERY_FILE = path.join(AJTOOLS_DIR, "ajai-bridge.json");
+// One file per live Revit, named <pid>.json. Written by McpBridgeService.WriteDiscoveryFile().
+const INSTANCES_DIR = path.join(AJTOOLS_DIR, "bridges");
 // RevitExecutionService soft-cancels a loop-based script at 60s, then gives it a further 20s grace
 // period to actually unwind before its own hard backstop gives up (see that file's HardWaitTimeout,
 // 80s total). This must stay comfortably above that 80s, or a script that's still legitimately
@@ -18,47 +23,161 @@ const CONNECT_TIMEOUT_MS = 10_000;
 let cachedDiscovery;
 let activeConnection;
 
-function readDiscoveryInfo() {
-  let stat;
+// Which Revit this MCP session is talking to. Null means "not chosen yet", which only matters when
+// more than one Revit is connected.
+let selectedPid = null;
+// Was that choice AJMAL'S, or did the client just take the only session going? The difference decides
+// what happens when the world changes underneath it, and getting it wrong is the whole risk here:
+//   - auto-picked, then a second Revit opens  -> ASK, because he never actually chose this one
+//   - auto-picked, and it closes              -> quietly take the remaining one, nothing was chosen
+//   - he picked it, and more Revits open      -> keep his choice, do not nag
+//   - he picked it, and it closes             -> STOP and say so, never slide onto a different project
+// Found by test, not by reasoning: without this flag, opening a second Revit mid-chat left every later
+// command silently going to the first one.
+let selectedWasExplicit = false;
+
+const NOT_CONNECTED =
+  'AJ AI Bridge is not connected. In Revit, open the AJ AI pane and click "Connect AJ AI Bridge", then try again.';
+
+function readInstanceFile(file) {
   try {
-    stat = fs.statSync(DISCOVERY_FILE);
+    const info = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!info || !info.pipeName || !info.token) return undefined;
+    if (info.pid == null) {
+      // A pre-multi-instance AJ Tools wrote this. Treat it as one nameless instance rather than
+      // discarding it, so an old add-in against a new client still connects.
+      info.pid = 0;
+    }
+    return info;
   } catch {
-    // Covers "file doesn't exist" (the common case) and any other stat failure (e.g. permissions) —
-    // both mean the same thing to a caller: there's nothing usable to connect through right now.
-    cachedDiscovery = undefined;
-    throw new Error(
-      "AJ AI Bridge is not connected. In Revit, open the AJ AI pane and click \"Connect AJ AI Bridge\", then try again."
-    );
+    // Deleted mid-read (Revit closing) or written half-way. Either way it is not a usable instance.
+    return undefined;
   }
+}
 
-  if (
-    cachedDiscovery &&
-    cachedDiscovery.mtimeMs === stat.mtimeMs &&
-    cachedDiscovery.size === stat.size
-  ) {
-    return cachedDiscovery.info;
-  }
-
-  let info;
+/**
+ * Every Revit currently advertising a bridge, newest first.
+ *
+ * Revit sweeps dead instance files when it starts, but nothing sweeps them while it is running, so a
+ * Revit that crashed a minute ago can still have a file here. A stale entry cannot hurt: connecting to
+ * its pipe fails and the caller is told plainly, which is far better than silently hiding a session
+ * that IS alive because a liveness probe was too clever.
+ */
+export function listBridgeInstances() {
+  let files = [];
   try {
-    const raw = fs.readFileSync(DISCOVERY_FILE, "utf8");
-    info = JSON.parse(raw);
-  } catch (err) {
-    // Covers a genuine race (the file was deleted/replaced between the statSync above and this read —
-    // e.g. Revit was closed at exactly this moment) as well as a truncated/corrupt write caught mid-flight.
-    // Without this, either case would throw a raw ENOENT/SyntaxError straight out of this function instead
-    // of the same friendly, actionable message every other failure mode here already gives.
+    files = fs
+      .readdirSync(INSTANCES_DIR)
+      .filter((f) => f.toLowerCase().endsWith(".json"))
+      .map((f) => path.join(INSTANCES_DIR, f));
+  } catch {
+    // No per-instance folder: an older AJ Tools, or the bridge has never been started on this machine.
+    const legacy = readInstanceFile(DISCOVERY_FILE);
+    return legacy ? [legacy] : [];
+  }
+
+  const instances = files.map(readInstanceFile).filter(Boolean);
+  if (instances.length === 0) {
+    const legacy = readInstanceFile(DISCOVERY_FILE);
+    return legacy ? [legacy] : [];
+  }
+
+  instances.sort((a, b) => String(b.startedUtc || "").localeCompare(String(a.startedUtc || "")));
+  return instances;
+}
+
+/** Short human label for one instance - what Ajmal actually recognises a session by. */
+export function describeInstance(info) {
+  const version = info.revitVersion ? `Revit ${info.revitVersion}` : "Revit";
+  const title = (info.windowTitle || "").trim();
+  // Revit's window title is "<document> - <Revit year> - <view>"; the document is the useful half.
+  const doc = title ? title.split(" - ")[0].trim() : "";
+  return `${version}${doc ? ` - ${doc}` : ""} (pid ${info.pid})`;
+}
+
+/** Pin this MCP session to one Revit. Returns the chosen instance, or throws with the valid choices. */
+export function selectBridgeInstance(pid) {
+  const wanted = Number(pid);
+  const instances = listBridgeInstances();
+  const match = instances.find((i) => Number(i.pid) === wanted);
+  if (!match) {
+    const list = instances.map((i) => `  - ${describeInstance(i)}`).join("\n");
     throw new Error(
-      "Could not read the AJ AI bridge connection file (" + err.message + "). Reconnect from the AJ AI pane in Revit."
+      instances.length
+        ? `No connected Revit with pid ${pid}. Currently connected:\n${list}`
+        : NOT_CONNECTED
     );
   }
+  selectedPid = Number(match.pid);
+  selectedWasExplicit = true;
+  return match;
+}
 
-  if (!info.pipeName || !info.token) {
-    throw new Error("AJ AI bridge connection file is malformed. Reconnect from the AJ AI pane in Revit.");
+export function getSelectedPid() {
+  return selectedPid;
+}
+
+function readDiscoveryInfo() {
+  const instances = listBridgeInstances();
+
+  if (instances.length === 0) {
+    cachedDiscovery = undefined;
+    selectedPid = null;
+    selectedWasExplicit = false;
+    throw new Error(NOT_CONNECTED);
   }
 
-  cachedDiscovery = { mtimeMs: stat.mtimeMs, size: stat.size, info };
-  return info;
+  const choices = () => instances.map((i) => `  - ${describeInstance(i)}`).join("\n");
+
+  if (selectedPid !== null) {
+    const chosen = instances.find((i) => Number(i.pid) === selectedPid);
+
+    if (chosen) {
+      // His own choice stands even after other Revits appear - he already answered this question.
+      if (selectedWasExplicit || instances.length === 1) return chosen;
+
+      // Only auto-picked, and now there is a real choice to make. Ask before anything is sent.
+      selectedPid = null;
+      throw new Error(
+        `Another Revit has been opened since this chat started, so there are now ${instances.length} ` +
+          `sessions and it is not safe to keep assuming:\n${choices()}\n` +
+          "Ask Ajmal which session he means, then call use_revit_instance with that pid. " +
+          "Nothing has been sent to Revit."
+      );
+    }
+
+    // The session being used has gone.
+    const wasExplicit = selectedWasExplicit;
+    const lostPid = selectedPid;
+    selectedPid = null;
+    selectedWasExplicit = false;
+
+    if (wasExplicit) {
+      // He named this one. Sliding onto whatever else happens to be open is exactly the
+      // "finished in the wrong project" failure this mechanism exists to prevent - so stop.
+      throw new Error(
+        `The Revit session you chose (pid ${lostPid}) has closed.\n` +
+          (instances.length
+            ? `Still open:\n${choices()}\nCall use_revit_instance with the pid you want.`
+            : NOT_CONNECTED)
+      );
+    }
+    // Never explicitly chosen, so there is nothing of his to contradict - fall through and re-pick.
+  }
+
+  if (instances.length === 1) {
+    // The ordinary case, and it must feel exactly as it always did: one Revit, no questions.
+    selectedPid = Number(instances[0].pid);
+    selectedWasExplicit = false;
+    return instances[0];
+  }
+
+  throw new Error(
+    `${instances.length} Revit sessions are connected, so it is not safe to guess which one you mean:\n` +
+      choices() +
+      "\nAsk Ajmal which session to use, then call use_revit_instance with that pid. " +
+      "Nothing is sent to Revit until one is chosen."
+  );
 }
 
 function connectionKey(info) {

@@ -16,6 +16,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { register as registerRunCsharp } from "./tools/run-csharp.js";
 import { register as registerPing } from "./tools/ping.js";
+import { register as registerListRevitInstances } from "./tools/list-revit-instances.js";
+import { register as registerUseRevitInstance } from "./tools/use-revit-instance.js";
 import { register as registerModelSummary } from "./tools/model-summary.js";
 import { register as registerListElements } from "./tools/list-elements.js";
 import { register as registerCountElements } from "./tools/count-elements.js";
@@ -40,6 +42,8 @@ const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.4.0" });
 
 registerRunCsharp(server);
 registerPing(server);
+registerListRevitInstances(server);
+registerUseRevitInstance(server);
 registerModelSummary(server);
 registerListElements(server);
 registerCountElements(server);
