@@ -79,43 +79,25 @@ Convert the foot value; never work from a remembered metric approximation.
 operation. Exception: in-rack sprinklers (§10.2.5.4.3). A dense layout can violate this while covering
 perfectly — so a minimum-spacing check is as necessary as a maximum one.
 
-## Rule 5 — deflector position (§10.2.6 in 2022+, §8.5/8.6 in 2019)
+## Rules 5 to 7 moved — they grew past a pointer (2026-08-20)
 
-- **1 in to 12 in (25–305 mm) below the ceiling** for unobstructed construction. Varies by sprinkler type
-  and construction — this is where the ceiling type and the sprinkler listing decide, not a rule of thumb.
-- **18 in (457 mm) clear below the deflector** to the top of storage or any object — the zone the spray
-  pattern needs to develop. This is a 3D clash question, not a plan-layout one.
+Deflector heights, obstructions, and the sidewall/extended-coverage tables were three short bullets here
+until Ajmal asked for the whole subject studied properly. They are now full chunks of their own, and this
+file deliberately does **not** repeat them — one fact, one place:
 
-## Rule 6 — obstructions (§10.2.7 / 2019 §8.6.5)
+| | |
+|---|---|
+| **Deflector heights** — with a ceiling, without one, obstructed construction, sloped ceilings, ceiling pockets, the 18 in clearance | [`fire-sprinkler/deflector-and-ceiling-height.md`](fire-sprinkler/deflector-and-ceiling-height.md) |
+| **Obstructions** — the three-times rule and its column exception, the beam table, wide obstructions, heads in bays | [`fire-sprinkler/obstructions.md`](fire-sprinkler/obstructions.md) |
+| **Sidewall, extended coverage, concealed, upright, dry** — which head, and what changes with it | [`fire-sprinkler/sprinkler-types.md`](fire-sprinkler/sprinkler-types.md) |
+| **The method end to end**, and the Revit side of it | [`fire-sprinkler/layout-method.md`](fire-sprinkler/layout-method.md), [`fire-sprinkler/revit-modelling.md`](fire-sprinkler/revit-modelling.md) |
+| Folder index | [`fire-sprinkler/README.md`](fire-sprinkler/README.md) |
 
-Plan geometry alone cannot clear these; they need the real model.
-
-- **Three-times rule** (isolated/noncontinuous obstruction under 24 in / 610 mm wide): the head must be at
-  least **3 × the obstruction's maximum dimension** away horizontally. A 4 in (102 mm) pipe → at least
-  12 in (305 mm) clear.
-- **Continuous obstructions / beam rule**: how far below the deflector an obstruction may extend depends on
-  its horizontal distance from the head — roughly 2.5 in allowed at 1 ft, 5.5 in at 3 ft, 22 in at 10 ft,
-  unrestricted beyond about 11 ft. Read the actual table; do not interpolate from these.
-- Beams deeper than **18 in (457 mm)** require sprinklers in each bay. Members under **4 in (102 mm)** deep
-  are generally ignored unless within 1 ft of the head.
-- A continuous obstruction wider than **30 in (762 mm)** against a wall needs a sprinkler beneath it.
-
-## Rule 7 — sidewall sprinklers (§10.3.4)
-
-Different limits from pendent/upright — do not carry the 15 ft figure across.
-
-| Hazard class | Max spacing along the wall | In metric |
-|---|---|---|
-| Light | 14 ft | 4,267 mm |
-| Ordinary | 10 ft | 3,048 mm |
-
-Minimum 4 in from the wall and 6 ft between heads still apply (§10.3.4.3.1, §10.3.4.4).
-
-## Extended coverage heads
-
-A listed EC head can space wider (commonly out to about 20 ft) but its permitted area and spacing come
-from **its own listing**, not from the standard-spray tables. Never apply an EC spacing to a standard head,
-or the reverse.
+One thing that surfaced in the move and is worth keeping: **the old Rule 6 bullet here quoted "2.5 in at
+1 ft, 5.5 in at 3 ft, 22 in at 10 ft", which is not the beam table** — a table reaching 22 in only at
+around 10 ft is the *obstruction-against-a-wall* one, while the beam table reaches its 24 in maximum at
+about 6 ft. Two different tables, easy to conflate, and conflating them is lenient in one direction and
+strict in the other. Both are described in [`fire-sprinkler/obstructions.md`](fire-sprinkler/obstructions.md).
 
 ## Worked reference — the user's Project1 'Room 4' (287.7 m², 3,097 ft²), measured 2026-07-27
 

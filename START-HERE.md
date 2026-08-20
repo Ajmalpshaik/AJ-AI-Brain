@@ -53,7 +53,7 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Placing HVAC air terminals (count + layout) | [`skills/ajtools-hvac-terminal-layout/SKILL.md`](skills/ajtools-hvac-terminal-layout/SKILL.md) |
 | Calculating/updating a room's Space airflow | [`skills/ajtools-hvac-space-airflow/SKILL.md`](skills/ajtools-hvac-space-airflow/SKILL.md) |
 | Placing an FCU, drawing/connecting ductwork | [`skills/ajtools-hvac-duct-routing/SKILL.md`](skills/ajtools-hvac-duct-routing/SKILL.md) |
-| **Fire fighting** — sprinkler head layout or an NFPA spacing check ("how many sprinklers", "check my sprinkler spacing") | [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](skills/ajtools-fire-sprinkler-layout/SKILL.md) — its own code rules, NOT the plain coverage job |
+| **Fire fighting** — sprinkler head layout, an NFPA spacing check, pendent vs upright vs sidewall, how far below the ceiling or the slab, or what a beam or column does to the heads ("how many sprinklers", "check my sprinkler spacing", "there is a beam in the room") | [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](skills/ajtools-fire-sprinkler-layout/SKILL.md) — its own code rules, NOT the plain coverage job. The full rule set is [`knowledge/fire-sprinkler/README.md`](knowledge/fire-sprinkler/README.md), the tools are the eight `scripts/recipes/sprinkler-*.cs` |
 | Laying out fixed-radius devices so a room has no gap — smoke detectors, CCTV, WiFi, lighting ("how many at 3 m coverage, and where") | [`scripts/recipes/generate-room-coverage-layout.cs`](scripts/recipes/generate-room-coverage-layout.cs) — read its header first; it records which mistakes this has already made |
 | **"Do the grayout" / "do the grayout for MEP"** — grey the background, bring the services forward, on a view | [`skills/ajtools-mep-grayout/SKILL.md`](skills/ajtools-mep-grayout/SKILL.md) — his own standard, values already settled; don't re-ask them |
 | Checking whether ductwork already built is still fully connected | [`skills/ajtools-mep-connectivity-verify/SKILL.md`](skills/ajtools-mep-connectivity-verify/SKILL.md) |
@@ -64,7 +64,7 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | A technical gotcha, ambiguous term, or reply-format question with no task attached | [`knowledge/INDEX.md`](knowledge/INDEX.md) |
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
 | Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 319 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 333 files by meaning *and* exact words. **Read the top 3–5, not just #1** (measured ~3 in 4 right at #1); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
