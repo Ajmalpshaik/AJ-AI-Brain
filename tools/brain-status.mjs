@@ -139,6 +139,91 @@ const consistencyIssues = consistencyClean
   ? []
   : (check.stdout || "").split(/\r?\n/).filter((l) => l.trim().startsWith("- "));
 
+// --- derived layers: vector index, knowledge graph, Obsidian vault ----------
+// WHY THIS EXISTS: the daily "check AJ Tool / vector index / Graphify / Obsidian" routine ran in a
+// cloud container against a fresh clone and PASSED SILENTLY, because all three of these are
+// gitignored on purpose ("a stale index in this repo is worse than no index", 2026-08-07). A clone
+// holds their CODE and none of their STATE, so "current" and "never built here" looked identical
+// and nothing on either machine reported their age. Recorded 2026-08-17 in brain-log.md as the gap
+// to close rather than a routine to abandon; this closes it.
+//
+// mtime is the signal, and it is only honest where the folder LIVES — a fresh checkout stamps every
+// file with checkout time, which would read as "everything is newer than the build". So when the
+// layers are absent this says so in those words instead of inventing a staleness number. The
+// authoritative checks are unchanged and named in the output: the content-comparing STALE INDEX
+// banner ask-brain-hybrid prints, and `python tools/graph-rebuild.py --check` for the graph.
+const newestMtime = (files) =>
+  files.reduce((max, f) => {
+    try { const m = fs.statSync(f).mtimeMs; return m > max ? m : max; } catch { return max; }
+  }, 0);
+
+function buildTimeOf(p) {
+  if (!fs.existsSync(p)) return null;
+  const st = fs.statSync(p);
+  if (st.isFile()) return st.mtimeMs;
+  // A directory's own mtime only moves when a direct child is added or removed, which would report
+  // a vault as fresh long after every note inside it went stale. Use the newest thing inside.
+  const inner = walk(p, () => true);
+  return inner.length ? newestMtime(inner) : st.mtimeMs;
+}
+
+// The set the indexer actually covers - mirrors verify-consistency.mjs check 8 and
+// semantic-index/brain_common.py (INDEX_TARGETS + ROOT_DOCS + FILE_EXTENSIONS).
+const sourceFiles = [];
+for (const folder of ["scripts", "knowledge", "skills"]) {
+  sourceFiles.push(...walk(path.join(brainRoot, folder), (n) => n.endsWith(".md") || n.endsWith(".cs")));
+}
+for (const rel of ["AGENT-SPEC.md", "START-HERE.md", "README.md", "SETUP.md", "CLAUDE.md",
+                   path.join("mcp-server", "tools", "README.md")]) {
+  const p = path.join(brainRoot, rel);
+  if (fs.existsSync(p)) sourceFiles.push(p);
+}
+// These two are machine-written every session and would report stale forever - a warning that is
+// always on is a warning nobody reads. graph-rebuild.py already excludes score-history.md for
+// exactly this reason; brain-log.md is the same shape. Judge by the other files.
+const ALWAYS_CHANGING = new Set(["brain-log.md", "score-history.md"]);
+const judgeable = sourceFiles.filter((f) => !ALWAYS_CHANGING.has(path.basename(f)));
+
+const DAY = 24 * 60 * 60 * 1000;
+function layerState(name, buildPath, extra = {}) {
+  const builtMs = buildTimeOf(buildPath);
+  if (builtMs === null) return { name, present: false, ...extra };
+  return {
+    name,
+    present: true,
+    built: new Date(builtMs).toISOString().slice(0, 10),
+    ageDays: Math.floor((Date.now() - builtMs) / DAY),
+    changedSince: judgeable.filter((f) => {
+      try { return fs.statSync(f).mtimeMs > builtMs; } catch { return false; }
+    }).length,
+    ...extra,
+  };
+}
+
+const graphOut = path.join(brainRoot, "graphify-out");
+// graphify writes the Obsidian vault into graphify-out/, but the folder name has moved between
+// versions - so find it rather than hard-code one: the subfolder holding the most .md notes.
+let vaultDir = null;
+let vaultNotes = 0;
+if (fs.existsSync(graphOut)) {
+  for (const e of fs.readdirSync(graphOut, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    const n = walk(path.join(graphOut, e.name), (f) => f.endsWith(".md")).length;
+    if (n > vaultNotes) { vaultNotes = n; vaultDir = path.join(graphOut, e.name); }
+  }
+}
+
+const derived = [
+  layerState("vector index", path.join(brainRoot, "semantic-index", "chroma-db"),
+    { rebuild: "semantic-index\\index-brain.cmd" }),
+  layerState("knowledge graph", path.join(graphOut, "graph.json"),
+    { rebuild: "/graphify . --update" }),
+  vaultDir
+    ? { ...layerState("Obsidian vault", vaultDir, { rebuild: "/graphify . --update" }), notes: vaultNotes }
+    : { name: "Obsidian vault", present: false, rebuild: "/graphify . --update" },
+];
+const derivedPresent = derived.filter((d) => d.present);
+
 // --- output -----------------------------------------------------------------
 const pct = (n) => (rows.length ? Math.round((n / rows.length) * 100) : 0);
 
@@ -154,6 +239,7 @@ if (args.has("--json")) {
     knowledge: { files: knowledgeFiles.length, oversized, keptWhole },
     openItems: openGroups,
     consistencyClean,
+    derivedLayers: { onThisMachine: derivedPresent.length > 0, layers: derived },
   }, null, 2));
   process.exit(0);
 }
@@ -199,6 +285,26 @@ console.log(`  ${String(flagged.length).padStart(3)} flagged untested    (${pct(
 console.log(`  ${String(blocked.length).padStart(3)} blocked/impossible  (${pct(blocked.length)}%)`);
 console.log(`  ${String(noStatus.length).padStart(3)} no status either way (${pct(noStatus.length)}%)  <- unproven, and not flagged as such`);
 console.log("  Not a blocker: run one element first, check the result, then trust it for a batch.");
+
+console.log("\nDerived layers — gitignored, so they live on the machine and never travel in git:");
+if (!derivedPresent.length) {
+  console.log("  vector index · knowledge graph · Obsidian vault — NONE PRESENT IN THIS CHECKOUT");
+  console.log("  This copy has their code and none of their state, so nothing here can judge whether");
+  console.log("  they are current. Answerable only where the Brain folder itself lives.");
+} else {
+  for (const d of derived) {
+    if (!d.present) {
+      console.log(`  ${d.name.padEnd(15)} absent — build it with ${d.rebuild}`);
+      continue;
+    }
+    const age = d.ageDays === 0 ? "today" : `${d.ageDays} d ago`;
+    const notes = d.notes ? ` · ${d.notes} notes` : "";
+    const stale = d.changedSince ? `  <- ${d.changedSince} source file(s) newer than it` : "";
+    console.log(`  ${d.name.padEnd(15)} built ${d.built} (${age})${notes}${stale}`);
+  }
+  console.log("  Dates are mtime — a hint, not a verdict. Confirm with the STALE INDEX banner");
+  console.log("  ask-brain-hybrid prints, and `python tools/graph-rebuild.py --check` for the graph.");
+}
 
 if (openGroups.length) {
   console.log("\nOpen items:");
