@@ -2269,3 +2269,32 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   outside `INDEX_TARGETS` so the Brain's indexer never reads it — **0 of 343 indexed files come from
   it**, and the Brain stayed at 3,786 chunks. Indexing + search proven end to end on a synthetic corpus
   that matches reflection's output shape; the real harvest is unproven until run on a live Revit.
+
+- 2026-08-20 — New `recipes/audit-flex-curves.cs`, closing a gap that was **bigger than the count
+  suggested**. A first look said "FlexDuct 5 fragments, FlexPipe 1"; reading them showed all six hits
+  were only the CATEGORY NAME inside a list (obstruction sweeps, grayout, a multi-category filter).
+  **Nothing in the library measured, connected or checked a flex run.** The new recipe audits both types
+  together — they behave identically — reporting size, real spline length against the direct line (the
+  slack the drawing hides), bend points, whether both ends are genuinely connected, and which runs exceed
+  the length the PROJECT allows. The length limit is an input defaulting to 0/off: a flex allowance is a
+  per-job spec decision, not a number to inherit (START-HERE rule 3).
+  Two design choices worth keeping: it **collects by `OST_FlexDuctCurves`/`OST_FlexPipeCurves` and casts
+  to `MEPCurve`**, so it never names `FlexDuct` (`...DB.Mechanical`) or `FlexPipe` (`...DB.Plumbing`) and
+  cannot hit the fully-qualify compile trap `core.md` records; and it reads length from `Curve.Length` /
+  `GetEndPoint` / `Tessellate` only, which exist on every targeted version, rather than any
+  flex-specific member. Counts `Connector.AllRefs`, never `IsConnected`, per the hvac-ducts.md gotcha.
+  Unproven — written without Revit.
+
+- 2026-08-20 — Ajmal stated his two standing problems plainly, and said he is **not a coder** — so every
+  programming decision is the assistant's to make, not his to choose between. Recorded in `CLAUDE.md`
+  with his own words. Problem 2 ("proven in 2020, errors in a newer Revit") turned out to be **already
+  solved and simply undiscoverable**: `tools/verify-fragments-compile.ps1` has always compile-checked the
+  whole library against a chosen Revit's real API DLLs **without opening Revit**, and it was mentioned in
+  exactly two places — one line of a tools list, and a footnote about `%TEMP%`. New
+  `tools/check-scripts.cmd` + `.ps1` wraps it: finds **every** Revit on the PC, checks all 285 fragments
+  against each, and prints one plain-language line per version (SAFE / n scripts would error). Routed
+  from START-HERE's table, the version note's opening line, and CLAUDE.md, because the lesson of the
+  original tool is that a good tool nobody can find is worth nothing. Problem 1 ("not covered, so fresh
+  code, which is slow and goes wrong") is answered in CLAUDE.md as a habit rather than a tool: search
+  before writing, and **compile-check fresh C# before he runs it** — a round trip through Revit costs his
+  attention, a compile costs a minute of nobody's.

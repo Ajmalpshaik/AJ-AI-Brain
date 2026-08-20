@@ -1,6 +1,6 @@
 # Which Revit API this Brain actually uses
 
-Generated from the 283 fragments on 2026-08-20 — **not** copied from documentation. Regenerate with the
+Generated from the 285 fragments on 2026-08-20 — **not** copied from documentation. Regenerate with the
 command at the bottom; do not hand-edit.
 
 ## Why this file exists instead of a copy of the API docs
@@ -12,7 +12,7 @@ The instinct is right and the scale is the problem. Measured:
 |---|---|
 | Revit API | ~1,700 classes, 50 interfaces, 500 enumerations, **30,000+ documented members** |
 | This Brain's whole index today | **3,786 chunks** from 341 files |
-| Types the 283 fragments actually use | **229** |
+| Types the 285 fragments actually use | **230** |
 
 Indexing the API into the main search would make the Brain roughly **11% of its own index** — every
 question would land on reference pages instead of on the skill or fragment that answers it. That is the
@@ -22,7 +22,7 @@ reverted the same hour for being a 20% increase. This would be eight times worse
 **And the API docs are not the gap.** A reference page tells you a method's signature. It does not tell
 you that `FilteredElementCollector.UnionWith()` silently drops quick filters, or that
 `RBS_START_LEVEL_PARAM` is the only level parameter an MEP curve has — both of which this Brain already
-knows because it learned them the hard way. The fragments are **283 proven working examples**; the value
+knows because it learned them the hard way. The fragments are **285 proven working examples**; the value
 is an index of our own usage, which is what this file is.
 
 If the full API is genuinely wanted later, it belongs in a **separate index** that Brain searches never
@@ -34,29 +34,29 @@ touch — see [`semantic-index/README.md`](../semantic-index/README.md) for why 
 
 | Type | used in | example fragments |
 |---|---|---|
-| `Document` | 232 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-selection-filter.cs` |
+| `Document` | 233 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-selection-filter.cs` |
 | `Transaction` | 159 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-selection-filter.cs` |
-| `FilteredElementCollector` | 149 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-selection-filter.cs` |
+| `FilteredElementCollector` | 150 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-selection-filter.cs` |
 | `ElementId` | 133 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-create-view-filter.cs` |
-| `Element` | 124 | `actions/color-graphics/action-color-by-group.cs`, `actions/move-copy-rotate/action-align-elements.cs`, `actions/move-copy-rotate/action-move-elements.cs` |
+| `Element` | 126 | `actions/color-graphics/action-color-by-group.cs`, `actions/move-copy-rotate/action-align-elements.cs`, `actions/move-copy-rotate/action-move-elements.cs` |
 | `View` | 72 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-highlight-vs-rest.cs` |
-| `BuiltInParameter` | 44 | `actions/color-graphics/action-color-by-group.cs`, `actions/parameters-naming/action-set-element-phase.cs`, `actions/parameters-naming/action-set-workset.cs` |
-| `BuiltInCategory` | 43 | `actions/color-graphics/action-create-view-filter.cs`, `actions/reporting/action-count-by-spatial-container.cs`, `actions/reporting/action-report-coverage.cs` |
+| `BuiltInParameter` | 45 | `actions/color-graphics/action-color-by-group.cs`, `actions/parameters-naming/action-set-element-phase.cs`, `actions/parameters-naming/action-set-workset.cs` |
+| `BuiltInCategory` | 44 | `actions/color-graphics/action-create-view-filter.cs`, `actions/reporting/action-count-by-spatial-container.cs`, `actions/reporting/action-report-coverage.cs` |
 | `LocationPoint` | 30 | `actions/move-copy-rotate/action-align-elements.cs`, `actions/move-copy-rotate/action-move-elements.cs`, `actions/move-copy-rotate/action-move-to-ray-hit.cs` |
 | `FamilyInstance` | 29 | `actions/move-copy-rotate/action-flip-elements.cs`, `actions/parameters-naming/action-rename-family.cs`, `actions/reporting/action-count-by-group.cs` |
 | `Level` | 25 | `context/context-levels-and-grids.cs`, `context/context-session-start.cs`, `creators/create-cable-tray.cs` |
-| `LocationCurve` | 21 | `actions/move-copy-rotate/action-align-elements.cs`, `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/move-copy-rotate/action-move-elements.cs` |
+| `LocationCurve` | 22 | `actions/move-copy-rotate/action-align-elements.cs`, `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/move-copy-rotate/action-move-elements.cs` |
 | `Line` | 19 | `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/move-copy-rotate/action-trim-extend-elements.cs`, `actions/structural-changes/action-extract-cad-curves.cs` |
 | `ElementType` | 18 | `actions/parameters-naming/action-add-parameter-prefix-suffix.cs`, `actions/parameters-naming/action-copy-parameter-value.cs`, `actions/parameters-naming/action-remove-parameter-value.cs` |
+| `Connector` | 16 | `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/reporting/action-report-connectors.cs`, `actions/structural-changes/action-place-accessory-on-run.cs` |
 | `ViewSheet` | 16 | `actions/sheet-dates-revisions/action-assign-revisions-by-sheet-date.cs`, `actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs`, `actions/sheet-dates-revisions/action-remove-revision-from-sheet.cs` |
-| `Connector` | 15 | `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/reporting/action-report-connectors.cs`, `actions/structural-changes/action-place-accessory-on-run.cs` |
 | `FamilySymbol` | 15 | `actions/parameters-naming/action-rename-family.cs`, `actions/sheets-views/action-set-sheet-title-block.cs`, `actions/sheets-views/action-tag-elements.cs` |
 | `Parameter` | 14 | `actions/parameters-naming/action-add-parameter-prefix-suffix.cs`, `actions/parameters-naming/action-copy-parameter-value.cs`, `actions/parameters-naming/action-remove-parameter-value.cs` |
 | `Category` | 13 | `actions/color-graphics/action-report-category-overrides.cs`, `actions/move-copy-rotate/action-move-to-ray-hit.cs`, `actions/qa-checks/action-check-surface-fit.cs` |
 | `ViewSchedule` | 13 | `actions/sheets-views/action-add-schedule-calculated-field.cs`, `actions/sheets-views/action-add-schedule-field.cs`, `actions/sheets-views/action-export-schedule-to-csv.cs` |
+| `MEPCurve` | 10 | `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/reporting/action-report-connectors.cs`, `actions/structural-changes/action-place-accessory-on-run.cs` |
 | `ViewPlan` | 10 | `actions/reporting/action-plan-shortest-route.cs`, `actions/reporting/action-report-coverage.cs`, `actions/visibility/action-set-view-range.cs` |
 | `Curve` | 9 | `actions/structural-changes/action-extract-cad-curves.cs`, `creators/create-filled-region.cs`, `creators/create-revision-cloud.cs` |
-| `MEPCurve` | 9 | `actions/move-copy-rotate/action-fillet-elements.cs`, `actions/reporting/action-report-connectors.cs`, `actions/structural-changes/action-place-accessory-on-run.cs` |
 | `Phase` | 9 | `actions/parameters-naming/action-delete-phase.cs`, `actions/parameters-naming/action-rename-phase.cs`, `actions/parameters-naming/action-report-phases.cs` |
 | `FillPatternElement` | 8 | `actions/color-graphics/action-apply-view-filter.cs`, `actions/color-graphics/action-color-by-group.cs`, `actions/color-graphics/action-highlight-vs-rest.cs` |
 | `FilteredWorksetCollector` | 8 | `actions/parameters-naming/action-rename-workset.cs`, `actions/parameters-naming/action-set-workset.cs`, `actions/visibility/action-set-view-workset-visibility.cs` |
@@ -244,6 +244,7 @@ touch — see [`semantic-index/README.md`](../semantic-index/README.md) for why 
 | `Title` | 1 | `actions/sheets-views/action-export-schedule-to-csv.cs` |
 | `TransactWithCentralOptions` | 1 | `commands/command-sync-with-central.cs` |
 | `Transform` | 1 | `actions/sheets-views/action-duplicate-view-template.cs` |
+| `Type` | 1 | `context/harvest-revit-api.cs` |
 | `UIApplication` | 1 | `commands/native-undo.cs` |
 | `UIDocument` | 1 | `actions/selection/action-select-elements.cs` |
 | `UNCONFIRMED` | 1 | `recipes/sprinkler-adjust-for-obstructions.cs` |
@@ -266,11 +267,11 @@ touch — see [`semantic-index/README.md`](../semantic-index/README.md) for why 
 
 ## BuiltInParameter values in use (68)
 
-`RBS_CURVE_HEIGHT_PARAM`, `RBS_CURVE_WIDTH_PARAM`, `EXTRUSION_END_PARAM`, `FAMILY_LEVEL_PARAM`, `INSTANCE_REFERENCE_LEVEL_PARAM`, `LEVEL_PARAM`, `RBS_START_LEVEL_PARAM`, `SCHEDULE_LEVEL_PARAM`, `CEILING_HEIGHTABOVELEVEL_PARAM`, `EXTRUSION_START_PARAM`, `RBS_DUCT_SYSTEM_TYPE_PARAM`, `RBS_CURVE_DIAMETER_PARAM`, `RBS_DUCT_FLOW_PARAM`, `RBS_SYSTEM_NAME_PARAM`, `ROOM_NAME`, `ALL_MODEL_FAMILY_NAME`, `ALL_MODEL_MARK`, `BASEPOINT_ANGLETON_PARAM`, `CURVE_ELEM_LENGTH`, `RBS_CABLETRAY_HEIGHT_PARAM`, `RBS_CABLETRAY_WIDTH_PARAM`, `RBS_CONDUIT_DIAMETER_PARAM`, `RBS_PIPE_DIAMETER_PARAM`, `ROOM_DESIGN_RETURN_AIRFLOW_PARAM`, `ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM`, `SYMBOL_FAMILY_NAME_PARAM`, `VIEWER_VOLUME_OF_INTEREST_CROP`, `BASEPOINT_EASTWEST_PARAM`, `BASEPOINT_ELEVATION_PARAM`, `BASEPOINT_NORTHSOUTH_PARAM`, `CLIENT_NAME`, `CONNECTOR_DIAMETER`, `CONNECTOR_HEIGHT`, `CONNECTOR_WIDTH`, `ELEM_PARTITION_PARAM`, `FAMILY_CONTENT_PART_TYPE`, `INVALID`, `IS_VISIBLE_PARAM`, `LEADER_OFFSET_SHEET`, `LEVEL_ELEV`, `LINE_COLOR`, `OPTION_SET_ID`, `PHASE_CREATED`, `PHASE_DEMOLISHED`, `PROJECT_NAME`, `PROJECT_NUMBER`, `PROJECT_STATUS`, `RBS_CALCULATED_SIZE`, `RBS_ELEC_APPARENT_LOAD`, `RBS_ELEC_NUMBER_OF_POLES`, `RBS_ELEC_VOLTAGE`, `RBS_PIPE_FLOW_DIRECTION_PARAM`, `RBS_PIPING_SYSTEM_TYPE_PARAM`, `RBS_SYSTEM_ABBREVIATION_PARAM`, `ROOM_NUMBER`, `ROOM_VOLUME`, `TEXT_BACKGROUND`, `TEXT_BOX_VISIBILITY`, `TEXT_FONT`, `TEXT_SIZE`, `TEXT_STYLE_BOLD`, `TEXT_STYLE_ITALIC`, `TEXT_STYLE_UNDERLINE`, `TEXT_WIDTH_SCALE`, `VIEW_PHASE`, `VIEW_PHASE_FILTER`, `VIEW_SCALE`, `VIEWER_ANNOTATION_CROP_ACTIVE`
+`RBS_CURVE_HEIGHT_PARAM`, `RBS_CURVE_WIDTH_PARAM`, `EXTRUSION_END_PARAM`, `FAMILY_LEVEL_PARAM`, `INSTANCE_REFERENCE_LEVEL_PARAM`, `LEVEL_PARAM`, `RBS_START_LEVEL_PARAM`, `SCHEDULE_LEVEL_PARAM`, `CEILING_HEIGHTABOVELEVEL_PARAM`, `EXTRUSION_START_PARAM`, `RBS_CURVE_DIAMETER_PARAM`, `RBS_DUCT_SYSTEM_TYPE_PARAM`, `RBS_DUCT_FLOW_PARAM`, `RBS_SYSTEM_NAME_PARAM`, `ROOM_NAME`, `ALL_MODEL_FAMILY_NAME`, `ALL_MODEL_MARK`, `BASEPOINT_ANGLETON_PARAM`, `CURVE_ELEM_LENGTH`, `RBS_CABLETRAY_HEIGHT_PARAM`, `RBS_CABLETRAY_WIDTH_PARAM`, `RBS_CONDUIT_DIAMETER_PARAM`, `RBS_PIPE_DIAMETER_PARAM`, `ROOM_DESIGN_RETURN_AIRFLOW_PARAM`, `ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM`, `SYMBOL_FAMILY_NAME_PARAM`, `VIEWER_VOLUME_OF_INTEREST_CROP`, `BASEPOINT_EASTWEST_PARAM`, `BASEPOINT_ELEVATION_PARAM`, `BASEPOINT_NORTHSOUTH_PARAM`, `CLIENT_NAME`, `CONNECTOR_DIAMETER`, `CONNECTOR_HEIGHT`, `CONNECTOR_WIDTH`, `ELEM_PARTITION_PARAM`, `FAMILY_CONTENT_PART_TYPE`, `INVALID`, `IS_VISIBLE_PARAM`, `LEADER_OFFSET_SHEET`, `LEVEL_ELEV`, `LINE_COLOR`, `OPTION_SET_ID`, `PHASE_CREATED`, `PHASE_DEMOLISHED`, `PROJECT_NAME`, `PROJECT_NUMBER`, `PROJECT_STATUS`, `RBS_CALCULATED_SIZE`, `RBS_ELEC_APPARENT_LOAD`, `RBS_ELEC_NUMBER_OF_POLES`, `RBS_ELEC_VOLTAGE`, `RBS_PIPE_FLOW_DIRECTION_PARAM`, `RBS_PIPING_SYSTEM_TYPE_PARAM`, `RBS_SYSTEM_ABBREVIATION_PARAM`, `ROOM_NUMBER`, `ROOM_VOLUME`, `TEXT_BACKGROUND`, `TEXT_BOX_VISIBILITY`, `TEXT_FONT`, `TEXT_SIZE`, `TEXT_STYLE_BOLD`, `TEXT_STYLE_ITALIC`, `TEXT_STYLE_UNDERLINE`, `TEXT_WIDTH_SCALE`, `VIEW_PHASE`, `VIEW_PHASE_FILTER`, `VIEW_SCALE`, `VIEWER_ANNOTATION_CROP_ACTIVE`
 
 ## BuiltInCategory values in use (41)
 
-`OST_DuctCurves`, `OST_DuctTerminal`, `OST_PipeCurves`, `OST_Rooms`, `OST_DuctAccessory`, `OST_DuctFitting`, `OST_PipeFitting`, `OST_TitleBlocks`, `OST_MEPSpaces`, `OST_VolumeOfInterest`, `OST_FlexDuctCurves`, `OST_MechanicalEquipment`, `OST_StructuralFraming`, `OST_CableTray`, `OST_Ceilings`, `OST_Sprinklers`, `OST_Columns`, `OST_Conduit`, `OST_Doors`, `OST_LightingFixtures`, `OST_StructuralColumns`, `OST_DuctInsulations`, `OST_DuctLinings`, `OST_DuctTags`, `OST_Floors`, `OST_Lines`, `OST_PipeAccessory`, `OST_Walls`, `OST_CableTrayFitting`, `OST_CalloutBoundary`, `OST_Callouts`, `OST_CLines`, `OST_Coupler`, `OST_FlexPipeCurves`, `OST_Furniture`, `OST_Grids`, `OST_Levels`, `OST_Matchline`, `OST_PipeInsulations`, `OST_Rebar`, `OST_Windows`
+`OST_DuctCurves`, `OST_DuctTerminal`, `OST_PipeCurves`, `OST_Rooms`, `OST_DuctAccessory`, `OST_DuctFitting`, `OST_PipeFitting`, `OST_TitleBlocks`, `OST_FlexDuctCurves`, `OST_MEPSpaces`, `OST_VolumeOfInterest`, `OST_MechanicalEquipment`, `OST_StructuralFraming`, `OST_CableTray`, `OST_Ceilings`, `OST_Sprinklers`, `OST_Columns`, `OST_Conduit`, `OST_Doors`, `OST_LightingFixtures`, `OST_StructuralColumns`, `OST_DuctInsulations`, `OST_DuctLinings`, `OST_DuctTags`, `OST_FlexPipeCurves`, `OST_Floors`, `OST_Lines`, `OST_PipeAccessory`, `OST_Walls`, `OST_CableTrayFitting`, `OST_CalloutBoundary`, `OST_Callouts`, `OST_CLines`, `OST_Coupler`, `OST_Furniture`, `OST_Grids`, `OST_Levels`, `OST_Matchline`, `OST_PipeInsulations`, `OST_Rebar`, `OST_Windows`
 
 ## Regenerate
 
