@@ -6,11 +6,14 @@ layout. Deliberately split into small chunks so a search returns the one that an
 instead of a 700-line wall.
 
 The workflow that uses all of this is [`skills/ajtools-fire-sprinkler-layout/SKILL.md`](../../skills/ajtools-fire-sprinkler-layout/SKILL.md).
-**Pipe sizing, hydraulics, pump and tank selection are not here and not in this Brain** — this folder is
-about head placement only.
+**Hydraulics, pump and tank selection are not here and not in this Brain.** Head placement is the bulk of
+this folder; **pipe sizing by the schedule method** was added 2026-08-20 and lives in
+[`pipe-sizing.md`](pipe-sizing.md) — sizing only, never routing, and it checks whether the schedule method
+is permitted before it sizes anything.
 
 | The question is about… | Open |
 |---|---|
+| **Which hazard class is this space, and how is that decided** — all five NFPA classes and the EN LH/OH1–4/HHP/HHS set, the 8 ft stockpile line, mixed occupancy, and the car-park reclassification | [`hazard-classification.md`](hazard-classification.md) |
 | How many heads, how far apart, how far off the wall — hazard class, max area per head, max/min spacing, wall distances, the small-room rule, the worked jobs already done | [`../nfpa13-sprinkler-spacing.md`](../nfpa13-sprinkler-spacing.md) — the numbers chunk, stayed where it was so old links still work |
 | Which head — pendent, upright, sidewall, concealed, recessed, flush, dry, extended coverage — and what changes in the layout when the type changes | [`sprinkler-types.md`](sprinkler-types.md) |
 | **The Z dimension**: how far below the ceiling, how far below the slab when there is no ceiling, sloped ceilings, ceiling pockets, clearance above stored goods | [`deflector-and-ceiling-height.md`](deflector-and-ceiling-height.md) |
@@ -19,6 +22,7 @@ about head placement only.
 | **Which rulebook is this job on** — where NFPA 13 and BS EN 12845 agree, where they quietly don't, and what to change when the spec says EN | [`nfpa-vs-en12845.md`](nfpa-vs-en12845.md) |
 | **Does this space need heads at all** — omissions, exempt locations, stairs and shafts, and choosing the temperature rating | [`where-sprinklers-are-required.md`](where-sprinklers-are-required.md) |
 | **Is the whole job covered yet** — what a complete zero-to-finish design needs, what exists, what is missing, and why pipe sizing is gated | [`roadmap-zero-to-finish.md`](roadmap-zero-to-finish.md) |
+| **Sizing the pipe** — the two methods, when the pipe schedule is permitted at all, the tables, and why hydraulic calculation stays out | [`pipe-sizing.md`](pipe-sizing.md) |
 | **The actual method** — room boundary in, head positions out, in the order the decisions have to be made | [`layout-method.md`](layout-method.md) |
 | Doing it in Revit — which categories hold the beams and columns, how to read the ceiling, how head height is really controlled, which fragment to run | [`revit-modelling.md`](revit-modelling.md) |
 

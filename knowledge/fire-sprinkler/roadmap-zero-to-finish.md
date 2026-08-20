@@ -47,9 +47,13 @@ Ordered by what blocks "zero to finish" hardest.
 1. **A live run of the whole chain, once.** Three of the fragments need only a placed Room, which exists.
    Three need a beam and a column, which the API can build. One needs a ceiling. One needs a sprinkler
    family. See the open-items list in [`../brain-log.md`](../brain-log.md).
-2. **Hazard class per room.** Today it is one input applied to a whole run. A real floor is mixed, and
-   nothing in the model stores the class. Needs a project parameter on Rooms, written once and read by
-   every fragment — otherwise every run re-asks and every answer is un-auditable.
+2. ~~**Hazard class per room.**~~ **Built 2026-08-20** —
+   [`../../scripts/recipes/sprinkler-set-room-hazard.cs`](../../scripts/recipes/sprinkler-set-room-hazard.cs)
+   records the class, its source and its standard on each Room and reads them back, with the full class
+   reference in [`hazard-classification.md`](hazard-classification.md). **What remains:** the project
+   parameters have to be bound to Rooms once through the Revit UI (a script cannot create them), and the
+   other fragments still take `hazardLabel` as a typed input rather than reading the room's recorded
+   class — wiring that through is the next step and makes a mixed floor work end to end.
 3. **The head schedule.** Type, K-factor, temperature rating, response, finish, and the hazard class and
    standard the layout was computed for. `sprinkler-place-heads.cs` places geometry; it does not yet write
    the data that makes a placed head a designed head. The temperature-rating logic to drive it is written
@@ -81,15 +85,26 @@ Saying this plainly so it never becomes an implied promise:
 Ajmal's own sequencing, 2026-08-20: *"after all finishing the sprinkler, you can continue the pipe
 sizing. Not routing, pipe sizing only."*
 
-**The gate is item 1 above: the chain has to run against a real model once.** Sizing pipe for a layout
+**Update 2026-08-20, later the same day: Ajmal asked for pipe sizing to be built now, and it was.**
+[`pipe-sizing.md`](pipe-sizing.md) and
+[`../../scripts/recipes/sprinkler-pipe-schedule-size.cs`](../../scripts/recipes/sprinkler-pipe-schedule-size.cs)
+cover the **pipe schedule method**. That is not a reversal of the gate — the gate was always about *using*
+this on a live job, and building the knowledge and the lookup does not depend on the layout being verified.
+What still holds: **do not issue sizes from a layout whose head positions have never been checked.**
+
+**The gate for USE is item 1 above: the chain has to run against a real model once.** Sizing pipe for a layout
 whose head positions have never been verified would build a second unproven layer on an unproven first
 one, and the failure would surface at the bottom where it is hardest to diagnose.
 
-When that gate is passed, pipe sizing is its own subject with its own chunk — and worth noting now, while
-it is fresh: it is **not** the same job as HVAC duct sizing, the Brain's existing sizing work. Sprinkler
-pipe is sized either by a **pipe schedule** (a lookup table: this many heads on this size, by hazard
-class) or **hydraulically** (calculated to a density). The schedule method is tractable here and is
-genuinely useful. The hydraulic method is not, and it belongs with the same licensed engineer as the rest
-of the hydraulics.
+Pipe sizing is **not** the same job as HVAC duct sizing, the Brain's existing sizing work. Sprinkler pipe
+is sized either by a **pipe schedule** (a lookup: this many heads on this size, by hazard class) or
+**hydraulically** (calculated to a density). The schedule method is built. The hydraulic method is not and
+will not be — it belongs with the same licensed engineer as the rest of the hydraulics.
 
-That distinction is the first thing to establish when the gate opens — not after.
+And the finding that came out of building it, which is the useful part: **the schedule method is so
+restricted that on most real projects it does not apply.** Light and ordinary hazard only, new systems of
+465 m² or less, or larger only with 50 psi proven at the highest head — and the 2025 edition removed the
+old allowance for additions to existing schedule systems. So the fragment's most valuable output is often
+*"this needs hydraulic calculation"*, delivered before anyone spends a day sizing pipe that cannot be
+issued. It still prints the sizes underneath, marked INDICATIVE ONLY, because they are genuinely useful
+for coordination, clash and take-off.
