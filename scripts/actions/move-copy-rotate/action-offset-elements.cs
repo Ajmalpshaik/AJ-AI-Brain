@@ -63,7 +63,7 @@ using (var t = new Transaction(Document, "AJ Tools - Offset Elements"))
         }
         t.Commit();
         sb.AppendLine($"Offset {done} element(s) by {offsetMm}mm ({(copy ? "copy" : "moved in place")}), skipped {skipped}.");
-        if (copy && newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id.IntegerValue))}");
+        if (copy && newElementIds.Count > 0) sb.AppendLine($"newElementIds: {string.Join(", ", newElementIds.Select(id => id))}");
         if (failures.Count > 0)
             sb.AppendLine("Skipped detail: " + string.Join("; ", failures.Take(10)) +
                 (failures.Count > 10 ? $" ... and {failures.Count - 10} more" : ""));

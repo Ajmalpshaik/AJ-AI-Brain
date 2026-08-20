@@ -76,12 +76,12 @@ else
         var b = el.get_BoundingBox(null);
         return b == null ? null : (b.Min + b.Max) / 2.0;
     };
-    var tCentre = new Dictionary<int, XYZ>();
-    var tBox = new Dictionary<int, BoundingBoxXYZ>();
+    var tCentre = new Dictionary<ElementId, XYZ>();
+    var tBox = new Dictionary<ElementId, BoundingBoxXYZ>();
     foreach (var t in targets)
     {
-        tCentre[t.Id.IntegerValue] = centreOf(t);
-        tBox[t.Id.IntegerValue] = t.get_BoundingBox(null);
+        tCentre[t.Id] = centreOf(t);
+        tBox[t.Id] = t.get_BoundingBox(null);
     }
 
     // gap between two axis-aligned boxes: 0 on any axis where they overlap
@@ -111,10 +111,10 @@ else
             if (excludeSameElement && tgt.Id == src.Id) continue;
             comparisons++;
             double d;
-            if (metric == "gap") d = boxGap(sbx, tBox[tgt.Id.IntegerValue]);
+            if (metric == "gap") d = boxGap(sbx, tBox[tgt.Id]);
             else
             {
-                var tc = tCentre[tgt.Id.IntegerValue];
+                var tc = tCentre[tgt.Id];
                 if (sc == null || tc == null) continue;
                 d = metric == "manhattan"
                     ? Math.Abs(sc.X - tc.X) + Math.Abs(sc.Y - tc.Y) + Math.Abs(sc.Z - tc.Z)

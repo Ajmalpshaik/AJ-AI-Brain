@@ -17,6 +17,15 @@
 //          action-set-schedule-sort-group.cs — those two SET the rules this one reports.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================
+
+// Version-proof id VALUE, for the few places that need a number rather than an ElementId (testing for a
+// built-in negative id, casting to BuiltInParameter). Revit 2024 renamed IntegerValue -> Value and made
+// it 64-bit; naming either one directly fails to compile on the other version, so it is looked up by
+// name instead. The lookup happens ONCE and is captured, so each call is a field read, not a reflection
+// search - safe to use in a loop.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 // API LIMIT, measured on Revit 2020 (2026-08-19): the TEXT of a calculated-value formula cannot be read.
 // ScheduleField has no formula member at all in this version (ScheduleField.GetFormula() arrived later),
 // so a Formula column is reported as such and its expression has to be read in the Revit UI —
@@ -36,7 +45,7 @@ foreach (var el in elements)
     Category cat = null;
     try { cat = Category.GetCategory(Document, def.CategoryId); } catch { }
     string catName = cat != null ? cat.Name
-        : (def.CategoryId.IntegerValue == -1 ? "<Multi-Category>" : def.CategoryId.ToString());
+        : (IdValue(def.CategoryId) == -1 ? "<Multi-Category>" : def.CategoryId.ToString());
 
     sb.AppendLine($"Schedule '{schedule.Name}' (Id {schedule.Id})");
     sb.AppendLine($"  Category     : {catName}");
@@ -109,10 +118,10 @@ foreach (var el in elements)
             if (formulaMethod != null) { try { extra = (string)formulaMethod.Invoke(field, null); } catch { extra = "(formula unreadable)"; } }
             else extra = "(formula text not exposed by this Revit version — read it in the UI)";
         }
-        else if (pid.IntegerValue < 0)
+        else if (IdValue(pid) < 0)
         {
             source = "Revit built-in";
-            extra = ((BuiltInParameter)pid.IntegerValue).ToString();
+            extra = ((BuiltInParameter)IdValue(pid)).ToString();
         }
         else
         {
@@ -120,7 +129,7 @@ foreach (var el in elements)
             var spe = pe as SharedParameterElement;
             if (spe != null) { source = "SHARED parameter"; extra = spe.GuidValue.ToString(); }
             else if (pe != null) { source = "project parameter"; extra = "(not shared)"; }
-            else { source = "id " + pid.IntegerValue; }
+            else { source = "id " + pid; }
         }
         sb.AppendLine($"    {i + 1} | {field.GetName()} | {field.FieldType} | {source} | {extra}");
     }

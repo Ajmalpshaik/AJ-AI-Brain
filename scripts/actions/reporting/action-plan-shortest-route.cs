@@ -132,7 +132,7 @@ if (nodes.Count < 2)
 else
 {
     // ---------- 1. put every element into a group ----------
-    var groupOf = new Dictionary<int, string>();   // element id -> group key
+    var groupOf = new Dictionary<ElementId, string>();   // element id -> group key
     if (groupBy == "room" || groupBy == "space")
     {
         var cat = groupBy == "room" ? BuiltInCategory.OST_Rooms : BuiltInCategory.OST_MEPSpaces;
@@ -157,7 +157,7 @@ else
                 catch { }
                 if (inside) { key = $"{c.Name} ({c.Id})"; break; }
             }
-            groupOf[el.Id.IntegerValue] = key;
+            groupOf[el.Id] = key;
         }
     }
     else if (groupBy == "level")
@@ -165,7 +165,7 @@ else
         foreach (var el in nodes)
         {
             var lvl = Document.GetElement(el.LevelId);
-            groupOf[el.Id.IntegerValue] = lvl != null ? $"{lvl.Name} ({lvl.Id})" : "(no level)";
+            groupOf[el.Id] = lvl != null ? $"{lvl.Name} ({lvl.Id})" : "(no level)";
         }
     }
     else if (groupBy == "parameter")
@@ -176,15 +176,15 @@ else
             if (p == null) { var te = Document.GetElement(el.GetTypeId()); p = te?.LookupParameter(groupParameterName); }
             string v = null;
             if (p != null && p.HasValue) { try { v = p.AsValueString(); } catch { } if (string.IsNullOrEmpty(v)) v = p.AsString(); }
-            groupOf[el.Id.IntegerValue] = string.IsNullOrEmpty(v) ? "(blank)" : v;
+            groupOf[el.Id] = string.IsNullOrEmpty(v) ? "(blank)" : v;
         }
     }
     else
     {
-        foreach (var el in nodes) groupOf[el.Id.IntegerValue] = "(all)";
+        foreach (var el in nodes) groupOf[el.Id] = "(all)";
     }
 
-    var groups = nodes.GroupBy(e => groupOf[e.Id.IntegerValue]).OrderBy(g => g.Key).ToList();
+    var groups = nodes.GroupBy(e => groupOf[e.Id]).OrderBy(g => g.Key).ToList();
 
     // ---------- 2. route inside each group ----------
     // returns the segments as (fromElement, toElement, length) plus the guarantee wording
@@ -293,12 +293,12 @@ else
         var byGroup = groups.ToDictionary(g => g.Key, g => g.ToList());
         var remaining = new HashSet<string>(byGroup.Keys);
         // start where the user said, else the first element of the first group
-        Element entry = nodes.FirstOrDefault(e => e.Id.IntegerValue == startElementIdInt) ?? groups.First().First();
+        Element entry = nodes.FirstOrDefault(e => e.Id == new ElementId(startElementIdInt)) ?? groups.First().First();
         double inside = 0, hopTotal = 0; int hopCount = 0;
 
         while (remaining.Count > 0)
         {
-            string gk = groupOf[entry.Id.IntegerValue];
+            string gk = groupOf[entry.Id];
             if (!remaining.Contains(gk)) { gk = remaining.First(); entry = byGroup[gk].First(); }
             remaining.Remove(gk);
             var ms = byGroup[gk];
@@ -331,7 +331,7 @@ else
             {
                 allSegments.Add(Tuple.Create(bestExit, bestNextEntry, bestHop));
                 hopTotal += bestHop; hopCount++;
-                sb.AppendLine($"      -> jump {toMm(bestHop):N0} mm to {bestNextEntry.Id} in {groupOf[bestNextEntry.Id.IntegerValue]} (nearest of {remaining.SelectMany(r => byGroup[r]).Count()} remaining)");
+                sb.AppendLine($"      -> jump {toMm(bestHop):N0} mm to {bestNextEntry.Id} in {groupOf[bestNextEntry.Id]} (nearest of {remaining.SelectMany(r => byGroup[r]).Count()} remaining)");
                 entry = bestNextEntry;
             }
         }
@@ -346,7 +346,7 @@ else
         int startIdx = 0;
         if (startElementIdInt != 0)
         {
-            int idx = members.FindIndex(e => e.Id.IntegerValue == startElementIdInt);
+            int idx = members.FindIndex(e => e.Id == new ElementId(startElementIdInt));
             if (idx >= 0) startIdx = idx;
         }
         var segs = routeGroup(members, startIdx);

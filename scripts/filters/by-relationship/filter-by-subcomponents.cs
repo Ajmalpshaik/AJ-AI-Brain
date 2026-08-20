@@ -21,7 +21,7 @@ var sb = new System.Text.StringBuilder();
 var elements = new List<Element>();
 
 var toVisit = new Queue<ElementId>(parentIdInts.Select(i => new ElementId(i)));
-var seen = new HashSet<int>();
+var seen = new HashSet<ElementId>();
 int invalidParents = 0;
 
 while (toVisit.Count > 0)
@@ -32,7 +32,7 @@ while (toVisit.Count > 0)
 
     foreach (var subId in fi.GetSubComponentIds())
     {
-        if (!seen.Add(subId.IntegerValue)) continue;
+        if (!seen.Add(subId)) continue;
         var sub = Document.GetElement(subId);
         if (sub == null) continue;
         elements.Add(sub);

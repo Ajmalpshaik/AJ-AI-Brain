@@ -614,7 +614,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
             return (cx - halfW, cx + halfW, cy - halfH, cy + halfH);
         };
         Func<IndependentTag, XYZ> safeElbow = (tagEl) => { try { return tagEl.HasLeader ? tagEl.LeaderElbow : null; } catch { return null; } };
-        Action<Dictionary<int, XYZ>, int, XYZ> addMove = (dict, id, v) => { if (dict.TryGetValue(id, out var ex2)) dict[id] = ex2.Add(v); else dict[id] = v; };
+        Action<Dictionary<ElementId, XYZ>, ElementId, XYZ> addMove = (dict, id, v) => { if (dict.TryGetValue(id, out var ex2)) dict[id] = ex2.Add(v); else dict[id] = v; };
 
         int cleanupMoves = 0, cleanupIter;
         const int CLEANUP_CAP = 20;
@@ -624,7 +624,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
             var fullBoxes = new List<(IndependentTag tag, double minX, double maxX, double minY, double maxY)>();
             foreach (var t in liveTags) { var b = realViewBox(t); if (b.HasValue) fullBoxes.Add((t, b.Value.minX, b.Value.maxX, b.Value.minY, b.Value.maxY)); }
 
-            var moves = new Dictionary<int, XYZ>();
+            var moves = new Dictionary<ElementId, XYZ>();
 
             for (int i = 0; i < fullBoxes.Count; i++)
             for (int j = i + 1; j < fullBoxes.Count; j++)
@@ -647,8 +647,8 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
                 else if (!aIsL && bIsL) { aShare = 1; bShare = 0; }
                 else { aShare = 0.5; bShare = 0.5; }
 
-                addMove(moves, a.tag.Id.IntegerValue, axisDir.Multiply(sign * pushDist * aShare));
-                addMove(moves, b.tag.Id.IntegerValue, axisDir.Multiply(-sign * pushDist * bShare));
+                addMove(moves, a.tag.Id, axisDir.Multiply(sign * pushDist * aShare));
+                addMove(moves, b.tag.Id, axisDir.Multiply(-sign * pushDist * bShare));
             }
 
             foreach (var t in liveTags)
@@ -667,7 +667,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
                     double sign = Math.Sign(tCenter - dCenter);
                     if (sign == 0) sign = 1;
                     XYZ axisDir = pushXAxis ? viewRight : viewUp;
-                    addMove(moves, t.Id.IntegerValue, axisDir.Multiply(sign * pushDist));
+                    addMove(moves, t.Id, axisDir.Multiply(sign * pushDist));
                 }
             }
 
@@ -675,7 +675,7 @@ using (var txCleanup = new Transaction(doc, "Resolve residual tag clashes (dense
 
             foreach (var kv in moves)
             {
-                var tagM = doc.GetElement(new ElementId(kv.Key)) as IndependentTag;
+                var tagM = doc.GetElement(kv.Key) as IndependentTag;
                 if (tagM == null) continue;
                 XYZ newHead = tagM.TagHeadPosition.Add(kv.Value);
                 var taggedEl = doc.GetElement(tagM.TaggedLocalElementId);

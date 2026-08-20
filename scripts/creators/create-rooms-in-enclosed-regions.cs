@@ -47,7 +47,7 @@ else
 {
     var unplaced = new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_Rooms)
         .WhereElementIsNotElementType().Cast<Autodesk.Revit.DB.Architecture.Room>()
-        .Where(r => r.Area <= 0).OrderBy(r => r.Id.IntegerValue).ToList();
+        .Where(r => r.Area <= 0).OrderBy(r => r.Id).ToList();
 
     using (var t = new Transaction(Document, "AJ Tools - Fill Enclosed Regions With Rooms"))
     {

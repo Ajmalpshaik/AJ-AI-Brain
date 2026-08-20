@@ -41,7 +41,7 @@ Func<Parameter, string> valueText = p =>
         case StorageType.ElementId:
             var id = p.AsElementId();
             if (id == null || id == ElementId.InvalidElementId) return "";
-            return Document.GetElement(id)?.Name ?? ("#" + id.IntegerValue);
+            return Document.GetElement(id)?.Name ?? ("#" + id);
         default: return "";
     }
 };

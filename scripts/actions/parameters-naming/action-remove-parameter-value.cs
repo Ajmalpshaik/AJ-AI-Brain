@@ -35,7 +35,7 @@ Func<Element, Parameter> resolveWritable = e =>
 };
 
 int clearedInstance = 0, clearedType = 0, zeroedNumeric = 0, skipped = 0, rejected = 0;
-var rejectedIds = new List<int>();
+var rejectedIds = new List<ElementId>();
 
 using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
 {
@@ -62,7 +62,7 @@ using (var t = new Transaction(Document, "AJ Tools - Remove Parameter Value"))
                 case StorageType.Integer: ok = p.Set(0); if (ok) zeroedNumeric++; break;
                 default: skipped++; continue;
             }
-            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id); }
         }
         t.Commit();
         sb.AppendLine($"'{parameterName}': genuinely cleared on {clearedInstance} element(s) at Instance level" +

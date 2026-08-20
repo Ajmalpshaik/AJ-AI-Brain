@@ -14,6 +14,15 @@
 //   (Area, Length, Volume) and suppressed the ~50 identical ones.
 // ============================================================
 
+
+// Version-proof id VALUE, for the few places that need a number rather than an ElementId (testing for a
+// built-in negative id, casting to BuiltInParameter). Revit 2024 renamed IntegerValue -> Value and made
+// it 64-bit; naming either one directly fails to compile on the other version, so it is looked up by
+// name instead. The lookup happens ONCE and is captured, so each call is a field read, not a reflection
+// search - safe to use in a loop.
+var _idValueProp = typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue");
+Func<ElementId, long> IdValue = id => Convert.ToInt64(_idValueProp.GetValue(id));
+
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 bool showAll = false;       // false = only parameters whose values differ; true = every parameter
 bool includeType = true;    // also compare the elements' TYPE parameters (marked [T])
@@ -42,7 +51,7 @@ else
                 case StorageType.Double: v = p.AsDouble().ToString("F4"); break;
                 case StorageType.ElementId:
                     var id = p.AsElementId();
-                    v = id.IntegerValue < 0 ? "(none)" : (Document.GetElement(id)?.Name ?? id.ToString());
+                    v = IdValue(id) < 0 ? "(none)" : (Document.GetElement(id)?.Name ?? id.ToString());
                     break;
             }
         }

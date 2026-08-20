@@ -36,7 +36,7 @@ Func<Element, (Parameter param, string source)> resolveParam = e =>
 };
 
 int updatedInstance = 0, updatedType = 0, skipped = 0, rejected = 0;
-var rejectedIds = new List<int>();
+var rejectedIds = new List<ElementId>();
 
 using (var t = new Transaction(Document, "AJ Tools - Set Parameter Value"))
 {
@@ -68,7 +68,7 @@ using (var t = new Transaction(Document, "AJ Tools - Set Parameter Value"))
                 skipped++;
                 continue;
             }
-            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id); }
         }
         t.Commit();
         sb.AppendLine($"Set '{parameterName}' on {updatedInstance} element(s) at Instance level" +

@@ -26,27 +26,27 @@ bool countLiningAsInsulated = true; // true = Duct Lining counts as "insulated" 
 var sb = new System.Text.StringBuilder();
 
 // Build the host->has-covering lookup ONCE (reverse scan), instead of re-scanning per candidate.
-var insulatedHostIds = new HashSet<int>();
+var insulatedHostIds = new HashSet<ElementId>();
 foreach (Autodesk.Revit.DB.InsulationLiningBase il in new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Mechanical.DuctInsulation)))
 {
-    try { insulatedHostIds.Add(il.HostElementId.IntegerValue); } catch { }
+    try { insulatedHostIds.Add(il.HostElementId); } catch { }
 }
 foreach (Autodesk.Revit.DB.InsulationLiningBase il in new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Plumbing.PipeInsulation)))
 {
-    try { insulatedHostIds.Add(il.HostElementId.IntegerValue); } catch { }
+    try { insulatedHostIds.Add(il.HostElementId); } catch { }
 }
 if (countLiningAsInsulated)
 {
     foreach (Autodesk.Revit.DB.InsulationLiningBase il in new FilteredElementCollector(Document).OfClass(typeof(Autodesk.Revit.DB.Mechanical.DuctLining)))
     {
-        try { insulatedHostIds.Add(il.HostElementId.IntegerValue); } catch { }
+        try { insulatedHostIds.Add(il.HostElementId); } catch { }
     }
 }
 
 List<Element> elements = new FilteredElementCollector(Document)
     .OfCategory(targetCategory)
     .WhereElementIsNotElementType()
-    .Where(e => insulatedHostIds.Contains(e.Id.IntegerValue) == wantInsulated)
+    .Where(e => insulatedHostIds.Contains(e.Id) == wantInsulated)
     .ToList();
 
 sb.AppendLine($"Filtered {elements.Count} element(s) in category {targetCategory}, {(wantInsulated ? "insulated" : "bare (no insulation/lining)")}" +

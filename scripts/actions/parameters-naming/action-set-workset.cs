@@ -51,6 +51,8 @@ else
 
                     try
                     {
+                        // WorksetId, NOT ElementId - unaffected by the Revit 2024 64-bit
+                        // ElementId change, and Parameter.Set wants the int. Leave as is.
                         p.Set(targetWorkset.Id.IntegerValue);
                         updated++;
                     }

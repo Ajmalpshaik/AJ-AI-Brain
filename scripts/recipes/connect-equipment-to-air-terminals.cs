@@ -70,14 +70,14 @@ if (sup == null)                                            // fallback: any fre
 if (sup == null) return "No free SupplyAir connector on the equipment - stopped.";
 
 // ---- STEP 2 (terminals): every free air-terminal duct connector ----
-var terms = new List<Tuple<int, Connector>>();
+var terms = new List<Tuple<ElementId, Connector>>();
 foreach (var at in new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctTerminal)
          .WhereElementIsNotElementType().Cast<FamilyInstance>())
 {
     if (at.MEPModel == null || at.MEPModel.ConnectorManager == null) continue;
     foreach (Connector c in at.MEPModel.ConnectorManager.Connectors)
         if (c.Domain == Domain.DomainHvac && !c.IsConnected)
-            terms.Add(Tuple.Create(at.Id.IntegerValue, c));
+            terms.Add(Tuple.Create(at.Id, c));
 }
 if (terms.Count == 0) return "No free air-terminal connectors found - nothing to connect.";
 

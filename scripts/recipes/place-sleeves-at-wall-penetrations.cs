@@ -113,7 +113,7 @@ if (!dryRun && crossings.Count > 0)
             try
             {
                 if (!symbol.IsActive) { symbol.Activate(); Document.Regenerate(); }
-                int placed = 0; var placedIds = new List<int>();
+                int placed = 0; var placedIds = new List<ElementId>();
 
                 foreach (var c in crossings)
                 {
@@ -144,7 +144,7 @@ if (!dryRun && crossings.Count > 0)
                         if (pH != null && !pH.IsReadOnly) pH.Set(svcH.AsDouble() + 2 * mm(clearanceMm));
                     }
 
-                    placed++; placedIds.Add(inst.Id.IntegerValue);
+                    placed++; placedIds.Add(inst.Id);
                 }
                 t.Commit();
                 sb.AppendLine($"Placed {placed} sleeve(s) ('{symbol.FamilyName}' : '{symbol.Name}', +{clearanceMm} mm clearance all around). Ids: {string.Join(", ", placedIds.Take(30))}{(placedIds.Count > 30 ? ", ..." : "")}");

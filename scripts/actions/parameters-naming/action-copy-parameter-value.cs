@@ -35,7 +35,7 @@ Func<Element, string, Parameter> resolveAny = (e, name) =>
 };
 
 int updatedInstance = 0, updatedType = 0, skipped = 0, rejected = 0;
-var rejectedIds = new List<int>();
+var rejectedIds = new List<ElementId>();
 
 using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
 {
@@ -72,7 +72,7 @@ using (var t = new Transaction(Document, "AJ Tools - Copy Parameter Value"))
                 case StorageType.ElementId: ok = dst.Set(src.AsElementId()); break;
                 default: skipped++; continue;
             }
-            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id.IntegerValue); continue; }
+            if (!ok) { rejected++; if (rejectedIds.Count < 20) rejectedIds.Add(e.Id); continue; }
             if (dstIsType) updatedType++; else updatedInstance++;
         }
         t.Commit();
