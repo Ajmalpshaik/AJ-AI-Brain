@@ -14,8 +14,8 @@ original full text.)
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
 Rewritten 2026-08-07 at the end of the big verification campaign so the next session can resume without
-re-deriving anything. **223 of 268 fragments are verified against a real Revit model (83%).** The 45
-below are everything left, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
+re-deriving anything. **237 of 280 fragments are verified against a real Revit model (85%) as of 2026-08-20.** Everything
+left is below, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
 nothing about whether you can act. Headings are bold and items numbered on purpose: `tools/brain-status.mjs`
 counts them that way.
 
@@ -23,6 +23,12 @@ counts them that way.
 1. `actions/structural-changes/action-place-accessory-on-run.cs` — ducts exist; create-then-rollback.
    Its METHOD is proven but the file as one uninterrupted run threw an unisolated null reference; read its
    STATUS block. Suspect: an element handle reused across a transaction boundary after `BreakCurve`.
+
+2. `recipes/sprinkler-nfpa-grid.cs`, `recipes/sprinkler-compliance-audit.cs` and
+   `recipes/sprinkler-sidewall-layout.cs` — a placed Room is all three need, and Room 4 exists. These are
+   the three of the eight sprinkler fragments (2026-08-20) that can be proven on the model as it stands.
+   Run the grid one first and check its table against a hand calculation; the arithmetic is plain C# with
+   no Revit call in it, so one room settles all three.
 
 (**Everything else in this group is closed.** 2026-08-14: `action-add-aligned-dimensions.cs`,
 `action-add-spot-elevations.cs`, `action-manage-sheet-sets.cs` and `action-add-remove-insulation.cs`
@@ -61,6 +67,20 @@ including 166 electrical. Its "KNOWN BUG" also turned out not to be real — see
    reflection 2026-08-14: 0 overloads, and no ceiling method on `Document.Create`), so the API cannot
    build this one fixture. That makes it an ASK, not a wait. `creators/create-ceiling.cs` is not an open
    item at all — it is already written up as CONFIRMED IMPOSSIBLE and does the right thing.
+
+4. **Structural framing and columns in the test model** — the positive path of
+   `recipes/sprinkler-obstruction-survey.cs`, `recipes/sprinkler-obstruction-check.cs` and
+   `recipes/sprinkler-adjust-for-obstructions.cs` (2026-08-20). All three will RUN today and report
+   "nothing found", which proves only the empty branch. Beams and columns are buildable by API
+   (`NewFamilyInstance` with a structural type), so this is a build-the-fixture job, not a wait — the same
+   move that closed the electrical and insulation items. Add one beam and one column to Room 4 and all
+   three get a real test, including the bay-module detection.
+5. `recipes/sprinkler-deflector-height.cs` — needs **a ceiling**, exactly like `ray-trace-to-ceiling.cs`
+   above, and blocked by the same Revit 2020 `Ceiling.Create` gap. Same ASK: one ceiling drawn by hand
+   unblocks both. Its no-ceiling cases (2a exposed slab, 2b under a beam) can be proven without one.
+6. `recipes/sprinkler-place-heads.cs` — needs **a sprinkler family loaded**. Not yet checked whether the
+   model has one; the stock library ships them, so this is likely a `creators/load-family.cs` call rather
+   than a real block. Check before assuming — "fixture-blocked" has been wrong four times in this Brain.
 
 (Electrical content was item 1 here until 2026-08-14 — **closed by building the fixture**: two stock MEP
 families loaded, a real panelled PowerCircuit created, `filter-by-electrical-system.cs` verified.)
