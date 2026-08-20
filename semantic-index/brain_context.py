@@ -61,25 +61,15 @@ def log_question(query, results):
         pass
 
 
-def main(argv):
-    parser = argparse.ArgumentParser(description="Compact Brain search block for context.")
-    parser.add_argument("query", nargs="+")
-    parser.add_argument("--top", type=int, default=5)
-    parser.add_argument("--log", action="store_true",
-                        help="append the question and its hits to job-log/questions.jsonl")
-    args = parser.parse_args(argv)
+def build_block(query, results, notes):
+    """
+    The compact block, as text. Split out from main() so the warm server can build the
+    identical thing without a second copy of the format living in JavaScript.
 
-    query = " ".join(args.query).strip()
-    if not query:
-        return 0
-
-    sys.path.insert(0, str(HERE))
-    from brain_search_hybrid import hybrid_search
-
-    results, notes = hybrid_search(query, top_k=args.top)
-    if not results:
-        return 0
-
+    That matters more than it sounds: the last two lines are the guardrail against
+    answering from general Revit knowledge, and a duplicate formatter in another language
+    is exactly how a guardrail quietly stops being emitted.
+    """
     lines = [f'Brain hits for "{query}":']
     for i, r in enumerate(results, start=1):
         path = str(r.get("path", "?")).replace("\\", "/")
@@ -114,10 +104,37 @@ def main(argv):
     if notes and "stale" in repr(notes).lower():
         lines.append("  (WARNING: index is STALE - these paths may be out of date)")
 
+    return "\n".join(lines)
+
+
+def main(argv):
+    parser = argparse.ArgumentParser(description="Compact Brain search block for context.")
+    parser.add_argument("query", nargs="+")
+    parser.add_argument("--top", type=int, default=5)
+    parser.add_argument("--log", action="store_true",
+                        help="append the question and its hits to job-log/questions.jsonl")
+    args = parser.parse_args(argv)
+
+    query = " ".join(args.query).strip()
+    if not query:
+        return 0
+
+    sys.path.insert(0, str(HERE))
+    # Through the client, not hybrid_search directly: this runs on EVERY message typed
+    # at a session, and it was paying 1,856 ms to load the embedding model each time.
+    # The client uses a warm server when one is up and does the search here when it is
+    # not, so the answer is identical either way and the first search after a reboot
+    # simply leaves a warm server behind for the second.
+    from brain_client import search
+
+    results, notes, _source = search(query, top_k=args.top)
+    if not results:
+        return 0
+
     if args.log:
         log_question(query, results)
 
-    print("\n".join(lines))
+    print(build_block(query, results, notes))
     return 0
 
 

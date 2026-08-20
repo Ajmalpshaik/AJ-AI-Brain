@@ -24,6 +24,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import net from "node:net";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -70,6 +71,68 @@ try {
 
 const prompt = payload.prompt ?? "";
 if (!shouldSearch(prompt)) process.exit(0);
+
+// --- fast path: ask a warm server, in Node, with no Python at all -----------------------
+//
+// This hook runs on EVERY message. Measured 2026-08-21 it cost 3,536 ms, and even with the warm
+// server behind a Python relay it still cost 840 ms - of which only ~231 ms was the search. The
+// rest was starting an interpreter to pass a socket message that Node can send itself.
+//
+// So when a server is up, Node speaks to it directly and asynchronously. A hook does not need
+// synchronous I/O: it only has to write its block to stdout before the process exits, which a
+// callback does perfectly well. That removes an entire process launch from every message.
+//
+// The server returns the FINISHED block, built by brain_context.build_block, not raw results.
+// One formatter, in one language - including the two guardrail lines that tell the session to
+// say so when nothing matched. A JavaScript copy of that format is exactly how a guardrail
+// stops being emitted without anyone noticing.
+//
+// Any problem at all - no server, stale details, refused, slow, malformed - falls through to
+// the Python path, which is unchanged and still correct on its own.
+function askWarmServer(question) {
+  return new Promise((resolve) => {
+    let info;
+    try {
+      const infoPath = path.join(semanticRoot, "brain-server.json");
+      if (!fs.existsSync(infoPath)) return resolve(null);
+      info = JSON.parse(fs.readFileSync(infoPath, "utf8"));
+      if (!info.port || !info.token) return resolve(null);
+    } catch {
+      return resolve(null);
+    }
+
+    const request = JSON.stringify({
+      token: info.token, cmd: "context", query: question, top_k: 5, log: true,
+    });
+
+    let done = false;
+    const finish = (value) => { if (!done) { done = true; resolve(value); } };
+
+    const sock = net.createConnection({ host: "127.0.0.1", port: Number(info.port) });
+    let buf = "";
+    sock.setTimeout(15000, () => { sock.destroy(); finish(null); });
+    sock.on("connect", () => sock.write(request + "\n"));
+    sock.on("data", (chunk) => {
+      buf += chunk;
+      if (!buf.includes("\n")) return;
+      sock.end();
+      try {
+        const reply = JSON.parse(buf.trim().split("\n")[0]);
+        finish(reply.ok ? (reply.block || "") : null);
+      } catch {
+        finish(null);
+      }
+    });
+    sock.on("error", () => finish(null));
+    sock.on("close", () => finish(null));
+  });
+}
+
+const warm = await askWarmServer(prompt);
+if (warm !== null) {
+  if (warm.trim()) console.log(warm.trim());
+  process.exit(0);
+}
 
 const python = venvPython();
 if (!python) process.exit(0); // silent: a missing venv must not spam every message

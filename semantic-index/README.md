@@ -285,6 +285,42 @@ is rebuildable and is ignored, so the repo stays small.
 
 ---
 
+## The warm search server — why a search is fast the second time
+
+Every message typed at a session runs a search. Measured 2026-08-21 that cost **3,536 ms**, and
+almost none of it was searching: **1,856 ms** went on loading the embedding model and **548 ms** on
+pulling and re-tokenising all 3,888 chunks to rebuild the BM25 index — both repeated identically
+every single time, over data that only changes when the index is rebuilt.
+
+`brain_server.py` keeps one process alive holding both. Nothing about retrieval changes: it calls
+the same `hybrid_search` the command line calls, so there is no second implementation to drift.
+
+| | |
+|---|---|
+| Before | 3,536 ms per message |
+| Warm server, via Python | 840 ms |
+| **Warm server, Node talking to it directly** | **~650 ms** |
+| The search itself, inside the server | ~230 ms |
+
+**Nobody has to start it.** A speed-up that needs a manual step is one nobody gets — this repo
+already learned that when `score_brain.py` sat unused for a day until a hook was written to run it.
+So the first search after a reboot is exactly as slow as it always was, and it leaves a warm server
+behind. The second is fast. There is nothing to install and nothing to remember.
+
+**It cannot break a search.** Every path through `brain_client.py` returns a real answer: from the
+server when it is there, from an in-process search when it is not. Missing, dead, hung, killed or
+never started all cost one short timeout and then behave exactly as before it existed.
+
+**Safety, since this opens a socket on a working machine.** It binds to `127.0.0.1` only — never
+`0.0.0.0` — on an ephemeral port, and every request must carry a random token written alongside the
+port in `brain-server.json` (gitignored: it is a credential and local state). It is read-only by
+construction: there is no request that writes to the Brain, touches Revit, or runs code. It idles
+out after 30 minutes.
+
+    python brain_server.py --status     is one running, and how is it doing
+    python brain_server.py --stop       stop it
+    python brain_server.py              run one in the foreground, to watch it
+
 ## Two things worth knowing
 
 **It works offline.** The model lives in `model-cache/`, downloaded once. Searching
