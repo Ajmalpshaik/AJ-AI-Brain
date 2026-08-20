@@ -271,9 +271,12 @@ this same file.)*
 | `brain_index.py` | Reads the Brain and builds the index |
 | `brain_search_hybrid.py` | Answers a question using both signals |
 | `brain_search.py` | Answers a question using meaning only |
+| `embed_bge.py` | The embedding model — turns text into the numbers the search compares |
+| `rerank.py` | Optional second-pass scorer, off by default |
+| `score_brain.py` | Runs `test-questions.md` and prints the score |
 | `requirements.txt` | The one Python package needed |
 | `venv/` | The private Python installation |
-| `model-cache/` | The downloaded language model (~166 MB) |
+| `model-cache/` | The downloaded language models (~250 MB with the re-ranker) |
 | `chroma-db/` | The index itself |
 | `pip-temp/`, `pip-cache/`, `run-temp/` | Scratch space, kept off the system temp folder |
 
@@ -284,9 +287,18 @@ is rebuildable and is ignored, so the repo stays small.
 
 ## Two things worth knowing
 
-**It works offline.** The model was downloaded once, on 2026-08-06, and lives in
-`model-cache/`. Searching and rebuilding both work with no internet. Your Brain's
-text never leaves this machine.
+**It works offline.** The model lives in `model-cache/`, downloaded once. Searching
+and rebuilding both work with no internet, and your Brain's text never leaves this
+machine — there is no API key anywhere in this layer because there is no service to
+call.
+
+**The model is `bge-small-en-v1.5`** (changed from `all-MiniLM-L6-v2` on 2026-08-20).
+The old one was a 2021 model that read only 256 word-pieces at a time; this one reads
+512 and retrieves measurably better. It is the same size class and still runs on
+`onnxruntime`, so nothing new was installed. Changing the model changes the
+fingerprint in `brain_common.py`, which makes the next `index-brain.cmd` rebuild
+everything by itself — vectors from two different models cannot be compared, so a
+part-migrated index would answer every question, just quietly worse.
 
 **Nothing is ever written to the system temp folder.** This is a hard rule, set
 after `tools/verify-fragments-compile.ps1` wrote ~267 unsigned DLLs into `%TEMP%`
@@ -300,10 +312,23 @@ folder by `brain_common.py`. Verified clean on 2026-08-06.
 
 **"collection does not exist"** — run `index-brain.cmd` once.
 
-**Moved the Brain to another folder or another PC?** Open `brain_common.py` and
-change the `BRAIN_ROOT` line at the top to the new path, then rebuild. If the
-whole `semantic-index` folder came along, nothing else needs doing — including
-the model, so it still works offline.
+**"The embedding model has not been downloaded yet."** — run it once, then rebuild:
+
+```
+venv\Scripts\python.exe embed_bge.py --download
+index-brain.cmd --full
+```
+
+It refuses to fall back to the old model on purpose. Half an index in one vector
+space and half in another still answers every question, just worse, and nothing
+would ever tell you.
+
+**Moved the Brain to another folder or another PC?** Nothing to do — since
+2026-08-20 `BRAIN_ROOT` is worked out from where `brain_common.py` actually sits,
+so the folder simply works wherever it is copied. (It used to be a hardcoded
+`D:\...` path, which meant the search ran on exactly one PC.) Set the
+`AJ_BRAIN_ROOT` environment variable only for the odd case of running these scripts
+from a copy that lives outside the Brain they index.
 
 **Starting fresh on a new machine?** See `requirements.txt` — it has the setup
 commands, including how to keep pip off `%TEMP%`.
