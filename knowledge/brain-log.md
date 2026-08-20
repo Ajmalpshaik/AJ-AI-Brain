@@ -2225,3 +2225,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   now takes an `ElementId`. A post-sweep scan for `new ElementId(x)` where `x` had itself become an
   `ElementId` caught **2 real bugs** — worth repeating after any similar mass edit. **Not compiled, not
   run**: the brain-status proven-counts describe the pre-migration state.
+
+- 2026-08-20 — New `scripts/context/context-session-start.cs`: the opening check, one bridge call, wired
+  into the ping rule (`live-model/core.md`, `AGENT-SPEC.md` §1 + §3.5, the live-model SKILL). Ajmal's
+  words: *"everytime while pinging or connection to revit check the all things like what is the version
+  of revit what is the model."* It reports Revit version/build **and which API generation is actually
+  live** (64-bit ElementId? ForgeTypeId units? split Dimension classes?) — the confirmation the
+  2026-08-20 migration needs, since one source now serves 2020-2027 and the version number alone is an
+  inference. Also: document + path + central, project name/number/client, **what unit the project really
+  displays** (read off a Level's own AsValueString, so it names no version-specific unit API), size,
+  unloaded links, closed worksets, design options, phases, warnings, active view, selection. Four of
+  those catch a **silently wrong answer** rather than an error — an unloaded link, a closed workset and
+  an unexamined design option each make a query quietly return LESS than the truth, and metres-not-mm
+  makes every figure wrong by 1000. None of them throws. Every section is independently guarded so one
+  unreadable part cannot take down the report. Unproven — never run.

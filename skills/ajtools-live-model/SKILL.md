@@ -82,6 +82,21 @@ file names are generic. "How many pipes?" and "how many ducts, what height?" bot
 2. **Check the bridge is connected when the fast path does not fit**:
    `mcp__aj-tools-aj-ai__ping`. If it fails, Revit is closed or
    the AJ AI pane's Connect AJ AI Bridge toggle is off — tell the user plainly, don't guess at an answer.
+
+   **On the FIRST successful connection of a session, immediately run
+   [`scripts/context/context-session-start.cs`](../../scripts/context/context-session-start.cs)** — one
+   call, and it tells you everything you would otherwise assume: which Revit **and which API generation
+   is live**, the document and whether it is workshared, **what unit the project actually displays**,
+   model size, **links that are not loaded**, **worksets that are closed**, design options, phases,
+   warnings, the active view. Say the headline back to the user in one line
+   (*"Revit 2024, 'Tower-MEP', mm, 3 links loaded, 2 worksets closed"*) so they can correct you before
+   any work starts, not after.
+
+   **Why it is not optional:** an unloaded link, a closed workset and an unexamined design option each
+   make a query quietly return LESS than the truth, and a project displaying metres rather than
+   millimetres makes every figure wrong by a factor of a thousand. **None of them throws an error.** They
+   are the confidently-wrong failures this Brain exists to prevent, and they are invisible unless you
+   look at the start.
    If the native MCP tool is not exposed in the current agent session, use the checked-in fast helper
    instead of re-reading `mcp-server/index.js` or hand-writing a named-pipe wrapper:
    `powershell -NoProfile -ExecutionPolicy Bypass -File tools\invoke-bridge.ps1 -Ping`.
