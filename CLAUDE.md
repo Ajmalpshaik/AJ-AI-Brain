@@ -100,6 +100,16 @@ He named two problems. Both have an answer that already exists:
   `[System.IO.File]::WriteAllText($p, $t, (New-Object System.Text.UTF8Encoding($false)))`. The Edit/Write
   tools are always safe. Tell-tale sign something went wrong: a `git diff --stat` far larger than the edit
   you actually made.
+- **Any `.ps1` you write here must have a UTF-8 BOM, or contain no non-ASCII character at all.** Same
+  root cause as the rule above, but it breaks *running* a script rather than editing one: PS 5.1 reads a
+  BOM-less file as ANSI, so an em dash's last byte becomes cp1252 `0x94` — a smart quote, **which
+  PowerShell accepts as a string delimiter**. One em dash opens an unterminated string and cascades into
+  dozens of parse errors that look like syntax. It has now happened twice:
+  `tools/verify-fragments-compile.ps1` had never run once (2026-08-04), and `tools/check-scripts.ps1`
+  — written in a Linux container and pulled in — could not start (2026-08-20). **The container is the
+  live vector: it has no PowerShell to fail on, so nothing catches it before the file reaches Windows.**
+  Check with `head -c3 file.ps1` (want `ef bb bf`). Diagnose a suspect file by parsing its bytes decoded
+  as UTF-8 — 0 errors that way but many via `ParseFile` means encoding, not syntax.
 - This repo doubles as an installable Claude Code **plugin** — manifest in `.claude-plugin/`, install
   steps in [`SETUP.md`](SETUP.md) step 1. Keep `skills/` at the repo root; that's where the plugin
   loader finds them.

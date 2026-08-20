@@ -64,4 +64,11 @@ Also note these were the first runs ever made off Windows, on `all-MiniLM-L6-v2`
 all**: `huggingface.co` is blocked from the container the runs happened in. That measurement is still
 owed, and it is step 3 of the handover.
 
+**Confirmed once more after merging `main`:** the same 4001-chunk corpus, with only main's two commits
+mixed in, scores **3/14 / MRR 0.325** — the row flipped back with no search change at all. A 1-point
+move on this test set is noise. **Do not adopt or reject anything on it**, including the BGE comparison
+that is still owed.
+
 Full working: `semantic-index/rag-architecture-decisions.md`.
+- 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.326  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4001 fp=a5fe51a07241db26
+- 3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.325  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4009 fp=5e2411794df50cea

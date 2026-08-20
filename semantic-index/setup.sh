@@ -82,44 +82,22 @@ else
 fi
 
 # --------------------------------------------------------------------------
-step "4/5  The embedding model (~127 MB, downloaded once, then fully offline)"
+step "4/5  The embedding model"
 # --------------------------------------------------------------------------
-# bge-small-en-v1.5 comes from huggingface.co. That host is reachable from a normal PC but is
-# blocked by some corporate proxies and by the Claude Code for web container (measured
-# 2026-08-20: the proxy answers 403 to CONNECT). A blocked download must NOT abandon the whole
-# setup half-built - chromadb ships all-MiniLM-L6-v2 from a different host, the Brain scored on
-# it for months, and brain_common.py keeps it selectable for exactly this reason.
-MODEL="${AJ_BRAIN_EMBED_MODEL:-bge-small-en-v1.5}"
-FALLBACK=""
-
-if [ "$MODEL" = "bge-small-en-v1.5" ]; then
-  if [ -s "$HERE/model-cache/model.onnx" ] && [ -s "$HERE/model-cache/tokenizer.json" ]; then
-    ok "bge-small-en-v1.5 already downloaded"
-  elif "$PY" "$HERE/embed_bge.py" --download >/dev/null 2>&1; then
-    ok "bge-small-en-v1.5 downloaded"
-  else
-    FALLBACK=1
-    MODEL="all-MiniLM-L6-v2"
-    printf '  \033[33mSKIPPED\033[0m  could not reach huggingface.co\n'
-    info "Falling back to all-MiniLM-L6-v2, which chromadb fetches from a different host."
-    info "The Brain works fully on it - it is what every score line before 2026-08-20 used."
-    info ""
-    info "To use the better model later, from a machine that can reach huggingface.co:"
-    info "    $PY $HERE/embed_bge.py --download"
-    info "    $PY $HERE/brain_index.py --full"
-  fi
-fi
-# Persist it - an exported variable dies with this shell and every later search would
-# fall back to the BGE default against a MiniLM index. See brain_common.py.
-export AJ_BRAIN_EMBED_MODEL="$MODEL"
-if [ -n "$FALLBACK" ]; then
-  printf '%s\n' "$MODEL" > "$HERE/embed-model.txt"
-  info "remembered in semantic-index/embed-model.txt - delete it to go back to the default"
-fi
-
-if [ -z "$FALLBACK" ]; then
-  info "smoke test - the model must tell a matching passage from a non-matching one:"
-  "$PY" "$HERE/embed_bge.py" 2>&1 | sed 's/^/      /'
+# Deliberately does NOT download bge-small-en-v1.5.
+#
+# Two reasons, both learned on 2026-08-20. brain_common.py's default is MiniLM
+# because it ships inside chromadb and therefore always works - BGE was briefly the
+# default and broke search outright on the Windows PC, because its weights are a
+# separate ~127 MB download. And BGE has never been scored: score-history.md has no
+# line for it. Making a first-time setup pull an unmeasured model over a working one
+# is the "documentation ahead of reality" failure in a different coat.
+#
+# So setup does the thing that always works, and says how to upgrade deliberately.
+MODEL="$("$PY" -c "import brain_common; print(brain_common.EMBED_MODEL)" 2>/dev/null || echo all-MiniLM-L6-v2)"
+ok "using $MODEL — the repo default, no download needed"
+if [ -f "$HERE/embed-model.txt" ]; then
+  info "pinned by semantic-index/embed-model.txt — delete that file to go back to the default"
 fi
 
 # --------------------------------------------------------------------------
@@ -139,6 +117,13 @@ Ask the Brain a question:
 Score the search against semantic-index/test-questions.md:
 
     $PY $HERE/score_brain.py
+
+Optional, and still unmeasured — try the newer embedding model and pin it:
+
+    $PY $HERE/embed_bge.py --download          # ~127 MB, needs huggingface.co
+    echo bge-small-en-v1.5 > $HERE/embed-model.txt
+    $PY $HERE/brain_index.py --full
+    $PY $HERE/score_brain.py                   # compare against score-history.md
 
 Nothing else needs doing. The Stop hook re-indexes after any turn that edits a file,
 and search_brain works as an MCP tool call from here on.

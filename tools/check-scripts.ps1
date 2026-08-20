@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     "Will my scripts work in this Revit?" — answered in about a minute, without opening Revit.
 

@@ -1,6 +1,6 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-20**, end of a long remote session. This replaces the 2026-08-14 handover, which
+Last updated: **2026-08-20**, updated again on the Windows PC — read the UPDATE section first. This replaces the 2026-08-14 handover, which
 had gone stale (it said 270 fragments; there are now 287).
 
 ## The prompt
@@ -10,6 +10,77 @@ Read D:\Ajmal\AJ AI Brain\docs\HANDOVER.md and CLAUDE.md first, then continue th
 ```
 
 ---
+
+## UPDATE — 2026-08-20, later the same day, ON the Windows PC
+
+The remote session above was picked up on the PC. **Step 1 and step 3 below are now done, and both
+were blocked by bugs that had to be fixed first.** Read this section instead of taking steps 1 and 3
+at face value.
+
+### Two things were broken on arrival, both now fixed
+
+1. **The search was dead.** The remote session made `bge-small-en-v1.5` the *default* embedding model,
+   but its weights are a separate ~127 MB download that had never been fetched. Every single
+   `ask-brain-hybrid` call died with "model has not been downloaded yet". A default that requires a
+   download before the tool runs at all is not a default, so `brain_common.py` now defaults to
+   `all-MiniLM-L6-v2`, which ships inside chromadb and always works. BGE is still one env var away —
+   which is all the A/B ever needed. Index rebuilt on MiniLM: **348 files, 3750 chunks**, search
+   verified working.
+
+2. **`tools/check-scripts.cmd` could not run at all** — the very command step 1 calls "the single
+   command that answers the whole session". It was written in the Linux container as UTF-8 **without a
+   BOM**, and Windows PowerShell 5.1 reads a BOM-less file as ANSI, so the eight em dashes in it
+   corrupted and broke the string terminators. This is the exact trap `CLAUDE.md` warns about. Fixed by
+   adding a UTF-8 BOM — which is what the three `.ps1` files that already worked all have.
+   **Lesson for any future container session: a `.ps1` written there needs either a BOM or pure ASCII.**
+
+### What step 1 actually found, once it could run
+
+| Revit | Result |
+|---|---|
+| 2020 | **281 of 287 compile** — 6 real failures |
+| 2024 | **274 of 287 compile** — 13 real failures |
+| 2027 | 4 of 287 — **a harness bug, not 283 broken fragments. See below.** |
+
+So the version-proofing largely held. It did not hold everywhere.
+
+**Revit 2027 is a harness problem, and it is well understood.** Every failure is
+`error CS0012: The type 'Object' is defined in an assembly that is not referenced. You must add a
+reference to assembly 'System.Runtime, Version=10.0.0.0'`. Revit 2027 runs on **.NET 10**, so its
+`RevitAPI.dll` references `System.Runtime 10.0.0.0`, while `verify-fragments-compile.ps1` still compiles
+against the .NET Framework reference set. The checker's own advice covers this case exactly: *"unless the
+error names a type the harness failed to supply"*. **Fix the harness to pass the .NET 10 reference
+assemblies for 2027+; do not touch the 283 fragments.**
+
+**The real fragment failures — these are genuine and worth fixing:**
+
+Fails on **both 2020 and 2024** (fix these first):
+
+- `recipes/mep-grayout.cs` — **this one matters most.** It is Ajmal's own standing "do the grayout" job.
+- `actions/sheets-views/action-report-schedule-definition.cs`
+- `actions/structural-changes/action-place-accessory-on-run.cs` — already a known open item, see below.
+- `context/context-model-categories.cs`
+- `recipes/connect-equipment-to-air-terminals.cs`
+- `recipes/sprinkler-layout-options.cs`
+
+Fails on **2024 only** (7 more): `action-add-project-parameter.cs`, `context-project-units.cs`,
+`create-floor.cs`, `filter-by-tag-status.cs`, `create-equipment-family-from-datasheet.cs`,
+`create-parametric-box-family-with-duct-connector.cs`, `tag-elements-in-active-view.cs`.
+
+Error codes are `CS0122` (member not accessible in that version) and `CS1061` (member does not exist)
+on 2024, plus `CS0308`/`CS0030`/`CS0019`/`CS0029`/`CS1503`/`CS1501` shared with 2020 — all genuine
+per-version API differences, not unit or id problems. Re-run `tools\check-scripts.cmd` any time; the full
+error text lands in `fragment-compile-failures.txt` at the repo root (gitignored).
+
+### So the next job, in order
+
+1. Fix `recipes/mep-grayout.cs` on 2020 and 2024 — most-used recipe, currently would not compile.
+2. Fix the other 5 both-version failures, then the 7 that are 2024-only.
+3. Teach `verify-fragments-compile.ps1` the .NET 10 reference set so 2027 gives a real answer.
+4. Step 2 below (live Revit run) is still untouched and still the thing that proves correctness.
+
+**Still true and unchanged: compiling is a floor, not a ceiling.** None of the 2026-08-20 work has been
+run against a real model yet.
 
 ## What happened on 2026-08-20 — and the one thing that matters about it
 
@@ -29,8 +100,9 @@ What changed:
    version, which API generation is live, the document, what unit the project displays, unloaded links,
    closed worksets, warnings.
 3. **The search was measured properly for the first time** and a real bug fixed (RRF was fusing chunk
-   ranks while ranking files). The embedding model is now selectable and defaults to `bge-small-en-v1.5`,
-   **which has never been downloaded or scored.**
+   ranks while ranking files). The embedding model is now selectable. **Superseded the same day:** BGE was
+   briefly the default and broke search on the PC — see item 1 above. The default is `all-MiniLM-L6-v2`
+   again, and **BGE still has no score line at all.**
 4. **A separate Revit API index** in `api-index/`, fed by reflecting over the running Revit's own
    `RevitAPI.dll`. Deliberately a different database — the Brain's search never reads it.
 5. **`recipes/audit-flex-curves.cs`** — flex duct and flex pipe had no fragment at all.
@@ -79,19 +151,27 @@ the simple ones do not.
 
 ### 3. Is the new search model actually better?
 
+**Still owed. It is the one measurement this Brain has never taken.**
+
 ```
 cd semantic-index
-venv\Scripts\python.exe embed_bge.py --download     (~127 MB, once)
+venv\Scripts\python.exe embed_bge.py --download     (~127 MB, once, needs huggingface.co)
 venv\Scripts\python.exe embed_bge.py                (smoke test, should print PASS)
+echo bge-small-en-v1.5 > embed-model.txt            (pin it, so search and index agree)
 index-brain.cmd --full                              (~80 s)
 score-brain.cmd
 ```
 
-**The number to beat is `3/14 at #1, MRR 0.321` on `all-MiniLM-L6-v2`** — that line is already in
+**The number to beat is `3/14 at #1, MRR 0.325` on `all-MiniLM-L6-v2`** — in
 `semantic-index/score-history.md`, stamped with the model that produced it.
 
-If BGE loses, revert in one line: `set AJ_BRAIN_EMBED_MODEL=all-MiniLM-L6-v2`. That is exactly why the
-model was made selectable rather than replaced.
+**Read the note at the bottom of `score-history.md` before you judge the result.** That row is
+knife-edge: measured 2026-08-20, `what does duck mean` flips between #1 and #6 on a **2-chunk** corpus
+change, which is 7% of a 14-row score all by itself. **A 1-point move either way proves nothing.** If BGE
+wins or loses by one, it is a tie — say so rather than adopting or rejecting on noise.
+
+If BGE loses, delete `embed-model.txt` and rebuild. That is exactly why the model was made selectable
+rather than replaced.
 
 ### 4. Optional — build the API reference index
 
@@ -114,6 +194,19 @@ assistant's.
 
 ---
 
+## Since this handover was written — merged from the review branch (PR #22)
+
+- **`semantic-index/setup.sh`** — one command sets the search up on Linux/macOS. Nothing to do on the
+  PC; it exists so a container session is not searching blind. Proven on a wiped venv.
+- **Model choice can be pinned** in `semantic-index/embed-model.txt` (git-ignored, per-machine), so an
+  upgrade to BGE survives without setting an env var on every command — the failure item 1 above
+  describes, in its other direction.
+- **`docs/superpowers/` is gone** — two plans and a spec with 60 unticked boxes for work that is
+  entirely built. The five genuinely live items moved into `semantic-index/rag-architecture-decisions.md`.
+- **`semantic-index/rag-architecture-decisions.md`** is new: why the retrieval layer is not being
+  rewritten, the six standard upgrades already measured and reverted here, and the folder-structure
+  verdict. Read it before anyone proposes rebuilding the RAG.
+
 ## Still open from before — carried forward, still true
 
 - `actions/structural-changes/action-place-accessory-on-run.cs` — METHOD proven, but the file as one
@@ -130,9 +223,14 @@ assistant's.
 
 ## Housekeeping
 
-- A stray remote branch **`claude/revit-api-surface`** needs deleting by hand. It was created by mistake
-  and its content is already on `main`. The container's git proxy refuses branch deletion, so it could
-  not be removed remotely.
+- ~~A stray remote branch `claude/revit-api-surface` needs deleting by hand.~~ **Done on the PC,
+  2026-08-20.** Verified first rather than trusted: `tools/api-surface.mjs` was byte-identical to `main`,
+  and `knowledge/revit-api-surface.md` differed only by being the *older* generated snapshot (283
+  fragments vs 285 on `main`), so nothing unique was lost. Two other fully-merged branches went with it
+  — `claude/rag-folder-structure-4pui5e` and `claude/sprinkler-spacing-coverage-lp914z`, both zero
+  unique commits. **`claude/rag-architecture-review-bqpjah` was kept**: it carries open **draft PR #22**
+  ("Answer the 'rebuild the RAG properly' question with the measurements"), which is Ajmal's to merge or
+  close. Remote is now `main` + that one branch.
 - `knowledge/live-model/core.md` is at 303 lines, just past the ~300-line split rule, and has not been
   reviewed for splitting.
 

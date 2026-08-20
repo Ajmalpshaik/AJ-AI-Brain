@@ -57,8 +57,9 @@ COLLECTION_NAME = "aj_brain"
 # outright, which made the change impossible to A/B: you cannot ask "is the new
 # one actually better" if the old one no longer exists in the code.
 #
-#   bge-small-en-v1.5   default. 512 word-pieces, 2024-era, ONNX via embed_bge.py
-#   all-MiniLM-L6-v2    the previous model. 256 word-pieces, 2021, shipped by chromadb
+#   bge-small-en-v1.5   opt-in. 512 word-pieces, 2024-era, ONNX via embed_bge.py
+#                       needs embed_bge.py --download (~127 MB) before first use
+#   all-MiniLM-L6-v2    default. 256 word-pieces, 2021, shipped inside chromadb
 #
 # Switching changes build_fingerprint(), so index-brain.cmd rebuilds by itself.
 # To compare the two honestly:
@@ -71,21 +72,31 @@ COLLECTION_NAME = "aj_brain"
 EMBED_MODEL_BGE = "bge-small-en-v1.5"
 EMBED_MODEL_MINILM = "all-MiniLM-L6-v2"
 
-# Where a non-default choice is remembered between runs. Written by setup.sh when
-# huggingface.co cannot be reached and it falls back to the chromadb-shipped model.
+# Default is MiniLM because it ships inside chromadb and therefore always works.
+# BGE was briefly the default (2026-08-20) and broke search outright on the
+# Windows PC: its ONNX weights are a separate ~127 MB download, so every query
+# died with "model has not been downloaded yet" until it was fetched. A default
+# that needs a download before the tool runs at all is not a default. BGE stays
+# one env var away, which is all the A/B above ever needed.
 #
-# WHY IT EXISTS (2026-08-20): setup.sh exported AJ_BRAIN_EMBED_MODEL and built a
-# MiniLM index, but the export died with its shell. Every search afterwards fell
-# back to the BGE default, found no BGE model, and refused to run - against an
-# index that was perfectly good. An install that silently disagrees with itself is
-# worse than one that fails loudly, so the choice is persisted rather than exported.
+# ...and one env var away is still a per-command choice, which is its own version
+# of the same fault. Set it for the rebuild but forget it for the search and the
+# two disagree silently: a MiniLM query against a BGE index answers every question,
+# just quietly worse, and nothing tells you. So an upgrade can be PINNED once, in
+# semantic-index/embed-model.txt (git-ignored - it is per-machine state, like venv/):
 #
-# Precedence is env var > this file > BGE. The env var still wins, so the documented
-# A/B (set AJ_BRAIN_EMBED_MODEL, rebuild, score) behaves exactly as it always did.
+#     python embed_bge.py --download
+#     echo bge-small-en-v1.5 > semantic-index/embed-model.txt
+#     python brain_index.py --full          <- rebuilds itself; the fingerprint changed
+#
+# Precedence is env var > pin file > MiniLM, so the documented A/B still wins over
+# the pin and behaves exactly as it always did.
 EMBED_MODEL_PATH = SEMANTIC_ROOT / "embed-model.txt"
 
 
 def _pinned_model():
+    """The model this machine has been pinned to, or None. Never raises: an unreadable
+    or unrecognised pin falls through to the default rather than breaking every search."""
     try:
         name = EMBED_MODEL_PATH.read_text(encoding="utf-8").strip()
     except OSError:
@@ -93,7 +104,7 @@ def _pinned_model():
     return name if name in (EMBED_MODEL_BGE, EMBED_MODEL_MINILM) else None
 
 
-EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or _pinned_model() or EMBED_MODEL_BGE
+EMBED_MODEL = os.environ.get("AJ_BRAIN_EMBED_MODEL") or _pinned_model() or EMBED_MODEL_MINILM
 
 # Folders inside the Brain that get indexed, and the label each one carries.
 # Order matters only for the report.
