@@ -30,6 +30,9 @@ counts them that way.
    Run the grid one first and check its table against a hand calculation; the arithmetic is plain C# with
    no Revit call in it, so one room settles all three.
 
+4. `recipes/sprinkler-pipe-schedule-size.cs` (2026-08-20) — needs modelled sprinkler PIPE connected to
+   heads, which this model does not have yet. The walk and the lookup can be exercised the moment any
+   connected pipe run exists; a duct run would even prove the clustering half.
 3. `recipes/sprinkler-layout-options.cs` and `recipes/sprinkler-floor-scope.cs` (2026-08-20) — a placed
    Room and a Level are all they need, both of which exist. Run the options one on Room 4 alongside
    `sprinkler-nfpa-grid.cs` and check that the grid's single answer APPEARS in the options list: if it
@@ -2169,3 +2172,27 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   now, while it is fresh, that sprinkler pipe sizing splits into a tractable **pipe-schedule** method and a
   **hydraulic** method that belongs with a licensed engineer. Establishing which one a project uses is the
   first move when the gate opens, not an afterthought.
+
+- **2026-08-20 — pipe sizing, and the finding is that you usually are not allowed to use it.** Ajmal asked
+  for pipe sizing to be built (his sequencing: sprinklers first, then sizing, *"not routing, pipe sizing
+  only"*). Built: `knowledge/fire-sprinkler/pipe-sizing.md` and
+  `scripts/recipes/sprinkler-pipe-schedule-size.cs`, covering the **pipe schedule** method — walk the
+  network, count the heads each segment feeds, look the size up, compare to what is modelled.
+  **The valuable half turned out to be the gate, not the table.** The schedule method is restricted to
+  light and ordinary hazard, and to new systems of **465 m² (5,000 ft²) or less** — larger only where the
+  required flow is available at **50 psi residual at the highest sprinkler**, which is a water-supply fact
+  needing a real curve, not a drawing fact. The **2025 edition removed** the old allowance for additions to
+  existing pipe-schedule systems. Consequence for Ajmal's work: **a Qatar project of any normal size does
+  not qualify**, and the honest output is "this needs hydraulic calculation by the fire engineer" —
+  delivered before someone spends a day sizing pipe that cannot be issued. The fragment checks the gate
+  first, says so loudly, and still prints the sizes underneath marked INDICATIVE ONLY, because they are
+  genuinely useful for coordination, clash and take-off.
+  Three more things worth keeping: **heads above AND below a ceiling both count on the branch that feeds
+  them**, so a protected ceiling void doubles what the ceiling plan suggests — the walk catches it
+  automatically, but only if the void heads are modelled and connected; **a looped or gridded network has
+  no downstream at all**, so a count-based schedule is meaningless on one and the fragment reports the loop
+  rather than silently following one path; and **Revit snaps a written diameter to the Pipe Type's allowed
+  list**, so a write-back can land on a different size than the one requested — the fragment says to read
+  it back from a separate call. The tables themselves hit the same wall as the beam obstruction table:
+  sources gave the method's limits clearly and its numbers not at all, so they are an editable input seeded
+  `[UNCONFIRMED]` with a warning on every run. **Hydraulic calculation stays permanently out of scope.**
