@@ -20,6 +20,7 @@ The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sp
 | how far below the ceiling — or below the slab where there is none | [`knowledge/fire-sprinkler/deflector-and-ceiling-height.md`](../../knowledge/fire-sprinkler/deflector-and-ceiling-height.md) |
 | a beam, a column, a wide duct in the room | [`knowledge/fire-sprinkler/obstructions.md`](../../knowledge/fire-sprinkler/obstructions.md) |
 | **does the ceiling void need its own heads** — upright above, pendent below, and the 800 mm figure that is not NFPA | [`knowledge/fire-sprinkler/concealed-spaces.md`](../../knowledge/fire-sprinkler/concealed-spaces.md) |
+| the spec says **BS EN 12845**, not NFPA | [`knowledge/fire-sprinkler/nfpa-vs-en12845.md`](../../knowledge/fire-sprinkler/nfpa-vs-en12845.md) |
 | the whole method, in order | [`knowledge/fire-sprinkler/layout-method.md`](../../knowledge/fire-sprinkler/layout-method.md) |
 | which category, which API call, which fragment | [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md) |
 
@@ -49,7 +50,10 @@ Ask, then restate what was used in the reply. Nothing here is derivable from the
    limit from 225 ft² to 130 ft², nearly doubling the head count.
 3. **Sprinkler type** — standard spray pendent/upright, sidewall, or listed extended coverage. Sidewall
    and EC have their own limits; carrying the 15 ft standard-spray figure across is a real error.
-4. **NFPA edition adopted** and any QCDD or project-specification requirement that overrides it.
+4. **Which standard, and which edition.** NFPA 13 is the default under QCDD, but a specification can
+   call up **BS EN 12845** instead and Gulf projects do. The two agree on area per head and differ on the
+   deflector window, the minimum spacing, the ceiling-void rule and the hazard classes — so this is not a
+   formality: [`knowledge/fire-sprinkler/nfpa-vs-en12845.md`](../../knowledge/fire-sprinkler/nfpa-vs-en12845.md).
 5. **The room(s)**, and whether the layout goes in the ceiling plan or the floor plan.
 
 If the user cannot give the hazard class, say plainly that the head count cannot be produced without it,
