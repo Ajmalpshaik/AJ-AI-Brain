@@ -1,6 +1,6 @@
 ---
 name: ajtools-fire-sprinkler-layout
-description: Lay out or code-check fire sprinkler heads in a room against NFPA 13 spacing rules — head count, head-to-head spacing, distance to walls, minimum spacing, maximum area per head, hazard class. Use whenever the request is about fire fighting, fire protection, sprinklers, sprinkler heads, deluge/wet/dry sprinkler layout, "how many sprinklers does this room need", "check my sprinkler spacing", "is this layout NFPA compliant", "fire fighting layout for this room" — including broken-English/dictated versions ("fire figting", "sprinkler spacing rools", "make sprinkler in this room"). Fires for CHECKING an existing sprinkler layout as much as creating one. Do NOT use this for HVAC air terminals (that's ajtools-hvac-terminal-layout), for smoke detectors, CCTV, WiFi or lighting coverage (that's the plain coverage recipe — those have no NFPA spacing rules), or for hydraulic calculations, pipe sizing, pump selection or density/remote-area design, which this Brain does not do at all.
+description: Lay out or code-check fire sprinkler heads in a room against NFPA 13 — head count, spacing, distance to walls, minimum spacing, maximum area per head, hazard class, deflector height, and what a beam or a column does to the layout. Use whenever the request is about fire fighting, fire protection, sprinklers, sprinkler heads, deluge/wet/dry sprinkler layout, "how many sprinklers does this room need", "check my sprinkler spacing", "is this layout NFPA compliant", "fire fighting layout for this room", "how far below the ceiling", "there is no ceiling, upright or pendent", "there is a beam/column in the room" — including broken-English/dictated versions ("fire figting", "sprinkler spacing rools", "make sprinkler in this room", "pendend or upraght", "beem", "colom", "celling"). Fires for CHECKING an existing sprinkler layout as much as creating one. Do NOT use this for HVAC air terminals (that is ajtools-hvac-terminal-layout), for smoke detectors, CCTV, WiFi or lighting coverage (that is the plain coverage recipe — those have no NFPA spacing rules), or for hydraulic calculations, pipe sizing, pump selection or density/remote-area design, which this Brain does not do at all.
 ---
 
 # AJ Tools — Fire Sprinkler Layout (NFPA 13)
@@ -10,9 +10,22 @@ lighting — is satisfied by "no gaps in the floor". A sprinkler layout is not: 
 code limits at once**, and geometric coverage is not one of them. A layout can cover every square metre of
 a room and still be non-compliant by four heads.
 
-All the numbers live in [`knowledge/nfpa13-sprinkler-spacing.md`](../../knowledge/nfpa13-sprinkler-spacing.md).
-**Read that file before doing anything here** — do not work from remembered figures, and read its "hard
-boundary" section before making any statement about compliance.
+The rules live in [`knowledge/fire-sprinkler/README.md`](../../knowledge/fire-sprinkler/README.md) —
+**open the one chunk that matches the question, not the whole folder**:
+
+| The question | The chunk |
+|---|---|
+| how many heads, how far apart, how far off the wall | [`knowledge/nfpa13-sprinkler-spacing.md`](../../knowledge/nfpa13-sprinkler-spacing.md) |
+| pendent / upright / sidewall / concealed / extended coverage | [`knowledge/fire-sprinkler/sprinkler-types.md`](../../knowledge/fire-sprinkler/sprinkler-types.md) |
+| how far below the ceiling — or below the slab where there is none | [`knowledge/fire-sprinkler/deflector-and-ceiling-height.md`](../../knowledge/fire-sprinkler/deflector-and-ceiling-height.md) |
+| a beam, a column, a wide duct in the room | [`knowledge/fire-sprinkler/obstructions.md`](../../knowledge/fire-sprinkler/obstructions.md) |
+| the whole method, in order | [`knowledge/fire-sprinkler/layout-method.md`](../../knowledge/fire-sprinkler/layout-method.md) |
+| which category, which API call, which fragment | [`knowledge/fire-sprinkler/revit-modelling.md`](../../knowledge/fire-sprinkler/revit-modelling.md) |
+
+**Read the chunk before doing anything here** — do not work from remembered figures, and read the folder
+README's "before you use a single number" section before making any statement about compliance. Some
+numbers there carry an `[UNCONFIRMED]` tag, which means exactly what it says: widely published, not
+verified against the standard. Say so when one of them drives an answer.
 
 ## What this skill will not do
 
@@ -42,25 +55,40 @@ If the user cannot give the hazard class, say plainly that the head count cannot
 and offer to compute the options side by side (light / ordinary / extra) so they can see the difference —
 that is useful; guessing one and presenting it as the answer is not.
 
-## Step 2 — plan, then run one step at a time
+## Step 2 — run the chain, one step at a time, checking each real result
 
-Same discipline as every other skill here: a short numbered plan, one step, check the real result, next.
+Eight fragments, written for this job, that run in this order. Same discipline as every other skill here:
+a short numbered plan, one step, check the real result, then the next. Never one script that does it all.
 
-1. Resolve the room fresh — Id, real area, bounding box, whether it is actually placed (Area > 0).
-   An unplaced room silently covers nothing.
-2. Compute the **minimum head count from the area rule alone** (room area ÷ max area per head for that
-   hazard class, rounded up). State it before laying anything out — it is the floor no layout may go under.
-3. Generate the candidate layout with
-   [`scripts/recipes/generate-room-coverage-layout.cs`](../../scripts/recipes/generate-room-coverage-layout.cs)
-   in **`layoutMode = "inset"`** — centres inside the room, off the walls. Feed it the real code limits:
-   `maxAllowedSpacingMm`, `maxWallDistanceMm`, `minSpacingMm` and `maxAreaPerDeviceM2` from the knowledge
-   file, converted from the foot values.
-   **Set the radius from the spacing rule, not from a "coverage radius"** — see the trap below.
-4. Read the recipe's report and relay every check with its measured number: head count, area per head,
-   head-to-head spacing, distance to the worst wall, minimum spacing, and how many centres are inside the
-   room. A FAIL is reported, never quietly rounded away.
-5. Only then place real families, if asked — `creators/create-point-based-element.cs` at the reported
-   centres, with the mounting height the user gives.
+| | Step | Fragment |
+|---|---|---|
+| 1 | **Look inside the room first** — ceiling or no ceiling, the deck, every beam and column, the bay module, wide services | [`scripts/recipes/sprinkler-obstruction-survey.cs`](../../scripts/recipes/sprinkler-obstruction-survey.cs) |
+| 2 | Say out loud whether this is **unobstructed or obstructed construction**, and why. Everything downstream hangs on that word | — |
+| 3 | State the **head-count floor** from the area rule alone (room area ÷ max area per head, rounded up) before laying anything out | — |
+| 4 | **Derive the grid from the limits** — smallest nx × ny satisfying area per head, spacing, wall distances and minimum separation at once | [`scripts/recipes/sprinkler-nfpa-grid.cs`](../../scripts/recipes/sprinkler-nfpa-grid.cs) |
+| 5 | **Test those positions against the beams and columns** — four rules, in code order | [`scripts/recipes/sprinkler-obstruction-check.cs`](../../scripts/recipes/sprinkler-obstruction-check.cs) |
+| 6 | Move what fails, by the smallest amount that does not break something else — **then re-check step 4** | [`scripts/recipes/sprinkler-adjust-for-obstructions.cs`](../../scripts/recipes/sprinkler-adjust-for-obstructions.cs) |
+| 7 | **Set the height by reading what is really above each head**, not from a remembered ceiling void | [`scripts/recipes/sprinkler-deflector-height.cs`](../../scripts/recipes/sprinkler-deflector-height.cs) |
+| 8 | Place the families — after showing Ajmal the count and getting a clear go-ahead | [`scripts/recipes/sprinkler-place-heads.cs`](../../scripts/recipes/sprinkler-place-heads.cs) |
+| 9 | **Audit what is actually in the model**, from a separate bridge call | [`scripts/recipes/sprinkler-compliance-audit.cs`](../../scripts/recipes/sprinkler-compliance-audit.cs) |
+
+Two side doors off that chain:
+
+- **Sidewall heads** (corridors, no void above) → [`scripts/recipes/sprinkler-sidewall-layout.cs`](../../scripts/recipes/sprinkler-sidewall-layout.cs).
+  Its own table, and the across-room throw check that spacing alone never makes.
+- **"Check my sprinkler spacing"** with nothing to design → jump straight to step 9.
+
+**All eight were written 2026-08-20 and none has been run against a real model yet.** That is not a reason
+to refuse the job — it is the Brain's standing rule: run one element first, check the real result, then use
+it for the batch, and say plainly that is what you are doing.
+
+Two things the chain will not do for you, and both are yours to say out loud:
+
+- **Step 6 changes the answer to step 4.** A head moved to clear a beam has different spacing, a different
+  wall distance and a different area. Re-running the check is the step people skip and it is how a
+  compliant grid quietly becomes a non-compliant one.
+- **An obstructed room does not have a free grid.** Where the beams set the module, one axis of the spacing
+  is decided by the bay. Find that out in step 1, not after the grid is drawn.
 
 ## The trap that produces a plausible, wrong layout
 
@@ -89,8 +117,26 @@ and it is the number that ends up on a drawing.
 
 ## After finishing
 
-New gotcha, or a code figure confirmed against the real adopted edition →
-[`knowledge/nfpa13-sprinkler-spacing.md`](../../knowledge/nfpa13-sprinkler-spacing.md), in the one place it
-belongs. If the user states their project's own standard (hazard class, QCDD requirement, an office default),
-that is a durable project fact — record it, since it is exactly the kind of number that must not be
+Route what you learned to the **one** chunk it belongs to — see the table at the top of this file. Never
+copy a fact into two of them.
+
+Two things are worth more than a normal note:
+
+- **A number confirmed against the real adopted edition.** Several values in the folder carry an
+  `[UNCONFIRMED]` tag. Replacing one with a checked figure and dropping the tag is the single most
+  valuable edit anyone can make here. The **beam obstruction table** in
+  [`scripts/recipes/sprinkler-obstruction-check.cs`](../../scripts/recipes/sprinkler-obstruction-check.cs)
+  is top of that list — it is an input, seeded with commonly published values, and it prints a warning on
+  every run until `beamTableConfirmed` is set.
+- **Ajmal's own words for something.** His rule, 2026-08-10: *"this is my normal work and you have to
+  remember the words am using."* A term, a spelling, the way he describes a whole job → a row in
+  [`knowledge/site-vocabulary.md`](../../knowledge/site-vocabulary.md) (works immediately, no rebuild) and
+  an entry in [`knowledge/glossary.md`](../../knowledge/glossary.md), in the same turn.
+
+If he states a project standard — hazard class, a QCDD requirement, an office default mounting height —
+that is a durable project fact. Record it, because it is exactly the kind of number that must not be
 re-derived or re-guessed next session.
+
+And when one of these fragments finally runs against a real model: **update its STATUS block with what
+actually happened**, including anything it got wrong. All eight say "NOT LIVE-VERIFIED" today, and that
+sentence is only useful while it is true.

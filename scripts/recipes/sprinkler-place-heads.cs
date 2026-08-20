@@ -1,0 +1,210 @@
+// ============================================================
+// RECIPE — sprinkler-place-heads.cs
+// PURPOSE: Place real sprinkler family instances at a list of computed centres, at a stated height, and
+//          then READ THE PLACED HEADS BACK OUT OF THE MODEL and report what is actually there. The last
+//          step of the layout chain — everything before it produces numbers, this produces elements.
+// STANDALONE — has its own sb and returns. WRITES to the model when confirmPlacement is true.
+// SOURCE: ../../knowledge/fire-sprinkler/revit-modelling.md    (hosted vs unhosted, the origin trap, the schedule)
+// SOURCE: ../../knowledge/fire-sprinkler/layout-method.md      (step 7, and why the read-back is not optional)
+//
+// *** THE READ-BACK IS THE POINT. *** This Brain has caught FOUR separate "silent success" bugs — scripts
+//   that reported "N placed, 0 skipped" while the model held something else. A script's own report of what
+//   it did is not evidence that it did it. So this fragment re-collects the sprinklers from the document
+//   after committing and reports the count, the positions and the heights it can actually see. If those
+//   two halves disagree, believe the read-back. Better still: run a THIRD check from a separate bridge
+//   call (recipes/sprinkler-compliance-audit.cs).
+//
+// HOSTED OR NOT — and the wrong choice fails in the case you most need it:
+//   unhosted / level-based  -> NewFamilyInstance(point, symbol, level, NonStructural). Always works.
+//                              The height is then a parameter you set, and it does not follow the ceiling.
+//   face-based / ceiling    -> needs a real Reference to a face. Better coordination — the head moves with
+//                              the ceiling — but it fails outright where there is NO ceiling, which is
+//                              exactly the exposed-slab car park case. Do not pick hosted for a car park.
+//   This fragment does the UNHOSTED path, because it is the one that always works and the one this
+//   library has already proven live. For ceiling-hosted placement, use the face-based overload and expect
+//   to resolve a Reference per point — that is a different job, not a flag on this one.
+//
+// GOTCHA: **an unactivated FamilySymbol places nothing and does not error.** `if (!symbol.IsActive)
+//         symbol.Activate();` inside the transaction, before the first placement. Silent no-op otherwise.
+// GOTCHA: **the height parameter differs by family.** 'Offset from Host', 'Elevation from Level',
+//         'Offset' — read it off one head before writing a batch. A blank height reads as zero and puts
+//         every head on the floor.
+// GOTCHA: **the family origin is not the deflector.** The Z here places the family's insertion point.
+//         If the code dimension you are working to is to the deflector plate, offset it — see
+//         originToDeflectorMm in recipes/sprinkler-deflector-height.cs.
+// GOTCHA: placing 40 heads is a bulk change. START-HERE rule 5: state what will happen and how many, and
+//         wait for a clear go-ahead. confirmPlacement exists so that cannot be skipped by accident.
+// GOTCHA: never Document.Regenerate() after Commit() — illegal, and it surfaces as a HANG, not an error.
+//
+// STATUS: NOT LIVE-VERIFIED as a whole — written 2026-08-20 with no Revit session. Its core,
+//   `NewFamilyInstance(point, symbol, level, StructuralType.NonStructural)` with symbol.Activate(), is
+//   live-proven in creators/create-point-based-element.cs. New here is the read-back and the reporting.
+//   Place ONE head first, look at it in Revit, then run the batch.
+// ============================================================
+
+// ---- INPUTS (edit every time — never treat these as fixed defaults) ----
+bool confirmPlacement = false;        // MUST be set true deliberately. False = report the plan and stop.
+int roomIdInt = 0;                    // for the read-back check (which heads landed in this room)
+string familyNameContains = "";       // e.g. "Sprinkler - Pendent" — leave blank to match any family
+string typeNameContains = "";         // narrow to one type within the family
+int levelIdInt = 0;                   // the level to place on — REQUIRED
+double placementZmm = 0;              // the insertion-point Z, project coordinates. From
+                                      // recipes/sprinkler-deflector-height.cs, not from memory.
+string heightParameterName = "";      // optional: also write the height into this parameter
+double heightParameterValueMm = 0;    // what to write into it
+
+List<(double xMm, double yMm)> pointsMm = new List<(double, double)>
+{
+    // paste the HEAD CENTRES block from recipes/sprinkler-nfpa-grid.cs (after the obstruction check has passed)
+};
+
+// --- the head schedule data. A placed head with no data is a dot on a drawing.
+string hazardLabel = "";              // the hazard class this layout was computed for — record it somewhere
+string constructionLabel = "";        // and the construction type
+int maxListed = 100;
+// ---- END INPUTS ----
+
+var sb = new System.Text.StringBuilder();
+Func<double, double> toMm = v => UnitUtils.ConvertFromInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+Func<double, double> mm = v => UnitUtils.ConvertToInternalUnits(v, DisplayUnitType.DUT_MILLIMETERS);
+
+var level = levelIdInt == 0 ? null : Document.GetElement(new ElementId(levelIdInt)) as Level;
+var room = roomIdInt == 0 ? null : Document.GetElement(new ElementId(roomIdInt)) as Autodesk.Revit.DB.Architecture.Room;
+
+var symbol = new FilteredElementCollector(Document)
+    .OfClass(typeof(FamilySymbol)).Cast<FamilySymbol>()
+    .FirstOrDefault(fs =>
+        (string.IsNullOrEmpty(familyNameContains) || fs.Family.Name.IndexOf(familyNameContains, StringComparison.OrdinalIgnoreCase) >= 0)
+        && (string.IsNullOrEmpty(typeNameContains) || fs.Name.IndexOf(typeNameContains, StringComparison.OrdinalIgnoreCase) >= 0));
+
+if (level == null) { sb.AppendLine("NOT RUN — levelIdInt is not set, or is not a Level."); }
+else if (pointsMm.Count == 0) { sb.AppendLine("NOT RUN — pointsMm is empty. Paste the centres from recipes/sprinkler-nfpa-grid.cs."); }
+else if (symbol == null)
+{
+    sb.AppendLine($"NOT RUN — no FamilySymbol matches family '{familyNameContains}' / type '{typeNameContains}'.");
+    sb.AppendLine("  List what is loaded: context/context-used-families.cs. A sprinkler family lives in the");
+    sb.AppendLine("  Sprinklers category — if nothing matches, it may not be loaded at all (creators/load-family.cs).");
+}
+else
+{
+    string catName = symbol.Category != null ? symbol.Category.Name : "(no category)";
+    sb.AppendLine($"PLACE SPRINKLER HEADS — {pointsMm.Count:N0} position(s)");
+    sb.AppendLine($"  family '{symbol.Family.Name}' type '{symbol.Name}', category {catName}");
+    sb.AppendLine($"  level '{level.Name}' ({toMm(level.Elevation):N0} mm), insertion Z {placementZmm:N0} mm");
+    if (!string.IsNullOrWhiteSpace(hazardLabel) || !string.IsNullOrWhiteSpace(constructionLabel))
+        sb.AppendLine($"  computed for: {hazardLabel} | {constructionLabel}");
+    else
+    {
+        sb.AppendLine("  *** hazardLabel and constructionLabel are blank. A head count with no hazard class is meaningless,");
+        sb.AppendLine("      and it is the first thing a reviewer asks for. Record them somewhere on this layout.");
+    }
+    if (catName != "Sprinklers")
+        sb.AppendLine($"  *** WARNING: this family is in '{catName}', not Sprinklers. A fire schedule filtered by category will miss it.");
+
+    if (!confirmPlacement)
+    {
+        sb.AppendLine();
+        sb.AppendLine($"  NOT PLACED — confirmPlacement is false. This would create {pointsMm.Count:N0} element(s).");
+        sb.AppendLine("  Show Ajmal that count, get a clear go-ahead, then set confirmPlacement = true.");
+        int shown = 0;
+        foreach (var p in pointsMm)
+        {
+            if (shown++ >= maxListed) break;
+            sb.AppendLine($"    {shown,3}. {p.xMm:N0}, {p.yMm:N0} mm");
+        }
+    }
+    else
+    {
+        var placedIds = new List<ElementId>();
+        int failed = 0;
+        using (var t = new Transaction(Document, "AJ Tools - Place Sprinkler Heads"))
+        {
+            t.Start();
+            try
+            {
+                if (!symbol.IsActive) symbol.Activate();     // silent no-op placement without this
+                foreach (var p in pointsMm)
+                {
+                    try
+                    {
+                        var pt = new XYZ(mm(p.xMm), mm(p.yMm), mm(placementZmm));
+                        var fi = Document.Create.NewFamilyInstance(
+                            pt, symbol, level, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                        if (fi != null)
+                        {
+                            placedIds.Add(fi.Id);
+                            if (!string.IsNullOrWhiteSpace(heightParameterName))
+                            {
+                                var prm = fi.LookupParameter(heightParameterName);
+                                if (prm != null && !prm.IsReadOnly) prm.Set(mm(heightParameterValueMm));
+                            }
+                        }
+                        else failed++;
+                    }
+                    catch { failed++; }
+                }
+                t.Commit();
+            }
+            catch (Exception ex)
+            {
+                t.RollBack();
+                sb.AppendLine($"FAILED (place) — rolled back, nothing changed. Reason: {ex.Message}");
+                placedIds.Clear();
+            }
+        }
+
+        if (placedIds.Count > 0 || failed > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"  REPORTED: {placedIds.Count:N0} placed, {failed:N0} failed.");
+
+            // ---- THE READ-BACK. Do not trust the line above. ----
+            double zProbe = room != null ? room.Level.Elevation + mm(1000) : 0;
+            Func<XYZ, bool> insideRoom = p =>
+            {
+                if (room == null) return true;
+                bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { }
+                return i;
+            };
+
+            int seen = 0, inRoom = 0, offTarget = 0;
+            double worstOffMm = 0;
+            foreach (var id in placedIds)
+            {
+                var el = Document.GetElement(id);
+                if (el == null) continue;
+                seen++;
+                var lp = el.Location as LocationPoint;
+                if (lp == null) continue;
+                if (insideRoom(lp.Point)) inRoom++;
+                // did it land where it was asked to?
+                double best = double.MaxValue;
+                foreach (var p in pointsMm)
+                {
+                    double dx = toMm(lp.Point.X) - p.xMm, dy = toMm(lp.Point.Y) - p.yMm;
+                    double d = Math.Sqrt(dx * dx + dy * dy);
+                    if (d < best) best = d;
+                }
+                if (best > 1.0) { offTarget++; if (best > worstOffMm) worstOffMm = best; }
+            }
+
+            sb.AppendLine($"  READ BACK from the document: {seen:N0} of those Ids still exist"
+                + (room != null ? $", {inRoom:N0} inside '{room.Name}'" : ""));
+            if (seen != placedIds.Count)
+                sb.AppendLine($"  *** {placedIds.Count - seen:N0} placed Id(s) are NOT in the document. The report above was wrong —"
+                    + " believe this line, and find out why before placing more.");
+            if (offTarget > 0)
+                sb.AppendLine($"  *** {offTarget:N0} head(s) are not at the position asked for (worst {worstOffMm:N0} mm out)."
+                    + " Something moved them — a host, a snap, or a workplane. Look before continuing.");
+            if (seen == placedIds.Count && offTarget == 0 && failed == 0)
+                sb.AppendLine("  Placed count, surviving Ids and positions all agree.");
+
+            sb.AppendLine();
+            sb.AppendLine("  NEXT, from a SEPARATE bridge call: recipes/sprinkler-compliance-audit.cs on this room.");
+            sb.AppendLine("  That reads the heads out of the model with fresh eyes and re-tests every spacing limit —");
+            sb.AppendLine("  which is the only evidence that what was placed is what was designed.");
+        }
+    }
+}
+
+return sb.ToString();

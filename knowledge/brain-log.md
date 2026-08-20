@@ -14,8 +14,8 @@ original full text.)
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
 Rewritten 2026-08-07 at the end of the big verification campaign so the next session can resume without
-re-deriving anything. **223 of 268 fragments are verified against a real Revit model (83%).** The 45
-below are everything left, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
+re-deriving anything. **237 of 280 fragments are verified against a real Revit model (85%) as of 2026-08-20.** Everything
+left is below, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
 nothing about whether you can act. Headings are bold and items numbered on purpose: `tools/brain-status.mjs`
 counts them that way.
 
@@ -23,6 +23,12 @@ counts them that way.
 1. `actions/structural-changes/action-place-accessory-on-run.cs` — ducts exist; create-then-rollback.
    Its METHOD is proven but the file as one uninterrupted run threw an unisolated null reference; read its
    STATUS block. Suspect: an element handle reused across a transaction boundary after `BreakCurve`.
+
+2. `recipes/sprinkler-nfpa-grid.cs`, `recipes/sprinkler-compliance-audit.cs` and
+   `recipes/sprinkler-sidewall-layout.cs` — a placed Room is all three need, and Room 4 exists. These are
+   the three of the eight sprinkler fragments (2026-08-20) that can be proven on the model as it stands.
+   Run the grid one first and check its table against a hand calculation; the arithmetic is plain C# with
+   no Revit call in it, so one room settles all three.
 
 (**Everything else in this group is closed.** 2026-08-14: `action-add-aligned-dimensions.cs`,
 `action-add-spot-elevations.cs`, `action-manage-sheet-sets.cs` and `action-add-remove-insulation.cs`
@@ -61,6 +67,20 @@ including 166 electrical. Its "KNOWN BUG" also turned out not to be real — see
    reflection 2026-08-14: 0 overloads, and no ceiling method on `Document.Create`), so the API cannot
    build this one fixture. That makes it an ASK, not a wait. `creators/create-ceiling.cs` is not an open
    item at all — it is already written up as CONFIRMED IMPOSSIBLE and does the right thing.
+
+4. **Structural framing and columns in the test model** — the positive path of
+   `recipes/sprinkler-obstruction-survey.cs`, `recipes/sprinkler-obstruction-check.cs` and
+   `recipes/sprinkler-adjust-for-obstructions.cs` (2026-08-20). All three will RUN today and report
+   "nothing found", which proves only the empty branch. Beams and columns are buildable by API
+   (`NewFamilyInstance` with a structural type), so this is a build-the-fixture job, not a wait — the same
+   move that closed the electrical and insulation items. Add one beam and one column to Room 4 and all
+   three get a real test, including the bay-module detection.
+5. `recipes/sprinkler-deflector-height.cs` — needs **a ceiling**, exactly like `ray-trace-to-ceiling.cs`
+   above, and blocked by the same Revit 2020 `Ceiling.Create` gap. Same ASK: one ceiling drawn by hand
+   unblocks both. Its no-ceiling cases (2a exposed slab, 2b under a beam) can be proven without one.
+6. `recipes/sprinkler-place-heads.cs` — needs **a sprinkler family loaded**. Not yet checked whether the
+   model has one; the stock library ships them, so this is likely a `creators/load-family.cs` call rather
+   than a real block. Check before assuming — "fixture-blocked" has been wrong four times in this Brain.
 
 (Electrical content was item 1 here until 2026-08-14 — **closed by building the fixture**: two stock MEP
 families loaded, a real panelled PowerCircuit created, `filter-by-electrical-system.cs` verified.)
@@ -2057,3 +2077,28 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   a material `if()` formula on Description inside the grille families. `Document.EditFamily` +
   `FamilyManager.get_Parameter(...).IsDeterminedByFormula` is how to prove it rather than guess. 74 more
   locked types sit unplaced across 22 other TCM families in the same project.
+
+- **2026-08-20 — fire sprinklers went from one knowledge note to a subject.** Ajmal asked for the whole
+  thing studied properly — spacing, room coverage, "with celling how without celling how", pendent /
+  upright / wall, "how mcuh from the wall", "if upraght howmcuh from the slab", and what a beam or a column
+  does — then turned into tools. Added `knowledge/fire-sprinkler/` (6 chunks: types, deflector/ceiling
+  height, obstructions, the method, the Revit side, and a folder README), and eight fragments
+  `scripts/recipes/sprinkler-*.cs` that run as a chain: survey the room → derive the grid from the code
+  limits → check every head against the beams and columns → move what fails → set the height by reading
+  what is really above → place → audit. `nfpa13-sprinkler-spacing.md` kept its spacing rules and worked
+  Room 4 examples and handed its three thin bullets (deflector, obstructions, sidewall) to the new chunks.
+  Three things are worth more than the files:
+  **(1)** the old Rule 6 bullet here quoted *"2.5 in at 1 ft, 5.5 in at 3 ft, 22 in at 10 ft"* as the beam
+  table — those numbers are the **obstruction-against-a-wall** table, which climbs far more slowly. Two
+  different tables, conflated for weeks, lenient one way and strict the other.
+  **(2)** NFPA 13's own beam table could not be retrieved in that session — the environment blocked every
+  page fetch and only search snippets came back. Rather than hardcode remembered numbers, the table is an
+  **editable input** on `sprinkler-obstruction-check.cs` seeded `[UNCONFIRMED]`, and every run prints that
+  warning until someone types their adopted edition's values in. Same treatment for the other values that
+  only one source corroborated. An unchecked number cannot quietly become a compliance claim.
+  **(3)** the column exception: the three-times rule is capped at 24 in for most isolated obstructions but
+  **not for a vertical one**, so a 600 mm column needs 1,800 mm clear, not 610. That is the car-park trap
+  and it is now enforced in code rather than remembered.
+  All eight fragments are written but **not live-verified** — no Revit in that session. Every Revit call in
+  them is proven elsewhere in this library and each header names which, so the honest route is one element
+  first, check the real result, then the batch.
