@@ -13,6 +13,19 @@ these files, so a word only exists to a future session if it was written here. R
 phrasing on the left, the Revit meaning on the right — a term that read as obvious the day it was said
 is exactly the one a fresh session cannot route.
 
+> **split-review: kept whole** (reviewed 2026-08-20, at 309 lines). Past the ~300-line rule and staying
+> that way. The rule is a split candidate, not a mandate, and its purpose is to cut the cost of *reading a
+> file whole* — but **nobody reads a glossary whole.** It is a lookup: you arrive with one word and leave
+> with one meaning. There is a visible seam (the term list, then the dated `### Log`), and splitting on it
+> would still be wrong: both halves answer the same question — *what does Ajmal mean by this word* — so a
+> split just means guessing which file a word landed in, and the semantic index would have to get that
+> guess right too. That is the "splitting adds hops" case the rule names.
+>
+> It will keep growing, by design — his standing rule is that his words get written down every session.
+> Growth alone is not a reason to revisit this. **Re-open the decision only if a genuinely different
+> subject starts accumulating here** — a body of entries that someone would look up *without* having heard
+> Ajmal say the word first. That would be a different question, and it would deserve its own file.
+
 - **Element ID (Revit)** → a unique number Revit assigns to every single element in a project — walls,
   doors, pipes, rooms, views, sheets, everything. No two elements share the same ID in one model. Used to
   find, select, or track an element individually (e.g. Add-ins → Select by ID, `filter-by-id-list.cs`,
