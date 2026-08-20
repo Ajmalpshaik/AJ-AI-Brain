@@ -1,6 +1,6 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-20**, updated again on the Windows PC — read the UPDATE section first. This replaces the 2026-08-14 handover, which
+Last updated: **2026-08-20**, end of the Windows PC session — read THE BRIDGE section first, then the UPDATE section. This replaces the 2026-08-14 handover, which
 had gone stale (it said 270 fragments; there are now 287).
 
 ## The prompt
@@ -8,6 +8,66 @@ had gone stale (it said 270 fragments; there are now 287).
 ```text
 Read D:\Ajmal\AJ AI Brain\docs\HANDOVER.md and CLAUDE.md first, then continue the work listed there.
 ```
+
+---
+
+## THE BRIDGE NOW HANDLES SEVERAL REVITS AND SEVERAL PROJECTS — 2026-08-20, end of session
+
+**Do this first: Ajmal must close and reopen Revit.** The add-in only loads at Revit startup, so
+**AJ Tools 1.56.0 is built and deployed but not yet running** in the session that was open.
+
+### What changed, and why it was two problems
+
+| Question | Fix | Version |
+|---|---|---|
+| Which **Revit session**? | one named pipe per process id | AJ Tools **1.55.0** |
+| Which **project inside it**? | optional `document` title on the request | AJ Tools **1.56.0** |
+
+The bridge used to assume exactly one Revit: every session hosted the same pipe name, which has room for
+two server instances — and one Revit uses BOTH (one servicing the chat, one listening so preemption is
+instant). **Measured, not inferred:** creating four servers on one name gives two, then
+`All pipe instances are busy`. So a second Revit's bridge simply refused to start.
+
+The second half is subtler and was still live after the first fix: `RevitExecutionService` builds its
+globals from `app.ActiveUIDocument`, so `Document` means **the front window**. With two projects open in
+one Revit, clicking the other one silently moved where the next script landed.
+
+**The rule both halves share: a name that does not resolve is an ERROR listing the real choices, never a
+fall back to whatever is in front.** Falling back IS the failure.
+
+**Ajmal's rule for choosing, asked and answered:** *ask, don't guess.* One Revit, one project — no
+prompt, behaves exactly as it always did. More than one — nothing is sent until he names one.
+
+### Three new tools (native tools 17 → 20)
+
+`list_revit_instances` · `use_revit_instance` · `use_revit_document`. They read
+`%APPDATA%\AJToolsridges\<pid>.json`, which each Revit writes with its version and open document.
+
+### Proven live on 2026-08-20, and what is NOT
+
+**Proven:** two Revits (`school.rvt` pid 1320, `vila.rvt` pid 23876) hosted bridges **simultaneously**,
+and 10 sheets were created in each — `school 01..10`, `vila 01..10` — switching between them mid-job and
+verifying each by reading it back. That is the thing that was impossible before.
+
+**NOT yet proven, and it needs Ajmal:**
+
+1. **Document targeting has never run.** 1.56.0 was built after that test, so the running Revit did not
+   have it. Open **two projects in ONE Revit**, then pin one with `use_revit_document` and confirm a
+   write lands in the named project no matter which window is in front.
+2. **The three tools have never been called.** They were added after this session's mcp-server had
+   already loaded, so the switching on 2026-08-20 was done by hand — by rewriting `ajai-bridge.json` to
+   point at the other instance file. A fresh chat gets the real tools.
+
+### Known limit, recorded rather than hidden
+
+A `UIDocument` for a background project still carries **that project's** active view. So view-scoped work
+(isolate, colour, **grayout**, crop) follows Revit, not the caller. Model work — create, rename,
+parameters, schedules — is unaffected. Do not quietly widen this claim.
+
+### Small thing worth doing
+
+Both `school.rvt` and `vila.rvt` still have **Project Name and Project Number unset** (Revit's literal
+placeholder text). Title blocks normally read those fields, so sheets print with blanks.
 
 ---
 
