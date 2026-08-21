@@ -334,6 +334,36 @@ foreach ($file in @("CLAUDE.md", "START-HERE.md", "README.md")) {
 }
 Write-Host ("Checked {0} 'searches all N files' claim(s) against {1} indexable file(s) on disk." -f $claimCount, $indexable)
 
+# === 9. Fragment-count claims in the entry documents ===
+# Check 5 covers AGENT-SPEC.md and check 8 covers the "searches all N files" line, but the entry docs
+# also each quote how many FRAGMENTS a tool covers. Nothing checked those, and on 2026-08-21 all four
+# were stale at once against 290 on disk: CLAUDE.md said 268 and 285, START-HERE.md said 285,
+# README.md said 267 and 266. Only 'all N' / 'the N' forms count as a live claim; the historical
+# example in CLAUDE.md ("AGENT-SPEC said 206 fragments against 264") records a PAST drift on purpose
+# and must never be rewritten to match disk, so the 'said ... against' shape is skipped explicitly.
+Write-Host "`n=== 9. Fragment-count claims in entry documents ===" -ForegroundColor Cyan
+$fragTotal = (Get-ChildItem -Path (Join-Path $brainRoot 'scripts') -Filter '*.cs' -Recurse -File).Count
+$fragPatterns = @('(?:all|the) (\d+)(?: C#)? fragments', 'searches all (\d+) by purpose')
+$fragClaimCount = 0
+foreach ($file in @('CLAUDE.md', 'START-HERE.md', 'README.md')) {
+    $p = Join-Path $brainRoot $file
+    if (-not (Test-Path $p)) { continue }
+    $lines = [System.IO.File]::ReadAllLines($p, [System.Text.Encoding]::UTF8)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        if ($line -match '\bsaid\b.*\bagainst\b') { continue }  # documented past drift, not a live claim
+        foreach ($pattern in $fragPatterns) {
+            foreach ($m in [regex]::Matches($line, $pattern)) {
+                $fragClaimCount++
+                if ([int]$m.Groups[1].Value -ne $fragTotal) {
+                    $issues.Add("FRAGMENT COUNT DRIFT in " + $file + ":" + ($i + 1) + ": says `"" + $m.Value + "`" but scripts/ holds " + $fragTotal + " fragments")
+                }
+            }
+        }
+    }
+}
+Write-Host ("Checked {0} fragment-count claim(s) against {1} fragment(s) on disk." -f $fragClaimCount, $fragTotal)
+
 Write-Host "`n=== Result ===" -ForegroundColor Cyan
 if ($issues.Count -eq 0) {
     Write-Host "All checks passed - no drift found." -ForegroundColor Green

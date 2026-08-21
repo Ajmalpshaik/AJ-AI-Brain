@@ -375,6 +375,39 @@ for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
 }
 console.log(`Checked ${claimCount} "searches all N files" claim(s) against ${indexable} indexable file(s) on disk.`);
 
+// === 9. Fragment-count claims in the entry documents ===
+// Check 5 covers AGENT-SPEC.md and check 8 covers the "searches all N files" line, but the entry docs
+// also each quote how many FRAGMENTS a tool covers ("compile-checks all N fragments", "search the N
+// fragments"). Nothing checked those, and on 2026-08-21 all four were stale at once against 290 on
+// disk: CLAUDE.md said 268 and 285, START-HERE.md said 285, README.md said 267 and 266. That is the
+// exact failure this repo keeps naming - the docs quietly getting ahead of reality - so it is a check
+// now rather than a note. Only 'all N' / 'the N' forms count as a live claim; the historical example
+// in CLAUDE.md ("AGENT-SPEC said 206 fragments against 264") deliberately records a PAST drift and
+// must never be rewritten to match disk, so the `said ... against` shape is skipped explicitly.
+console.log("\n=== 9. Fragment-count claims in entry documents ===");
+const fragTotal = walk(path.join(brainRoot, "scripts"), (n) => n.endsWith(".cs")).length;
+const FRAG_CLAIM_RE = [/(?:all|the) (\d+)(?: C#)? fragments/g, /searches all (\d+) by purpose/g];
+let fragClaimCount = 0;
+for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
+  const p = path.join(brainRoot, file);
+  if (!fs.existsSync(p)) continue;
+  const lines = fs.readFileSync(p, "utf8").split(/\r?\n/);
+  lines.forEach((line, i) => {
+    if (/\bsaid\b.*\bagainst\b/.test(line)) return; // documented past drift, not a live claim
+    for (const re of FRAG_CLAIM_RE) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(line))) {
+        fragClaimCount++;
+        if (Number(m[1]) !== fragTotal) {
+          issues.push(`FRAGMENT COUNT DRIFT in ${file}:${i + 1}: says "${m[0]}" but scripts/ holds ${fragTotal} fragments`);
+        }
+      }
+    }
+  });
+}
+console.log(`Checked ${fragClaimCount} fragment-count claim(s) against ${fragTotal} fragment(s) on disk.`);
+
 // === Result ===
 console.log("\n=== Result ===");
 if (issues.length === 0) {

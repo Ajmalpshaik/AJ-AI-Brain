@@ -2685,3 +2685,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
   hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
   knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
+- 2026-08-21 — **the daily check found six stale fragment counts in the three entry docs, and the drift
+  checker now has a ninth check so they cannot drift again.** Disk holds 290; CLAUDE.md said 268 and 285,
+  START-HERE.md said 285, README.md said 267 and 266, and README also still quoted the superseded 14-row
+  search score and "seven drift checks". Check 5 only ever covered `AGENT-SPEC.md` and check 8 only the
+  "searches all N files" line, so fragment counts in the entry docs were the one uncovered number — the
+  repo's own named failure mode, live in four places at once. Check 9 reads `scripts/*.cs` and matches the
+  `all N` / `the N` forms only, skipping the deliberate historical example in CLAUDE.md (`said 206
+  fragments against 264`) by its `said ... against` shape. Negative-tested: it names file, line and claim.
+  Added to both checkers; **the `.ps1` half is ASCII-only and BOM-preserved but has never been parsed —
+  no PowerShell in the container, which is exactly the trap `CLAUDE.md` warns about. Run it once on the PC.**

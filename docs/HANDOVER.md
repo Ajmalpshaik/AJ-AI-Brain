@@ -355,6 +355,22 @@ assistant's.
   `brain-log.md` reports stale on nearly every run because it is written every session; judge by the
   other files.
 
+## From the daily check — 2026-08-21, container run
+
+**One thing needs a single run on the PC.** `tools/verify-consistency.ps1` gained a ninth check
+(fragment-count claims in CLAUDE.md / START-HERE.md / README.md, which were stale in six places against
+290 on disk and are now fixed). The Node half is negative-tested and passing. **The PowerShell half has
+never been parsed** — the container has no PowerShell, which is the exact blind spot `CLAUDE.md` records
+after `check-scripts.ps1` and `verify-fragments-compile.ps1` both shipped broken this way. It is
+ASCII-only and the file's UTF-8 BOM is intact, so the *encoding* trap is ruled out; the parse is not.
+Run `tools\verify-consistency.ps1` once and confirm it prints nine checks and "All checks passed".
+
+**Unchanged and expected, not a fault:** the vector index, the Graphify graph and the Obsidian vault are
+gitignored, so a container run sees their code and none of their state. `brain-status.mjs` says so out
+loud since 2026-08-20 rather than passing silently. Their freshness is answerable **only on the PC** —
+`semantic-index\ask-brain-hybrid.cmd` (its STALE INDEX banner compares content) and
+`python tools/graph-rebuild.py --check`. The daily routine cannot settle those three from the cloud.
+
 ## Housekeeping
 
 - ~~A stray remote branch `claude/revit-api-surface` needs deleting by hand.~~ **Done on the PC,

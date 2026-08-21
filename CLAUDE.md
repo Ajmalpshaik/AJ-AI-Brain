@@ -27,7 +27,7 @@ that's what you're doing. It is never a reason to refuse the job. Run
 `node tools/brain-status.mjs --capabilities` when you need what this Brain can actually do.
 
 **Before writing any new C#, look for an existing fragment first** —
-`node tools/fragment-index.mjs --find <word>` searches all 268 by purpose and input field and shows each
+`node tools/fragment-index.mjs --find <word>` searches all 290 by purpose and input field and shows each
 one's proven status; `--show <path>` prints what a given fragment needs filled in. That is one lookup
 instead of reading `scripts/README.md` end to end, which is the read that gets skipped when it feels
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
@@ -76,7 +76,7 @@ questions; make the code decisions yourself and tell him what you did.
 
 He named two problems. Both have an answer that already exists:
 
-- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 285 fragments against
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 290 fragments against
   every Revit installed on the PC **without opening Revit**, in about a minute. Offer it the moment a
   version change is mentioned. It catches the whole "worked in 2020, errors in 2024" class before he
   hits it mid-job.
@@ -92,10 +92,11 @@ He named two problems. Both have an answer that already exists:
   → [`tools/verify-consistency-hook.mjs`](tools/verify-consistency-hook.mjs)) that runs the full
   consistency check — skill frontmatter, markdown link targets, scripts README sync, skill coverage in
   the entry docs, AGENT-SPEC's fragment counts, text encoding, the `// SOURCE:` cross-references
-  inside script fragments, and the "searches all N files" semantic-index coverage claims. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  inside script fragments, the "searches all N files" semantic-index coverage claims, and the fragment-count
+  claims in the entry docs themselves. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
-  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same eight checks.
+  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same nine checks.
 - **Never name an outside source in anything written here — no other people's repos, tools, products,
   websites or personal names.** Ajmal's instruction, 2026-08-20: *"do not mention any thing that we took
   from this web site or repo... the words also remove... remove his name and do not use like that."*
