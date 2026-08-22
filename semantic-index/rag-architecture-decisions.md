@@ -54,6 +54,27 @@ of this file are met first.
 >    score, so an ordinary session's `brain-log.md` entry can trip the REGRESSION alarm. That is not a
 >    reason to distrust the score card — it is the sharpest argument yet for the 30 rows below.
 
+## What is in this file
+
+14 sections. The two you most likely want are **What is actually limiting the search** (the answer to "should we rebuild this?") and **What has already been tried and reverted** (so you do not re-propose something that measured worse).
+
+- [How to judge a proposed upgrade — Ajmal's rule, 2026-08-20](#how-to-judge-a-proposed-upgrade-ajmals-rule-2026-08-20)
+- [What is already here](#what-is-already-here)
+- [What has already been tried and reverted — do not re-propose these](#what-has-already-been-tried-and-reverted-do-not-re-propose-these)
+- [Measured and found unnecessary — an ingest de-duplication stage](#measured-and-found-unnecessary-an-ingest-de-duplication-stage)
+- [Confidence, citation, evals, caching, observability — checked 2026-08-21](#confidence-citation-evals-caching-observability-checked-2026-08-21)
+- [KV cache — asked 2026-08-21, and there is nothing to build](#kv-cache-asked-2026-08-21-and-there-is-nothing-to-build)
+- [Query understanding — the weak spot was misdiagnosed, and it is now half fixed](#query-understanding-the-weak-spot-was-misdiagnosed-and-it-is-now-half-fixed)
+- [The ANN index — checked properly 2026-08-21, and it needs nothing](#the-ann-index-checked-properly-2026-08-21-and-it-needs-nothing)
+- [What "combining both approaches" is actually doing — measured 2026-08-20](#what-combining-both-approaches-is-actually-doing-measured-2026-08-20)
+- [What is actually limiting the search](#what-is-actually-limiting-the-search)
+- [The one re-architecture that IS worth doing](#the-one-re-architecture-that-is-worth-doing)
+- [Revisit a rewrite only when both of these are true](#revisit-a-rewrite-only-when-both-of-these-are-true)
+- [Folder structure — same verdict, for a related reason](#folder-structure-same-verdict-for-a-related-reason)
+- [Still open, carried over from the retired 2026-08-13 spec](#still-open-carried-over-from-the-retired-2026-08-13-spec)
+
+> **Reading the numbers in this file.** Any score written as **`x/14`** is from the 14-row test-set era, before 2026-08-21. Those are kept exactly as measured — they are the evidence for the decisions around them — but they are **history, not today**. The current baseline is **28 rows**; see *What is actually limiting the search*. When a figure here disagrees with `semantic-index/score-history.md`, the score file wins: it is generated, this one is written.
+
 ## How to judge a proposed upgrade — Ajmal's rule, 2026-08-20
 
 He set the acceptance test himself, and it governs this whole file. When he names an idea, check it
@@ -90,8 +111,15 @@ worse, and here is the line it was reverted from.
 ## What is already here
 
 Measured on the corpus as it stands (2026-08-20, build fingerprint `5e2411794df50cea`):
-**352 files, 3,892 chunks.** File count is live from `semantic-index/index-manifest.json`; the chunk
-count is the last `score-brain` line carrying that same fingerprint, in `score-history.md`.
+**352 files, 3,892 chunks** *(as measured 2026-08-20).* File count came from
+`semantic-index/index-manifest.json`; the chunk count from the last `score-brain` line carrying that same
+fingerprint in `score-history.md`.
+
+> **Neither figure can be re-checked from a git clone, and both have already moved.** `index-manifest.json`
+> is gitignored — it lives only on the machine that built the index — so a cloud session cannot verify the
+> file count at all. As of 2026-08-22 the live counts elsewhere are **353 indexable files** (the
+> consistency checker counts these from disk) and **3,890 chunks** (latest `score-history.md` line). Treat
+> the pair above as a dated snapshot that anchors the table below it, never as today's state.
 
 | Piece | Where |
 |---|---|
@@ -223,7 +251,7 @@ alarm about the *cause* and a true alarm about something else entirely.
 | **High-frequency query cache** | Measured over 172 logged questions: **171 distinct, 1 repeat.** A cache would hit **0.6%** of the time. There is no repeat traffic to cache. |
 | **Freshness scoring** | Nothing here decays. A gotcha found in July is exactly as true in August, so weighting by age would demote proven technique in favour of recent writing — and the most recently written files are changelogs, which are already *discounted* for crowding out answers. No evidence of a freshness problem exists; if one appears it will appear as a wrong answer, and that is when to weight it. |
 | **Per-chunk timestamps for citations** | Git already holds when every line of every file was written, with who and why attached. A timestamp copied into chunk metadata would be a second, worse copy that goes stale between rebuilds. |
-| **Adversarial eval rows** | The right idea at the wrong time. Rows whose expected answer is "nothing here covers this" test over-confidence, which is real — but the test set is **14 rows** and that is already limiter 1. Adding adversarial rows to a set this small makes it less able to measure ordinary retrieval, not more. Revisit at 30+ ordinary rows. |
+| **Adversarial eval rows** | The right idea at the wrong time *(when written, 2026-08-21)*. Rows whose expected answer is "nothing here covers this" test over-confidence, which is real — but the set was **14 rows** and that was already limiter 1. Adding adversarial rows to a set that small makes it less able to measure ordinary retrieval, not more. Revisit at 30+ ordinary rows. **Status 2026-08-22: the set is now 28. This verdict is two rows from expiring — re-read it, do not re-apply it.** |
 
 ### Already present, and where
 
@@ -448,20 +476,33 @@ it"* — was describing a case that **cannot occur in a top-5 answer**; it has b
 
 Not the pipeline. Three things, in order of how much they cost:
 
-1. **The test set is 14 questions.** `semantic-index/score-history.md`, last reproducible run:
-   **3/14 at #1, 5/14 in top 3, 6/14 in top 5, 11/14 retrievable, MRR 0.321.** Two finished features —
-   the cross-encoder and the skill weighting — are switched off *solely* because 14 rows cannot tell a
-   real gain from a coincidence. **This is the whole bottleneck**, and only Ajmal can clear it: the file
-   itself explains why assistant-written questions do not count.
+1. **The test set is 28 questions — and it is two short of the gate this file sets for itself.**
+   *(Updated 2026-08-22. It said 14 until then; Ajmal added 14 more rows from his own log on 2026-08-21
+   and this section was not updated with them. Every "14 rows" left elsewhere in this file is history and
+   is marked as such — do not read those as current.)*
+
+   `semantic-index/score-history.md`, latest line: **5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28
+   retrievable, MRR 0.267** (model `all-MiniLM-L6-v2`, chunk 900/1100/150, 3,890 chunks).
+
+   **Those numbers are NOT comparable to the 14-row era above them.** The set doubled, and the new rows
+   came from real questions Ajmal actually asked, which are harder than the originals. 3/14 (21% at #1)
+   against 5/28 (18%) is not a decline that has been measured — it is two different exams. The only honest
+   reading is that **28 rows is the first baseline worth defending**, and everything before it is prologue.
+
+   Two finished features — the cross-encoder and the skill weighting — are still switched off *solely*
+   because the set could not tell a real gain from a coincidence. **At 28 rows that reason is close to
+   expiring.** The gate at the foot of this file is 30+ rows; two more of Ajmal's own questions reach it,
+   and at that point the re-sweep is due rather than optional. That makes writing two test questions the
+   single highest-value thing anyone can do to this search — still true, and now nearly finished.
 
    Three more decisions are parked behind the same wall, and it is worth naming them so they are not
    mistaken for settled: **the fusion balance has never been swept** (`WEIGHT_MEANING` and
    `WEIGHT_WORDS` are both 1.0 — a starting point, not a result), **`RRF_K` is 60 because that is the
    value the original method proposed**, not because 60 beat anything here, and **`bge-small-en-v1.5`
    versus `all-MiniLM-L6-v2` has never been run at all.** Each is a real unknown. None of them can be
-   answered on 14 rows without repeating the `AREA_WEIGHT` mistake — a sweep that "wins" by moving
-   points from one half of a small test set to the other is fitting the sample, and it was already
-   caught doing exactly that once.
+   answered on a set this size without repeating the `AREA_WEIGHT` mistake — a sweep that "wins" by
+   moving points from one half of a small test set to the other is fitting the sample, and it was already
+   caught doing exactly that once. 28 rows makes that less likely than 14 did; it does not make it safe.
 2. **Words the files do not contain.** Two different problems were filed under one heading here, and
    separating them on 2026-08-21 was worth more than any tuning. **Misspellings** are the larger half —
    65% of real questions carry a word in no file, mostly ordinary Revit words typed fast — and they are
@@ -503,6 +544,9 @@ re-architecture.
 
 1. `semantic-index/test-questions.md` holds **30+ rows in Ajmal's own words**, and the two switched-off
    features have been re-swept against them.
+   **Progress, checked 2026-08-22: 28 of 30.** Fourteen original rows plus fourteen added 2026-08-21 from
+   Ajmal's own question log. Two more rows open this gate — which is why "write two test questions" now
+   outranks every other idea in this file.
 2. A specific question class is failing that **no configuration of the current pipeline can reach** —
    demonstrated on those rows, not argued from a diagram.
 
