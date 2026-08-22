@@ -3210,3 +3210,32 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `CLAUDE.md`, `START-HERE.md` and `README.md`. Before check 8 existed that would have drifted silently —
   it is on record as having done exactly that for two days. One delete, three docs corrected, no thought
   required.
+
+- 2026-08-22 — **Final sweep of the markdown, and the one thing it found was the failure `CLAUDE.md` names
+  by name.** `README.md` was quoting the search accuracy as **"3/14 at #1, 6/14 in top 5, 11/14 retrievable
+  at all"**. Two things wrong with that, and the second is worse than the first: the test set doubled to 28
+  rows on 2026-08-21, *and* that exact combination **matches no line in `score-history.md` that ever
+  happened** — it was a remembered composite, which is precisely what `CLAUDE.md` warns about when it says
+  *"three different numbers (75%, 60%, 29%) were once in circulation here."* Corrected to the real last
+  run, **5/28 at #1, MRR 0.267**, with the note that it is not comparable to any `x/14` above it.
+  **Check 12 added** so a score claim is compared to the last run in `score-history.md` automatically —
+  `score-history.md`, `brain-log.md`, `rag-architecture-decisions.md` and `HANDOVER.md` are exempt because
+  all four quote every era on purpose and the last three already carry a banner saying so. Tested by
+  putting the old number back; it fired with file and line.
+  **Everything else in the markdown came back clean, and the negative results are worth recording** so the
+  next session does not repeat the search: **35 in-file `#anchor` links, all resolving** (check 2 strips
+  the `#`, so these had never been validated — including the jump table added to this log this morning);
+  **every `tools/*.mjs|ps1|py|cmd` named in prose exists on disk**; **0 orphan knowledge files** of 43,
+  so everything is reachable from an index; **no TODO/FIXME/placeholder leftovers** (11 keyword hits, all
+  legitimate — "need todo" is Ajmal's own quoted words, `(XXX)` is a naming regex, "connector placeholder
+  size" is a real term); **no sentence over 150 characters appears in two files**, so the "never duplicate
+  a fact across two files" rule is actually holding; and **no duplicate headings** inside any file.
+  **One measurement error caught in my own audit, worth more than the clean results.** A percentage check
+  flagged two figures in this log as wrong arithmetic. Both were my regex, not the log: one spanned two
+  unrelated numbers, and the other read `1,192` as `1` because of the comma. **Neither was reported as a
+  finding.** The pattern this session keeps proving in both directions: a scan is evidence only after you
+  read what it actually matched.
+  **`docs/HANDOVER.md` rewritten at the top** for the close-out — the whole 2026-08-22 session, the four
+  new checks, the four decisions Ajmal took, and the three things only he can do. Its own stale numbers
+  (270 / 283 / 287 fragments, `3/14`) were stamped or corrected; the 2026-08-20 Windows bridge work below
+  is untouched because it is still unfinished.

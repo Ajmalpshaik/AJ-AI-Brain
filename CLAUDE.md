@@ -97,8 +97,13 @@ He named two problems. Both have an answer that already exists:
   audit found nine wrong ones — including one on line 79 of this file), **each fragment's own header
   status against its `scripts/README.md` row** (check 10 — nineteen headers still said "NOT YET
   LIVE-VERIFIED" for fragments proven on 2026-08-06/07, because the campaign updated the README and never
-  the file), and **outside-source names in `scripts/` and `skills/`** (check 11 — the 2026-08-20 strip
-  never reached the fragments). If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  the file), **outside-source names in `scripts/`, `skills/` and `knowledge/`** (check 11 — the 2026-08-20 strip
+  never reached the fragments), and **any `N/M at #1` retrieval score against the last run in
+  `semantic-index/score-history.md`** (check 12 — `README.md` was quoting a top-1 figure from the
+  retired 14-row era next to a top-5 figure that matched no run that ever happened, i.e. a remembered
+  composite; the check fired on this very sentence when it first carried the literal numbers, which is
+  the check working, so quote the file instead of the digits). **Twelve checks in the Node version.** If it reports
+  drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
   [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — but know that it

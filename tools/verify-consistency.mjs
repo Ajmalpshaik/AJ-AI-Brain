@@ -534,6 +534,50 @@ for (const dir of ["scripts", "skills", "knowledge"]) {
 }
 console.log(`Scanned ${sourceScanned} fragment/skill/knowledge file(s) for outside-source names.`);
 
+// === 12. Retrieval-score claims vs semantic-index/score-history.md ===
+// CLAUDE.md names this as a failure that already happened: "three different numbers (75%, 60%, 29%) were
+// once in circulation here". It happened again - on 2026-08-21 the test set doubled from 14 rows to 28,
+// and on 2026-08-22 README.md was still quoting "3/14 at #1, 6/14 in top 5, 11/14 retrievable", a figure
+// that matches no single line in score-history.md at all. It was a remembered composite, which is exactly
+// what that file exists to stop. score-history.md is append-only and stamped with the model and settings
+// that produced each run, so its LAST line is the only current answer.
+console.log("\n=== 12. Retrieval-score claims vs score-history ===");
+const historyPath = path.join(brainRoot, "semantic-index", "score-history.md");
+if (fs.existsSync(historyPath)) {
+  const runLines = fs.readFileSync(historyPath, "utf8").split(/\r?\n/)
+    .filter((l) => /^\s*-\s*\d+\/\d+ at #1/.test(l));
+  const last = runLines[runLines.length - 1] || "";
+  const truth = last.match(/(\d+)\/(\d+) at #1/);
+  let scoreClaims = 0;
+  if (truth) {
+    const [, top1, rows] = truth;
+    for (const f of walkAll(brainRoot).filter((x) => x.endsWith(".md"))) {
+      const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+      // score-history is the source; brain-log and the rag doc are dated records that quote every era on
+      // purpose, and both already carry a banner saying an x/14 figure is the pre-2026-08-21 set.
+      if (/score-history\.md|brain-log\.md|rag-architecture-decisions\.md|HANDOVER\.md$/.test(rel)) continue;
+      const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+      for (let i = 0; i < lines.length; i++) {
+        for (const m of lines[i].matchAll(/(\d+)\/(\d+) at #1/g)) {
+          scoreClaims++;
+          if (m[1] !== top1 || m[2] !== rows) {
+            issues.push(
+              `SCORE CLAIM DRIFT in ${rel}:${i + 1}: says "${m[0]}" but the last run in` +
+                ` semantic-index/score-history.md is ${top1}/${rows} at #1 - quote that file, never a` +
+                ` remembered number, and say which run it came from`,
+            );
+          }
+        }
+      }
+    }
+    console.log(`Checked ${scoreClaims} retrieval-score claim(s) against the last run (${top1}/${rows} at #1).`);
+  } else {
+    issues.push("SCORE HISTORY UNREADABLE: no 'N/M at #1' run line found in semantic-index/score-history.md");
+  }
+} else {
+  issues.push("MISSING FILE: semantic-index/score-history.md not found");
+}
+
 // === Result ===
 console.log("\n=== Result ===");
 if (issues.length === 0) {
