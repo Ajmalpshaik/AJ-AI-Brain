@@ -1,8 +1,91 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-21**, end of the RAG + speed session. Read the 2026-08-21 section
-immediately below first — it corrects an item the older sections still list as outstanding.
-Everything under it is the 2026-08-20 record, kept because its Revit-side work is still open.
+Last updated: **2026-08-22**. Read top-down, newest first: the **2026-08-22** section is
+`run_fragment` and five new native tools, none of it yet run on a real model; **2026-08-21** is the
+search work; **2026-08-20** is the bridge record, whose Revit-side work is still open. The 2026-08-20
+header said 287 fragments; there are now 290.
+
+---
+
+## 2026-08-22 — RUN_FRAGMENT AND FIVE NATIVE TOOLS, none of it run on a real model yet
+
+**What it is.** A new MCP tool, `run_fragment`. Name one or more fragments, pass their input values, and
+the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. It replaces the
+read-the-file / hand-edit / paste-into-`run_csharp` loop that every scripted job used until now.
+
+**Why it was built, in one line:** "PROVEN" described a file that was never the thing that ran. Every job
+sent a retyped copy. Two Revit round trips were lost to exactly that on 2026-08-20 alone.
+
+**What is proven, and it is all off-model.** 14 tests, `mcp-server/test/run-fragment.test.js`, all
+passing — including a sweep that rewrites **all 247 input-bearing fragments** and asserts the declared
+types, names and comments come through unchanged, and a byte-identical check on everything outside the
+INPUTS block. It has **never been run against a real Revit document.**
+
+**So do this first, and it is two minutes.** Ajmal must close and reopen Revit only if the add-in
+changed — it did not, this is Node-side only — but the MCP server must be reloaded to see the new tool.
+Then, on the test model:
+
+1. `run_fragment(describe: "Count the ducts", fragments: "filter-by-category",
+   inputs: {targetCategory: "OST_DuctCurves"}, preview: true)` — read the composed script, confirm it is
+   the fragment plus one `return sb.ToString();`.
+2. Same call without `preview` — check the count against `count_elements` for the same category. Two
+   independent mechanisms agreeing is the proof.
+3. A composed one: `fragments: ["filter-by-category", "action-set-color-uniform"]`, with
+   `colorR/colorG/colorB`. This exercises the multi-field declaration line, which is where the one real
+   bug was found while building it.
+
+Then mark it in `knowledge/brain-log.md` as live-verified, with the numbers.
+
+### Five native tools came out of the same session (21 -> 26)
+
+`grayout` · `session_start` · `verify_connectivity` · `report_length_by_size` · `color_by_group`.
+Each is a typed front door onto ONE proven fragment — **they contain no Revit code**, so there is never
+a second copy to drift from the original. Table and reasoning:
+[`mcp-server/tools/README.md`](../mcp-server/tools/README.md).
+
+**`grayout` is the fastest way to prove the whole chain at once.** Its recipe declares 33 inputs and
+32 of them ARE the settled standard, so the tool sets one value and leaves the rest byte-identical.
+Run `grayout()` on a coordination view: if the view greys correctly, then `run_fragment`, the shared
+composition engine and the native-tool wrapper are all proven in one shot.
+
+**`session_start` wraps an unproven fragment** (`context-session-start.cs`, never verified against a
+real model). Not a blocker — it says so in its own result — but it is the one to check the output of
+rather than trust.
+
+**They were picked from the wrong evidence, and that is on the record.** Ajmal's job log never travels
+in git, so from the container they were ranked by how often each fragment is named across the skills
+plus AGENT-SPEC §9.4. `node tools/job-report.mjs` gives the real ranking. The 89% `run_csharp` figure
+in the 2026-08-21 section is the measurement that should have chosen them — re-check before promoting
+any more.
+
+### And a shortlist now rides on every message
+
+[`tools/shortlist.mjs`](../tools/shortlist.mjs), injected by `auto-search-hook.mjs`: Ajmal's most-used
+fragments, ranked from his last 30 days of real work, so the everyday jobs skip the search entirely.
+**0.17 ms on a real log, 2.0 ms on a simulated year, ~92 tokens.** It shows nothing in a fresh
+checkout because the log lives only on the PC — `node tools/shortlist.mjs` there will show the real one.
+
+**One bug fixed that this depends on:** `job-log-revit.mjs` read fragment names out of the pasted
+`code`, which only `run_csharp` has. `run_fragment` NAMES its fragments, so every call through the new
+tool was recording zero — the usage record was quietly becoming a record of the old way only.
+
+**Known limits, recorded rather than hidden:**
+- It does **not** compile-check. Only Revit and `tools\check-scripts.cmd` do. It validates the form —
+  names, inputs, types, whether the composition is legal C# structurally.
+- 43 of the 290 fragments have no `INPUTS` block; those still go through `run_csharp` unchanged.
+- Two filters cannot be composed (both declare `sb` and `elements`) — it refuses with that message,
+  which is correct, not a bug to fix.
+
+**The two follow-ups this makes cheap**, both agreed as the ranking on 2026-08-22 and neither started:
+promoting the ~10 remaining everyday jobs to native tools (`AGENT-SPEC.md` §11 names them), and the
+test-set work that would let the cross-encoder and skill-weighting be judged (`semantic-index/
+rag-architecture-decisions.md`, "What is actually limiting the search").
+
+**One thing to check on the PC that is not code.** `.mcp.json` in the repo hard-codes
+`D:\Ajmal\AJ AI Brain\mcp-server\index.js` — that is SETUP.md's Option B, the per-folder path. If the
+Brain is running that way rather than as an installed plugin, it only exists when that folder is open.
+Installing it as a plugin (SETUP.md step 1, Option A) makes all 11 skills and the bridge available in
+every project on the machine. **Do not run both** — same server key registered twice.
 
 ## 2026-08-21 — the search was measured, corrected and made ~5x faster
 
@@ -48,8 +131,14 @@ downloaded and still has no score line); the cross-encoder is not inert — it c
   never swept), and `RRF_K` (60, inherited, never tested here). Sweep against the 28-row set, never
   the old one, and remember `AREA_WEIGHT` — a sweep that "wins" by moving points between halves of a
   small set is fitting the sample.
-- **Not started, and the last speed item:** 89% of logged Revit calls are `run_csharp`, compiling
-  fresh C#, while 20 native tools sit nearly unused. Needs the model open to measure honestly.
+- ~~**Not started, and the last speed item:** 89% of logged Revit calls are `run_csharp`, compiling
+  fresh C#, while 20 native tools sit nearly unused.~~ — **ADDRESSED 2026-08-22, and this measurement
+  is what justifies it.** `run_fragment` runs the proven library by name instead of pasting retyped C#,
+  and five everyday jobs became native tools (21 → 26). That 89% is the number to re-measure once both
+  have run on a real model — `node tools/job-report.mjs` shows the split by tool. **It is also the
+  usage evidence the five tools should have been picked on**, and were not: the job log never travels
+  in git, so they were ranked by how often each fragment is named across the skills instead. Check them
+  against the real ranking before promoting any more.
 
 ---
 
@@ -60,6 +149,7 @@ Read D:\Ajmal\AJ AI Brain\docs\HANDOVER.md and CLAUDE.md first, then continue th
 ```
 
 ---
+
 
 ## THE BRIDGE NOW HANDLES SEVERAL REVITS AND SEVERAL PROJECTS — 2026-08-20, end of session
 

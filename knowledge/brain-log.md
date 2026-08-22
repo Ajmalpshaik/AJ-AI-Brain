@@ -2685,3 +2685,65 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
   hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
   knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
+- 2026-08-22 — **the proven library can now be RUN by name, not retyped.** New MCP tool `run_fragment`
+  ([`run-fragment.js`](../mcp-server/tools/run-fragment.js)): name the fragments, pass the input values,
+  and the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. Until now
+  every scripted job read the file, hand-edited the block and pasted a copy — so "PROVEN" described a
+  file that was never the thing that ran. Four mistakes that used to cost a Revit round trip are now
+  local errors: an unknown or ambiguous fragment name, an input name that is a typo, a wrong-typed
+  value, and a composition C# would reject (two filters both declaring `sb`). Native tools 20 → 21.
+- 2026-08-22 — **one declaration line can declare several inputs, and the first writer for them was
+  wrong.** `byte colorR = 255, colorG = 0, colorB = 0;` — 50 such lines across 28 fragments, every
+  colour job among them. Replacing the initialiser as one string kept `colorR`'s new value and deleted
+  `colorG` and `colorB`. `parseInputs` now expands each declarator, so `--show` lists all three fields
+  as well. Caught by a whole-library sweep, which is now a standing test: rewriting the VALUES must
+  never change the declared types, names or comments, across all 290 fragments.
+- 2026-08-22 — the fragment parser moved to [`tools/fragment-lib.mjs`](../tools/fragment-lib.mjs),
+  shared by `fragment-index.mjs` and `run_fragment`. A runner that re-implemented the parse would drift
+  from the index silently — `--show` printing one form while the tool filled in another. Proof the
+  refactor was safe: `--json` byte-identical before and after.
+- 2026-08-22 — **"widget" is his word for a picture in the chat reply**, confirmed by asking him rather
+  than guessing — a synonym of "visualization" (2026-08-14), never a published page. The part worth
+  keeping: he used it while asking **how the Brain works**, not about model numbers, so
+  [`ajtools-visual-report`](../skills/ajtools-visual-report/SKILL.md) now says explicitly that an
+  explanation gets a diagram too. The old rule was written only around Revit figures.
+- 2026-08-22 — **`run_fragment` benchmarked** on the real library, 30 runs each: build + check a
+  2-fragment job **32 ms**, catch a bad input or a wrong fragment name **28 ms**. Text through the model
+  for one composed colour job: **2,800 tokens → 46**, a 98.3% cut, or roughly 55,000 tokens over a
+  20-job session. **Revit's own execution time is unchanged** — the same C# arrives. No measured figure
+  for a Revit round trip exists anywhere in this Brain, so the cost of a mistake is still stated as a
+  shape, not a number; measure one on the PC and record it here.
+- 2026-08-22 — **the job log was about to go blind.** `job-log-revit.mjs` read fragment names out of
+  the pasted `code`, which only `run_csharp` has. `run_fragment` NAMES its fragments instead, so every
+  call through the new tool recorded zero — and it is the tool meant to carry most jobs. Fixed to read
+  `input.fragments` too, normalised to the same bare `name.cs`, so counts from both paths add up
+  instead of splitting. **Found while building something that depends on that log, not by the log
+  complaining** — nothing would have complained.
+- 2026-08-22 — **the fragments Ajmal really uses are now in front of every message.**
+  [`tools/shortlist.mjs`](../tools/shortlist.mjs) ranks them from his own last 30 days of recorded work
+  and `auto-search-hook.mjs` injects three lines. **0.17 ms on a real log, 2.0 ms on a simulated year
+  of heavy use, ~92 tokens** — against a search that costs 650 ms and is right at #1 on 5 of 28
+  questions. His idea, and his framing of the decision order, now in AGENT-SPEC §2.4.
+  **What he asked for and did NOT get, deliberately:** MCP tools registering and unregistering
+  themselves by usage. That churns the tool list, breaks any skill note naming a tool, only takes
+  effect on a restart, and a machine-made tool is worse than a hand-written one — it cannot invent
+  `category: "Ducts"` in place of `OST_DuctCurves`. The shortlist gives the same benefit (no search)
+  for all 290 fragments instead of ~8, updates every message instead of every restart, and registers
+  nothing so it can break nothing.
+- 2026-08-22 — **run_fragment shrank what promoting to a native tool is worth.** Before it, native was
+  ~15 tokens against ~2,800 for read-and-paste. Now it is ~15 against ~46. The remaining reason to
+  hand-write a native tool is the friendly typed input and skipping the search — not saved code. Judge
+  the next promotion on that, not on the old arithmetic.
+- 2026-08-22 — **five fragment-backed native tools**: `grayout`, `session_start`,
+  `verify_connectivity`, `report_length_by_size`, `color_by_group`. Native tools 21 → 26. They hold
+  **no Revit code** — each names one proven fragment and the shared engine
+  ([`fragment-runner.js`](../mcp-server/shared/fragment-runner.js)) composes it off disk, so there is
+  never a second copy of a proven file to drift. `run-fragment.js` shrank 478 → 122 lines onto the same
+  engine, all 14 of its tests unchanged and passing, which is the proof the extraction changed nothing.
+  **`grayout` is the case that justifies the pattern:** its recipe declares 33 inputs and 32 of them
+  ARE Ajmal's settled standard, so the tool sets one value and leaves the rest byte-identical.
+- 2026-08-22 — **the five were picked from Brain evidence, not from usage** — his job log never travels
+  in git, so it could not be read from the container. Ranked instead by how often each fragment is named
+  across the skills and entry docs, plus AGENT-SPEC §9.4's standing request shapes. **Recorded so it is
+  revisited, not inherited:** `job-report.mjs` and `shortlist.mjs` on the PC give the real ranking, and
+  AGENT-SPEC §11's promotion list is now marked as written-from-memory rather than measured.
