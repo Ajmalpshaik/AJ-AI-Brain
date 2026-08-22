@@ -3326,3 +3326,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   CLAUDE.md had conflicted too. That is the same error shape as the truncated `head -25` earlier today
   and the phantom log entry this morning: **a scan is evidence only for what it actually covered.** The
   fix each time is the same, and it is now a check rather than a resolution to be careful.
+
+- 2026-08-22 — **Both open PRs merged and the repo tidied; one housekeeping job cannot be done from a
+  cloud session and is recorded rather than left silent.** PR #30 (the number audit, 49 files) and PR #31
+  (the daily check's PowerShell port) are both in `main`, which now passes all 13 checks. Merging #30
+  first meant #31 arrived mostly superseded — its six count fixes were a subset of #30's seventeen, and
+  its single new check a subset of checks 9–12 — so those conflicts resolved to `main` and only the
+  `.ps1` port was taken, after verifying the branch's own *"it is ASCII-only"* claim was **false** (two em
+  dashes, both pre-existing, and the BOM is intact, so it is safe for a different reason than the one
+  given).
+  **`main` had moved underneath this work**: PR #32 merged `run_fragment` and five fragment-backed native
+  tools, taking `mcp-server/tools/` from 20 `.js` files to **26** — falsifying every "20 native tools"
+  claim the audit had just finished correcting, one merge later. Check 9 caught all of them. That is the
+  clearest argument yet for the checks over the fixes: the fixes were obsolete within a day; the check
+  was not.
+  **What could not be done:** deleting the three merged `claude/*` branches. `git push --delete` returns
+  **HTTP 403** through the container's git proxy, and the GitHub tools available here have no
+  delete-branch call. Nothing depends on them and `main` contains every commit, so this is cosmetic — but
+  it is a two-click job on GitHub that a cloud session cannot do, and `docs/HANDOVER.md` now says so
+  instead of leaving it to be rediscovered.

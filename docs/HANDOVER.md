@@ -113,7 +113,7 @@ fixes — it is four new checks that make the same drift impossible to ship agai
   first run, in a file the hand-written grep had never looked at.
 - **12** — any `N/M at #1` retrieval score against the last run in `semantic-index/score-history.md`.
 
-`tools/verify-consistency.mjs` now runs **12 checks** and the edit hook runs it on every file change. The
+`tools/verify-consistency.mjs` now runs **13 checks** and the edit hook runs it on every file change. The
 PowerShell copy trails at 8 and the docs say so — do not port checks 9–12 from a Linux container, that is
 the `.ps1` encoding trap this repo has already been bitten by twice.
 
@@ -130,7 +130,11 @@ the `.ps1` encoding trap this repo has already been bitten by twice.
 
 ### What Ajmal still has to do — none of it possible from a cloud session
 
-1. **Merge PR #30** — https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/30 ("Ready for review", then "Merge").
+1. ~~**Merge PR #30.**~~ **DONE 2026-08-22** — merged, along with PR #31 (the daily check's PowerShell
+   port). All three merged branches still exist on GitHub: the container's git proxy returns 403 on a
+   branch delete and the API tools here have no delete-branch call, so **deleting `claude/*` branches is a
+   two-click job on GitHub** and cannot be done from a cloud session. Nothing depends on them; `main`
+   contains every commit.
 2. **Run `tools\check-scripts.cmd`.** One fragment was rewritten this session without a compiler:
    `filters/by-identity/filter-by-wrong-category.cs` used `ElementId.IntegerValue`, removed at Revit 2024.
    It was written on 2026-08-21, *the day after* the whole library was migrated off that API — which is why
