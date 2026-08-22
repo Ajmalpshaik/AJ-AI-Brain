@@ -77,8 +77,10 @@ foreach (var fi in new FilteredElementCollector(Document)
     if (hit) matched.Add(fi);
 }
 
-int expectedId = (int)expectedCategory;
-var wrong = matched.Where(f => { try { return f.Category == null || f.Category.Id.IntegerValue != expectedId; } catch { return true; } }).ToList();
+// Compare ElementId to ElementId, never via the 32-bit int: that property is GONE on Revit 2027 and
+// this fragment would not compile there (caught by tools\check-scripts.cmd, 2026-08-22).
+ElementId expectedCatId = new ElementId(expectedCategory);
+var wrong = matched.Where(f => { try { return f.Category == null || f.Category.Id != expectedCatId; } catch { return true; } }).ToList();
 var right = matched.Count - wrong.Count;
 
 List<Element> elements = (onlyMismatches ? wrong : matched).Cast<Element>().ToList();
@@ -90,7 +92,7 @@ foreach (var f in matched)
 {
     string cat = ""; try { cat = f.Category?.Name ?? "(no category)"; } catch { cat = "(no category)"; }
     string fam = ""; try { fam = f.Symbol?.Family?.Name ?? ""; } catch { }
-    bool ok = false; try { ok = f.Category != null && f.Category.Id.IntegerValue == expectedId; } catch { }
+    bool ok = false; try { ok = f.Category != null && f.Category.Id == expectedCatId; } catch { }
     string key = (ok ? "OK   " : "WRONG") + "\t" + cat + "\t" + fam;
     if (!rows.ContainsKey(key)) { rows[key] = 0; tags[key] = ""; }
     rows[key] = rows[key] + 1;
