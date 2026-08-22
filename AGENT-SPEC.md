@@ -113,6 +113,15 @@ for generic Revit questions with no live model involved.
   before appending the action — cheaper to catch a wrong filter before it acts than after.
 
 ### 2.4 Decision hierarchy (what to reach for, in order)
+**Ajmal stated this order back himself, 2026-08-22, and it is exactly right:** *"if i ask anything it
+will check the shortlist or native tool. If there is no it will go to fragment and after that if no
+tool there it will generate new."* Steps 0-1 are things already in hand; step 2 costs a search; step 4
+costs writing code that has never run.
+
+0. **The usage shortlist** — every message carries Ajmal's most-used fragments, ranked from his own
+   last 30 days of real work (`tools/shortlist.mjs`, injected by `tools/auto-search-hook.mjs`). If the
+   job is there, it needs no search at all. This exists because the search puts the right answer at #1
+   on only 5 of 28 real questions, and the jobs done daily should not be exposed to that.
 1. **Native fast-path tool** (`model_summary`) — plain counts/one-parameter breakdowns.
 2. **Filter + action composition** (`scripts/filters/` + `scripts/actions/`) — the default for "which
    elements" + "what to do to them" requests; covers the large majority of daily work. **Run it with

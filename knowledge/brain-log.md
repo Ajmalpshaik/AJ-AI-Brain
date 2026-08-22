@@ -2713,3 +2713,24 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   20-job session. **Revit's own execution time is unchanged** — the same C# arrives. No measured figure
   for a Revit round trip exists anywhere in this Brain, so the cost of a mistake is still stated as a
   shape, not a number; measure one on the PC and record it here.
+- 2026-08-22 — **the job log was about to go blind.** `job-log-revit.mjs` read fragment names out of
+  the pasted `code`, which only `run_csharp` has. `run_fragment` NAMES its fragments instead, so every
+  call through the new tool recorded zero — and it is the tool meant to carry most jobs. Fixed to read
+  `input.fragments` too, normalised to the same bare `name.cs`, so counts from both paths add up
+  instead of splitting. **Found while building something that depends on that log, not by the log
+  complaining** — nothing would have complained.
+- 2026-08-22 — **the fragments Ajmal really uses are now in front of every message.**
+  [`tools/shortlist.mjs`](../tools/shortlist.mjs) ranks them from his own last 30 days of recorded work
+  and `auto-search-hook.mjs` injects three lines. **0.17 ms on a real log, 2.0 ms on a simulated year
+  of heavy use, ~92 tokens** — against a search that costs 650 ms and is right at #1 on 5 of 28
+  questions. His idea, and his framing of the decision order, now in AGENT-SPEC §2.4.
+  **What he asked for and did NOT get, deliberately:** MCP tools registering and unregistering
+  themselves by usage. That churns the tool list, breaks any skill note naming a tool, only takes
+  effect on a restart, and a machine-made tool is worse than a hand-written one — it cannot invent
+  `category: "Ducts"` in place of `OST_DuctCurves`. The shortlist gives the same benefit (no search)
+  for all 290 fragments instead of ~8, updates every message instead of every restart, and registers
+  nothing so it can break nothing.
+- 2026-08-22 — **run_fragment shrank what promoting to a native tool is worth.** Before it, native was
+  ~15 tokens against ~2,800 for read-and-paste. Now it is ~15 against ~46. The remaining reason to
+  hand-write a native tool is the friendly typed input and skipping the search — not saved code. Judge
+  the next promotion on that, not on the old arithmetic.
