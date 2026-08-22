@@ -1,7 +1,57 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-20**, end of the Windows PC session — read THE BRIDGE section first, then the UPDATE section. This replaces the 2026-08-14 handover, which
-had gone stale (it said 270 fragments; there are now 287).
+Last updated: **2026-08-21**, end of the RAG + speed session. Read the 2026-08-21 section
+immediately below first — it corrects an item the older sections still list as outstanding.
+Everything under it is the 2026-08-20 record, kept because its Revit-side work is still open.
+
+## 2026-08-21 — the search was measured, corrected and made ~5x faster
+
+Ajmal walked a RAG checklist through the Brain under one rule: *check whether we already have it,
+take the better version, and say which.* Most of it already existed. The value came from measuring
+things nobody had measured, and several claims the Brain made about itself turned out to be false.
+Full working, with every number: [`semantic-index/rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md).
+
+**Built:** automatic spelling correction (65% of real questions contain a word in no file, mostly
+ordinary Revit words typed fast); a warm search server so the embedding model loads once, not on
+every message; a disk cache for the fragment index; a corpus/BM25 cache inside `hybrid_search`; a
+duplicate check on every build; build provenance stamped into the manifest.
+
+**Fixed, and these mattered more than the features:**
+- **A rebuild could mark itself finished before it had.** The manifest was written before the build
+  was verified; a crash left **1,200 chunks of 3,895** reporting "UP TO DATE". Both paths now count
+  first. General rule: *write the "this is finished" record last.*
+- Derived files now write-then-rename — a search during a re-index could read a half-written file.
+- A black console window appeared over Revit on every message (PR #29). The venv `python.exe` is a
+  Store-Python launcher shim that loses the detach flag; `pythonw.exe` fixes it. Same shim, same fix
+  as the voice layer made on 2026-08-11.
+
+**Claims corrected:** the live embedding model is `all-MiniLM-L6-v2`, not BGE (which is still not
+downloaded and still has no score line); the cross-encoder is not inert — it changes the #1 answer on
+**88%** of real questions, so it stays off for a much better reason; `site-vocabulary.md` rows
+**replace** the matched phrase, they do not merely add to it.
+
+**Speed, measured:** per message **3,536 ms -> ~650 ms**; consistency check per edit
+**3,720 -> 1,307 ms**; end-of-turn hooks **2,105 -> 900 ms** quiet, ~31 s -> ~20 s busy.
+
+### What changed in the open items
+
+- **The test questions are DONE, and the older sections below are wrong about this.** The set went
+  from 14 to 28 rows, taken from `job-log/questions.jsonl` — Ajmal's own real questions, spellings
+  kept. First 28-row baseline: **5/28 at #1, 7/28 in top 3, 20/28 retrievable, MRR 0.267.** Not
+  comparable to any 14-row line. **8 rows fail outright and 10 more sit below #5**, which is the
+  material the parked decisions were waiting for.
+- **Still owed by Ajmal, and only by him:** check the 14 new expected answers. They were drafted by
+  reading the library, never by running the search, and are marked as the assistant's reading in
+  `semantic-index/test-questions.md`. A wrong target quietly teaches the search the wrong thing.
+- **Now unblocked — four sweeps that could not be decided on 14 rows:** the cross-encoder,
+  BGE against MiniLM, the meaning-versus-words balance (`WEIGHT_MEANING`/`WEIGHT_WORDS`, both 1.0 and
+  never swept), and `RRF_K` (60, inherited, never tested here). Sweep against the 28-row set, never
+  the old one, and remember `AREA_WEIGHT` — a sweep that "wins" by moving points between halves of a
+  small set is fitting the sample.
+- **Not started, and the last speed item:** 89% of logged Revit calls are `run_csharp`, compiling
+  fresh C#, while 20 native tools sit nearly unused. Needs the model open to measure honestly.
+
+---
 
 ## The prompt
 
@@ -190,7 +240,7 @@ versions whose API has moved most. Use it before assuming a member was renamed.
 1. **Nothing here has been run against a live model.** Step 2 below is untouched and is the only thing
    that proves correctness. The reflection work deserves it most: a differently-shaped API can compile
    perfectly and still act on the wrong element.
-2. Ajmal's 15 test questions for the search (step 5 below) — still the highest-value thing only he can do.
+2. ~~Ajmal's 15 test questions for the search~~ — **DONE 2026-08-21**, the set is now 28 rows. See the 2026-08-21 section at the top of this file. What is still owed is Ajmal checking the 14 drafted expected answers.
 
 **Still true and unchanged: compiling is a floor, not a ceiling.** None of the 2026-08-20 work has been
 run against a real model yet.
