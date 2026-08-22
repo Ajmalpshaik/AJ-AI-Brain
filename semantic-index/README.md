@@ -17,7 +17,7 @@ Nothing here touches Revit, the AJ AI Bridge, or the compile checker. It only
 reads `skills/`, `knowledge/`, `scripts/`, the five top-level guides
 (`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`, `CLAUDE.md`), and
 one named file from `mcp-server/`: `tools/README.md`, the reference table of
-the bridge's 20 native tools — the doc, never the bridge's JS code.
+the bridge's 26 native tools — the doc, never the bridge's JS code.
 
 ---
 

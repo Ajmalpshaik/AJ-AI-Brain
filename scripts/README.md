@@ -546,6 +546,26 @@ not "Colour the supply ducts blue". Write the comment.
 
 ## How to compose two or more fragments into one script
 
+**`run_fragment` does all five steps below for you, and should be the first thing you reach for.**
+Name the fragments and pass the input values; it reads the files off disk, fills the `INPUTS` blocks by
+their declared C# types, composes them in this exact order, and appends the one `return sb.ToString();`.
+The steps stay written out because they are the rules the tool follows, and because `run_csharp` is
+still there for anything the library does not cover.
+
+```
+run_fragment(
+  describe:  "Colour the supply ducts blue",
+  fragments: ["filter-by-category", "action-set-color-uniform"],
+  inputs:    { targetCategory: "OST_DuctCurves", colorR: 0, colorG: 0, colorB: 255 })
+```
+
+Why prefer it over pasting: what reaches Revit is the proven file itself, not a retyped copy of it, so
+a fragment's verified status still means something at the moment it runs. A misspelled fragment name, a
+misspelled input, a wrong type, or a composition C# would reject are all errors **here**, before Revit
+sees anything — each of those used to cost a full round trip. `preview: true` shows the exact composed
+script without running it, and every input you leave unset is reported back as *left at the file's
+value*, because nothing in these files is a default (see the rule below).
+
 1. Pick the filter fragment that matches the request; open it and read its `INPUTS` block.
 2. Pick one or more action fragments; read each one's `INPUTS` block too.
 3. Paste the filter fragment's body first, then each action fragment's body in the order they should
@@ -560,7 +580,8 @@ not "Colour the supply ducts blue". Write the comment.
    missing-vs-blank parameter rule are written down, instead of the 80/150/38 copies that exist now.
 4. Fill in every `INPUTS` block with today's actual values — nothing pre-filled in these files is a
    default, per the rule below.
-5. Run the composed script via `mcp__aj-tools-aj-ai__run_csharp`.
+5. Run it — `run_fragment` if you are naming fragments (it does steps 3-4 itself), or paste the
+   composed script into `run_csharp` if you have hand-assembled one.
 
 If the native MCP tool is not exposed in the current agent session, do not spend time re-reading
 `mcp-server/index.js` or hand-writing a named-pipe wrapper. Use the checked-in fallback helper:
