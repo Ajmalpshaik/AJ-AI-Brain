@@ -8,19 +8,29 @@ here "just works."
 
 ## 1. Point your AI coding tool at this folder
 
-**Option A — install as a Claude Code plugin (recommended).** This repo is itself an installable
-plugin (manifest in `.claude-plugin/`): one install gets all 11 skills auto-loaded on every project on
-that machine, plus the bundled MCP relay — no folder copying, no `.mcp.json` editing. In an
-interactive Claude Code session on the target machine:
+**Option A — install as a Claude Code plugin, straight from GitHub (recommended).** This repo is
+itself an installable plugin (manifest in `.claude-plugin/`). One install gets every skill auto-loaded
+on every project on that machine, the bundled MCP relay, the live hooks, and the `/brain-setup`
+command — no folder copying, no `.mcp.json` editing, and nothing pointing at anyone else's paths. In
+an interactive Claude Code session on the target machine:
 
-1. `/plugin marketplace add <path to this folder>` — e.g. `D:\Ajmal\AJ AI Brain`, or the private
-   GitHub repo URL if that machine's git is already signed in to it.
+1. `/plugin marketplace add Ajmalpshaik/AJ-AI-Brain` — or a local path such as
+   `D:\Ajmal\AJ AI Brain` if the folder was handed over on a drive rather than pulled from GitHub.
+   A private repo needs that machine's git to be signed in to it already.
 2. `/plugin install aj-ai-brain@aj-ai-brain`
+3. Restart Claude Code, then run **`/brain-setup`** once.
 
-Two footnotes: the plugin's MCP relay runs `node` from PATH — if the relay shows as failed, run
-`npm install` once inside the installed plugin copy's `mcp-server/` folder, and if Node isn't on PATH
-at all, register the relay manually instead (step 2 below, full path to `node.exe`). And **don't do
-both Option A and step 2's manual `.mcp.json` on the same machine** — same server key twice.
+Step 3 is the one that makes it work on *that* machine. The install brings the knowledge; it cannot
+bring the search index, the Python environment or the relay's npm packages, because those are
+gitignored on purpose — an index built on someone else's machine is stale on arrival. `/brain-setup`
+builds all three, takes a few minutes, and is safe to re-run. You will not have to remember it: a
+SessionStart hook checks on every session and stays silent unless something is genuinely missing, in
+which case it names the missing piece and prints that one command.
+
+Two footnotes: the plugin's MCP relay runs `node` from PATH, so if the relay shows as failed the usual
+cause is Node not being on PATH — register the relay manually instead (step 2 below, full path to
+`node.exe`). And **don't do both Option A and step 2's manual `.mcp.json` on the same machine** — same
+server key twice.
 
 **Option B — manual copy (Claude Code without plugin support, or other tools that load a `.claude/`
 folder):**
@@ -85,3 +95,106 @@ Two ways to get it:
 
 A successful ping means all three pieces are connected. From there, open [`START-HERE.md`](START-HERE.md)
 and work normally — it routes to the right skill for whatever you're asking for.
+
+## 5. Handing this folder to someone else — the fresh-machine checklist
+
+Sections 1–4 assume the machinery already exists somewhere. This section is the other case: a colleague
+is handed the folder and starts from nothing.
+
+**What he receives, and what he does not.** The Brain's own content — `skills/`, `knowledge/`,
+`scripts/`, the relay source and the root docs — is tracked and travels intact. The layers *derived*
+from that content do not: the Python environment, the vector index, the knowledge graph and the
+Obsidian vault are all gitignored on purpose, each with its reason written in [`.gitignore`](.gitignore).
+The short version is that a stale index is worse than no index, so they are rebuilt on the machine that
+will use them rather than shipped.
+
+So he starts with all of the knowledge and none of the machinery. Rebuilding it is about an hour, most
+of which is unattended.
+
+> **Copying the folder rather than cloning it does not skip this.** A Python virtual environment records
+> the absolute path it was created at, so `semantic-index/venv` copied from another machine is dead
+> weight — it has to be recreated either way.
+
+### Step A — what the machine needs that this folder cannot provide
+
+| Needs | What it is for | Confirm with |
+|---|---|---|
+| Node.js on PATH | the MCP relay, and every hook in `.claude/settings.json` | `node --version` |
+| Python 3.11 or newer | the plain-English search | `python --version` |
+| **A Revit-side bridge listener** | **the one real blocker — see section 3 above** | a successful ping (step D) |
+| The graphify skill, in his own user-level skills folder | only to rebuild the knowledge graph and the vault; the search and every fragment work without it | — |
+
+Everything except the Revit listener is a normal install. The listener is not — read section 3 before
+promising anyone this will work end to end.
+
+### Step B — install the Brain
+
+Use the plugin route in **section 1, Option A**. On a second machine that choice matters more than it
+does on the first: the plugin registers the relay with a bare `node` and its own folder path, so it is
+portable. This repo's own `.mcp.json`, by contrast, records the **absolute path of the `node.exe` on the
+machine that wrote it** — on any other machine that path does not exist and the bridge never starts. If
+he registers the relay by hand instead of installing the plugin, that one line is the thing to change:
+point it at his own Node, or simply at `node` when Node is on PATH.
+
+### Step C — build the layers that did not travel: one command
+
+```
+/brain-setup
+```
+
+That is the whole step. It installs the relay's npm dependencies, creates the Python environment,
+installs the search dependencies and builds the search index from scratch — in that order, stopping at
+the first failure rather than reporting success over a half-built environment. A few minutes, safe to
+re-run, and it resumes from wherever it stopped. It also redirects pip's temp folder inside
+`semantic-index/` by itself, which on a company-managed PC is the difference between a clean install
+and antivirus quarantining half the packages (the reason is at the top of
+[`semantic-index/requirements.txt`](semantic-index/requirements.txt)).
+
+**He will not have to remember to run it.** A SessionStart hook checks every session and says nothing
+at all when the machinery is present; when it is missing it names the missing piece and prints that
+command.
+
+Outside a Claude session, the same thing runs directly:
+
+```
+node tools/brain-setup.mjs
+```
+
+and `node tools/brain-setup.mjs --check` reports what is missing without changing anything.
+
+Then the index itself. The embedding model ships inside the search dependency and fetches itself on this
+first run, so this step needs internet once and then never again:
+
+```
+semantic-index\index-brain.cmd --full
+```
+
+Expect a few minutes, and a final `DONE (full rebuild)` line stating the file and chunk counts. It
+verifies its own count before recording success, so if it says done, it is done.
+
+For the knowledge graph and the Obsidian vault, follow
+[`skills/brain-update-layers/SKILL.md`](skills/brain-update-layers/SKILL.md) — it is the maintained
+procedure for all three derived layers and it says which steps are no-ops. The graph's document side is
+the slow part, because it needs an AI session rather than a script.
+
+### Step D — prove it works, in this order
+
+Each of these tests something the one before it does not:
+
+1. `node tools/brain-status.mjs` — reads the true state from disk. The **Derived layers** block should
+   name today for each layer, with nothing newer.
+2. `node tools/verify-consistency.mjs` — all checks pass, no drift.
+3. `semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` — must return in
+   under 4 seconds, print no `STALE INDEX` banner, and put genuinely relevant files at the top. A fast
+   empty answer is still a failure.
+4. `mcp__aj-tools-aj-ai__ping`, or the fallback in section 4 — this is the only one that proves Revit is
+   reachable.
+
+Steps 1–3 can all pass on a machine with no Revit at all. That is worth knowing rather than discovering
+later: they prove the Brain, step 4 proves the bridge.
+
+### What he will not inherit
+
+`job-log/` holds the record of which fragments get used in real work, and it is per-machine. His starts
+empty, so the most-used-fragments hint on each message shows nothing until he has done some jobs. That is
+correct behaviour — it is his usage it should be learning, not someone else's.
