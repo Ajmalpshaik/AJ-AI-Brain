@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Stop hook - say out loud when fresh C# was written instead of composed from the 269
+// Stop hook - say out loud when fresh C# was written instead of composed from the 290
 // existing fragments, and when nothing from a session was saved back.
 //
 // WHY THIS EXISTS: on 2026-08-13, during one real working session, 13 run_csharp calls went
 // to the model and NOT ONE used a saved fragment. Every one was written from scratch, and
 // none was saved back afterwards. Both halves of the Brain's core promise were skipped at
-// once - "search the 269 first" (CLAUDE.md) and "save what surfaced" (START-HERE.md) - and
+// once - "search the 290 first" (CLAUDE.md) and "save what surfaced" (START-HERE.md) - and
 // Ajmal is the one who noticed, by asking whether it worked that way at all.
 //
 // job-log/revit-runs.jsonl had recorded every one of those 13 calls the whole time. What was

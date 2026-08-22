@@ -7,7 +7,7 @@
     has already been bitten by exactly what that allows. action-reload-links.cs referenced
     LinkLoadResultType.LinkNotNeeded - an enum member that does not exist on Revit 2020 - and carried
     that plain compile error for months. A static review flagged it and could not settle it; only a
-    compile could. This script is that compile, for all 266 fragments at once, in about a minute.
+    compile could. This script is that compile, for all 290 fragments at once, in about a minute.
 
     What it CAN catch: misspelled API members, wrong overloads, types that do not exist on this Revit
     version, missing casts, syntax errors - the CS#### family. That is the whole class of bug above.
