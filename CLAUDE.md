@@ -94,7 +94,11 @@ He named two problems. Both have an answer that already exists:
   the entry docs, AGENT-SPEC's fragment counts, text encoding, the `// SOURCE:` cross-references
   inside script fragments, the "searches all N files" semantic-index coverage claims, and **every live
   fragment/skill/native-tool count stated anywhere in markdown** (check 9, added 2026-08-22 after an
-  audit found nine wrong ones — including one on line 79 of this file). If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  audit found nine wrong ones — including one on line 79 of this file), **each fragment's own header
+  status against its `scripts/README.md` row** (check 10 — nineteen headers still said "NOT YET
+  LIVE-VERIFIED" for fragments proven on 2026-08-06/07, because the campaign updated the README and never
+  the file), and **outside-source names in `scripts/` and `skills/`** (check 11 — the 2026-08-20 strip
+  never reached the fragments). If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
   [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — but know that it

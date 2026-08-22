@@ -2,8 +2,7 @@
 // FRAGMENT (action) — action-report-compound-structure.cs
 // PURPOSE: Report the layer build-up (compound structure) of the wall/floor/roof/ceiling TYPES behind
 //          `elements` — function, material, thickness per layer, core boundaries, total thickness.
-//          The "what is this wall made of" answer, deduped per type. (Dynamo-package equivalent:
-//          Clockwork's Wall/FloorType.Layers nodes.)
+//          The "what is this wall made of" answer, deduped per type.
 // ASSUMES: elements (List<Element>, walls/floors/roofs/ceilings — or their types directly via
 //          filter-by-types.cs) and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Read-only, model never changes.

@@ -439,6 +439,93 @@ console.log(
     `(${liveCounts.fragments} fragments, ${liveCounts.skills} skills, ${liveCounts["native tools"]} native tools).`,
 );
 
+// === 10. Fragment header status vs its scripts/README.md row ===
+// scripts/README.md is the verification record - brain-status.mjs counts from it, and it carries the
+// evidence ("length 4000 mm, LevelId 311"). But a modeller opening a fragment reads the HEADER, and on
+// 2026-08-22 nineteen headers still said "NOT YET LIVE-VERIFIED" for fragments proven on 2026-08-06/07:
+// the big verification campaign updated the README row and never went back to the file. The log had
+// already recorded the mirror image of this bug on 2026-08-07 (a stale "NOT yet live-verified" clause
+// left INSIDE a README row hid four fragments from the count) - it was fixed in the README and the other
+// half was missed. Two records of the same fact drift apart unless something compares them.
+//
+// Only the README-says-verified / header-says-never-ran direction is checked. The reverse (a header
+// overclaiming) cannot be caught by keyword: fragments legitimately write "proven live in this Brain"
+// about a TECHNIQUE inside a GOTCHA block, which is true and not a status claim.
+console.log("\n=== 10. Fragment header status vs README row ===");
+const readmeRows = new Map();
+for (const line of fs.readFileSync(path.join(scriptsDir, "README.md"), "utf8").split(/\r?\n/)) {
+  if (!line.startsWith("| [`")) continue;
+  const m = line.match(/\]\(([^)]+\.cs)\)/);
+  if (m) readmeRows.set(path.normalize(path.join("scripts", m[1])), line);
+}
+// A status DECLARATION opens a comment line. Text quoted inside a later correction note, and prose in a
+// GOTCHA continuation, must not count - that is why this anchors to the start of the line and skips the
+// correction wording explicitly.
+const neverRan = /^\/\/\s*(?:STATUS:\s*)?(?:BLOCKED[^—-]*[—-]\s*)?NOT ?(?:YET )?LIVE-VERIFIED\b/i;
+let statusChecked = 0;
+for (const f of walk(scriptsDir, (n) => n.endsWith(".cs"))) {
+  const rel = path.relative(brainRoot, f);
+  const row = readmeRows.get(path.normalize(rel));
+  if (!row) continue;
+  const readmeVerified =
+    /verified(?:\s+\w+)? 2026-\d\d-\d\d/.test(row) && !/NOT yet live-verified/.test(row);
+  if (!readmeVerified) continue;
+  statusChecked++;
+  const head = fs.readFileSync(f, "utf8").split(/\r?\n/).slice(0, 45);
+  for (let i = 0; i < head.length; i++) {
+    // The anchor above is what excludes quoted text: a correction note's continuation line starts with a
+    // date, not with the keyword, so it cannot match. An earlier version ALSO skipped any line containing
+    // "Header corrected", which silently swallowed the declaration line itself - the check then passed a
+    // deliberately broken header during its own test. A skip broad enough to hide the bug is worse than no
+    // skip, so the anchor does the work alone now.
+    if (/still read "/.test(head[i])) continue;
+    if (neverRan.test(head[i])) {
+      issues.push(
+        `FRAGMENT STATUS DRIFT in ${rel.split(path.sep).join("/")}:${i + 1}: the header still says it has` +
+          ` never run, but its scripts/README.md row records a live verification - update the header, or` +
+          ` if only one code path is proven say which (see the PARTLY VERIFIED headers for the wording)`,
+      );
+      break;
+    }
+  }
+}
+console.log(`Checked ${statusChecked} README-verified fragment(s) against their own header status.`);
+
+// === 11. Outside sources named in fragments and skills ===
+// Ajmal's instruction, 2026-08-20: "do not mention any thing that we took from this web site or repo...
+// the words also remove". Everything of that kind was stripped that day - from the docs. The strip never
+// reached scripts/, and on 2026-08-22 seven fragment headers still carried a "(Dynamo-package
+// equivalent: X's Y nodes.)" line: pure attribution, no technical content, in the PURPOSE block a
+// modeller reads first. Same shape of miss as the verification campaign that updated README rows and not
+// the fragment headers - a sweep over documentation does not reach code.
+//
+// Scoped to scripts/ and skills/ deliberately. knowledge/brain-log.md is dated history and rewriting it
+// destroys the record; knowledge/dynamo-vocabulary-map.md is a routing table for Ajmal's own vocabulary
+// (he says "the Rhythm one" and something has to translate it) and whether it stays is his call, not
+// this checker's. Neither is scanned here. If he decides either way, widen or narrow this list - do not
+// silently let scripts/ drift back.
+console.log("\n=== 11. Outside sources in fragments and skills ===");
+const outsideNames = /\b(rhythm|clockwork|bimorph|genius ?loci|archi-?lab|mepover|data-?shapes|spring nodes|orchid|dynamo)\b/i;
+let sourceScanned = 0;
+for (const dir of ["scripts", "skills"]) {
+  for (const f of walk(path.join(brainRoot, dir), (n) => n.endsWith(".cs") || n.endsWith(".md"))) {
+    sourceScanned++;
+    const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+    const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(outsideNames);
+      if (m) {
+        issues.push(
+          `OUTSIDE SOURCE NAMED in ${rel}:${i + 1}: "${m[0]}" - Ajmal's 2026-08-20 rule is that no other` +
+            ` people's repos, tools, products or names appear in this Brain. If the technique is worth` +
+            ` having, state it in this Brain's own words; do not record where it came from`,
+        );
+      }
+    }
+  }
+}
+console.log(`Scanned ${sourceScanned} fragment/skill file(s) for outside-source names.`);
+
 // === Result ===
 console.log("\n=== Result ===");
 if (issues.length === 0) {

@@ -6,7 +6,10 @@
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: a bare CableTray.Create makes an unconnected segment — check open ends after with
 //         filter-by-connection-status.cs; fittings between segments are not created here.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2
+//          suggestions.", which the README had already superseded. The verification was recorded there and never
+//          here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

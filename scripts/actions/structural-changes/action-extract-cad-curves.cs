@@ -3,7 +3,6 @@
 // PURPOSE: Trace a linked/imported CAD file into real Revit lines — read the curves on chosen DWG
 //          layer(s) from the ImportInstances in `elements` and recreate them as Model Lines or Detail
 //          Lines. The "convert this CAD background to Revit linework" job every modeller knows.
-//          (Dynamo-package equivalent: Bimorph's CurvesFromCADLayers.)
 // ASSUMES: elements (List<Element>, ImportInstances — from filters/by-relationship/filter-by-links.cs with CAD included)
 //          and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
@@ -14,7 +13,7 @@
 //         only take flat curves too.
 // GOTCHA: PolyLines are exploded into straight segments; splines/ellipses are skipped and counted —
 //         extend deliberately if a real case needs them, don't pre-build.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest); needs a CAD fixture.
+// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3; needs a CAD fixture.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

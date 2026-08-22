@@ -3147,3 +3147,41 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   and it stops crowding the search. At 10% today, nothing to do. `tools/brain-status.mjs` now computes and
   prints that share every session (loudly past 20%, quietly under `--full` below it), so the trigger fires
   on a number rather than on somebody's impression of how long the file looks.
+
+- 2026-08-22 — **Ajmal asked for the same stale-number audit over the `.cs` fragments. Two real classes of
+  drift, both the same shape: a sweep over the documentation that never reached the code.**
+  **(1) Nineteen fragment headers said the fragment had never run — for fragments proven three weeks
+  earlier.** `create-wall.cs`, `create-duct.cs`, `create-pipe.cs`, `create-floor.cs` and twelve more still
+  opened with *"NOT YET LIVE-VERIFIED — created 2026-07-26"* while their `scripts/README.md` rows carry
+  hard evidence of a live run: *"length 4000 mm, height 3000 mm, `LevelId` 311"*, *"read back `RevisionId`
+  49030"*, *"12.00 m2"*. The 2026-08-06/07 verification campaign recorded every result in the README and
+  never went back to the files. **This exact bug is already in this log**, on 2026-08-07, from the other
+  side: a stale "NOT yet live-verified" clause left inside a README row hid four fragments from the count.
+  It was fixed in the README and the other half was missed. Sixteen headers now carry the verified date
+  and a pointer to the README row, each quoting its own old wording verbatim so nothing is lost. Three
+  were **not** flatly wrong and were rewritten as `PARTLY VERIFIED` instead, naming which path is proven
+  and which is not — `action-create-view-filter.cs` (contains-rule only), `filter-by-assembly.cs` (by-Id,
+  not by-name), `filter-by-host.cs` (hosted families, not insulation). **The dangerous direction is clean:**
+  no fragment claims to be proven when the README says otherwise. The one hit was a false positive — a
+  GOTCHA saying a *technique* was "proven live in this Brain", which is true.
+  **(2) The 2026-08-20 outside-source strip never touched `scripts/`.** Seven fragment headers still
+  carried a `(Dynamo-package equivalent: X's Y nodes.)` line in the PURPOSE block a modeller reads first —
+  pure attribution, no technical content — plus three more in `scripts/README.md`. All removed, per
+  Ajmal's own words that day: *"do not mention any thing that we took from this web site or repo... the
+  words also remove."* One source citation in `knowledge/live-model/views.md` went too; the fact it
+  supported (the view-title API landed in Revit 2022) stands on its own and is recorded in
+  `revit-version-compatibility.md` anyway.
+  **What was checked and found clean:** every relative path referenced from a fragment (109 of them, 0
+  broken), library counts stated inside `.cs` comments (none), and headers overclaiming their own status.
+  **Two checks added, both tested by deliberately breaking a file first** — the first attempt at check 10
+  had a skip rule broad enough to swallow the very line it was meant to catch, and passed its own test.
+  Check 10 compares each fragment's header status to its README row (241 verified fragments). Check 11
+  scans `scripts/` and `skills/` for outside-source names, and **found three more on its first run**, in
+  `scripts/README.md`, which the `.cs`-only grep had never looked at. That is the argument for a check
+  over a one-off sweep, in one line.
+  **Two things deliberately left for Ajmal**, because both are his call and not a checker's:
+  `knowledge/dynamo-vocabulary-map.md` (a whole file whose second table maps community package names to
+  fragments — it is also the only thing that routes "the Rhythm one" to the right fragment), and the eight
+  external URLs under "Sources consulted" in `knowledge/nfpa13-sprinkler-spacing.md` (fire-code values
+  whose own heading warns they are secondary summaries — removing the sources would leave unverified
+  numbers looking authoritative). Neither is scanned by check 11; the reason is written into the check.

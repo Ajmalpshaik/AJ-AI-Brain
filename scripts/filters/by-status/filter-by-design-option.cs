@@ -6,7 +6,10 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified against a real model containing Design Options.
+// VERIFIED LIVE 2026-08-06 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "STATUS: not yet live-verified against a real model containing
+//          Design Options.", which the README had already superseded. The verification was recorded there and never
+//          here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

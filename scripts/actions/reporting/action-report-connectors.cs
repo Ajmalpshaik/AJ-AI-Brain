@@ -4,14 +4,15 @@
 //          (mm), facing direction (BasisZ), and what each is REALLY connected to. This packages step 1
 //          of the user's own connection method (check connectors exist → domain/size → real direction →
 //          only then draw) as one reusable read — see ../../../knowledge/live-model/hvac-ducts.md.
-//          (Dynamo-package equivalent: MEPover's connector query nodes.)
 // ASSUMES: elements (List<Element>, MEPCurves and/or FamilyInstances with MEP connectors) and sb exist
 //          from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Read-only, model never changes.
 // GOTCHA: IsConnected can be true with no physical partner (proven wrong in real sessions) — that's why
 //         the report also lists the actual connected refs' owner elements; trust the refs, not the flag.
-// NOT YET LIVE-VERIFIED as a fragment — the underlying reads are the live-proven core of
-//          connect-equipment-to-air-terminals.cs (2026-07-26); packaged 2026-07-26, round 3.
+// VERIFIED LIVE 2026-08-06 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED as a fragment — the underlying reads are the
+//          live-proven core of connect-equipment-to-air-terminals.cs (2026-07-26); packaged 2026-07-26, round 3.",
+//          which the README had already superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
