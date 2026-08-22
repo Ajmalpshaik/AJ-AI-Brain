@@ -17,6 +17,31 @@ tool is registered from `../index.js`; nothing here runs on its own.
 | `use_revit_instance` | [`use-revit-instance.js`](use-revit-instance.js) | Pin this chat to one Revit session, by pid |
 | `use_revit_document` | [`use-revit-document.js`](use-revit-document.js) | Pin this chat to one open project inside that Revit, by title |
 
+## Fragment-backed tools (added 2026-08-22) — the everyday five
+Each is a typed front door onto ONE proven fragment. **They contain no Revit code**: they name a
+fragment, hand over the values, and [`../shared/fragment-runner.js`](../shared/fragment-runner.js)
+composes the file off disk. Change the fragment and the tool follows; there is never a second copy to
+drift. All five take `preview: true` to see the composed C# without sending it.
+
+| Tool | File | Wraps | Job |
+|---|---|---|---|
+| `grayout` | [`grayout.js`](grayout.js) | `recipes/mep-grayout.cs` | Ajmal's own drawing standard, one call. The fragment declares **33 inputs and 32 of them ARE the standard** — this sets only the view |
+| `session_start` | [`session_start.js`](session_start.js) | `context/context-session-start.cs` | The opening call: Revit version, document, real units, size, links, worksets, warnings. **No inputs** |
+| `verify_connectivity` | [`verify_connectivity.js`](verify_connectivity.js) | `recipes/verify-duct-connectivity.cs` | Walk every terminal's chain out to its FCU. Deliberately does not trust `IsConnected` |
+| `report_length_by_size` | [`report_length_by_size.js`](report_length_by_size.js) | filter + `action-report-length-by-size.cs` | Count **and total length** per size — the take-off answer `count_elements` cannot give |
+| `color_by_group` | [`color_by_group.js`](color_by_group.js) | filter + `action-color-by-group.cs` | A distinct colour per System Type / Level / any parameter. Defaults to a **repeatable** palette |
+
+**Why these five and not another five.** Ajmal's own usage log lives on his PC and never travels in
+git, so it could not be read from the container they were built in. They were chosen from the evidence
+that IS in the Brain — how often each fragment is named across the skills and entry docs, and
+AGENT-SPEC §9.4's list of standing request shapes — and the choice is meant to be revisited:
+`node tools/job-report.mjs` and `node tools/shortlist.mjs` on the PC give the real ranking, and
+swapping one of these for a better candidate is a small edit, not a rewrite.
+
+**One is honestly unproven.** `context-session-start.cs` has never been verified against a real model.
+That is not a blocker — the Brain's rule is warn and keep working — and the tool reports it in its own
+result rather than passing quietly as if it were verified.
+
 **About `run_fragment` (added 2026-08-22).** It is the difference between *having* 290 proven fragments
 and *running* them. Before it, every scripted job read the `.cs` file, hand-edited its `INPUTS` block and
 pasted the result into `run_csharp` — so what actually reached Revit was a freshly retyped copy, and the

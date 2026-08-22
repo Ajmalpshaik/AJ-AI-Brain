@@ -201,7 +201,7 @@ same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the
 needed **no changes** — it already accepts any C# generically; the whole upgrade lives on the Node side.
 As of the same day, `mcp-server/` is split one-file-per-tool (mirrors the `scripts/` fragment pattern) —
 `mcp-server/index.js` is now just the entry point; see [`mcp-server/tools/README.md`](mcp-server/tools/README.md)
-for the routing index into all 21 tool files.
+for the routing index into all 26 tool files.
 
 | Tool | Covers |
 |---|---|
@@ -230,6 +230,15 @@ bridge connected. **It walks a hardcoded list, so a new tool is not covered by i
 `search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
 for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
+
+### 3.4b Fragment-backed native tools (5, added 2026-08-22)
+`grayout` · `session_start` · `verify_connectivity` · `report_length_by_size` · `color_by_group`.
+
+Unlike §3.4's tools, these generate no C# of their own — each names one proven fragment and lets the
+shared engine compose it, so the fragment stays the single copy. `grayout` is the clearest case for why
+they exist: the recipe behind it declares 33 inputs of which 32 **are** Ajmal's settled standard, so the
+old flow was to read 33 declarations, change none, and paste. Full table and the reason these five were
+picked: [`mcp-server/tools/README.md`](mcp-server/tools/README.md).
 
 ### 3.4a `run_fragment` — running the library instead of retyping it (added 2026-08-22)
 The 290 fragments in `scripts/` were proven one at a time against a real model. Until this tool, none of
@@ -665,8 +674,10 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
   Unused left this list 2026-07-22: `action-purge-unused.cs` now covers the provably-correct subset —
   unused View Templates/Filters/Materials, dry-run by default.)
 - **Native tools for the remaining common actions not yet ported**: creation tools (`create_room`,
-  `create_levels`, `create_schedule`), `color_by_group`, `report_location`/`report_bounding_box`,
-  `copy_elements`, `rotate_elements`, `rename_element`. Same pattern as §3.4, straightforward to add.
+  `create_levels`, `create_schedule`), `report_location`/`report_bounding_box`, `copy_elements`,
+  `rotate_elements`, `rename_element`. (`color_by_group` left this list 2026-08-22 — see §3.4b.)
+  **Pick the next ones from `node tools/job-report.mjs`, not from this list** — it was written from
+  memory before anything recorded what actually gets used.
 
 ### Plugin architecture note
 This Brain's own extension mechanism is `skills/brain-self-maintain/SKILL.md` — new

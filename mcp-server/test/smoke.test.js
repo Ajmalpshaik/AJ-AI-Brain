@@ -13,6 +13,11 @@ import assert from "node:assert/strict";
 
 import { register as registerRunCsharp } from "../tools/run-csharp.js";
 import { register as registerRunFragment } from "../tools/run-fragment.js";
+import { register as registerGrayout } from "../tools/grayout.js";
+import { register as registerSessionStart } from "../tools/session_start.js";
+import { register as registerVerifyConnectivity } from "../tools/verify_connectivity.js";
+import { register as registerReportLengthBySize } from "../tools/report_length_by_size.js";
+import { register as registerColorByGroup } from "../tools/color_by_group.js";
 import { register as registerPing } from "../tools/ping.js";
 import { register as registerModelSummary } from "../tools/model-summary.js";
 import { register as registerListElements } from "../tools/list-elements.js";
@@ -31,8 +36,8 @@ import { register as registerMoveElements } from "../tools/move-elements.js";
 import { register as registerDeleteElements } from "../tools/delete-elements.js";
 
 // Not a Revit tool, and deliberately NOT added to the lists below: the two tests there assert
-// exactly 18 registrations and that every handler fails with a bridge error. search_brain never
-// touches the bridge, so it gets its own test at the bottom of this file and the 18-tool guard
+// exactly 23 registrations and that every handler fails with a bridge error. search_brain never
+// touches the bridge, so it gets its own test at the bottom of this file and the 23-tool guard
 // stays meaningful.
 import { register as registerSearchBrain } from "../brain-tools/search-brain.js";
 import { register as registerSearchGraph } from "../brain-tools/search-graph.js";
@@ -65,6 +70,13 @@ const SAMPLE_ARGS = {
   report_parameters: { category: "Ducts", parameterNames: ["Mark"] },
   move_elements: { category: "Ducts", offsetXmm: 10, offsetYmm: 0, offsetZmm: 0 },
   delete_elements: { category: "Ducts", confirm: true },
+  // The five fragment-backed tools. Each must reach the bridge like every other handler here, so
+  // none of them sets preview: the point is proving the compose-and-send path runs to completion.
+  grayout: {},
+  session_start: {},
+  verify_connectivity: {},
+  report_length_by_size: { category: "Ducts" },
+  color_by_group: { category: "Ducts", groupBy: "System Type" },
 };
 
 const EXPECTED_TOOL_NAMES = Object.keys(SAMPLE_ARGS).sort();
@@ -82,7 +94,9 @@ function createFakeServer() {
 test("every tool module registers exactly one well-formed tool", () => {
   const server = createFakeServer();
   for (const register of [
-    registerRunCsharp, registerRunFragment, registerPing, registerModelSummary, registerListElements, registerCountElements,
+    registerRunCsharp, registerRunFragment, registerGrayout, registerSessionStart,
+    registerVerifyConnectivity, registerReportLengthBySize, registerColorByGroup,
+    registerPing, registerModelSummary, registerListElements, registerCountElements,
     registerHideElements, registerUnhideElements, registerIsolateElements, registerResetIsolation,
     registerSetColor, registerResetGraphicOverrides, registerSetTransparency, registerSelectElements,
     registerSetParameterValue, registerReportParameters, registerMoveElements, registerDeleteElements,
@@ -90,7 +104,7 @@ test("every tool module registers exactly one well-formed tool", () => {
     register(server);
   }
 
-  assert.equal(server.registrations.length, 18, "expected exactly 18 registered tools");
+  assert.equal(server.registrations.length, 23, "expected exactly 23 registered tools");
 
   const names = server.registrations.map((r) => r.name).sort();
   assert.deepEqual(names, EXPECTED_TOOL_NAMES, "registered tool names drifted from this test's expectations");

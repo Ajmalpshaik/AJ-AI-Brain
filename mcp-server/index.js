@@ -7,7 +7,7 @@
 // This file only wires things together. See:
 //   - bridge-connection.js  — the named-pipe plumbing
 //   - shared/               — helpers every native tool reuses
-//   - tools/README.md       — index of all 21 Revit tools, one file each
+//   - tools/README.md       — index of all 26 Revit tools, one file each
 //   - brain-tools/          — tools that do NOT touch Revit (search_brain), kept out of tools/
 //                             so brain-status.mjs keeps counting Revit tools truthfully
 
@@ -16,6 +16,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { register as registerRunCsharp } from "./tools/run-csharp.js";
 import { register as registerRunFragment } from "./tools/run-fragment.js";
+
+// Fragment-backed native tools: a typed front door onto one proven fragment each. They hold no
+// Revit code of their own - see shared/fragment-runner.js.
+import { register as registerGrayout } from "./tools/grayout.js";
+import { register as registerSessionStart } from "./tools/session_start.js";
+import { register as registerVerifyConnectivity } from "./tools/verify_connectivity.js";
+import { register as registerReportLengthBySize } from "./tools/report_length_by_size.js";
+import { register as registerColorByGroup } from "./tools/color_by_group.js";
 import { register as registerPing } from "./tools/ping.js";
 import { register as registerListRevitInstances } from "./tools/list-revit-instances.js";
 import { register as registerUseRevitInstance } from "./tools/use-revit-instance.js";
@@ -44,6 +52,11 @@ const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.4.0" });
 
 registerRunCsharp(server);
 registerRunFragment(server);
+registerGrayout(server);
+registerSessionStart(server);
+registerVerifyConnectivity(server);
+registerReportLengthBySize(server);
+registerColorByGroup(server);
 registerPing(server);
 registerListRevitInstances(server);
 registerUseRevitInstance(server);

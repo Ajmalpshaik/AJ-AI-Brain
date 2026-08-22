@@ -2734,3 +2734,16 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   ~15 tokens against ~2,800 for read-and-paste. Now it is ~15 against ~46. The remaining reason to
   hand-write a native tool is the friendly typed input and skipping the search — not saved code. Judge
   the next promotion on that, not on the old arithmetic.
+- 2026-08-22 — **five fragment-backed native tools**: `grayout`, `session_start`,
+  `verify_connectivity`, `report_length_by_size`, `color_by_group`. Native tools 21 → 26. They hold
+  **no Revit code** — each names one proven fragment and the shared engine
+  ([`fragment-runner.js`](../mcp-server/shared/fragment-runner.js)) composes it off disk, so there is
+  never a second copy of a proven file to drift. `run-fragment.js` shrank 478 → 122 lines onto the same
+  engine, all 14 of its tests unchanged and passing, which is the proof the extraction changed nothing.
+  **`grayout` is the case that justifies the pattern:** its recipe declares 33 inputs and 32 of them
+  ARE Ajmal's settled standard, so the tool sets one value and leaves the rest byte-identical.
+- 2026-08-22 — **the five were picked from Brain evidence, not from usage** — his job log never travels
+  in git, so it could not be read from the container. Ranked instead by how often each fragment is named
+  across the skills and entry docs, plus AGENT-SPEC §9.4's standing request shapes. **Recorded so it is
+  revisited, not inherited:** `job-report.mjs` and `shortlist.mjs` on the PC give the real ranking, and
+  AGENT-SPEC §11's promotion list is now marked as written-from-memory rather than measured.
