@@ -146,7 +146,16 @@ export function makeStatusOf(rows = readmeRows()) {
     const row = rows.find((l) => l.includes(`](${rel})`));
     if (!row) return "not-in-readme";
     if (/NOT yet live-verified/.test(row)) return "untested";
-    if (/verified 2026/.test(row)) return "verified";
+    // "verified" and the year are allowed a few words between them. The old test was the literal
+    // `verified 2026`, so a row reading "✓ verified LIVE 2026-08-14" did not match and the fragment
+    // reported as UNPROVEN even though it had been run against a real model. Found 2026-08-22: EIGHT
+    // fragments were affected - the aligned-dimension, spot-elevation, sheet-set, insulation,
+    // highlight-vs-rest, HVAC-zone, room-elevation and trunk-slicing ones - all genuinely proven, all
+    // reported as unproven, and the session-start count was understating the library by 8. The natural
+    // phrasing was right and the regex was wrong, so this is fixed here rather than by rewording eight
+    // rows into an unnatural shape that would break again the next time someone wrote plainly.
+    // The `NOT yet live-verified` test above still runs FIRST, so an explicit not-yet row is unaffected.
+    if (/\bverified\b[^|]{0,24}?20\d\d/.test(row)) return "verified";
     if (/CONFIRMED IMPOSSIBLE/.test(row)) return "impossible";
     if (/BLOCKED/.test(row)) return "blocked";
     return "no-status";

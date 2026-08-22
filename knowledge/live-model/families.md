@@ -229,7 +229,36 @@ failed script ever called `fm.Set()` on them. Separately, 3 `Extrusion` elements
 document where exactly 1 had ever been created — no script in the session explicitly duplicated one.
 
 **Net effect: treat any `ReplaceParameter`/`RenameParameter` sequence that throws as leaving the entire
-document's parameter *and geometry* state untrusted, not just "that one call failed."** After a failure
+document's parameter *and geometry* state untrusted, not just "that one call failed."**
+
+#### What the add-in does about the same clash, and how to reconcile the two (2026-08-22)
+
+Harvested from the add-in's **Shared to Family** tool, which converts a shared family parameter into a
+plain family parameter. It hits the identical wall and handles it in the mirror-image order:
+
+1. `ReplaceParameter(source, targetName, group, isInstance)` — the direct attempt.
+2. Only if that throws **"name already in use"**: `ReplaceParameter(source, TEMP_NAME, ...)` first, then
+   `RenameParameter(converted, targetName)`.
+
+The Brain's 2026-07-19 attempt was the other way round — **rename to a temp name first, then replace** —
+looped over ~10 parameters in one transaction, and that is what corrupted the document. Replace-to-temp
+**then** rename touches the parameter in a different order and is what the add-in has been shipping.
+
+**Neither ordering is proven safe here, and the difference is not the point.** What the add-in adds is
+the observation that the direct call fails *specifically* with a name-in-use error, so the detour is
+worth attempting only on that exact exception — not as a standing pattern. What this Brain adds, and the
+add-in has no equivalent of, is the **measured corruption**: a failure mid-loop left garbage behind that
+an uncommitted transaction did not roll back.
+
+**So the rule stands, unchanged and now better argued:**
+
+- **Catch the name-in-use error specifically** and try the temp-name detour once, replace-to-temp first.
+- **One parameter per transaction**, never a loop of ten inside one — the corruption was found in a loop.
+- **After ANY throw, re-query names, groups, values and geometry counts** before doing anything else.
+- The add-in's tool is a human driving one family at a time with Revit's own undo behind them. A script
+  batching parameters has neither, which is why the caution here is stricter than the tool's.
+
+ After a failure
 here, don't assume "the transaction didn't commit, so nothing changed" — re-query every parameter's name,
 group, AND value (not just existence), and re-count geometry elements, before continuing. Same standard
 of proof this file already requires for resize tests, just triggered by a failure instead of a success.

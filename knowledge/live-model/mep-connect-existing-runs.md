@@ -131,3 +131,32 @@ The related fragments — none of which do this job, so there is no overlap to r
 **A fragment that does the full plan-and-build has not been written.** Doing it properly means the
 sub-transaction attempt loop, the pair scoring and the crank math above, and it should be built the day a
 real job needs it — not speculatively. This note is what to build it from.
+
+## What can actually be connected — the category taxonomy
+
+Harvested 2026-08-22 from the add-in's `SmartConnectSelectionFilter`, which exists to answer "may the
+user pick this?" and in doing so writes down the whole answer to *"what counts as a connectable MEP
+element in Revit"*:
+
+| Group | Categories | Notes |
+|---|---|---|
+| **Straight runs — always candidates** | `OST_PipeCurves`, `OST_DuctCurves`, `OST_CableTray` | the core three |
+| Conduit | `OST_Conduit` | optional, off by default in some setups |
+| Flex | Flex Duct **and** Flex Pipe, **separately** | they were one flag until v3 and were split, because they behave differently — a flex run can never be trimmed longer |
+| Air terminals | `OST_DuctTerminal` | |
+| Fittings | `OST_PipeFitting`, `OST_DuctFitting`, `OST_CableTrayFitting`, `OST_ConduitFitting` | |
+| Accessories | duct and pipe accessories | |
+| **Equipment — the CATCH-ALL** | **any connector-bearing `FamilyInstance` that is none of the above** | plumbing fixtures, sprinklers, electrical equipment |
+
+**Why the catch-all matters, in the add-in's own words:** naming only the four explicit categories
+*"would have silently dropped everything else, which used to be pickable."* That is a real regression
+that happened and was fixed. Any fragment that enumerates connectable categories by name will do the
+same thing — a sprinkler or a plumbing fixture will simply not appear, with no message. **Prefer
+"connector-bearing family instance" as the test and use the category list only to classify, never to
+gate.**
+
+**Category membership is necessary but NOT sufficient.** A family instance in an allowed category still
+has to have a real **open End connector**. The Brain's
+[`../../scripts/filters/by-relationship/filter-by-connection-status.cs`](../../scripts/filters/by-relationship/filter-by-connection-status.cs)
+already tests exactly that — but it takes **one** category per call, so "find everything connectable"
+means either several calls or a wider filter. The list above is what to run it over.

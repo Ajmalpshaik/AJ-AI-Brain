@@ -236,7 +236,15 @@ function mojibakeOf(ch) {
 const USED_NON_ASCII = "—–‘’“”…↔↓↑→←✓✔✗•§°²³±«»·½¼ø×÷≈≥≤™€éèáíóúüñçâäåîôÅ📄";
 const MOJIBAKE = [...new Set(USED_NON_ASCII)].map(mojibakeOf).filter(Boolean);
 const textExt = [".md", ".cs", ".json", ".js", ".mjs", ".ps1"];
-const skipDir = new Set([".git", "node_modules"]);
+// `graphify-out` is DERIVED, gitignored output — the knowledge graph and its Obsidian export, both
+// regenerated wholesale from knowledge/, scripts/ and skills/. It carries copies of Brain prose, so
+// every library total quoted in a source file gets duplicated into it, and check 9 then reports the
+// copies as drift the author must go and fix. Hand-editing a generated file is meaningless: the next
+// rebuild overwrites it. Found 2026-08-22 — adding three fragments produced 19 "fix this" lines, all of
+// them inside graphify-out, several from a stale 2026-08-13 snapshot still quoting 269 fragments and 9
+// skills. Whether the derived layers have fallen behind their sources is a real question, but it is
+// answered by the STALE INDEX banner and `python tools/graph-rebuild.py --check`, not by this checker.
+const skipDir = new Set([".git", "node_modules", "graphify-out"]);
 
 function walkAll(dir, results = []) {
   if (!fs.existsSync(dir)) return results;

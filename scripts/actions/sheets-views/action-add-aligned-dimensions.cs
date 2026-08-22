@@ -25,6 +25,13 @@
 //           M_Supply Diffuser (stock Revit content) -> CenterLeftRight 1, CenterFrontBack 1, Strong 0, Weak 0
 //           M_* duct fittings, duct accessories     -> ALL FOUR ZERO. This fragment can never dimension them.
 //         So "no usable reference" on MEP fittings is expected, not a bug. Air terminals / equipment work.
+// ✱ CORRECTED 2026-08-22 — the measurement above is right, the CONCLUSION drawn from it was too broad.
+//   "All four zero" is true of the `FamilyInstance.GetReferences` ROUTE, not of MEP as a subject: ducts,
+//   pipes, conduit and trays CAN be dimensioned by walking their geometry for a `.Reference`, provided
+//   `Options.IncludeNonVisibleObjects = true` (a run's CENTRELINE is a non-visible object) alongside
+//   `ComputeReferences = true`. That is a different fragment —
+//   `action-dimension-mep-runs.cs` — and the full method is in knowledge/live-model/dimensioning.md.
+//   Keep using THIS one for air terminals and equipment; send MEP runs to that one.
 // GOTCHA: reading a created dimension back, `Dimension.Curve` throws "The input curve is not bound" —
 //         use `NumberOfSegments` / `Segments` / `References` to verify instead, never `.Curve`.
 // ============================================================

@@ -15,12 +15,22 @@
 //         be slow on a large model, same caution as any unbounded scan in this repo.
 // MANDATORY per README's explorer-first rule: run with dryRun = true first, read the actual list of what
 // would be deleted, confirm with the user, THEN set dryRun = false.
-// Dry-run live-verified 2026-07-22 for all 3 modes. Real non-dry-run delete not yet exercised (no
+// * UPGRADED 2026-08-22 (harvested from the add-in's Purge Unused Groups): added a "groups" mode.
+//   A GroupType whose `Groups` set is EMPTY has no placed instances anywhere — that is the provable
+//   test, the same shape as the other three modes here. Model groups and detail groups are both
+//   covered because both are GroupType.
+// GOTCHA (groups): an ATTACHED DETAIL GROUP is owned by its parent model group. If the parent is
+//   placed, the attached group is in use even when its own `Groups` set looks empty in some Revit
+//   versions - so attached detail groups are reported SEPARATELY and never deleted by this fragment.
+// GOTCHA (groups): deleting a GroupType is not the same as ungrouping. There is nothing placed to
+//   ungroup - the definition itself goes. Nothing in the model changes visually.
+// Dry-run live-verified 2026-07-22 for the first 3 modes; the groups mode is compile-checked on
+// 2020/2024/2027 but not yet live-run. Real non-dry-run delete not yet exercised (no
 // pre-existing unused content in this model that was safe to actually remove).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-string mode = "view_templates"; // "view_templates" | "filters" | "materials"
+string mode = "view_templates"; // "view_templates" | "filters" | "materials" | "groups"
 bool dryRun = true; // true = report what WOULD be deleted, delete nothing; false = actually delete
 // ---- END INPUTS ----
 
@@ -51,6 +61,34 @@ else if (mode == "filters")
         .Where(f => !appliedFilterIds.Contains(f.Id))
         .Cast<Element>().ToList();
 }
+else if (mode == "groups")
+{
+    // A GroupType with an EMPTY Groups set has no placed instances anywhere in the model.
+    int attachedSkipped = 0;
+    foreach (var gt in new FilteredElementCollector(Document).OfClass(typeof(GroupType)).Cast<GroupType>())
+    {
+        if (gt == null || !gt.IsValidObject) continue;
+
+        int placed = 0;
+        try { var gs = gt.Groups; placed = gs == null ? 0 : gs.Size; } catch { continue; }
+        if (placed > 0) continue;
+
+        // An attached detail group belongs to a parent model group - never delete one from here.
+        bool isAttached = false;
+        try
+        {
+            var cat = gt.Category;
+            isAttached = cat != null && cat.Name != null &&
+                         cat.Name.IndexOf("Attached", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+        catch { }
+        if (isAttached) { attachedSkipped++; continue; }
+
+        targets.Add(gt);
+    }
+    if (attachedSkipped > 0)
+        sb.AppendLine($"({attachedSkipped} attached detail group type(s) skipped - they belong to a parent model group.)");
+}
 else if (mode == "materials")
 {
     var usedMaterialIds = new HashSet<ElementId>();
@@ -69,7 +107,7 @@ else if (mode == "materials")
 
 if (targets == null)
 {
-    sb.AppendLine($"Unknown mode '{mode}' — use \"view_templates\", \"filters\", or \"materials\". Nothing changed.");
+    sb.AppendLine($"Unknown mode '{mode}' — use \"view_templates\", \"filters\", \"materials\", or \"groups\". Nothing changed.");
 }
 else
 {
