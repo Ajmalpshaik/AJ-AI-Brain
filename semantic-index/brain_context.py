@@ -29,7 +29,7 @@ def log_question(query, results):
     Two jobs, both of which need months of real use before they pay off, which is why this
     starts recording as early as possible:
 
-      1. Which files actually answer real questions - and therefore which of the 269 fragments
+      1. Which files actually answer real questions - and therefore which of the 290 fragments
          are doing the work and which have never once been the answer.
       2. A question -> correct-file pair set. That is the shape of data needed to fine-tune an
          embedding model on Ajmal's own site vocabulary, which is this Brain's measured weak

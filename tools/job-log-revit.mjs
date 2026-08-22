@@ -5,7 +5,7 @@
 // elements, real numbers, real failures, and all of it evaporated when the session ended. So
 // three questions about this Brain were unanswerable:
 //
-//   - which of the 269 fragments actually do the work (guess: about 40 do 90% of it)
+//   - which of the 290 fragments actually do the work (guess: about 40 do 90% of it)
 //   - which have never once run on a real job
 //   - which fail repeatedly against a real model
 //

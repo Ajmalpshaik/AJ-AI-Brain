@@ -3361,3 +3361,29 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Safety was confirmed before any of this: all three branches are **0 commits ahead of `main`**. Two of
   them show files differing from `main`, which is only them being *behind* it — `rev-list --count
   main..branch` is the test that answers "is anything lost", and `diff --stat` is not.
+
+- 2026-08-22 — **Asked whether the housekeeping was actually done, the honest answer was no — check 9 had
+  only ever looked at markdown, and there were six more stale counts sitting in code.** Every one frozen
+  in the mid-260s against 290 on disk: `tools/fragment-nudge.mjs` (twice), `tools/auto-search-hook.mjs`,
+  `tools/fragment-index.mjs`, `tools/job-log-revit.mjs`, `semantic-index/brain_context.py` and
+  `tools/verify-fragments-compile.ps1`. Two of those matter more than the rest — **`auto-search-hook.mjs`
+  injects its text into every message**, and `fragment-nudge.mjs` is the Stop hook whose whole job is
+  telling you to *"search the N first"*, so both were quoting a number to the model on every turn.
+  **Check 9 now scans `.mjs`, `.js`, `.py`, `.ps1`, `.cmd` and `.json` alongside `.md`** — 13 claims
+  became 22. It immediately caught a seventh: the comment inside the check describing the fix, which
+  quoted the old figures; that comment now describes them instead of repeating them, the same resolution
+  check 12 forced in `CLAUDE.md`. Negative-tested by putting a stale count back into `job-log-revit.mjs`.
+  **The repo hygiene sweep found the rest clean** and the negatives are worth recording so nobody repeats
+  it: no empty tracked files, no byte-identical duplicates, nothing committed that should not be (no
+  `node_modules`, databases or binaries), `.gitignore` genuinely covers all three derived layers, and the
+  two empty directories are `.voice-runtime/` runtime dirs that are both ignored and untrackable anyway.
+  **One live tool was documented nowhere.** `fragment-nudge.mjs` is wired into `stop-hooks.mjs` and runs
+  every turn, but appeared in no markdown file — so it was invisible to anyone reading the Brain, which is
+  a particular irony for the hook that exists to make invisible things visible. `README.md` now describes
+  all four end-of-turn hooks together, with the 2026-08-13 session that caused it: thirteen `run_csharp`
+  calls, zero saved fragments used, nothing saved back. Every tool in `tools/` is now referenced from at
+  least one document.
+  **The pattern, stated once more because it keeps being the same one:** a sweep is evidence only for what
+  it covered. Markdown was swept and declared done while code sat untouched — exactly as the 2026-08-20
+  outside-source strip covered docs and missed `scripts/`, and as the verification campaign updated
+  `scripts/README.md` and missed nineteen fragment headers.

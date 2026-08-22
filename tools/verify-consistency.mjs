@@ -389,7 +389,7 @@ console.log(`Checked ${claimCount} "searches all N files" claim(s) against ${ind
 //   * the file is an append-only dated record (brain-log, a log.md, score-history, a job-log snapshot).
 // A heading's date does NOT cover the lines under it: nothing downstream can see the heading, so a
 // historical figure has to say so on its own line.
-console.log("\n=== 9. Live counts stated anywhere in markdown ===");
+console.log("\n=== 9. Live counts stated anywhere in markdown or code ===");
 const liveCounts = {
   fragments: walk(scriptsDir, (n) => n.endsWith(".cs")).length,
   skills: fs.existsSync(skillsDir)
@@ -410,8 +410,16 @@ const countPatterns = [
   [/\b(\d+) tool files\b/gi, "native tools"],
 ];
 const datedRecord = /(brain-log\.md|score-history\.md|\/log\.md|job-log\/snapshots\/|HANDOVER\.md)$/;
+// Markdown was the whole scope until 2026-08-22, when a housekeeping sweep found SIX more stale counts
+// in code, all of them frozen at the mid-260s while disk held 290: the Stop hook that nags about
+// composing from fragments, tools/auto-search-hook.mjs which injects text into every message,
+// fragment-index.mjs, job-log-revit.mjs, brain_context.py and verify-fragments-compile.ps1. A comment
+// that states a library total is a claim wherever it lives, and the hook comments are the ones a model
+// actually reads. Code is scanned on the same terms as prose now - and this very comment tripped the
+// check when it first quoted the old figures, so it describes them instead of repeating them.
+const COUNT_EXTS = [".md", ".mjs", ".js", ".py", ".ps1", ".cmd", ".json"];
 let countClaims = 0;
-for (const file of walkAll(brainRoot).filter((f) => f.endsWith(".md"))) {
+for (const file of walkAll(brainRoot).filter((f) => COUNT_EXTS.some((e) => f.endsWith(e)))) {
   const rel = path.relative(brainRoot, file).split(path.sep).join("/");
   if (datedRecord.test(rel)) continue;
   const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
