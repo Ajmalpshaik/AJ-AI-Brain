@@ -2702,3 +2702,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   shared by `fragment-index.mjs` and `run_fragment`. A runner that re-implemented the parse would drift
   from the index silently — `--show` printing one form while the tool filled in another. Proof the
   refactor was safe: `--json` byte-identical before and after.
+- 2026-08-22 — **"widget" is his word for a picture in the chat reply**, confirmed by asking him rather
+  than guessing — a synonym of "visualization" (2026-08-14), never a published page. The part worth
+  keeping: he used it while asking **how the Brain works**, not about model numbers, so
+  [`ajtools-visual-report`](../skills/ajtools-visual-report/SKILL.md) now says explicitly that an
+  explanation gets a diagram too. The old rule was written only around Revit figures.
+- 2026-08-22 — **`run_fragment` benchmarked** on the real library, 30 runs each: build + check a
+  2-fragment job **32 ms**, catch a bad input or a wrong fragment name **28 ms**. Text through the model
+  for one composed colour job: **2,800 tokens → 46**, a 98.3% cut, or roughly 55,000 tokens over a
+  20-job session. **Revit's own execution time is unchanged** — the same C# arrives. No measured figure
+  for a Revit round trip exists anywhere in this Brain, so the cost of a mistake is still stated as a
+  shape, not a number; measure one on the PC and record it here.
