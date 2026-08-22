@@ -18,6 +18,8 @@ feet↔mm conversion every script needs.
 | Space airflow params; how many air terminals; terminal grid layout; a terminal's Flow value | [`hvac-terminals.md`](hvac-terminals.md) |
 | Changing a family's CATEGORY (e.g. Duct Accessory → Air Terminal) — what survives, what is silently dropped, what to check first | [`family-category-change.md`](family-category-change.md) |
 | Drawing duct between points; branch duct (riser + elbow + takeoff); connecting to an existing open end; drawing FROM a connector | [`hvac-ducts.md`](hvac-ducts.md) |
+| Putting diffusers/sprinklers/lights on the CEILING TILE CENTRES — reading a ceiling's real tile size and angle, and which elements actually sit over an L-shaped ceiling | [`ceiling-grid.md`](ceiling-grid.md) |
+| Two runs already exist and DON'T MEET — closing the gap, the offset crank, stretch-vs-create, one sub-transaction per attempt | [`mep-connect-existing-runs.md`](mep-connect-existing-runs.md) |
 | Slicing a trunk into progressively smaller segments for duct sizing; why the trunk gets split; recovering an orphaned branch | [`hvac-duct-sizing.md`](hvac-duct-sizing.md) |
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
 | Moving/copying/rotating elements — and why a transform can silently do NOTHING while reporting success (pinned elements, group members) | [`geometry-and-transforms.md`](geometry-and-transforms.md) |

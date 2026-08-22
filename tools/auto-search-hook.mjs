@@ -162,7 +162,7 @@ if (!python) process.exit(0); // silent: a missing venv must not spam every mess
 const result = spawnSync(
   python,
   // --log records the question and its hits in job-log/questions.jsonl. Over months that
-  // answers "which of the 290 fragments actually get used", which nothing else can, and
+  // answers "which of the 293 fragments actually get used", which nothing else can, and
   // builds the question -> file pairs a fine-tune would need.
   [path.join(semanticRoot, "brain_context.py"), "--top", "5", "--log", prompt],
   // windowsHide: this hook runs with no console of its own, so a console child gets a NEW

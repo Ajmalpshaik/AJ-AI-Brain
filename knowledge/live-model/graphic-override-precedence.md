@@ -225,6 +225,88 @@ styles that differ only in colour — `..._Black`, `_Blue`, `_Green`, `_Red`, `_
 Duct/Pipe Insulations, the projection pattern and weight held and the cut pattern and weight both read back
 empty.
 
+## Writing an OverrideGraphicSettings correctly — the sentinels and the copy
+
+Harvested 2026-08-22 from the add-in's Graphics Tools, which builds the full-fidelity object. These are
+API facts this Brain had **no record of anywhere**, and each one produces a wrong-but-plausible result
+rather than an error.
+
+**"No override" is a specific value, not zero and not blank.** Every property has a sentinel meaning
+*leave this alone*:
+
+| Property | "no override" is | NOT |
+|---|---|---|
+| any colour | `Color.InvalidColorValue` | black, or `null` |
+| line weight | `OverrideGraphicSettings.InvalidPenNumber` | `0` |
+| a pattern | `ElementId.InvalidElementId` | `null` |
+
+Write `0` as a line weight and you have not cleared the override — you have asked for something invalid.
+Valid line weights are **1–16**; clamp above, and send anything else to `InvalidPenNumber`.
+
+**A pattern id and its visibility flag are two separate writes.** `SetSurfaceForegroundPatternId(id)`
+alone is not enough — pair it with `SetSurfaceForegroundPatternVisible(...)`, set from whether the id is
+valid. The same goes for the background and both cut patterns. Set the id and forget the flag and the
+pattern is there but not drawn, which reads on screen as "the override didn't work".
+
+**Transparency is 0–100**, an integer percentage. Clamp it; out-of-range is not rejected loudly.
+
+**`new OverrideGraphicSettings(existing)` is a copy constructor** — the correct way to duplicate an
+override from one element or category to another. Do **not** read the source's properties one at a time
+and re-set them: every property you forget becomes "no override" on the target, so you get a partial
+copy that looks nearly right. This is what
+[`../../scripts/actions/color-graphics/action-match-graphics.cs`](../../scripts/actions/color-graphics/action-match-graphics.cs)
+uses.
+
+**`view.IsCategoryOverridable(categoryId)` is the real test** for whether a category will accept an
+override in a given view. Checking `CategoryType` is not enough, and `SetCategoryOverrides` on a
+category that refuses throws. Note this is a *different* question from the one in the section below —
+that one is about a category that accepts the call and then keeps only some of what you sent.
+
+## Filter versus filter — order inside one view decides which colour wins
+
+The table above ranks View Filters against the *other* mechanisms. It says nothing about **two filters
+that both catch the same element**, which is the case that actually bites. Harvested 2026-08-22 from the
+add-in's Filter Pro, which manages this deliberately.
+
+**Order matters, and Revit gives you no reorder API.** In the Visibility/Graphics Filters tab the list
+has an order, and for a property two filters both set, the one **higher in the list wins**. The only way
+to change it:
+
+1. **Capture** every existing filter's overrides (`view.GetFilterOverrides(id)`) and visibility
+   (`view.GetFilterVisibility(id)`) — you are about to lose them.
+2. **Remove them all** (`view.RemoveFilter(id)`).
+3. **Re-add in the order you want** (`view.AddFilter(id)`), then **restore** each one's captured
+   overrides and visibility.
+
+Skipping step 1 is how a "reorder" quietly resets every filter in the view to default graphics. There is
+no partial version of this — removing a filter drops its settings with it.
+
+**`View.GetFilters()` order is not guaranteed on Revit 2020.** If order matters across several
+operations, keep your own remembered list per view rather than re-reading it and trusting the sequence.
+
+**Compare filter ids by VALUE, never by reference.** `View.GetFilters()` can hand back **new `ElementId`
+wrapper objects** that are not reference-equal even when they point at the same filter. A
+`List.Contains(id)` or an `==` against a stored id can therefore say "not there" about a filter that is
+plainly there — and the code then adds it twice or fails to find it to remove. Compare the underlying
+value.
+
+## A view template blocks filter changes, and does it silently
+
+`view.AddFilter` / `RemoveFilter` / `SetFilterOverrides` on a view that has a **view template applied**
+do not do what you asked. The test is simply:
+
+```
+view.ViewTemplateId != ElementId.InvalidElementId    // and the view is not itself a template
+```
+
+Check it **before** the transaction and report the view as skipped by name. This is the same family of
+trap as the scope box on a crop box (see
+[`../../scripts/actions/visibility/action-set-view-crop.cs`](../../scripts/actions/visibility/action-set-view-crop.cs)):
+**a template or a governing element accepts the write and then decides the value anyway.** Neither
+throws. If a graphic change "worked" but nothing looks different, this is the first thing to check.
+
+To change it for real, either edit the template, or detach the template from the view first.
+
 ## Practical use
 
 - **"I set a category color but it's not showing on this element"** — check whether that element has a
@@ -233,8 +315,10 @@ empty.
   lookup yet for "which View Filter(s) currently apply to this element" — a real potential gap if this
   comes up often.
 - **"My View Filter isn't coloring what I expect"** — confirm the filter's category scope actually
-  includes the element's category (`ParameterFilterElement.SetCategories`) and that no per-element
-  override (row 2, stronger) is already sitting on those elements.
+  includes the element's category (`ParameterFilterElement.SetCategories`), that no per-element
+  override (row 2, stronger) is already sitting on those elements, that **no other filter above it in
+  the view's own list** sets the same property, and that **no view template is applied** — see the two
+  sections above, both of which fail silently.
 - **A new fragment overriding something in rows 3, 5, 6, or 8** hasn't been built yet — if one of these
   layers needs scripting (e.g. "set the MEP System's own graphic override color"), that's real, uncovered
   work, not something already handled elsewhere in this list.

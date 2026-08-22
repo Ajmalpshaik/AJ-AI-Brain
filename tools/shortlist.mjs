@@ -11,7 +11,7 @@
 // real questions (semantic-index/score-history.md). So the fix for "I use this every day and it still
 // gets lost" is to stop it being searched for at all.
 //
-// This does that for ALL 290 fragments instead of the ~8 that could ever be hand-promoted, updates on
+// This does that for ALL 293 fragments instead of the ~8 that could ever be hand-promoted, updates on
 // every single message rather than every restart, and cannot break a documented tool name because it
 // registers nothing.
 //

@@ -3387,3 +3387,74 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   it covered. Markdown was swept and declared done while code sat untouched — exactly as the 2026-08-20
   outside-source strip covered docs and missed `scripts/`, and as the verification campaign updated
   `scripts/README.md` and missed nineteen fragment headers.
+- 2026-08-22 — **started harvesting the AJ Tools add-in into the Brain**, one tool at a time, on
+  Ajmal's instruction: read each tool's real source, then give it one of four verdicts — build it,
+  upgrade ours, keep ours and say why, or skip. The ledger is [`docs/addin-harvest.md`](../docs/addin-harvest.md)
+  (in `docs/`, outside the search index, same as the handover) so a fresh session never re-reads a
+  tool already judged. **First result closes a whole branch:** all **77** C# fragments in the
+  add-in's own `.claude/scripts` are already here among the 290 — the two that looked missing
+  (`action-length-by-size`, `action-material-takeoff`) were renamed into `actions/reporting/`, not
+  absent. Checked by basename with the `action-`/`filter-` prefixes stripped, because the Brain
+  reorganised that library into sub-folders. The untouched material is the compiled add-in itself:
+  ~62 ribbon tools over 34 service groups, plus 27 helper/compat classes.
+- 2026-08-22 — **harvested the AJ Tools MEP panel** (first round of the add-in harvest). Three of four
+  tools were real gaps, one was skipped on Ajmal's call. New: [`plumbing-pipe-sizing.md`](plumbing-pipe-sizing.md)
+  — a domain this Brain had nothing on (water supply fixture units -> Hunter's curve -> velocity sizing
+  -> Hazen-Williams, with all four lookup tables) and its fragment
+  [`recipes/size-domestic-water-pipe.cs`](../scripts/recipes/size-domestic-water-pipe.cs);
+  [`live-model/ceiling-grid.md`](live-model/ceiling-grid.md) — reading a ceiling's real tile size off the
+  type's **model** surface pattern (a drafting pattern's Offset is a paper distance and changes with view
+  scale), the exact over-this-ceiling test via `Face.Project` rather than a bounding box, and the
+  tile-CENTRE snap math, with its fragment
+  [`actions/move-copy-rotate/action-snap-to-ceiling-grid.cs`](../scripts/actions/move-copy-rotate/action-snap-to-ceiling-grid.cs);
+  and [`live-model/mep-connect-existing-runs.md`](live-model/mep-connect-existing-runs.md) — closing the
+  gap between two runs that already exist (stretch-don't-create, `canTrim` vs `mayMove`, one
+  sub-transaction per attempt, and the crank sign trap where adding the axial gap instead of subtracting
+  it folds the bridge back over the run it just left). **No fragment for that last one on purpose** —
+  the add-in's builder is ~2,200 lines; the note is what to build from the day a job needs it. HVAC
+  Schematic skipped: unfinished in the add-in. Ledger: [`../docs/addin-harvest.md`](../docs/addin-harvest.md).
+- 2026-08-22 — **`filter-by-wrong-category.cs` could not compile on Revit 2027** and nothing had noticed.
+  It compared categories through `ElementId.IntegerValue`, which is **gone** on 2027 (it survived the
+  2024 64-bit widening, so the 2020 and 2024 passes were both clean and hid it). Now compares `ElementId`
+  to `ElementId`; re-verified passing on 2020 and 2027. Found only because the two new fragments above
+  were compile-checked against **every** installed Revit rather than the oldest — which is now the
+  standing rule for anything harvested: **check the newest, not just the oldest.**
+- 2026-08-22 — **harvested the AJ Tools View panel** (6 tools): 3 KEEP OURS, 3 UPGRADE, 0 build — a
+  well-covered area where half of it genuinely had nothing to teach us. **`action-set-view-crop.cs`
+  had a real, silent defect and it is now fixed**: it merged world-aligned bounding boxes and assigned
+  a Transform-less `BoundingBoxXYZ`, but `CropBox` Min/Max are read in the box's OWN transform — so on
+  any rotated plan, section or elevation the crop landed elsewhere while the fragment reported success.
+  It only looked right on a plain north-up plan, which is what its 2026-07-22 live test used, so the
+  test passed and the defect survived; its header had even recorded the gap as a known simplification.
+  Now projects all eight corners through `CropBox.Transform.Inverse` and writes back keeping the view's
+  own transform and Z. It also gained the four refusal checks — **three of which do not throw**: no
+  crop box, a **scope box** owning the crop, a **view template** controlling it.
+  **`action-highlight-vs-rest.cs`** now pulls insulation and lining along with their host in both
+  directions (`HostElementId` one way, `InsulationLiningBase.GetInsulationIds`/`GetLiningIds` the
+  other) — without it an insulated duct highlights half-grey. Those getters throw for an id that cannot
+  host a wrap, so the per-element catch IS the category filter.
+  **[`graphic-override-precedence.md`](live-model/graphic-override-precedence.md)** gained two sections
+  the Brain had **no mention of anywhere**: filter-versus-filter order inside one view (there is no
+  reorder API — capture overrides and visibility, remove all, re-add, restore, and skipping the capture
+  silently resets every filter), `View.GetFilters()` returning **new `ElementId` wrappers that are not
+  reference-equal**, and a view template blocking every filter change without throwing.
+  Kept unchanged, with the reason recorded: Unhide All, Toggle Links, Colorize.
+  Ledger: [`../docs/addin-harvest.md`](../docs/addin-harvest.md).
+- 2026-08-22 — **harvested the AJ Tools Graphics panel** (3 tools): one BUILD, one UPGRADE, one KEEP.
+  New [`action-match-graphics.cs`](../scripts/actions/color-graphics/action-match-graphics.cs) — copy
+  the graphic overrides off one source element onto a filtered set, per-element or category-to-category.
+  The Brain could set a colour you name and clear a colour, but had no way to **copy the look off
+  something already right**. `action-reset-category-graphics.cs` gained **`allCategories`**: it could
+  only clear categories named by hand, which cannot serve the request it exists for — "I ran grayout
+  over this view, put it back", where `recipes/mep-grayout.cs` alone has written 87 categories and 589
+  sub-categories. Four API facts went into
+  [`graphic-override-precedence.md`](live-model/graphic-override-precedence.md), none of which appeared
+  anywhere in this Brain: **"no override" is a sentinel** (`Color.InvalidColorValue`,
+  `OverrideGraphicSettings.InvalidPenNumber`, `ElementId.InvalidElementId`) and writing `0` as a line
+  weight clears nothing (valid weights are 1-16); **a pattern id and its visible flag are two separate
+  writes**, so setting the id alone leaves the pattern present but undrawn; **`new
+  OverrideGraphicSettings(existing)` is a copy constructor**, and re-setting properties one at a time
+  turns every property you forget into "no override"; and **`view.IsCategoryOverridable(id)`** is the
+  real test, not `CategoryType`. Apply Graphics kept as-is — our small composable fragments beat one
+  dialog. `GraphicsOverrideMemoryService` skipped: it remembers last-used dialog values, the opposite of
+  this Brain's every-number-is-a-per-request-input rule.

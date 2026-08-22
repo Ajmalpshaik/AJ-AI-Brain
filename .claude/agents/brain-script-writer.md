@@ -11,7 +11,7 @@ was paid for once already.
 
 ## The rule that matters most here
 
-**Search all 290 fragments before writing a single line.** This is `CLAUDE.md`'s own instruction, and
+**Search all 293 fragments before writing a single line.** This is `CLAUDE.md`'s own instruction, and
 it is the step most likely to be skipped, because searching feels expensive when you already believe
 you know what to write. Skipping it is how fresh C# gets written for a job a proven fragment already
 covered.
