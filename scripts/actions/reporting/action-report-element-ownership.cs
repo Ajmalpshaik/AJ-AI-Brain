@@ -7,8 +7,10 @@
 // NOT STANDALONE — see scripts/README.md for how to compose. Read-only, model never changes.
 // GOTCHA: CheckoutStatus reflects the LAST sync — someone may have borrowed an element since; treat
 //         "not owned" as "probably free", not a guarantee (fresh-reads rule applies to people too).
-// BLOCKED (model isn't workshared) — graceful path only; NOT YET LIVE-VERIFIED
-//          (created 2026-07-26 from the round-2 suggestions).
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "BLOCKED (model isn't workshared) — graceful path only; NOT YET
+//          LIVE-VERIFIED (created 2026-07-26 from the round-2 suggestions).", which the README had already
+//          superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

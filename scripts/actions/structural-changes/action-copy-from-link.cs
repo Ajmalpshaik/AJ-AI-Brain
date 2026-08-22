@@ -2,7 +2,7 @@
 // FRAGMENT (action) — action-copy-from-link.cs
 // PURPOSE: Copy elements FROM a linked RVT model INTO this host model, placed at their true linked
 //          position (the link's full transform applied) — "bring those walls/fixtures from the arch link
-//          into our model". (Dynamo-package equivalent: archi-lab/Orchid cross-document copy nodes.)
+//          into our model".
 // ASSUMES: sb (StringBuilder) exists. Does NOT consume `elements` — the source Ids live in the LINKED
 //          document, found via filter-by-linked-model-elements.cs (its report includes them).
 // PRODUCES: elements (List<Element>, the new HOST-model copies) for chaining.
@@ -12,7 +12,7 @@
 // GOTCHA: copies are plain host elements afterwards — no live connection to the link (they will NOT
 //         update when the link updates). Say this to the user every time; it changes what they're asking for.
 // BLOCKED (0 links in this model) — graceful path only; NOT YET LIVE-VERIFIED
-//          (created 2026-07-26, round 3, Dynamo package harvest).
+//          (created 2026-07-26, round 3).
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

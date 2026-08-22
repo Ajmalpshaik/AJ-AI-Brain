@@ -1,20 +1,41 @@
 # Will these fragments run on Revit 2024 and above?
 
-Every fragment in `scripts/` was proven against **Revit 2020**. This note records what actually breaks
-on a newer Revit, measured by scanning all 282 fragments on 2026-08-20 — not estimated.
+Every fragment in `scripts/` was written against **Revit 2020**. This note records what actually breaks
+on a newer Revit — measured, never estimated.
 
-**Short answer: 200 of the 282 fragments (71%) touch at least one API that changed after 2020.**
-Nothing here is unfixable, and the fixes are mechanical. What matters is knowing *which* failures shout
-and which stay quiet.
+**Short answer, re-measured 2026-08-22 against all 290 fragments: the migration worked.**
+`tools\check-scripts.cmd` compiled the library clean on **Revit 2020, 2024 and 2027** on 2026-08-20, and
+a fresh scan today finds **one** unmigrated call site left, in one file, described under "Keeping it
+fixed" below. Everything else that still matches a legacy keyword is either the deliberate runtime
+helper, a comment explaining it, or a different class with the same property name.
+
+> **How to read the numbers below.** The counts in the sections that follow — *200 of 282*, *93 units*,
+> *168 ElementId* — are the **pre-migration scan of 2026-08-20**, kept as the record of what was found.
+> They are not a to-do list and not the current state. Whenever a number here and a fresh
+> `tools\check-scripts.cmd` run disagree, **the tool wins**: it compiles against the Revit actually
+> installed, which is the only thing that answers this question.
 
 > **THE ONE COMMAND, if you read nothing else here:** `tools\check-scripts.cmd`. It compile-checks the whole
 > library against every Revit installed on the PC, **without opening Revit**, in about a minute, and says in
 > plain words which versions are safe. Run it after installing a new Revit — that is the whole worry,
 > answered before you start rather than in the middle of a job.
 >
-> **DONE, 2026-08-20.** The migration below was applied to the whole library in one pass. What is left
-> is listed under "The three deliberate exceptions". The counts in the older sections are kept as the
-> record of what was found, not as a to-do list.
+> **DONE, 2026-08-20 — and compiled, not just written.** The migration below was applied to the whole
+> library in one pass, then compile-checked: **287/287 fragments passed on Revit 2020, 2024 and 2027.**
+> One source, three versions, no forks and no `#if`. What is left is under "The two deliberate
+> exceptions" and "Keeping it fixed".
+
+> **split-review: kept whole** (reviewed 2026-08-22, at 359 lines). Past the ~300-line rule and staying
+> that way. This file answers exactly one question — *will my scripts still run after I install a newer
+> Revit* — and the answer is a single argument that has to be read in order: what breaks, which failures
+> shout and which stay silent, what the measured exposure was, what was actually changed, and how to
+> write the next fragment so it does not undo the fix. The obvious seam is diagnosis (what breaks) versus
+> record-and-how-to (what we did about it), and taking it would be the wrong move for a reason this file
+> now documents in its own text: **a fragment written the day after the migration re-introduced the exact
+> pattern the migration removed.** That happened because "what was changed" and "how to write new code"
+> read as separate concerns. Putting them in separate files would make that permanent. Re-check this
+> decision if the file passes ~450 lines, or if the pre-migration scan sections are ever cut down to a
+> summary — that would remove roughly a third of it and change the calculation.
 
 ## Gate zero: the .NET question is NOT a fragment question
 
@@ -252,8 +273,8 @@ is exactly what `MakeId` exists to avoid.
 
 ## What was actually changed (2026-08-20)
 
-One pass over all 282 fragments. Applied by a balanced-paren parser rather than regex, because the value
-arguments contain nested calls.
+One pass over the whole library as it stood on 2026-08-20 — 282 fragments then, 290 now. Applied by a
+balanced-paren parser rather than regex, because the value arguments contain nested calls.
 
 | | Sites | Change |
 |---|---|---|
@@ -273,17 +294,49 @@ member, a `GroupBy` key and an `OrderBy` key. That is version-proof **with no re
 matters because several of these sit inside loops over every element in the model. The reflection helper
 is reserved for the 8 places that need an actual number, and it caches the property lookup once.
 
-### The three deliberate exceptions
+### The two deliberate exceptions
 
-1. **2 electrical conversions** in `create-equipment-family-from-datasheet.cs` still name
-   `DisplayUnitType`. Revit does not store voltage as volts — the internal unit is feet-based — and the
-   Autodesk doc hosts are blocked from the session that did this work, so the factor could not be
-   confirmed. Guessing would silently corrupt a voltage instead of failing loudly. **Verify the factor,
-   then convert.**
-2. **1 `IntegerValue` in `action-set-workset.cs`** is on a `WorksetId`, not an `ElementId`. Different
+1. **1 `IntegerValue` in `action-set-workset.cs`** is on a `WorksetId`, not an `ElementId`. Different
    class, untouched by the 2024 change. It is annotated in place so nobody "fixes" it.
-3. **`prelude.cs` `ResolveView` now takes an `ElementId`, not an `int?`.** Any future fragment calling it
+2. **`prelude.cs` `ResolveView` now takes an `ElementId`, not an `int?`.** Any future fragment calling it
    must pass `someView.Id` or `null`.
+
+> **There used to be a third, and it was solved the same day.** The 2 electrical conversions in
+> `create-equipment-family-from-datasheet.cs` were listed here as blocked, because Revit does not store
+> voltage as volts and the conversion factor could not be confirmed without the Autodesk docs — so
+> converting by hand risked silently corrupting a voltage. The fix sidestepped the factor entirely:
+> **ask the API which unit type its own method takes**, and hand it that. `UnitUtils.ConvertToInternalUnits`
+> is located by reflection, preferring the `ForgeTypeId` overload and falling back to the
+> `DisplayUnitType` one, so the same source is correct on every version and nothing had to be guessed.
+> That is the general move whenever a factor is unknown: don't estimate it, ask the API. Corrected here
+> 2026-08-22 — the list had gone on saying "verify the factor, then convert" after it was already done.
+
+### Keeping it fixed — the migration does not defend itself
+
+A one-pass sweep fixes the library as it stood; it does nothing about the next fragment somebody writes.
+**That has already happened once.** `filter-by-wrong-category.cs` was added on **2026-08-21, the day
+after the migration**, and compared categories with `f.Category.Id.IntegerValue != (int)expectedCategory`
+— the exact pattern the whole library had just been moved off. It was found by a fresh scan on
+2026-08-22 and rewritten to compare `ElementId` to `ElementId` (`new ElementId(expectedCategory)` and the
+`==` / `!=` operators), which is correct on 2020 through 2027 and needs no reflection — worth having
+here, because that comparison runs once per `FamilyInstance` in the model.
+
+Two things follow, and they are cheap:
+
+1. **Writing new C#? Never take a number out of an `ElementId`.** Compare, key, group and sort with the
+   `ElementId` itself — `GetHashCode()` returns the id value, so it works directly as a `Dictionary` key,
+   a `HashSet` member and a `GroupBy` / `OrderBy` key. Reach for the reflection helper only when an
+   actual integer has to be printed or stored, which is rare.
+2. **Re-run the scan after adding fragments, not only after a Revit upgrade.** It takes seconds:
+
+   ```
+   grep -rn "\.IntegerValue" scripts --include=*.cs | grep -v GetProperty
+   grep -rn "DisplayUnitType\|UnitUtils.Convert" scripts --include=*.cs
+   ```
+
+   Anything the two exceptions above do not explain is a regression. `tools\check-scripts.cmd` catches
+   the same thing properly by compiling, but only on a PC with Revit installed — these two lines work
+   anywhere, including from a container.
 
 ### Checked before and after, since no C# compiler was available
 
@@ -298,8 +351,20 @@ is reserved for the 8 places that need an actual number, and it caches the prope
 - `git diff --stat` stayed proportional to the edit, so none of the UTF-8 double-encoding this repo has
   suffered before.
 
-### Still not proven
+### What is proven, and what still is not
 
-**None of this has been compiled or run.** It is a source-level migration done without Revit. Run the
-pilot and a couple of the heavier recipes on a real model before trusting the library again — the
-fragment status counts in `tools/brain-status.mjs` describe the PRE-migration state.
+**Compiled: yes, on three versions.** The claim that once stood here — *"none of this has been compiled
+or run"* — was written mid-migration and was already out of date by the end of the same day.
+`tools\check-scripts.cmd` took the migrated library to **287/287 on Revit 2020, 2024 and 2027**.
+Corrected 2026-08-22.
+
+**Run against a real model: no, not since the migration.** Compiling proves the API calls exist on that
+version; it cannot prove the arithmetic that replaced `UnitUtils` gives the same answer, or that an
+`ElementId`-keyed dictionary groups the same way the `int`-keyed one did. So the standing rule still
+applies unchanged: **run one element, check the real result, then trust it for the batch.** Start with a
+unit-heavy fragment and one of the heavier recipes — those are where a silent arithmetic slip would show.
+
+The fragment status counts in `tools/brain-status.mjs` describe the **pre-migration** verification state:
+a fragment marked verified was verified before its source was rewritten. That does not make the counts
+wrong — the method was proven — but it does mean the first live run on each rewritten fragment is worth
+watching rather than assuming.

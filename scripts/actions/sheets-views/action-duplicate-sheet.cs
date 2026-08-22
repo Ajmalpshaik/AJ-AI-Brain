@@ -3,7 +3,6 @@
 // PURPOSE: Duplicate each ViewSheet in `elements` — new sheet with the same title block, plus (on
 //          request) duplicates of every placed view dropped at the SAME viewport positions, and
 //          schedules re-placed at their same spots. The job Revit's UI still doesn't do in one click.
-//          (Dynamo-package equivalent: Rhythm's Sheet.Duplicate nodes.)
 // ASSUMES: elements (List<Element>, ViewSheets — from filters/by-view-and-sheet/filter-by-sheets.cs) and sb exist from a
 //          filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Produces `newSheetIds` for chaining.
@@ -18,7 +17,9 @@
 //         but the bridge's guard matches on the text `Document.Delete` regardless of the target.
 // GOTCHA: what carries over: title block, duplicated views at same positions, schedules. What does NOT:
 //         loose annotations drawn directly on the sheet, guide grids, revisions on the sheet.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest).
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26, round 3.", which the README had already superseded. The verification was recorded there and
+//          never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

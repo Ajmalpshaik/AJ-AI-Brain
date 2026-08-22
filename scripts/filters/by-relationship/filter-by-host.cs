@@ -10,8 +10,11 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified — confirm InsulationLiningBase resolves in this Revit version before
-//         trusting bulk results.
+// STATUS: PARTLY VERIFIED — the HOSTED-FAMILY path ran live 2026-08-06: a door was loaded and hosted
+//         in a wall, 1 hosted element found on wall 918932 and a proven 0 on a different wall (same
+//         code, so the zero means something). The INSULATION / LINING path is still unproven —
+//         confirm InsulationLiningBase resolves in this Revit version before trusting bulk results
+//         that lean on it. (Corrected 2026-08-22: this line read as if nothing here had ever run.)
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

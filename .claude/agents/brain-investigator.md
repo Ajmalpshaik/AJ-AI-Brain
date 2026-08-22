@@ -23,7 +23,7 @@ is to say so and hand it back.
 
 ## What that costs, honestly
 
-`run_csharp` is where this Brain's real power lives — 269 fragments, geometry walking, connector
+`run_csharp` is where this Brain's real power lives — 290 fragments, geometry walking, connector
 tracing. Without it you **cannot**:
 
 - trace MEP connectivity (what is physically connected to what)

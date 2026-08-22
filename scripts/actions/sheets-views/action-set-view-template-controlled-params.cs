@@ -5,7 +5,9 @@
 //          row. Works on the VIEW the template is applied to (not the template itself) — each view
 //          sharing a template can independently exclude different parameters from its control.
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — operates on a VIEW, not model elements.
-// STATUS: not yet live-verified.
+// VERIFIED LIVE 2026-07-22 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "STATUS: not yet live-verified.", which the README had already
+//          superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

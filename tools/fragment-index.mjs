@@ -24,109 +24,17 @@
 //   node tools/fragment-index.mjs --show recipes/place-fcu.cs   one fragment, with its input fields
 //   node tools/fragment-index.mjs --json                machine-readable, for another tool to consume
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { loadFragments, STATUS_LABEL } from "./fragment-lib.mjs";
 
-const brainRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const scriptsDir = path.join(brainRoot, "scripts");
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
 const valueOf = (n) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : null; };
 
-function walk(dir, results = []) {
-  if (!fs.existsSync(dir)) return results;
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, e.name);
-    if (e.isDirectory()) walk(full, results);
-    else if (e.name.endsWith(".cs")) results.push(full);
-  }
-  return results;
-}
+// Parsing, verification status and the fragment build all live in ./fragment-lib.mjs, shared with
+// mcp-server/tools/run-fragment.js so the form this prints and the form that tool FILLS IN can never
+// drift apart. Everything below is presentation only.
+const fragments = loadFragments();
 
-// --- header fields ---------------------------------------------------------------------------------
-// A field runs from "// FIELD:" until the next "// FIELD:" or a ==== divider. The continuation lines are
-// indented under it, which is why this cannot just take the single matching line.
-function headerField(lines, name) {
-  const start = lines.findIndex((l) => new RegExp(`^//\\s*${name}:`).test(l));
-  if (start === -1) return null;
-  const out = [lines[start].replace(new RegExp(`^//\\s*${name}:\\s*`), "")];
-  for (let i = start + 1; i < lines.length; i++) {
-    const l = lines[i];
-    if (!l.startsWith("//")) break;
-    if (/^\/\/\s*={5,}/.test(l)) break;
-    // Next field. The separator is not always a colon: "NOT STANDALONE — see scripts/README.md" uses an
-    // em dash, and matching only ":" let it bleed into the end of PRODUCES on every filter fragment.
-    // Continuation lines never match this, because they start with ordinary mixed-case prose.
-    if (/^\/\/\s*[A-Z][A-Z0-9 _]{2,}\s*(?::|—|-)/.test(l)) break;
-    out.push(l.replace(/^\/\/\s*/, ""));
-  }
-  return out.join(" ").replace(/\s+/g, " ").trim();
-}
-
-// --- INPUTS block ----------------------------------------------------------------------------------
-// These are the "form fields": what a caller must supply to use the fragment. Parsing them is the whole
-// point - it turns "read this file and work out what it needs" into a list.
-function parseInputs(src) {
-  const m = src.match(/----\s*INPUTS[\s\S]*?----\s*\n([\s\S]*?)\/\/\s*----\s*END INPUTS/);
-  if (!m) return [];
-  const out = [];
-  for (const raw of m[1].split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("//")) continue;
-    const d = line.match(/^([A-Za-z_][\w<>,?\[\]. ]*?)\s+([A-Za-z_]\w*)\s*=\s*(.+?);\s*(?:\/\/\s*(.*))?$/);
-    if (d) out.push({ type: d[1].trim(), name: d[2], default: d[3].trim(), note: (d[4] || "").trim() });
-  }
-  return out;
-}
-
-// --- verification status ---------------------------------------------------------------------------
-// Read off scripts/README.md's own per-fragment markers - the convention the library already maintains
-// by hand. A row with no marker either way is the honest "never run, never flagged" case.
-const readme = fs.existsSync(path.join(scriptsDir, "README.md"))
-  ? fs.readFileSync(path.join(scriptsDir, "README.md"), "utf8")
-  : "";
-const readmeRows = readme.split(/\r?\n/).filter((l) => l.startsWith("| [`"));
-
-function statusOf(rel) {
-  // Match the row whose markdown LINK TARGET is this fragment - `](path)` - not merely any row that
-  // mentions the path. 8 fragments are named inside a DIFFERENT fragment's row as prose ("feeds
-  // creators/create-dimension.cs", "paired with action-import-parameters-from-csv.cs"), and a plain
-  // .includes() picked up whichever row came first, so those 8 inherited a neighbour's verification
-  // status. That is the exact failure this whole tool exists to prevent: confidently reported, wrong.
-  const row = readmeRows.find((l) => l.includes(`](${rel})`));
-  if (!row) return "not-in-readme";
-  if (/NOT yet live-verified/.test(row)) return "untested";
-  if (/verified 2026/.test(row)) return "verified";
-  if (/CONFIRMED IMPOSSIBLE/.test(row)) return "impossible";
-  if (/BLOCKED/.test(row)) return "blocked";
-  return "no-status";
-}
-
-// --- build -----------------------------------------------------------------------------------------
-const fragments = walk(scriptsDir).map((full) => {
-  const rel = path.relative(scriptsDir, full).split(path.sep).join("/");
-  const src = fs.readFileSync(full, "utf8");
-  const lines = src.split(/\r?\n/);
-  const parts = rel.split("/");
-  return {
-    path: rel,
-    kind: parts[0],
-    group: parts.length > 2 ? parts[1] : null,
-    name: path.basename(rel),
-    purpose: headerField(lines, "PURPOSE") || "",
-    assumes: headerField(lines, "ASSUMES") || "",
-    produces: headerField(lines, "PRODUCES") || "",
-    gotchas: lines.filter((l) => /^\/\/\s*GOTCHA/.test(l)).length,
-    inputs: parseInputs(src),
-    status: statusOf(rel),
-  };
-}).sort((a, b) => a.path.localeCompare(b.path));
-
-const STATUS_LABEL = {
-  verified: "PROVEN", untested: "not run", blocked: "blocked",
-  impossible: "impossible", "no-status": "unproven", "not-in-readme": "?",
-};
 
 // --- output ----------------------------------------------------------------------------------------
 // NOTE: this section deliberately uses `return` and `process.exitCode`, never `process.exit()`. On a

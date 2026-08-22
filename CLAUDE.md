@@ -33,7 +33,7 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 353 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 352 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
@@ -92,11 +92,27 @@ He named two problems. Both have an answer that already exists:
   → [`tools/verify-consistency-hook.mjs`](tools/verify-consistency-hook.mjs)) that runs the full
   consistency check — skill frontmatter, markdown link targets, scripts README sync, skill coverage in
   the entry docs, AGENT-SPEC's fragment counts, text encoding, the `// SOURCE:` cross-references
-  inside script fragments, the "searches all N files" semantic-index coverage claims, and the fragment-count
-  claims in the entry docs themselves. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  inside script fragments, the "searches all N files" semantic-index coverage claims, and **every live
+  fragment/skill/native-tool count stated anywhere in markdown** (check 9, added 2026-08-22 after an
+  audit found nine wrong ones — including one on line 79 of this file), **each fragment's own header
+  status against its `scripts/README.md` row** (check 10 — nineteen headers still said "NOT YET
+  LIVE-VERIFIED" for fragments proven on 2026-08-06/07, because the campaign updated the README and never
+  the file), **outside-source names in `scripts/`, `skills/` and `knowledge/`** (check 11 — the 2026-08-20 strip
+  never reached the fragments), and **any `N/M at #1` retrieval score against the last run in
+  `semantic-index/score-history.md`** (check 12 — `README.md` was quoting a top-1 figure from the
+  retired 14-row era next to a top-5 figure that matched no run that ever happened, i.e. a remembered
+  composite; the check fired on this very sentence when it first carried the literal numbers, which is
+  the check working, so quote the file instead of the digits). and **unresolved merge-conflict markers in any tracked file** (check 13, added the
+  same day after a conflicted `CLAUDE.md` passed all twelve checks above — every other check reads
+  content for a specific claim, none asks whether the file is coherent at all). **Thirteen checks in the
+  Node version.** If it reports
+  drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
-  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same nine checks.
+  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — but know that it
+  **trails the Node checker and is not its equal**: the Node version is what the hook runs and is the
+  authority, and check 9 has not been ported to PowerShell. Porting it from a Linux container is exactly
+  the `.ps1` encoding trap described below, so it waits for a session on Windows that can run the result.
 - **Never name an outside source in anything written here — no other people's repos, tools, products,
   websites or personal names.** Ajmal's instruction, 2026-08-20: *"do not mention any thing that we took
   from this web site or repo... the words also remove... remove his name and do not use like that."*

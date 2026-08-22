@@ -151,7 +151,7 @@ Two different things get called "line weight settings", and only one is scriptab
 
 | | Where | Scope | API |
 |---|---|---|---|
-| **The pen table** | Manage → Additional Settings → **Line Weights** (tabs: Model / Perspective / Annotation, pens 1–16, one column per view scale) | **Whole project, every view and sheet** | **Not exposed.** A long-standing known gap (Autodesk ref CF-3772) with an open request to surface it to the API and Dynamo. Do not go looking for a class — there isn't one. Ask the user to screenshot the dialog instead; that worked well for V/G. |
+| **The pen table** | Manage → Additional Settings → **Line Weights** (tabs: Model / Perspective / Annotation, pens 1–16, one column per view scale) | **Whole project, every view and sheet** | **Not exposed.** A long-standing known gap (Autodesk ref CF-3772) with an open request to surface it to the API. Do not go looking for a class — there isn't one. Ask the user to screenshot the dialog instead; that worked well for V/G. |
 | **Which pen a category uses** | Object Styles, and the Weight column in V/G | project-wide (Object Styles) / per view (V/G) | Readable and writable: `Category.GetLineWeight(GraphicsStyleType.Projection\|Cut)`, and `OverrideGraphicSettings.SetProjectionLineWeight()` / `SetCutLineWeight()`. `-1` on a V/G override means "By View" — no override set. |
 
 **ISO 128-2:2020 defines nine line weights** — 0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1.0, 1.4, 2.0 mm. A first

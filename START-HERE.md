@@ -65,7 +65,7 @@ the "small routed files" rule — one document meant to be read start-to-finish.
 | Writing new AJ AI Bridge C# from scratch | [`scripts/README.md`](scripts/README.md) — compose from existing fragments first |
 | Hearing out loud what the AI is doing — silencing it, changing the voice, or fixing it when it goes quiet | [`tools/voice/README.md`](tools/voice/README.md) — `tools\voice\voice.cmd off` stops it instantly |
 | **Installed a newer Revit and want to know if the scripts still work** — before starting a job, not after hitting an error | `tools\check-scripts.cmd` — checks EVERY Revit on the PC against all 290 fragments in about a minute, **without opening Revit**. Green means safe; a FAIL list means send it to Claude and it gets fixed |
-| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 353 files by meaning *and* exact words. **Read the top 3–5, not just #1** (last run, 2026-08-21, on a 28-row set: 5/28 at #1, 7/28 in top 3, 20/28 found at all — quote [`semantic-index/score-history.md`](semantic-index/score-history.md), never a remembered figure); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
+| **You don't know which row above applies**, or don't know the word to grep for | `semantic-index\ask-brain-hybrid.cmd "the request, in plain English"` — searches all 352 files by meaning *and* exact words. **Read the top 3–5, not just #1** (last run, 2026-08-21, on a 28-row set: 5/28 at #1, 7/28 in top 3, 20/28 found at all — quote [`semantic-index/score-history.md`](semantic-index/score-history.md), never a remembered figure); weakest on site vocabulary, so try the Revit word too — see [`semantic-index/README.md`](semantic-index/README.md) |
 
 ## This Brain improves itself — a light version of this runs every session, no setup needed
 
@@ -112,7 +112,7 @@ right; the scale is the problem. The API is **~1,700 classes and 30,000+ documen
 this Brain's **3,786 chunks**, so indexing it would leave the Brain as roughly **11% of its own index**
 and every question would land on a reference page. It is the 604-chunk standards mistake, eight times
 over. Two things replace it, and they are better: [`knowledge/revit-api-surface.md`](knowledge/revit-api-surface.md)
-lists the **229 types this library actually uses** and names a working fragment for each — because a
+lists the **245 types this library actually uses** and names a working fragment for each — because a
 signature does not tell you that `UnionWith()` silently drops quick filters, and a proven fragment does.
 If the full API is ever genuinely needed it goes in a **separate index the Brain's own search never
 touches**, never in the same collection.

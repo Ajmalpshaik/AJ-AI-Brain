@@ -35,8 +35,16 @@ A page is for sending to someone else. If nobody else is going to see it, it is 
 | A breakdown — per size, width, category, level, system, room | Schedule table **+ inline chart** |
 | A whole-model reading — health, warnings, takeoff, audit | Key numbers + table **+ inline chart** (page only on request) |
 | A list of specific items he will act on next | Table with Element IDs, no chart — the IDs are the point |
+| **How something WORKS** — a pipeline, a workflow, what happens when he sends a message, why one way is better than another | **Box-and-arrow diagram** in the reply, plus a bar chart for any before/after numbers |
 
 Rule of thumb: **two or more numbers that invite comparison → draw it.** One number → don't.
+
+**And it is not only about model numbers.** Added 2026-08-22, from his own word **"widget"** (see
+[`../../knowledge/glossary.md`](../../knowledge/glossary.md)): he asked twice in one message for a
+picture while asking *how the Brain works* — an explanation with no Revit reading in it at all. So the
+trigger is wider than the table above implies: **when he asks how anything works, draw the flow.** A
+process gets boxes and arrows; a before/after gets bars. Text-only is the wrong answer to "explain this
+to me" just as it is to "how many ducts per size".
 
 ## Sorting
 

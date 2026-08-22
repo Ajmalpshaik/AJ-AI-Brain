@@ -335,3 +335,17 @@ is exactly the one a fresh session cannot route.
   Worth keeping as a pattern, not just a fact: **he remembered the number correctly and the source
   incorrectly.** That is the normal shape of site knowledge, and it is why "which standard is this project
   on" belongs in the opening questions of every sprinkler job rather than being assumed.
+
+- 2026-08-22 — **"widget" (his word) = a picture drawn IN THE CHAT REPLY.** Confirmed by him the same
+  day, when asked directly. It is a synonym of his 2026-08-14 **"visualization"**, and it means the
+  same three things: a diagram, a chart, or both, *in the reply itself* — never a published page, and
+  never something to click. Said twice in one message while asking for an explanation of how the Brain
+  works: *"tell me about the aj ai very simply what is hapening with shwo widget also"* and *"if i set
+  message what is hapening... and with widget also"*.
+
+  **The point is that it applies to explanations, not only to model numbers.** The 2026-08-14 rule was
+  written around Revit figures ("two or more numbers that invite comparison"), and both uses here were
+  about *how something works* — a pipeline, a before/after — with no model reading involved. So when he
+  asks how anything works, draw it: a box-and-arrow flow for a process, a bar chart for a comparison.
+  His **"artifact"** stays the separate, opposite thing — a published page with a link, only when he
+  asks for one by name.

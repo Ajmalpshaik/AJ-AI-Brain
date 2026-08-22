@@ -113,9 +113,20 @@ for generic Revit questions with no live model involved.
   before appending the action — cheaper to catch a wrong filter before it acts than after.
 
 ### 2.4 Decision hierarchy (what to reach for, in order)
+**Ajmal stated this order back himself, 2026-08-22, and it is exactly right:** *"if i ask anything it
+will check the shortlist or native tool. If there is no it will go to fragment and after that if no
+tool there it will generate new."* Steps 0-1 are things already in hand; step 2 costs a search; step 4
+costs writing code that has never run.
+
+0. **The usage shortlist** — every message carries Ajmal's most-used fragments, ranked from his own
+   last 30 days of real work (`tools/shortlist.mjs`, injected by `tools/auto-search-hook.mjs`). If the
+   job is there, it needs no search at all. This exists because the search puts the right answer at #1
+   on only 5 of 28 real questions, and the jobs done daily should not be exposed to that.
 1. **Native fast-path tool** (`model_summary`) — plain counts/one-parameter breakdowns.
 2. **Filter + action composition** (`scripts/filters/` + `scripts/actions/`) — the default for "which
-   elements" + "what to do to them" requests; covers the large majority of daily work.
+   elements" + "what to do to them" requests; covers the large majority of daily work. **Run it with
+   `run_fragment`, not by pasting into `run_csharp`**: name the fragments, pass the inputs, and the
+   proven file is sent as-is rather than as a retyped copy — see §3.4a.
 3. **A recipe** (`scripts/recipes/`) — genuinely bespoke, order-dependent, multi-stage builds that create
    new elements with real geometric/transactional dependencies between steps (duct routing, MEP tracing,
    family authoring). Never force this shape into filter+action.
@@ -190,7 +201,7 @@ same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the
 needed **no changes** — it already accepts any C# generically; the whole upgrade lives on the Node side.
 As of the same day, `mcp-server/` is split one-file-per-tool (mirrors the `scripts/` fragment pattern) —
 `mcp-server/index.js` is now just the entry point; see [`mcp-server/tools/README.md`](mcp-server/tools/README.md)
-for the routing index into all 17 tool files.
+for the routing index into all 26 tool files.
 
 | Tool | Covers |
 |---|---|
@@ -217,8 +228,45 @@ hide/unhide/isolate/set_color/reset_graphic_overrides/set_transparency) also tak
 names/schemas and that every handler's C#-generation runs to completion and fails gracefully with no
 bridge connected. **It walks a hardcoded list, so a new tool is not covered by it merely by existing** —
 `search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
-for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
+for that reason (26 native tools in total now, after the five fragment-backed ones). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
+
+### 3.4b Fragment-backed native tools (5, added 2026-08-22)
+`grayout` · `session_start` · `verify_connectivity` · `report_length_by_size` · `color_by_group`.
+
+Unlike §3.4's tools, these generate no C# of their own — each names one proven fragment and lets the
+shared engine compose it, so the fragment stays the single copy. `grayout` is the clearest case for why
+they exist: the recipe behind it declares 33 inputs of which 32 **are** Ajmal's settled standard, so the
+old flow was to read 33 declarations, change none, and paste. Full table and the reason these five were
+picked: [`mcp-server/tools/README.md`](mcp-server/tools/README.md).
+
+### 3.4a `run_fragment` — running the library instead of retyping it (added 2026-08-22)
+The 290 fragments in `scripts/` were proven one at a time against a real model. Until this tool, none of
+that proof reached the moment of running: every job read the `.cs` file, hand-edited its `INPUTS` block
+and pasted the result into `run_csharp`, so what Revit received was a fresh copy that had never been
+verified. `run_fragment` sends the file **byte-identical apart from its declarations**.
+
+```
+run_fragment(describe, fragments[], inputs{}, prelude?, preview?, requireAllInputs?, allowDestructive?)
+```
+
+It applies §5 of `scripts/README.md`'s composition rules automatically — optional prelude, filter or
+creator, then actions, then exactly one `return sb.ToString();` — and puts `describe` on line 1 as the
+`//` comment the voice reads out before the model changes.
+
+**What it refuses, locally, in milliseconds** — each of these used to be found by Revit, mid-job:
+- a fragment name that does not exist, or is ambiguous → the error lists the real candidates
+- an input name that is not declared → the error lists the real field names, instead of the value being
+  silently dropped and the job running on the file's value
+- a value of the wrong type for its declared C# type
+- a composition C# would reject — two filters that both declare `sb`, or two fragments declaring the
+  same input name
+
+**What it does not do:** compile-check. Only Revit and `tools/check-scripts.cmd` do that. This checks
+the *form*, which is the half that is checkable without Revit — a floor, not a ceiling. `preview: true`
+returns the composed script without sending it. Every unset input is reported as *left at the file's
+value*, never as a default (§2.1, rule 3), and an unproven fragment says so in the result rather than
+passing quietly as if it were verified.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
@@ -615,6 +663,8 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
   thing was a Node-side addition, now split one-file-per-tool under `mcp-server/tools/`. 14 tools built;
   the remaining ~5-10 candidates from the original "top 15-20" estimate can follow the same pattern
   (copy an existing `tools/*.js` file's shape) on request.
+- ~~A way to run the fragment library by name instead of pasting a hand-edited copy~~ — **DONE,
+  2026-08-22.** `run_fragment`, see §3.4a. Like the native tools before it, it needed no add-in change.
 - **Combined Model Health Report** — one action aggregating warnings + unused elements + family bloat +
   worksharing status, beyond what any single existing action currently reports alone.
 - **Lean/decision-tree variant of this spec** for smaller or local models, if this Brain is ever handed to
@@ -624,8 +674,10 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
   Unused left this list 2026-07-22: `action-purge-unused.cs` now covers the provably-correct subset —
   unused View Templates/Filters/Materials, dry-run by default.)
 - **Native tools for the remaining common actions not yet ported**: creation tools (`create_room`,
-  `create_levels`, `create_schedule`), `color_by_group`, `report_location`/`report_bounding_box`,
-  `copy_elements`, `rotate_elements`, `rename_element`. Same pattern as §3.4, straightforward to add.
+  `create_levels`, `create_schedule`), `report_location`/`report_bounding_box`, `copy_elements`,
+  `rotate_elements`, `rename_element`. (`color_by_group` left this list 2026-08-22 — see §3.4b.)
+  **Pick the next ones from `node tools/job-report.mjs`, not from this list** — it was written from
+  memory before anything recorded what actually gets used.
 
 ### Plugin architecture note
 This Brain's own extension mechanism is `skills/brain-self-maintain/SKILL.md` — new

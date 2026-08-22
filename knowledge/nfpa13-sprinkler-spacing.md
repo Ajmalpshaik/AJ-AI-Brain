@@ -124,6 +124,14 @@ questions, and the 3 m "coverage radius" used to draw those circles is not an NF
 
 ## Sources consulted (July 2026 — secondary summaries, not the standard itself)
 
+> **These links stay — Ajmal's decision, 2026-08-22: "keep the nfpa links".** They are the one deliberate
+> exception to the no-outside-sources rule, and the reason is safety, not sentiment: these are fire-code
+> values, the heading above warns they are *secondary summaries rather than the standard itself*, and
+> stripping the sources would leave unverified life-safety numbers looking authoritative. A future
+> session tidying outside references must skip this section. `tools/verify-consistency.mjs` check 11
+> excludes it for the same reason.
+
+
 - [QRFS — maximum and minimum sprinkler distance rules, standard spray](https://blog.qrfs.com/214-maximum-and-minimum-sprinkler-distance-rules-part-1-standard-spray-fire-sprinklers/)
 - [QRFS — obstruction distance rules](https://blog.qrfs.com/225-distance-rules-part-2-sprinkler-head-obstruction-distance-rules-for-standard-spray-fire-sprinklers/)
 - [sprinkler.wiki — obstructions to spray](https://sprinkler.wiki/docs/obstructions)

@@ -27,6 +27,7 @@ import path from "node:path";
 import net from "node:net";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { shortlistBlock } from "./shortlist.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const semanticRoot = path.join(here, "..", "semantic-index");
@@ -71,6 +72,27 @@ try {
 
 const prompt = payload.prompt ?? "";
 if (!shouldSearch(prompt)) process.exit(0);
+
+// THE SHORTLIST, printed before the search block and independently of it.
+//
+// The search is the weak link - the right answer is #1 on 5 of 28 real questions
+// (semantic-index/score-history.md) - and the fragments Ajmal uses every day should not be
+// subject to it at all. This puts them in front of the assistant on every message, ranked by his
+// own last 30 days of real work, so the decision order can actually start at step 1:
+//   shortlist or native tool  ->  search for a fragment  ->  write new C#
+//
+// Printed FIRST, so it is read before the search results it is meant to pre-empt. Computed
+// in-process from one .jsonl - never a spawn, which is the 426 ms -> 38 ms lesson from the
+// fragment index (knowledge/brain-log.md, 2026-08-21) and this runs on every single message.
+//
+// Wrapped, because a hook that throws blocks what Ajmal typed. No log, unreadable log, half-written
+// last line: all of them print nothing and get out of the way.
+try {
+  const shortlist = shortlistBlock();
+  if (shortlist) console.log(shortlist + "\n");
+} catch {
+  // silent, always - see the header
+}
 
 // --- fast path: ask a warm server, in Node, with no Python at all -----------------------
 //

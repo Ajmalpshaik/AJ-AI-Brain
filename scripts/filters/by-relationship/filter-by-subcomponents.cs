@@ -2,14 +2,13 @@
 // FRAGMENT (filter) — filter-by-subcomponents.cs
 // PURPOSE: Produce the NESTED sub-components of one or more parent FamilyInstances (shared nested
 //          families inside MEP equipment, multi-part fixtures...) — the members a category filter never
-//          finds because they hide inside a parent. (Dynamo-package equivalent: Clockwork's
-//          Element.SubComponents.) Reverse direction of filter-by-host.cs (which finds hostED elements,
-//          not nested members).
+//          finds because they hide inside a parent. Reverse direction of filter-by-host.cs (which finds
+//          hostED elements, not nested members).
 // PRODUCES: elements (List<Element>, the sub-components), sb
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: only FamilyInstance parents have sub-components; a parent with none contributes zero rows —
 //         that's a valid empty result, not an error (empty-result-is-valid rule).
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3 (Dynamo package harvest).
+// NOT YET LIVE-VERIFIED — created 2026-07-26, round 3.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

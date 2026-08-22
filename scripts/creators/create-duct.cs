@@ -9,8 +9,11 @@
 //         Diameter for round ones; the wrong pair is skipped and reported, not an error.
 // GOTCHA: connecting this duct into a system (fittings, taps) is the recipes' job — a bare Duct.Create
 //         makes an unconnected segment; check open ends after with filter-by-connection-status.cs.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions (the create call itself is the
-//          same one connect-equipment-to-air-terminals.cs uses live-proven, but this fragment hasn't run).
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2
+//          suggestions (the create call itself is the same one connect-equipment-to-air-terminals.cs uses live-
+//          proven, but this fragment hasn't run).", which the README had already superseded. The verification was
+//          recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

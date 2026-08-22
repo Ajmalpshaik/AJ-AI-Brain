@@ -1,7 +1,208 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-20**, end of the Windows PC session — read THE BRIDGE section first, then the UPDATE section. This replaces the 2026-08-14 handover, which
-had gone stale (it said 270 fragments; there are now 287).
+Last updated: **2026-08-22.** Read top-down. Two separate 2026-08-22 sessions are recorded below and
+neither has been near a real model: first the **`run_fragment` + five native tools** work, then the
+**number audit** that added four consistency checks. Under those, **2026-08-21** is the search work and
+**2026-08-20** is the bridge record, whose Revit-side work is the only thing still genuinely open.
+
+---
+
+## 2026-08-22 — RUN_FRAGMENT AND FIVE NATIVE TOOLS, none of it run on a real model yet
+
+**What it is.** A new MCP tool, `run_fragment`. Name one or more fragments, pass their input values, and
+the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. It replaces the
+read-the-file / hand-edit / paste-into-`run_csharp` loop that every scripted job used until now.
+
+**Why it was built, in one line:** "PROVEN" described a file that was never the thing that ran. Every job
+sent a retyped copy. Two Revit round trips were lost to exactly that on 2026-08-20 alone.
+
+**What is proven, and it is all off-model.** 14 tests, `mcp-server/test/run-fragment.test.js`, all
+passing — including a sweep that rewrites **all 247 input-bearing fragments** and asserts the declared
+types, names and comments come through unchanged, and a byte-identical check on everything outside the
+INPUTS block. It has **never been run against a real Revit document.**
+
+**So do this first, and it is two minutes.** Ajmal must close and reopen Revit only if the add-in
+changed — it did not, this is Node-side only — but the MCP server must be reloaded to see the new tool.
+Then, on the test model:
+
+1. `run_fragment(describe: "Count the ducts", fragments: "filter-by-category",
+   inputs: {targetCategory: "OST_DuctCurves"}, preview: true)` — read the composed script, confirm it is
+   the fragment plus one `return sb.ToString();`.
+2. Same call without `preview` — check the count against `count_elements` for the same category. Two
+   independent mechanisms agreeing is the proof.
+3. A composed one: `fragments: ["filter-by-category", "action-set-color-uniform"]`, with
+   `colorR/colorG/colorB`. This exercises the multi-field declaration line, which is where the one real
+   bug was found while building it.
+
+Then mark it in `knowledge/brain-log.md` as live-verified, with the numbers.
+
+### Five native tools came out of the same session (21 -> 26)
+
+`grayout` · `session_start` · `verify_connectivity` · `report_length_by_size` · `color_by_group`.
+Each is a typed front door onto ONE proven fragment — **they contain no Revit code**, so there is never
+a second copy to drift from the original. Table and reasoning:
+[`mcp-server/tools/README.md`](../mcp-server/tools/README.md).
+
+**`grayout` is the fastest way to prove the whole chain at once.** Its recipe declares 33 inputs and
+32 of them ARE the settled standard, so the tool sets one value and leaves the rest byte-identical.
+Run `grayout()` on a coordination view: if the view greys correctly, then `run_fragment`, the shared
+composition engine and the native-tool wrapper are all proven in one shot.
+
+**`session_start` wraps an unproven fragment** (`context-session-start.cs`, never verified against a
+real model). Not a blocker — it says so in its own result — but it is the one to check the output of
+rather than trust.
+
+**They were picked from the wrong evidence, and that is on the record.** Ajmal's job log never travels
+in git, so from the container they were ranked by how often each fragment is named across the skills
+plus AGENT-SPEC §9.4. `node tools/job-report.mjs` gives the real ranking. The 89% `run_csharp` figure
+in the 2026-08-21 section is the measurement that should have chosen them — re-check before promoting
+any more.
+
+### And a shortlist now rides on every message
+
+[`tools/shortlist.mjs`](../tools/shortlist.mjs), injected by `auto-search-hook.mjs`: Ajmal's most-used
+fragments, ranked from his last 30 days of real work, so the everyday jobs skip the search entirely.
+**0.17 ms on a real log, 2.0 ms on a simulated year, ~92 tokens.** It shows nothing in a fresh
+checkout because the log lives only on the PC — `node tools/shortlist.mjs` there will show the real one.
+
+**One bug fixed that this depends on:** `job-log-revit.mjs` read fragment names out of the pasted
+`code`, which only `run_csharp` has. `run_fragment` NAMES its fragments, so every call through the new
+tool was recording zero — the usage record was quietly becoming a record of the old way only.
+
+**Known limits, recorded rather than hidden:**
+- It does **not** compile-check. Only Revit and `tools\check-scripts.cmd` do. It validates the form —
+  names, inputs, types, whether the composition is legal C# structurally.
+- 43 of the 290 fragments have no `INPUTS` block; those still go through `run_csharp` unchanged.
+- Two filters cannot be composed (both declare `sb` and `elements`) — it refuses with that message,
+  which is correct, not a bug to fix.
+
+**The two follow-ups this makes cheap**, both agreed as the ranking on 2026-08-22 and neither started:
+promoting the ~10 remaining everyday jobs to native tools (`AGENT-SPEC.md` §11 names them), and the
+test-set work that would let the cross-encoder and skill-weighting be judged (`semantic-index/
+rag-architecture-decisions.md`, "What is actually limiting the search").
+
+**One thing to check on the PC that is not code.** `.mcp.json` in the repo hard-codes
+`D:\Ajmal\AJ AI Brain\mcp-server\index.js` — that is SETUP.md's Option B, the per-folder path. If the
+Brain is running that way rather than as an installed plugin, it only exists when that folder is open.
+Installing it as a plugin (SETUP.md step 1, Option A) makes all 11 skills and the bridge available in
+every project on the machine. **Do not run both** — same server key registered twice.
+
+## 2026-08-22 — a documentation-only session, and what it left for you
+
+No Revit, no bridge, no model touched. The whole session was one job: **find every place this Brain states
+a number about itself and check it against disk.** It found a lot, and the durable outcome is not the
+fixes — it is four new checks that make the same drift impossible to ship again.
+
+### What was wrong
+
+| Where | What it claimed | Truth |
+|---|---|---|
+| 8 documents | 267 / 269 / 282 / 285 fragments | **290** |
+| 3 places | 17 or 19 native tools | **20** at the time; **26** once `run_fragment` and the five fragment-backed tools merged the same day |
+| 19 fragment headers | "NOT YET LIVE-VERIFIED" | proven live 2026-08-06/07, recorded in `scripts/README.md` only |
+| 7 fragment headers + 4 docs | named outside tools | stripped, per the 2026-08-20 rule that never reached `scripts/` |
+| `README.md` | search scores `3/14 at #1` | **5/28 at #1, MRR 0.267** — and `6/14 in top 5` matched no run at all |
+| `tools/api-surface.mjs` | stamped every regeneration `2026-08-20` | a hardcoded literal; now reads the clock |
+| this file | 270 / 283 / 287 fragments, `3/14` | stamped or corrected above |
+
+### The four checks added, all tested by deliberately breaking a file first
+
+- **9** — every fragment / skill / native-tool count stated anywhere in markdown, against disk.
+- **10** — each fragment's own header status against its `scripts/README.md` row (241 verified fragments).
+- **11** — outside-source names in `scripts/`, `skills/` and `knowledge/` (344 files). Found 3 more on its
+  first run, in a file the hand-written grep had never looked at.
+- **12** — any `N/M at #1` retrieval score against the last run in `semantic-index/score-history.md`.
+
+`tools/verify-consistency.mjs` now runs **12 checks** and the edit hook runs it on every file change. The
+PowerShell copy trails at 8 and the docs say so — do not port checks 9–12 from a Linux container, that is
+the `.ps1` encoding trap this repo has already been bitten by twice.
+
+### Decisions taken by Ajmal this session, so they are not re-argued
+
+1. **KV cache / prompt caching — nothing to build.** Every layer that pays is already on by default or
+   already built and measured here. Full record in `semantic-index/rag-architecture-decisions.md`.
+2. **`knowledge/dynamo-vocabulary-map.md` deleted** — *"we dont have anyting related to dynamo."* Git has it.
+3. **The NFPA source links stay** — *"keep the nfpa links."* Fire-code values whose own heading warns they
+   are secondary summaries; a blockquote in that file now records the decision, and check 11 skips it.
+4. **brain-log.md keeps its full detail** — it is 11% of the searchable corpus; at 20%, move entries older
+   than 60 days to `docs/brain-log-archive.md` (outside the index). `brain-status.mjs --full` prints the
+   share every session. Move, never shorten.
+
+### What Ajmal still has to do — none of it possible from a cloud session
+
+1. **Merge PR #30** — https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/30 ("Ready for review", then "Merge").
+2. **Run `tools\check-scripts.cmd`.** One fragment was rewritten this session without a compiler:
+   `filters/by-identity/filter-by-wrong-category.cs` used `ElementId.IntegerValue`, removed at Revit 2024.
+   It was written on 2026-08-21, *the day after* the whole library was migrated off that API — which is why
+   check 11's lesson is that a sweep fixes what exists and does nothing about the next file somebody writes.
+3. **Two more test questions, in his own words.** The set is at **28 of 30**. Two finished features — the
+   cross-encoder re-ranker and skill weighting — are switched off only because the set is too small to
+   judge them. `semantic-index/rag-architecture-decisions.md` records that assistant-written questions do
+   not count, so this one genuinely cannot be done for him.
+
+Everything below this line is the 2026-08-20 Windows session and is unchanged.
+
+---
+
+This replaces the 2026-08-14 handover, which
+had gone stale (it said 270 fragments; there were 287 that day, and 290 now — which is the point).
+
+## 2026-08-21 — the search was measured, corrected and made ~5x faster
+
+Ajmal walked a RAG checklist through the Brain under one rule: *check whether we already have it,
+take the better version, and say which.* Most of it already existed. The value came from measuring
+things nobody had measured, and several claims the Brain made about itself turned out to be false.
+Full working, with every number: [`semantic-index/rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md).
+
+**Built:** automatic spelling correction (65% of real questions contain a word in no file, mostly
+ordinary Revit words typed fast); a warm search server so the embedding model loads once, not on
+every message; a disk cache for the fragment index; a corpus/BM25 cache inside `hybrid_search`; a
+duplicate check on every build; build provenance stamped into the manifest.
+
+**Fixed, and these mattered more than the features:**
+- **A rebuild could mark itself finished before it had.** The manifest was written before the build
+  was verified; a crash left **1,200 chunks of 3,895** reporting "UP TO DATE". Both paths now count
+  first. General rule: *write the "this is finished" record last.*
+- Derived files now write-then-rename — a search during a re-index could read a half-written file.
+- A black console window appeared over Revit on every message (PR #29). The venv `python.exe` is a
+  Store-Python launcher shim that loses the detach flag; `pythonw.exe` fixes it. Same shim, same fix
+  as the voice layer made on 2026-08-11.
+
+**Claims corrected:** the live embedding model is `all-MiniLM-L6-v2`, not BGE (which is still not
+downloaded and still has no score line); the cross-encoder is not inert — it changes the #1 answer on
+**88%** of real questions, so it stays off for a much better reason; `site-vocabulary.md` rows
+**replace** the matched phrase, they do not merely add to it.
+
+**Speed, measured:** per message **3,536 ms -> ~650 ms**; consistency check per edit
+**3,720 -> 1,307 ms**; end-of-turn hooks **2,105 -> 900 ms** quiet, ~31 s -> ~20 s busy.
+
+### What changed in the open items
+
+- **The test questions are DONE, and the older sections below are wrong about this.** The set went
+  from 14 to 28 rows, taken from `job-log/questions.jsonl` — Ajmal's own real questions, spellings
+  kept. First 28-row baseline: **5/28 at #1, 7/28 in top 3, 20/28 retrievable, MRR 0.267.** Not
+  comparable to any 14-row line. **8 rows fail outright and 10 more sit below #5**, which is the
+  material the parked decisions were waiting for.
+- **Still owed by Ajmal, and only by him:** check the 14 new expected answers. They were drafted by
+  reading the library, never by running the search, and are marked as the assistant's reading in
+  `semantic-index/test-questions.md`. A wrong target quietly teaches the search the wrong thing.
+- **Now unblocked — four sweeps that could not be decided on 14 rows:** the cross-encoder,
+  BGE against MiniLM, the meaning-versus-words balance (`WEIGHT_MEANING`/`WEIGHT_WORDS`, both 1.0 and
+  never swept), and `RRF_K` (60, inherited, never tested here). Sweep against the 28-row set, never
+  the old one, and remember `AREA_WEIGHT` — a sweep that "wins" by moving points between halves of a
+  small set is fitting the sample.
+- ~~**Not started, and the last speed item:** 89% of logged Revit calls are `run_csharp`, compiling
+  fresh C#, while 20 native tools sit nearly unused.~~ — **ADDRESSED 2026-08-22, and this measurement
+  is what justifies it.** `run_fragment` runs the proven library by name instead of pasting retyped C#,
+  and five everyday jobs became native tools (21 → 26). That 89% is the number to re-measure once both
+  have run on a real model — `node tools/job-report.mjs` shows the split by tool. **It is also the
+  usage evidence the five tools should have been picked on**, and were not: the job log never travels
+  in git, so they were ranked by how often each fragment is named across the skills instead. Check them
+  against the real ranking before promoting any more.
+
+---
+
+---
 
 ## The prompt
 
@@ -10,6 +211,7 @@ Read D:\Ajmal\AJ AI Brain\docs\HANDOVER.md and CLAUDE.md first, then continue th
 ```
 
 ---
+
 
 ## THE BRIDGE NOW HANDLES SEVERAL REVITS AND SEVERAL PROJECTS — 2026-08-20, end of session
 
@@ -110,7 +312,7 @@ reference to assembly 'System.Runtime, Version=10.0.0.0'`. Revit 2027 runs on **
 `RevitAPI.dll` references `System.Runtime 10.0.0.0`, while `verify-fragments-compile.ps1` still compiles
 against the .NET Framework reference set. The checker's own advice covers this case exactly: *"unless the
 error names a type the harness failed to supply"*. **Fix the harness to pass the .NET 10 reference
-assemblies for 2027+; do not touch the 283 fragments.**
+assemblies for 2027+; do not touch the fragments themselves.**
 
 **The real fragment failures — these are genuine and worth fixing:**
 
@@ -190,7 +392,7 @@ versions whose API has moved most. Use it before assuming a member was renamed.
 1. **Nothing here has been run against a live model.** Step 2 below is untouched and is the only thing
    that proves correctness. The reflection work deserves it most: a differently-shaped API can compile
    perfectly and still act on the wrong element.
-2. Ajmal's 15 test questions for the search (step 5 below) — still the highest-value thing only he can do.
+2. ~~Ajmal's 15 test questions for the search~~ — **DONE 2026-08-21**, the set is now 28 rows. See the 2026-08-21 section at the top of this file. What is still owed is Ajmal checking the 14 drafted expected answers.
 
 **Still true and unchanged: compiling is a floor, not a ceiling.** None of the 2026-08-20 work has been
 run against a real model yet.
@@ -206,7 +408,7 @@ fragment touched on 2026-08-20 as unproven until step 1 below says otherwise.
 
 What changed:
 
-1. **All 287 fragments were made version-proof** — one source now runs on Revit 2020 through 2027. 202
+1. **The whole library was made version-proof** (287 fragments that day; 290 now) — one source now runs on Revit 2020 through 2027. 202
    unit conversions became arithmetic (`mm / 304.8`, which no Revit version can deprecate) and element
    ids stayed as `ElementId` instead of being turned into numbers. No `#if`, no fork.
 2. **A new opening check** — `scripts/context/context-session-start.cs`, one call that reports the Revit
@@ -239,7 +441,7 @@ tools\check-scripts.cmd
 ```
 
 Double-click it. Revit does **not** need to be open and nothing is changed. It finds every Revit on the
-PC and compile-checks all 287 fragments against each, then says in plain words which versions are safe.
+PC and compile-checks every fragment against each, then says in plain words which versions are safe.
 
 **This single command answers the whole session.** Green everywhere means the version-proofing worked.
 Any FAIL list is a small fix — send it to Claude, because every change follows one of three patterns, so
@@ -296,7 +498,7 @@ index-brain.cmd --full                              (~80 s)
 score-brain.cmd
 ```
 
-**The number to beat is `3/14 at #1, MRR 0.325` on `all-MiniLM-L6-v2`** — in
+**The number to beat, as of 2026-08-21, is `5/28 at #1, MRR 0.267` on `all-MiniLM-L6-v2`** (the test set doubled from 14 rows to 28 that day, so it is not comparable to the `3/14, MRR 0.325` this line used to quote) — in
 `semantic-index/score-history.md`, stamped with the model that produced it.
 
 **Read the note at the bottom of `score-history.md` before you judge the result.** That row is

@@ -5,7 +5,11 @@
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
-// STATUS: not yet live-verified against a real model containing Assemblies.
+// STATUS: PARTLY VERIFIED — the BY-ID path ran live 2026-08-06: an Assembly was created in a
+//         transaction from 3 ducts, all 3 members came back, then rolled back. The BY-NAME path is
+//         still unproven, and for a documented reason — a freshly created AssemblyInstance has an
+//         empty Name until its type is named. Prefer the Id path; see scripts/README.md for the rest.
+//         (Corrected 2026-08-22: this line still claimed the whole fragment had never met an Assembly.)
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

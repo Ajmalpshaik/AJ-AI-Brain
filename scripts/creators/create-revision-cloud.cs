@@ -9,7 +9,10 @@
 //         RightDirection/UpDirection) — so the same numbers work in a plan, a section, or on a sheet.
 // GOTCHA: placing a cloud in a view auto-adds that view's sheet to the Revision's sheet list (Revit
 //         behavior) — same interaction noted in ../../knowledge/live-model/revisions.md.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2
+//          suggestions.", which the README had already superseded. The verification was recorded there and never
+//          here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

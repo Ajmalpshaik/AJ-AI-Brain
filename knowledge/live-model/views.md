@@ -105,9 +105,10 @@ and all of it is about what a viewport on a sheet will and will not let a script
   sheet, distinct from the label text) is not exposed as a Viewport Type parameter (checked every
   parameter live, project 4355: only `Show Title`/`Show Extension Line` on/off exist, no numeric length)
   nor as a parameter on the title family itself (checked `M_View Title`'s own type params too — none).
-  Confirmed why: the Rhythm-for-Dynamo package's own `Viewport.SetViewTitleLength` source throws `"This
-  node only works in Revit 2022 as that is when this API was added"` — the underlying Revit API for this
-  didn't exist before 2022. On 2020, the only working lever is the on/off `Show Extension Line` toggle
+  Confirmed why: **the underlying Revit API for setting a view-title line length did not exist before
+  2022** — the same 2022 boundary recorded in
+  [`../revit-version-compatibility.md`](../revit-version-compatibility.md). Nothing on 2020 can set it,
+  which is why no amount of hunting for the right parameter finds one. On 2020, the only working lever is the on/off `Show Extension Line` toggle
   (type-level — duplicate the viewport type before touching it if only some sheets should change, per the
   blast-radius check below). A true "auto-fit line to text width" needs either Revit 2022+, or a from-scratch
   parametric rebuild of the title family (formula-driven dimension tied to the label width) — not a script.

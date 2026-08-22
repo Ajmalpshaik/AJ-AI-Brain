@@ -6,17 +6,45 @@ own growth, separate from `live-model/log.md` (which is a record of what was don
 
 Add a line here whenever [`skills/brain-self-maintain/SKILL.md`](../skills/brain-self-maintain/SKILL.md)
 creates, splits, or retires something, or whenever any other skill's "after finishing" step says to log
-here. **Keep entries to 1–3 lines** — the full story lives in the git commit history and in the files the
-change touched (fragment headers, `scripts/README.md` rows, `AGENT-SPEC.md`); this log is the index, not
-the archive. (Compressed from long-form entries 2026-07-23, with the user's OK — see git history for the
-original full text.)
+here.
+
+**How long an entry should be — restated 2026-08-22, because the old rule was fiction.** It said *"keep
+entries to 1–3 lines"*. Measured across all 288 entries: **median 8 lines, 87 of them over 10.** A rule
+that 90% of a file breaks is not a standard, it is drift with a sentence on top. Ajmal's instruction the
+same day: *"need full details keep."*
+
+So the real rule: **write the length the finding deserves.** One line for a mechanical change (a fragment
+renamed, a file split). Several paragraphs when the entry carries a *measurement, a reversal, or a trap* —
+those are the entries a future session actually needs, and compressing them throws away the evidence that
+makes them worth having. What does not belong here is anything already written elsewhere: the code is in
+the fragment, the reasoning is in the knowledge note, the diff is in git. **Link to those, don't restate
+them.**
+
+(Entries before 2026-07-23 were compressed from long-form with the user's OK — git history has the original.)
+
+**When this file gets too big — asked 2026-08-22, and the answer is not "shorten it".** Ajmal asked
+whether the detail was worth keeping. It is: this file being detailed is what let the same session find a
+Revit-2024 regression, by reading what a migration two days earlier had actually done. A 1–3 line log
+could not have. But detail is not free — this file sits inside `knowledge/`, so **every line of it is
+indexed and competes with the notes that answer real questions.** Measured that day: **10% of the whole
+searchable corpus**, against the 20% that got 604 chunks of external standards reverted in an hour on
+2026-08-13.
+
+So the rule is **move, never shorten**: when `tools/brain-status.mjs` reports this file past **20% of the
+corpus**, cut entries older than ~60 days into `docs/brain-log-archive.md` — `docs/` is outside
+`INDEX_TARGETS`, so every word survives, git still has it, and it stops crowding the search. The share is
+printed by `brain-status.mjs --full` every session, so nobody has to argue about it from memory again.
 
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
 Rewritten 2026-08-07 at the end of the big verification campaign so the next session can resume without
-re-deriving anything. **237 of 280 fragments are verified against a real Revit model (85%) as of 2026-08-20.** Everything
-left is below, grouped by WHAT UNBLOCKS EACH — not by folder, because the folder tells you
-nothing about whether you can act. Headings are bold and items numbered on purpose: `tools/brain-status.mjs`
+re-deriving anything. Everything left is below, grouped by WHAT UNBLOCKS EACH — not by folder, because the
+folder tells you nothing about whether you can act.
+
+> **Never quote a verification count from this file.** It read *"237 of 280 (85%)"* until 2026-08-22, when
+> the live figure was **241 of 290 (83%)** — stale in both halves, and stale in the flattering direction.
+> `tools/brain-status.mjs` computes it from disk at every session start; that is the only number to repeat.
+> What is durable below is *what is blocked and why*. The arithmetic is not, so it is no longer written here. Headings are bold and items numbered on purpose: `tools/brain-status.mjs`
 counts them that way.
 
 **Needs a live bridge + the current test model — just run them:**
@@ -27,17 +55,17 @@ counts them that way.
 2. `recipes/sprinkler-sidewall-layout.cs` — a placed Room is all it needs, and four exist. It is the last
    of the three that were listed here on 2026-08-20 as provable on the model as it stands:
    **`sprinkler-nfpa-grid.cs` and `sprinkler-compliance-audit.cs` were both closed the same day** — run
-   live on all four rooms, hand-checked, 0 failures (see the Log entries at the foot of this file).
+   live on all four rooms, hand-checked, 0 failures (see [2026-08-20](#2026-08-20) in the Log).
    `sprinkler-obstruction-survey.cs` and `sprinkler-place-heads.cs` went with them. Sidewall needs a
    corridor-shaped room to be a fair test; Room 4 (27,900 x 4,900 mm) is the obvious candidate.
 
-4. `recipes/sprinkler-pipe-schedule-size.cs` (2026-08-20) — needs modelled sprinkler PIPE connected to
-   heads, which this model does not have yet. The walk and the lookup can be exercised the moment any
-   connected pipe run exists; a duct run would even prove the clustering half.
 3. `recipes/sprinkler-layout-options.cs` and `recipes/sprinkler-floor-scope.cs` (2026-08-20) — a placed
    Room and a Level are all they need, both of which exist. Run the options one on Room 4 alongside
    `sprinkler-nfpa-grid.cs` and check that the grid's single answer APPEARS in the options list: if it
    does not, one of the two is wrong, and finding that out costs one run.
+4. `recipes/sprinkler-pipe-schedule-size.cs` (2026-08-20) — needs modelled sprinkler PIPE connected to
+   heads, which this model does not have yet. The walk and the lookup can be exercised the moment any
+   connected pipe run exists; a duct run would even prove the clustering half.
 
 (**Everything else in this group is closed.** 2026-08-14: `action-add-aligned-dimensions.cs`,
 `action-add-spot-elevations.cs`, `action-manage-sheet-sets.cs` and `action-add-remove-insulation.cs`
@@ -119,52 +147,93 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
 
 ## Log
 
+**Jump to a date** — 290 entries across 20 working days, oldest first, newest at the bottom.
+
+| Date | Entries | | Date | Entries |
+|---|---|---|---|---|
+| [2026-07-21](#2026-07-21) | 2 | | [2026-08-10](#2026-08-10) | 6 |
+| [2026-07-22](#2026-07-22) | 18 | | [2026-08-11](#2026-08-11) | 21 |
+| [2026-07-23](#2026-07-23) | 9 | | [2026-08-13](#2026-08-13) | 23 |
+| [2026-07-26](#2026-07-26) | 26 | | [2026-08-14](#2026-08-14) | 14 |
+| [2026-07-27](#2026-07-27) | 11 | | [2026-08-15](#2026-08-15) | 1 |
+| [2026-08-01](#2026-08-01) | 8 | | [2026-08-17](#2026-08-17) | 1 |
+| [2026-08-04](#2026-08-04) | 24 | | [2026-08-19](#2026-08-19) | 4 |
+| [2026-08-06](#2026-08-06) | 53 | | [2026-08-20](#2026-08-20) | 45 |
+| [2026-08-07](#2026-08-07) | 11 | | [2026-08-21](#2026-08-21) | 10 |
+| [2026-08-09](#2026-08-09) | 1 | | [2026-08-22](#2026-08-22) | 2 |
+
+### 2026-07-21
+
+- 2026-07-21 — Added 13 `filters/` fragments after de-duplicating a proposed list; declined 2 as
+  redundant/wrong-contract.
+
+- 2026-07-21 — Found `filter-by-system-type.cs` silently matching system NAME, not TYPE (a `??` fallback
+  that never ran). Fixed in place; split the old behavior into `filter-by-system-name.cs`.
+
+### 2026-07-22
+
 - 2026-07-22 — Element ID glossary entry + standing rule: element reports always include Element ID.
+
 - 2026-07-22 — Reply-style rule: a narrowed request ("the 300x300 VCDs") gets an item list with IDs, not
   a bare count. Updated `reply-style.md`, live-model skill, `scripts/architecture.md`.
+
 - 2026-07-22 — Universal-actions audit: built `action-delete-elements.cs`, `action-rename-element.cs`,
   `create-schedule.cs`; wrote `knowledge/universal-actions-reference.md`.
+
 - 2026-07-22 — Expanded the reference to 175 actions (v2), then 182 (v3, full Revisions lifecycle).
+
 - 2026-07-22 — Folded four factual Revit lessons into `core.md`/glossary (UniqueId stability,
   discover-params-first, overflow caution, linked-element LevelId). Same pass: all 11
   graphics/visibility fragments got optional `targetViewIdInt`.
+
 - 2026-07-22 — Created `AGENT-SPEC.md` (11-section operating manual); follow-up caught 2 staleness gaps
   in it same-day. Lesson: a consolidated spec needs a deliberate re-check after changes, not just a link
   check.
+
 - 2026-07-22 — Built 14 native schema-validated MCP tools (Node-side only — the Revit listener needed
   zero changes); split `mcp-server/` one-file-per-tool. Caught a NUL-byte corruption `node --check`
   missed — lesson: `node --check` alone is not sufficient proof of a refactor.
-- 2026-07-21 — Added 13 `filters/` fragments after de-duplicating a proposed list; declined 2 as
-  redundant/wrong-contract.
-- 2026-07-21 — Found `filter-by-system-type.cs` silently matching system NAME, not TYPE (a `??` fallback
-  that never ran). Fixed in place; split the old behavior into `filter-by-system-name.cs`.
+
 - 2026-07-22 — Added 8 more filters (tag status, connection status, pin, views, warnings, electrical
   system, insulation status/type), then `filter-by-length.cs` + `filter-by-size.cs` (round + rectangular
   handled together).
+
 - 2026-07-22 — Balance fix: `filter-by-room.cs`/`filter-by-space.cs` now accept Name/Number, not just Id.
+
 - 2026-07-22 — Reorganized `scripts/actions/` (35 flat files) into 10 job-grouped subfolders with
   `git mv`; fixed every cross-reference; corrected 6 pre-existing wrong SOURCE paths found on the way.
+
 - 2026-07-22 — color-graphics pass: added category-level color/reset (different API from per-element);
   fixed `action-color-by-group.cs` random mode to hue-step (guaranteed-distinct colors) + pastel/neon
   modes; wrote `color-vocabulary.md`. Later passes completed the group to 19 fragments (halftone,
   line style, filters/overrides reporting, category transparency) — every per-element Set now has a
   category-level counterpart.
+
 - 2026-07-22 — View Filters lifecycle (create/apply/remove, all 16 rule kinds, Selection Filters too) +
   `graphic-override-precedence.md` (9-level priority list, moderate-confidence rows marked).
+
 - 2026-07-22 — View Template lifecycle complete: apply, create-from-view, controlled-params, remove,
   duplicate, status report + `filter-by-view-templates.cs` and a purge-unused-templates example.
+
 - 2026-07-22 — visibility/: added category-level visibility on/off + report (different mechanism from
   per-element hide; report deliberately scopes to whole model, not the view).
+
 - 2026-07-22 — parameters-naming/: added `action-remove-parameter-value.cs` (honest about Double/Integer
   having no true "unset") + `action-report-parameter-inventory.cs` (discover what parameters exist).
+
 - 2026-07-22 — Type-parameter fallback fix on set/copy/remove parameter actions (was Instance-only,
   silently skipping Type-level names like Manufacturer). Deliberately NOT applied to
   `action-renumber-sequential.cs` — a Type fallback there would corrupt the sequence (documented why).
+
 - 2026-07-22 — reporting/: `action-count-by-group.cs` (count by ANY parameter) +
   `action-count-by-spatial-container.cs` (Room/Space/Zone containment — spatial test, not a parameter).
+
 - 2026-07-22 — Phase management (create/rename/report/delete/assign) + final gap sweep across
   selection/qa/move/structural/sheet-dates groups: 9 new fragments (mirror, group/ungroup, join,
   duplicate-value QA, select modes, remove-revision-from-sheet).
+
+### 2026-07-23
+
 - 2026-07-23 — **Full live-verification pass of `scripts/` against the real Revit 2020 model** (~150
   fragments run for real; per-fragment results in `scripts/README.md`). Confirmed 3 hard API gaps
   (no Scope Box creation, no Phase creation, no Design Option activation) and multiple version traps
@@ -173,23 +242,28 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   fillet's in-place `LocationCurve` no-op, Space name matching. Key lessons now permanent in
   `AGENT-SPEC.md` §6. Meta-lessons: a simplified re-test can miss the broken shape; recount summary
   tallies; read a connector's real `BasisZ` before drawing.
+
 - 2026-07-23 — **Part 1** (multi-session health pass, no Revit): built `tools/verify-consistency.mjs`
   (portable checker; found the ps1's recursion blind spot — 0 of 112 actions/ files checked since the
   reorg); static re-audit of all known pitfalls (clean); added `mcp-server/test/smoke.test.js` (`npm
   test`, all 17 tools); pinned `@hono/node-server` — audit now 0 vulnerabilities.
+
 - 2026-07-23 — **Part 2**: mcp-server review. Fixed `model_summary`'s inconsistent error casing;
   `set_parameter_value` now rejects both/neither of stringValue/numericValueMm (was silently wrong);
   hardened `readDiscoveryInfo()` against a TOCTOU race and corrupt JSON. Documented (not built) the
   known reuse-a-dead-socket 90s-timeout limitation on `getConnection()`.
+
 - 2026-07-23 — **Part 3**: static review of the 14 README-flagged unverified fragments — 13 clean, 1
   precise flag (`LinkNotNeeded` enum member in `action-reload-links.cs`). Found 18 fragments whose file
   headers still said "NOT YET LIVE-VERIFIED" though README recorded them live-verified — replaced each
   stale banner with a pointer to README as the single source of truth (root-cause fix, not a re-sync).
+
 - 2026-07-23 — **Part 4**: self-audit found Part 1 never back-ported the recursion fix to the ps1 checker
   (fixed; untested — no PowerShell here) and the skill only instructed the ps1 (fixed). `AGENT-SPEC.md`
   staleness pass: corrected fragment count (77 → 206), tool counts (12/9 → 13/6), added the live-pass
   lessons to §6, un-listed Purge Unused from "unbuilt", stamped a re-check date. Fixed same-class drift
   in `universal-actions-reference.md` (items 101/102/171). Bumped mcp-server to 1.3.1.
+
 - 2026-07-23 — **Part 5**: finished the static sweep (the 11 remaining fragments). **Real find**:
   `action-add-project-parameter.cs` still used `SpecTypeId`/`GroupTypeId` (2022+-only) in live code while
   README claimed it "fixed for Revit 2020" — git history shows the fix only ever landed in the `.claude`
@@ -201,6 +275,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   sides — reconnect is side-agnostic, the label wasn't). Flagged connect-terminal-branch's by-design
   vertical-riser assumption. 4 recipes + set-workset/duplicate-type/export-csv otherwise clean.
   Compressed this log from ~600 lines of essays to this form (user-authorized; full text in git).
+
 - 2026-07-23 — **Part 6** (final part): measured the whole reading path — `START-HERE.md` + `INDEX.md`
   are already lean (~1,000 words, left alone); the real weight was `scripts/README.md` (6,270 words, read
   nearly every scripting session). Compressed ~45 verbose verification narratives in its rows to compact
@@ -210,27 +285,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (doesn't exist here either — fragment changes log to THIS file; the recipes-table source now points at
   `live-model/revisions.md`). Added the missing verification story to `action-delete-phase.cs`'s header
   so its README pointer resolves. Checker + tests clean.
+
 - 2026-07-23 — Coverage question follow-up: reviewed `tools/invoke-bridge.ps1`, the one pipeline file the
   Parts 1–6 pass never opened. Protocol matches the Node client exactly (same discovery file, same
   `{token, code, allowDestructive}` newline-delimited shape, same ping payload) — one real difference
   found and fixed: it wrote UTF-8 WITH a BOM (StreamWriter + `Encoding.UTF8` default), which the proven
   Node client never sends; now no-BOM, byte-for-byte matching. Added a ping-test line to the live
   checklist since the fallback caller itself has never been exercised live.
-- 2026-07-26 — Union-joint consistency audit (user-requested after the live 4-FCU build proved the
-  correct workflow): the day's discovery — bare `ConnectTo` joints after `BreakCurve` can be silently
-  re-merged by Revit, losing the split; real Union fittings (`NewUnionFitting`) are what preserve it —
-  clashed with 3 scripts and 1 knowledge line, all fixed: `slice-trunk-for-sizing.cs`,
-  `split-duct-near-equipment.cs`, `action-split-elements.cs` (all now NewUnionFitting + header notes,
-  README rows updated, union fix live-proven only via the inline build so scripts marked "union fix not
-  yet live-run"), hvac-ducts.md § slicing reconnect line, plus the new gotcha added to AGENT-SPEC.md.
-  Cap/equipment/terminal `ConnectTo` uses checked and left alone — correct there (fitting-to-duct, no
-  merge risk). Skills checked: no clashes.
-- 2026-07-26 — New recipe `connect-equipment-to-air-terminals.cs` (the user's connection method
-  end-to-end, live-proven same day) + new hvac-ducts.md section (connection method, connector-overload
-  size/system inheritance, end-cap-by-script technique) + first live-model log.md entries. New standing
-  rule from the user recorded in START-HERE.md: the Brain is the only portable memory — everything the
-  assistant saves to its local machine memory must ALSO be written into Brain files, because moving to
-  another system means copying the Brain folder only.
+
 - 2026-07-23 — Parallel consistency pass (independent of Parts 1–6 above, same day): found and fixed
   the same ps1 recursion bug, the same set_parameter_value validation gap, the same AGENT-SPEC.md
   staleness, and most of the same stale headers — reconciled to Parts 1–6's versions on merge (the
@@ -241,9 +303,30 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `create-parametric-box-family-with-duct-connector.cs`/`place-fcu.cs`/`place-terminals-checkerboard.cs`/
   `set-space-airflow.cs` (none of which this pass touched), and the missing null checks in
   `draw-main-duct-with-cap.cs`/`split-duct-near-equipment.cs`. Full text in git history (PR #3).
+
+### 2026-07-26
+
+- 2026-07-26 — Union-joint consistency audit (user-requested after the live 4-FCU build proved the
+  correct workflow): the day's discovery — bare `ConnectTo` joints after `BreakCurve` can be silently
+  re-merged by Revit, losing the split; real Union fittings (`NewUnionFitting`) are what preserve it —
+  clashed with 3 scripts and 1 knowledge line, all fixed: `slice-trunk-for-sizing.cs`,
+  `split-duct-near-equipment.cs`, `action-split-elements.cs` (all now NewUnionFitting + header notes,
+  README rows updated, union fix live-proven only via the inline build so scripts marked "union fix not
+  yet live-run"), hvac-ducts.md § slicing reconnect line, plus the new gotcha added to AGENT-SPEC.md.
+  Cap/equipment/terminal `ConnectTo` uses checked and left alone — correct there (fitting-to-duct, no
+  merge risk). Skills checked: no clashes.
+
+- 2026-07-26 — New recipe `connect-equipment-to-air-terminals.cs` (the user's connection method
+  end-to-end, live-proven same day) + new hvac-ducts.md section (connection method, connector-overload
+  size/system inheritance, end-cap-by-script technique) + first live-model log.md entries. New standing
+  rule from the user recorded in START-HERE.md: the Brain is the only portable memory — everything the
+  assistant saves to its local machine memory must ALSO be written into Brain files, because moving to
+  another system means copying the Brain folder only.
+
 - 2026-07-26 — Audit pass: `verify-consistency.ps1` first real PowerShell run caught genuine drift —
   the 2 MEP standards recipes (`create-mep-line-standards.cs`, `create-mep-text-standards.cs`) were on
   disk but missing from `scripts/README.md`; rows added, checker green.
+
 - 2026-07-26 — Brain became an installable Claude Code plugin: `.claude-plugin/plugin.json` (8 skills +
   bundled MCP relay via `${CLAUDE_PLUGIN_ROOT}`) + `marketplace.json` so the repo itself is the
   marketplace — SETUP.md step 1 Option A has the two install commands. Also new: root `CLAUDE.md`
@@ -251,33 +334,40 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (`.claude/settings.json` → `tools/verify-consistency-hook.ps1`) that re-runs the consistency checker
   after every edit in this repo — drift now surfaces same-turn (exit-2/stderr path live-tested with a
   planted unlisted script, then removed).
+
 - 2026-07-26 — Added 6 bridge principles to `live-model/core.md` Bridge basics:
   empty-result-is-valid, never-invent-ElementIds, resolve view-relative direction words before
   moving, one-composed-script-over-many-calls, verify-small, workshared-sync reminder. A
   "reuse cached state, don't re-query" rule was considered and rejected — it conflicts with our proven
   fresh-reads rule.
+
 - 2026-07-26 — Tool-gap backlog build: 9 gaps found became 14 new fragments — room elevations, floors, sheet sets, compare-elements,
   parameter CSV round-trip (Excel via agent-side xlsx), model-health-audit recipe, compact save,
   sync-with-central, link unload/remove, and DWG/IFC/NWC/image exports. All marked NOT live-verified yet.
+
 - 2026-07-26 — Round 2 (self-proposed gaps, user approved all): 17 more fragments — load-family,
   create duct/pipe/cable-tray/conduit/wall, create-ceiling recorded as IMPOSSIBLE on 2020 (API is 2022+),
   revision clouds, HVAC zones, insulation add/remove, sleeve-at-wall-penetrations recipe (dry-run first),
   spot elevations, print settings, workset rename (delete = impossible on 2020), element ownership
   report, shared-coordinates context, TextNote find/replace. All NOT live-verified yet.
+
 - 2026-07-26 — User's third comparison list was Dynamo's 100 standard nodes — all 100 already covered
   natively (fragments + LINQ + raw API). No fragments built; saved the translation as
   `knowledge/dynamo-vocabulary-map.md` + INDEX row so Dynamo-vocabulary requests route instantly.
+
 - 2026-07-26 — Round 3, Dynamo PACKAGE harvest (Clockwork/Rhythm/MEPover/Bimorph/Genius Loci/archi-lab):
   7 new fragments — connector report (packages the user's connection-method steps 1-3, cross-linked from
   hvac-ducts.md), sub-components filter, compound-structure report, room boundaries, CAD-layer curve
   extraction (dry-run first), duplicate-sheet-with-views, copy-from-link. Spring Nodes/Data-Shapes/Orchid
   recorded as deliberate non-builds in the map's package table. All NOT live-verified yet.
+
 - 2026-07-26 — Round 4, gap search after the package harvest: 9 fragments — accessory-into-run (VCD/valve,
   breaks the run and reconnects), purge unused FAMILIES/types (the file-size half `action-purge-unused.cs`
   omits), view range, MEP system TYPE creation, aligned dimensions on family instances, callout views,
   legend duplication, sheet list, key schedule. Auto duct SIZING was explicitly NOT built — hvac-ducts.md
   records it as the user's own step. Legends and workset delete recorded as partial/absent APIs.
   All NOT live-verified yet. Library now 256 fragments.
+
 - 2026-07-26 — First live-verification pass on the new fragments (bridge up, Revit 2020 / Project1):
   11 confirmed working — shared-coordinates, model-health-audit, purge-unused-families (dry-run),
   compound-structure, view-range (report), room-boundaries (graceful), compare-elements,
@@ -285,10 +375,12 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   found and fixed in place: view-range printed raw sentinel Ids ("Id -2") instead of "(level above)", and
   a pre-existing wrong relative path in filter-by-room.cs. MEP/link/CAD/worksharing fragments remain
   fixture-blocked — this model has walls, rooms and levels only.
+
 - 2026-07-26 — **Bridge gotcha found live: the destructive-op guard reads the whole script as TEXT and is
   CUMULATIVE.** A 100% read-only audit was refused because two OUTPUT strings together mentioned purging
   and deleting. Fix is to soften read-only scripts' wording, never to pass allowDestructive to get a read
   through. Recorded in `live-model/core.md`.
+
 - 2026-07-26 — Architecture pass (assessed first: restructure NOT needed, targeted fixes were):
   `filters/` split from 49 flat files into 6 job-grouped subfolders (by-identity / by-property /
   by-location / by-relationship / by-view-and-sheet / by-status), matching the 2026-07-22 actions/ split
@@ -296,12 +388,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (`filter-by-elements-on-level.cs`, `filter-by-elements-in-view.cs`), gave the two noun-first reports
   their `report` verb, moved the stray parameters-CSV export in with the other exports, and wrote the
   naming rules into `scripts/README.md` so they stop being folklore.
+
 - 2026-07-26 — **Self-inflicted incident worth remembering: PowerShell `Get-Content`/`Set-Content` for
   bulk edits double-encoded UTF-8 in 41 files** (em dashes and ✓ became mojibake) because 5.1's
   Get-Content reads UTF-8-without-BOM as ANSI. Caught by noticing the README diff was 285 lines when the
   real edit was ~90. Repaired with a targeted per-character map. **Rule: for bulk text edits across this
   repo use `[System.IO.File]::ReadAllText/WriteAllText` with an explicit UTF8Encoding($false), never
   Get-Content/Set-Content.**
+
 - 2026-07-26 — **Generalised ray-tracing (the user's idea, extending his own 2026-07-14 one).** His point:
   don't build "ray to ceiling", build "ray to whatever I name today" — slab, wall, beam, or simply the
   nearest thing — and fire in every direction, not just up. Two fragments:
@@ -314,6 +408,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   "nothing found" — 1 hit reported where there were 11.** Always Find-all → drop-self → take-nearest;
   FindNearest is only safe when a category filter makes a self-hit impossible (which is why the old
   ceiling recipe never showed the bug). Geometry cross-checked: diagonals came back at axis x root-2.
+
 - 2026-07-26 — `action-move-to-ray-hit.cs` ✓ live-verified on its first real job: the user added 17 air
   terminals and 3 ceilings, and asked for the terminals to be moved up to the ceiling. One pass moved all
   17, 0 misses. **The ceilings were at three different heights (2100 / 2400 / 3000 mm) and each terminal
@@ -321,6 +416,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   fixed-Z set would have put 11 of them in the wrong slab. Dry run first, matched exactly; read-back
   confirmed each Z equals its ceiling underside. Model state changes between messages — the fresh-read
   rule earned its keep here too: an earlier query in the SAME session had found 0 terminals and 0 ceilings.
+
 - 2026-07-26 — **Better ray algorithm, after the user asked whether ours was simple and whether volume
   would break it.** Measured first: ~0.07 ms per category-filtered ray, ~0.11 ms unfiltered, on a
   3239-instance model. So 1000 elements x 5 footprint rays is under a second — **ray count is NOT the
@@ -333,6 +429,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **Lesson from a false start in that test: never infer which surface is above a point from BOUNDING
   BOXES** — two of these ceilings had overlapping boxes but non-overlapping real shapes, which produced a
   misleading "OK" until the rays were read directly. Probe, don't infer from extents.
+
 - 2026-07-26 — **Proximity + route planning (user's idea): "nearest element" and "least wire".** Two
   fragments, both ✓ live-verified same day. `action-report-nearest-elements.cs` — nearest target(s) per
   source across any categories or a fixed Id list, with THREE metrics that deliberately disagree: `gap`
@@ -346,6 +443,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   and why manhattan is the honest default for cable.** Both headers state plainly that these are
   point-to-point estimates, NOT routed cable schedules. Obstacle-aware A* routing deliberately NOT built —
   named in the header as out of scope until a concrete case exists.
+
 - 2026-07-26 — **The user spotted the real flaw in nearest-neighbour routing: it does not know walls
   exist.** "If the nearest element is in the next room it will go there and come back." Measured on the
   chain actually drawn: it changed zone **6 times where 2 would do** — it genuinely leaves a zone and
@@ -360,11 +458,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   geometry sits above the cut plane (cost a real head-scratch when the user asked to see the chain in
   "1 - Mech" at a 1200 mm cut, with terminals at 2100-3000). It now takes a target view and draws DETAIL
   lines for plan/section/elevation, model lines otherwise.
+
 - 2026-07-26 — **Bridge gotcha: `PostCommand(Undo)` does NOT fire while a run_csharp script holds Revit's
   UI thread.** Posted an undo to remove 16 stray model lines, and the very next query showed the count
   unchanged (32 before, 32 after) — caught only because the script's own hardcoded "so they're gone"
   message contradicted the number printed beside it. For cleanup INSIDE a script, delete explicitly by Id;
   native Undo is for the user's own "that was a mistake", between calls, not mid-script.
+
 - 2026-07-26 — **The user designed a better routing algorithm than the one I had built, and the numbers
   prove it.** His method (now `mode="continuous"`): finish a room completely, then from its LAST fitting
   jump to the genuinely nearest fitting in any room not yet done — that jump decides both which room comes
@@ -380,12 +480,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   deliberate feeders. **Lesson on presentation, not maths: feeders drawn mixed in with room runs READ as
   errors even when correct** — the user flagged the picture as wrong when it was right. Draw them
   separately (own colour/weight), or leave them out.
+
 - 2026-07-26 — `action-plan-shortest-route.cs` gained `groupDrawnRoute` + `drawnGroupName` after the user
   asked for the route "in single stretch". **Revit has NO polyline element** — every curve element is one
   straight line or one arc — so a continuous route is always stored as joined segments. A GROUP is what
   makes it behave as a single thing: one click selects the whole run, and it moves/deletes as a unit.
   Verified live on the 17-terminal run (16 segments -> one detail group named `MEP_Terminal_Run`, matching
   the office MEP_ prefix).
+
 - 2026-07-26 — **Coverage analysis** (user: "if we draw a circle, that is coverage") →
   `actions/reporting/action-report-coverage.cs`. **Key discovery: the standard M_Supply Diffuser has NO
   coverage or throw parameter at all** — it carries Flow, Pressure Drop, Diffuser/Duct sizes, Max/Min
@@ -397,6 +499,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   circles drawn and grouped as `MEP_Terminal_Coverage`.
   Gotcha recorded: **~45% floor coverage is geometrically NORMAL** (circles cannot tile a plane — even
   perfect packing reaches only ~78%), so it must not be read as "half the room is unserved".
+
 - 2026-07-26 — **CORRECTION, and the lesson matters more than the fact.** The entry above originally also
   claimed "a full-circle Arc is rejected by Revit, so every circle is two half arcs". **That is FALSE.**
   `Arc.Create(centre, r, 0, 2*PI, X, Y)` returns a closed unbound arc that `NewDetailCurve` accepts as ONE
@@ -407,6 +510,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   every later session obeys it; if it is a guess, mark it FLAGGED like the other honest unknowns.
   **(2) clean-up must be verified too** — the replacement pass deleted one group but orphaned the other's
   932 arcs; counting curves afterwards (1431 where 499 was expected) is what caught it.
+
 - 2026-07-26 — **Session sweep at the user's request ("did you forget to save anything") found three real
   gaps** — things built live and demonstrated, then left in chat:
   (1) the room COVERAGE LAYOUT generator, run three times live and never saved → now
@@ -421,6 +525,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   centre ray found 4. **The header had claimed "4 vs 7" from the earlier ad-hoc test; that number was not
   reproducible and has been corrected to the measured 4 vs 5** — same discipline as the circle correction.
   Lesson: *demonstrating* something in chat is not *saving* it, and an offer made and not taken is a gap.
+
 - 2026-07-26 — **MAJOR bridge gotcha, found while verifying the fan: `ReferenceIntersector` ONLY FINDS
   WHAT ITS 3D VIEW SHOWS.** Identical code, same element, same direction: view `{3D}` (Walls category
   hidden) → **0** hits; view `3D Plumbing` (Walls visible) → **4**. Hidden categories, section boxes, view
@@ -429,6 +534,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `action-move-to-ray-hit.cs`, which would snap elements onto whatever is visible behind the real surface.
   Recorded in `live-model/core.md`; the report fragments now WARN and the move fragment REFUSES when the
   target category is hidden in the chosen view.
+
+### 2026-07-27
+
 - 2026-07-27 — First real *use* of `recipes/generate-room-coverage-layout.cs` (Room 4, r=3000, square, drawn
   into `1 - Mech`): 21 circles, 3,243/3,243 points covered, 0 gaps, grouped
   `MEP_Room4_Coverage_R3000_Square`. Two improvements folded back in. (1) The recipe reported *how many*
@@ -437,6 +545,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   4,243 mm vs hexagonal 5,196 mm, so square costs one extra device but PASSES a 4,600 mm max-spacing cap
   that hexagonal fails. Lesson: a saved recipe can be correct and still not be *actionable* — the first
   live use is what exposes that.
+
 - 2026-07-27 — Drew the hexagonal coverage alongside the square one in Room 4 (both kept, separate groups:
   21 red square / 20 green hexagonal, both 0 gaps). The read-back nearly produced a false alarm: a
   view-scoped `FilteredElementCollector(Document, viewId)` run right after the create+group transaction
@@ -445,6 +554,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   conclude an element is gone from a view-scoped read; confirm document-wide first. The pair also gave the
   spacing trade-off as measured fact — square 4,243 mm PASSES a 4,600 mm cap, hexagonal 5,196 mm FAILS,
   for one device less.
+
 - 2026-07-27 — **The user looked at the two drawn layouts and asked "did you find any mistake?" — there were
   three, and the recipe was wrong, not just the run.** (1) `cover` mode optimises coverage OF THE FLOOR, and a
   circle centred beyond the wall still covers floor, so it returned centres OUTSIDE the room: 6 of 21 (square,
@@ -458,6 +568,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   inside-room constraint, a BUILDABLE line in every report, and a wall-distance check. Lesson worth keeping:
   **a verified metric can still be the wrong metric — "no gaps" said nothing about whether a device could
   physically be mounted, and the drawings showed it before any check did.**
+
 - 2026-07-27 — Buildable hexagonal added to `recipes/generate-room-coverage-layout.cs` (`inset` + `hexagonal`),
   drawn as `MEP_Room4_Coverage_R3000_Staggered`: 19 devices, 0 gaps, 19/19 inside. Two findings worth more
   than the layout. (1) **The shifted-row construction swings the answer 40%** — giving shifted rows nx-1
@@ -467,6 +578,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   walls mostly destroy it**: square inset 20 with both code caps PASSING, vs staggered 19 that FAILS both by
   ~20-30 mm, vs compliant staggered 22. One device out of twenty, bought by breaking spacing — so the
   textbook "hexagonal is ~30% fewer" must never be quoted for a room. Both recorded in the recipe header.
+
 - 2026-07-27 — Session sweep (user: "did you forget anything to update?"). Five gaps found, all outside the
   files the work had naturally touched: (1) `START-HERE.md` had NO route row for device coverage layouts —
   the request type the user had just made twice was unroutable from the entry point; added one pointing at
@@ -478,6 +590,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   doesn't survive walls, try more than one construction. Lesson about the sweep itself: the files a task
   edits naturally are not the files that route FUTURE requests to it — an entry-point route row and a
   glossary disambiguation are the two most commonly missed, because the work never has to touch them.
+
 - 2026-07-27 — **New skill `ajtools-fire-sprinkler-layout` + new knowledge file `nfpa13-sprinkler-spacing.md`**
   (user: fire fighting follows its own rules, study NFPA first). Researched NFPA 13 spacing from secondary
   sources (the standard itself is copyrighted and edition-specific, so the file is a cited paraphrase that
@@ -494,6 +607,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   only. Recipe now takes `minSpacingMm` and `maxAreaPerDeviceM2` and reports all four; verified live.
   Lesson: **the drawn geometry was never the deliverable — the governing rule set was, and nobody had asked
   which one applied.** Three sessions of "verified, zero gaps" said nothing about the code that governs it.
+
 - 2026-07-27 — First layout produced through `ajtools-fire-sprinkler-layout` instead of the generic coverage
   recipe: Room 4, Ordinary Hazard I/II, 6 x 4 = 24 heads, all seven code checks PASS, drawn as
   `MEP_Room4_Sprinkler_OH_24Heads`. The method inverted — the grid is derived FROM the limits (smallest
@@ -503,6 +617,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   dimensions, NOT room area / head count** — the two agree only when the grid tiles the room exactly with
   half-spacing insets, and S x L is what the code means. Worked example appended to
   `nfpa13-sprinkler-spacing.md`.
+
 - 2026-07-27 — Sweep before committing caught the worst kind of drift: **numbers that were correct when
   written and became wrong later in the same session.** Three claims in the coverage recipe header still
   judged layouts against the assumed 4,600 mm cap after NFPA had established 4,572 — so the header said
@@ -512,6 +627,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   rule-set lesson. Lesson: **when a session later learns the real value of a number it had assumed, grep the
   whole repo for the old one.** A superseded figure written into a header reads as authoritative next
   session, and the file it sits in was already marked verified.
+
 - 2026-07-27 — `creators/create-sheet.cs` gained a SEQUENCE mode (prefix + running number + zero padding,
   sheet names counting 01, 02, 03...). Hand-typing 26 tuples into the explicit-list mode is where
   transcription errors come from. Explicit-list mode unchanged. Live-verified: 26 sheets in one transaction.
@@ -520,6 +636,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   forbid. A real value left in a fragment reads as a project standard next session. Replaced with deliberately
   fake placeholders (`XXX-000-`, `SHEET `) so an unfilled input shows up in the created sheets instead of
   looking plausible. Applies to every fragment, not just this one.
+
 - 2026-07-27 — Post-commit sweep found the recipe CONTRADICTING its own knowledge file: the area-per-device
   check computed `room area / device count`, while `nfpa13-sprinkler-spacing.md` records that NFPA means
   `A_s = S x L` from the grid dimensions. Fixed to report A_s as the governing value, with the average shown
@@ -531,6 +648,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   end-to-end from disk via `tools/invoke-bridge.ps1 -CodeFile` for both inset modes. Lesson: **writing a rule
   into a knowledge file does not make the script obey it** — when a method is corrected in prose, grep the
   scripts that implement it, and run the file, not a paraphrase of it.
+
 - 2026-07-27 — Same trap found in `recipes/generate-room-coverage-layout.cs` immediately after the
   create-sheet one: `radiusMm = 3000` was a PAST JOB's figure sitting in the INPUTS block as a default, in a
   file whose own header says "edit every time". A plausible number is worse than a blank one — it runs, it
@@ -540,6 +658,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   disk: 0 refuses, 3000 runs. A grep of all 264 fragments found no other real project value left in an INPUTS
   block — only a commented `e.g.` example, which is fine. **General rule: a fragment's default must be
   either neutral (0, null, "") or a guard, never a working value from the job that created it.**
+
+### 2026-08-01
+
 - 2026-08-01 — **Gotcha found live (project 4355): view-filter names can lie about their real category.**
   Two filters named `..._Cable Trays_Service Type_Refrigerant Pipes Tray` sound mechanical but
   `ParameterFilterElement.GetCategories()` showed they actually target `Cable Trays`/`Cable Tray Fittings`
@@ -551,29 +672,34 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   doc, Transform.Identity, new CopyPasteOptions())` works instead and Revit auto-suffixes the name, which
   then gets set to the real target name in a second step. Not yet promoted to a reusable fragment — only
   done inline twice so far.
+
 - 2026-08-01 — **Correction from the user (project 4355): "change filter color" defaulted to line+fill,
   should be line-only.** Applied black to 4 pipe filters' line AND fill together (matching
   `action-apply-view-filter.cs`'s `includeFill=true`, meant for the full MEP Color Data Standard sync);
   user undid it in Revit and clarified fill should stay untouched for a plain color-change request. Fixed
   by reusing the existing `OverrideGraphicSettings` and setting only `SetProjectionLineColor`/
   `SetCutLineColor`. Documented in `live-model/mep-color-standard.md`.
+
 - 2026-08-01 — Built a 3-sheet site shaft-coordination set for project 4355 (Duct/Piping/Electrical Cable
   Tray) — 6 duplicated view templates, one hero-system-full-color + rest-gray(80,80,80) scheme per sheet,
   the mislabeled Cable Tray filters grouped with Piping (their real function) not Electrical (their Revit
   category). First real multi-system use of the template-duplicate technique from the same day. Took two
   passes to get the 3x3 color matrix confirmed exactly against the user's wording before trusting it was
   right. Documented in `live-model/mep-color-standard.md`.
+
 - 2026-08-01 — Fill-color cleanup on `TRG_Accessories_Duct` silently reverted between two script calls
   despite a same-script verification passing right after the change — root cause not confirmed (the next
   script's logic looked correct on inspection, never referenced this filter by name). Caught by an
   independent later re-check, re-cleared, re-verified in a third separate call, held. New standing rule
   added to `core.md`: don't trust same-call verification alone for multi-element graphic-override
   mutations — check again in a separate later call before reporting success.
+
 - 2026-08-01 — View title extension-line length: confirmed no API lever exists on Revit 2020 (this
   project's version) — traced to Rhythm-for-Dynamo's own source throwing "only works in Revit 2022."
   Also found and fixed a blast-radius miss along the way: the viewport type holding the title style was
   shared by 77 viewports document-wide, not just the 3 new site sheets — duplicated the type before
   touching it, per the user's explicit choice. Documented both in `live-model/core.md`.
+
 - 2026-08-01 — View title POSITION also unsettable on Revit 2020 (reflection on `Viewport` shows only
   read-only `GetLabelOutline()`, no `LabelOffset`). Turned the dead end into a deliverable: computed each
   title's exact centering offset from `GetBoxOutline()` vs `GetLabelOutline()` so the user's manual drag
@@ -582,6 +708,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `live-model/core.md`. Also caught during the same pass: `Piping only section 05` had been deleted from
   the model entirely (lost in one of the user's undos) — found only because a fresh full-sheet read was
   done rather than trusting the earlier "3 plans + 5 sections" verification.
+
 - 2026-08-01 — **New technique: measure-by-rollback.** User pushed back on the "extension line can't be
   adjusted" answer, so re-verified exhaustively (full `Viewport` reflection + every viewport-related
   BuiltInParameter enumerated + Rhythm source) — no API lever on 2020, confirmed. But the re-check turned
@@ -592,6 +719,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   views; the original Ducting ones were already correct. Also corrected the earlier centering figures,
   which had wrongly centered text+line rather than the visible text. Technique in `live-model/core.md` —
   generalises to any "what would this look like if…" question, and never enters the user's undo stack.
+
 - 2026-08-01 — Root cause of the over-long title lines, found when the user pushed back a third time:
   **a script-placed viewport defaults its title line to `boxWidth + 6.4mm`** (exact, all 5 measured),
   vs a hand-set 92.6mm constant on the originals — so bulk `Viewport.Create` on Revit 2020 always leaves
@@ -601,20 +729,26 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `GetBoxOutline()` does NOT refresh mid-transaction after a `CropBox` change even though
   `GetLabelOutline()` does after a parameter change — so such a test must assert the input really changed
   before trusting a "nothing moved" result. All in `live-model/core.md`.
+
+### 2026-08-04
+
 - 2026-08-04 — Built a `/graphify` knowledge graph over the whole Brain (624 nodes, 728 edges, 334 files).
   `graphify-out/` is gitignored — it is derived from `knowledge/`, `scripts/`, `skills/` and goes stale on
   any edit, so it is rebuilt on demand, never committed.
+
 - 2026-08-04 — The graph named `AGENT-SPEC.md` the most-connected cross-topic node, and the reason is the
   duplication its own header has always declared ("intentionally duplicates summary-level facts… the topic
   file wins"). What was missing was *which* rows and *whether they're still true*: 8 of them, in §5.2, §6.4,
   §9.1, §9.2 and §9.3, owned by `live-model/hvac-ducts.md`, `families.md`, `hvac-terminals.md` and `core.md`.
   Now enumerated as a table in `AGENT-SPEC.md`'s header, all 8 verified in sync. Re-check that table when
   any of those four files changes — far cheaper than a full staleness pass over the spec.
+
 - 2026-08-04 — Health check with no Revit available: `npm test` in `mcp-server/` green (3/3), and both
   consistency checkers (`verify-consistency.mjs` and the `.ps1`) agree exactly — 9 skills, 504 links across
   38 files, 264 scripts, no drift. Also confirmed the graph's "45 isolated nodes" warning is structural
   noise, not a documentation gap: it is mostly the ~250 script fragments, each correctly referenced once by
   `scripts/README.md`. Not worth chasing.
+
 - 2026-08-04 — **First live bridge session in a while, and it caught a real bug.**
   `LinkLoadResultType.LinkNotNeeded` does NOT exist on Revit 2020 — the 2026-07-23 static-review flag on
   `action-reload-links.cs` was right, and the fragment could never have compiled ("CS0117"). Fixed to
@@ -622,20 +756,24 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (which value `Reload()` returns for an up-to-date link) marked as such rather than assumed. Lesson worth
   keeping: a fragment that has never been executed even once can carry a plain compile error indefinitely —
   static review flagged it correctly but could not settle it, and only a live compile could.
+
 - 2026-08-04 — `action-add-project-parameter.cs`: every legacy Revit-2020 API surface it uses compiles
   live (`ParameterType.Text`, `BuiltInParameterGroup.PG_DATA`, `ExternalDefinitionCreationOptions`,
   `NewInstanceBinding`/`NewTypeBinding`, both `ParameterBindings` overloads) — checked with method-group
   binding so nothing was invoked and the document was never touched. A reusable technique: bind a method
   group to a `Func<>` to prove an overload exists without calling it.
+
 - 2026-08-04 — 16 of the 17 native MCP tools verified live against a synthetic fixture (4 ducts created in
   an empty scratch model, 2×300x300 and 2×500x400), each mutation re-checked in a SEPARATE later call per
   the `core.md` rule. All passed. Only `delete_elements` is unverified — the session ended before it. New
   gotcha found and filed in `core.md`: a name-based parameter report returns a BLANK column for a parameter
   that does not exist rather than an error, so "Level" on a duct looks like missing data when the real name
   is "Reference Level".
+
 - 2026-08-04 — Open-items list split three ways (any-model / needs-a-fixture / confirmed-impossible). The
   old flat list mixed answered-and-closed items with genuinely-outstanding ones, so it always read as more
   unfinished than it was.
+
 - 2026-08-04 — **Comprehension audit: three things a fresh session would have read wrong.** (1) The fire
   sprinkler skill was missing from `README.md`'s table, `SETUP.md` and both plugin manifests — 9 skills on
   disk, "8 skills" everywhere a reader looks. (2) `AGENT-SPEC.md` §3.5 claimed 206 fragments against 264
@@ -644,6 +782,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   sizes never parsed and every one of them sorted as 0 — quietly breaking the user's own standing
   "never sort a size breakdown by qty" rule. All fixed; the sort now strips non-numeric characters
   generally, so no non-ASCII literal is load-bearing there.
+
 - 2026-08-04 — **`tools/fragment-index.mjs` — makes "reuse before writing new C#" a lookup instead of a
   500-line read.** The rule was never the problem; finding the fragment was. `--find <word>` searches
   every fragment's purpose AND its input fields and reports each hit's proven status; `--show <path>`
@@ -659,6 +798,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   so those 8 inherited a neighbour's verification status and the tool reported 75 proven against
   brain-status's 73. Match the markdown link target `](path)` instead. Both tools now agree exactly —
   which is the point: two tools disagreeing about the same number is the drift this repo keeps producing.
+
 - 2026-08-04 — **`scripts/recipes/build-test-fixtures.cs` — removes the "needs a fixture" blocker.** The
   open items had a whole category that no amount of effort could clear: fragments that can only be tested
   against a model containing something this scratch model doesn't have. This builds what an API can build
@@ -678,6 +818,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `AssemblyInstance.Create` (the assembly fragment only ever read assemblies), `EnableWorksharing`, and
   the `GroupType.Name` setter. Header says to run the groups one at a time first and leave worksharing
   off until the rest is proven.
+
 - 2026-08-04 — **`tools/verify-fragments-compile.ps1` — compile-check all 266 fragments without opening
   Revit.** Closes the gap that let `action-reload-links.cs` carry `LinkLoadResultType.LinkNotNeeded` — an
   enum member that does not exist on 2020 — for months: static review flagged it and could not settle it,
@@ -695,6 +836,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Validated as far as possible without Revit: parses clean under PowerShell, and `-DryRun` generated all
   266 wrappers with zero duplicate `sb` declarations and correct per-fragment injection. The compile
   itself is unrun — that needs a machine with Revit installed.
+
 - 2026-08-04 — **`scripts/lib/prelude.cs` — the shared toolkit the library never had.** Measured first:
   150 of 264 fragments carry their own `Transaction`+rollback, 136 their own collector setup, 80 their
   own `DisplayUnitType` call, 38 their own parameter lookup. The prelude holds `InTransaction`/
@@ -715,6 +857,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   brain-status, so the prelude cannot drift out of the index (verified by breaking the count).
   Sequencing decision recorded: migrating existing fragments waits for the C# compile check, because
   refactoring the 147 that have never been run would leave no way to tell a new break from an old one.
+
 - 2026-08-04 — **`hvac-ducts.md` split three ways; `tagging.md` and `universal-actions-reference.md`
   reviewed and deliberately kept whole.** The 379-line duct file was three different jobs sharing a
   filename, so it became `hvac-ducts.md` (drawing/branching/connecting, 228), `hvac-duct-sizing.md`
@@ -732,6 +875,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   that means scanning all of it. Both now carry a `split-review: kept whole` marker recording the
   reasoning, which `brain-status.mjs` reads so the file stops being flagged and the decision doesn't get
   re-argued every time someone notices the line count.
+
 - 2026-08-04 — **`tools/brain-status.mjs` — one honest answer to "what is the state of this Brain?"**
   Counts, how much of the library has actually been run against a real model, open items, oversized
   files, and drift, all computed from disk on every run and stored nowhere, because the recurring
@@ -741,12 +885,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the user's call, 2026-08-04: **warn and keep working** — report what's unproven, never block. First run
   surfaced three knowledge files past the repo's own ~300-line split rule (`hvac-ducts.md` 379,
   `tagging.md` 325, `universal-actions-reference.md` 309).
+
 - 2026-08-04 — **19 fragment `// SOURCE:` headers pointed at nothing.** Every recipe/command/context/
   creator fragment used `../knowledge/...` where its folder depth needed `../../knowledge/...`, and two
   `actions/*/` ones needed `../../../`. That header is how an agent gets from a piece of code to the
   reasoning behind it, so following one landed on a missing file. They are plain C# comments rather than
   markdown links, which is exactly why check 2 never saw them. All 19 repaired by recomputing each path
   from its real location, and check 7 added to both verifiers — 50 refs now checked every run.
+
 - 2026-08-04 — **The edit hook had never once fired in a non-Windows session.** `.claude/settings.json`
   hardcoded `powershell`, so on Claude Code for web (and any Linux/macOS container) the PostToolUse hook
   silently did nothing — no warning, no output. An entire session of ~18 edits went through with zero
@@ -756,6 +902,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Node is the safer dependency: this repo already requires it for the MCP relay, and it exists on all
   three platforms. The `.ps1` wrapper is kept for a Windows machine with no Node on PATH. Lesson worth
   keeping: a guard that fails silently on a platform is worse than no guard, because it reads as passing.
+
 - 2026-08-04 — Routing spot-check by walking one real question ("what is the maximum duct size used?")
   end to end. The routing itself is fine — START-HERE → `ajtools-live-model` → `model_summary` fast path,
   2-3 files read out of 264 scripts and 38 documents, no folder scan. But the question is ambiguous in a
@@ -765,6 +912,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   "size" entry — so a fresh session would have routed fast and then answered confidently wrong. Entry
   added. Worth repeating as a technique: pick a real question, walk it, and see what the router actually
   lands on.
+
 - 2026-08-04 — `verify-consistency.ps1`/`.mjs` grew checks 4-6, because checks 1-3 could not see any of
   the three problems above: skill coverage in the entry docs, AGENT-SPEC's fragment counts vs disk, and a
   mojibake scan. The encoding check builds its patterns by *simulating* the corruption (UTF-8 encode, then
@@ -772,17 +920,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   own source. Each of the six checks was proven to fire by deliberately re-introducing the defect, in both
   the Node and PowerShell versions, then reverting. Also found while testing: `Get-ChildItem -Recurse`
   needs `-Force`, or PowerShell skips dot-directories on Linux/macOS and never scans `.claude-plugin/`.
+
 - 2026-08-04 — Node **is** installed on Ajmal's Windows machine (v24.18.0, at
   `~/Documents/node-v24.18.0-win-x64/node.exe`) but was **not on PATH**, so both hooks in
   `.claude/settings.json` failed to launch and the per-edit drift check silently never ran. Both `.mjs`
   tools worked fine when called with the full path — the fix was a PATH entry, not an install.
   **Resolved same day:** that folder was appended to the user PATH, so the hooks work in any terminal
   started afterwards. The `.ps1` wrapper stays as the fallback for a machine without Node on PATH.
+
 - 2026-08-04 — graphify's AST pass returns **0 nodes** on this machine: every `ProcessPool` worker dies
   ("terminated abruptly") and the failure reads as an empty corpus rather than an error. Call
   `graphify.extract.extract(..., parallel=False)` — serial extraction gave 94 nodes from the same 34
   files that had just produced zero. Same shape as the hook bug above, and the recurring lesson of this
   whole log: a silent zero looks exactly like a clean pass.
+
 - 2026-08-04 — **A `.ps1` saved as UTF-8 *without* a BOM does not run on Windows PowerShell 5.1.** PS 5.1
   assumes ANSI for a BOM-less script, so an em dash (`—`, UTF-8 `E2 80 94`) is read as `â€"` — and that
   final byte is cp1252 `0x94`, a **smart right double-quote, which PowerShell accepts as a string
@@ -794,12 +945,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   content is byte-identical otherwise. This is the same PS 5.1 ANSI assumption already logged for
   `Get-Content`/`Set-Content` bulk edits — but it bites *executing* a script, not just editing one. Rule:
   **any `.ps1` in this repo that contains a non-ASCII character must be saved with a UTF-8 BOM.**
+
 - 2026-08-04 — With that fixed, `verify-fragments-compile.ps1` ran for the first time (Revit 2020 + VS 2022
   Roslyn): **259 of 267 fragments compile.** It immediately earned its keep by finding two more Revit 2020
   API gaps of exactly the `LinkNotNeeded` kind — `View.AnnotationCropActive` and
   `ScheduleDefinition.SetKeyName` — plus a variable-shadowing bug and a plain syntax error that had sat in
   the library unnoticed. 4 of the 8 failures are harness artifacts, not fragment bugs; see the Open items
   list above for which is which before touching anything.
+
 - 2026-08-04 — **267 of 267 fragments now compile.** The 4 real bugs are fixed: `t` renamed to
   `tIntersect` in `action-fillet-elements` (the Transaction `t` sat inside its scope), a stray
   `using Autodesk.Revit.DB;` deleted from `create-parametric-box-family-...` (a using DIRECTIVE is illegal
@@ -809,6 +962,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **both API gaps were already wrapped in a `try/catch` that could never help**, because a missing member
   is a compile error, not a runtime exception — the fragment never built at all. A `try` around an API you
   are unsure of buys nothing; only a compile proves it exists.
+
 - 2026-08-04 — The harness had 2 bugs of its own, which is why 4 "failures" were never real. Its
   `declaresElements` test required an `=`, so `List<Element> elements;` (no initialiser — 3 filters use
   exactly that) read as "does not declare", and it injected a second one on top: CS0128 three times. Now
@@ -816,35 +970,43 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   to paste `lib/prelude.cs` first; the harness now prepends the prelude for that one file, which turns a
   guaranteed false failure into the first real proof that the prelude and its smoke test agree. Lesson:
   when a checker reports failures, confirm the checker is right before touching the code it accuses.
+
+### 2026-08-06
+
 - 2026-08-06 — New `semantic-index/`: plain-English (semantic) search over `skills/`, `knowledge/`,
   `scripts/` and the 5 root docs (incl. `CLAUDE.md`) — 306 files, Python + ChromaDB, fully offline after
   a one-time model download. **Additive** — it sits beside `tools/fragment-index.mjs` (keyword) rather
   than replacing it; use keyword when you know the word, semantic when you only know the job. Ask with
   `semantic-index/ask-brain.cmd "question"` (add `--area fragment` for C# — prose files outrank fragments
   otherwise); rebuild with `semantic-index/index-brain.cmd`, ~80 s.
+
 - 2026-08-06 — **The semantic index is a snapshot and goes stale silently** — it keeps returning the old
   text after any edit to `skills/`, `knowledge/` or `scripts/`, with no warning. Rebuilding is part of
   finishing a Brain edit, the same way updating `scripts/README.md` is. Every run rebuilds from scratch
   on purpose, so renamed and deleted files leave no ghosts (same reasoning `.gitignore` already applies
   to `graphify-out/`). Only its `.py`/`.cmd`/`.md`/`.txt` are committed; venv, model and database are
   ignored.
+
 - 2026-08-06 — `semantic-index/` deliberately writes **nothing** to `%TEMP%`: the venv, ChromaDB, the
   embedding model and Python's own temp are all forced inside the folder by `brain_common.py`, and this
   was verified after the build. Reason: `tools/verify-fragments-compile.ps1` writing ~267 unsigned DLLs
   into `%TEMP%` is what Sophos flags as `ML/PE-A`. Any future tool added to this repo should assume the
   same constraint rather than rediscover it — on a company-managed endpoint, a temp folder full of
   freshly written binaries is the trap, not the specific tool that wrote them.
+
 - 2026-08-06 — `semantic-index/` got a **hybrid** search (`ask-brain-hybrid.cmd`,
   `brain_search_hybrid.py`): meaning + exact words merged by Reciprocal Rank Fusion, because closeness
   (0-100) and BM25 (unbounded) cannot be added meaningfully — each list votes by position instead.
   `brain_search.py` is deliberately left untouched as the semantic-only baseline to compare against.
   Routed from `CLAUDE.md` and `START-HERE.md` so a session actually finds it.
+
 - 2026-08-06 — **What hybrid fixed, and the rule behind it.** Semantic alone answered "how many diffusers
   do I need in this room" with the *sprinkler* files: the shape of the question ("count devices in a
   room") outweighed the single word naming the device. Adding exact-word matching weighted by **rarity**
   put `ajtools-hvac-terminal-layout` first — "diffuser" is in 12 files, "room" in 57, so diffuser earns
   ~2x the weight. Generalise: when two jobs share a shape, the discriminating word is rare, so rarity is
   the signal to trust, not similarity.
+
 - 2026-08-06 — **`tools/fragment-index.mjs` only reads `scripts/*.cs`** — it can never surface a skill or
   a knowledge note. Any ranking signal built on it therefore promotes fragments *only*, and must be gated
   to genuinely rare words. Ungated it buried the answering skill under `create-rooms-in-enclosed-regions.cs`
@@ -852,6 +1014,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   *before* removing stopwords let "this" survive as "thi" and match inside "within"/"something"; and a
   threshold derived from per-FILE counts (room = 19%) was applied to per-CHUNK counts (room = 8%) and let
   it through. Fixed with a self-tuning rule — only the rarest words in a given question qualify.
+
 - 2026-08-06 — **Hybrid search measured by independent testers, not by its author: 24 questions written
   in a modeller's own words → 13 good, 3 acceptable, 8 wrong.** Tuning a retrieval tool on the questions
   you invented while building it proves nothing; this is the number that counts. Three mechanical causes
@@ -861,6 +1024,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   match by WHERE it landed (`PURPOSE`/prose full weight, `INPUTS` 0.45, code body 0.35), drop bare numbers,
   and match the fragment-index signal against PURPOSE only. Re-tested: 2 failures fixed, 1 borderline
   improved to correct, **0 regressions** across 6 known-good questions.
+
 - 2026-08-06 — **The remaining failures are vocabulary, not ranking, and reranking cannot fix them.**
   "add 4 more floor levels" → `create-floor.cs` (the slab creator, actively wrong); "how many light
   fitting" → matched "light hazard"; "take my door schedule out to excel" → missed
@@ -869,6 +1033,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   [`glossary.md`](glossary.md) IS the user's-terms → Revit-terms map. Expanding a query through it before
   searching is the obvious next build. Until then the honest instruction is **read the top 3-5, not just
   #1** — the right file was usually still in that window.
+
 - 2026-08-06 — **The semantic index now tells you when it has gone stale**, instead of answering
   confidently from an older copy of the Brain. `brain_index.py` writes `index-manifest.json` (a content
   hash per indexed file) after every successful build, and every hybrid search compares the Brain on disk
@@ -877,12 +1042,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   warning that cries wolf is one you learn to ignore. It warns rather than blocks — the results still
   print, they are just from the old picture. Verified by adding a file, changing a file, and confirming
   silence when current.
+
 - 2026-08-06 — **Worth being clear about what is NOT automatic here.** Nothing in this Brain rebuilds
   itself on a timer, and no mechanism decides that a finished job was "worth saving" — that judgement is
   the standing discipline in `START-HERE.md`, carried out by whoever is working, not by machinery. The
   staleness banner is deliberately the smaller, reliable thing: it cannot make you rebuild, it can only
   make forgetting impossible to do quietly. Auto-rebuilding on every file edit was considered and
   rejected — at ~80 s a rebuild, a session touching ten files would spend fifteen minutes re-indexing.
+
 - 2026-08-06 — **Nine `context/` fragments live-verified** against a real open model (Revit 2020,
   `Project1`): active-view, project-units, all-warnings, workset-info, model-categories, used-families,
   design-options, levels-and-grids, linked-models. Proven count 73 → 82. Real finding worth keeping:
@@ -890,22 +1057,26 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   such as "flow direction mismatch" and "No Loss Defined" name no element, so never assume every warning
   row points at something you can select. Four of the nine only exercised their *empty* branch (no
   worksets, no links, no design options); their README rows say so rather than claiming full proof.
+
 - 2026-08-06 — New [`site-vocabulary.md`](site-vocabulary.md): a plain table of site word → Revit word,
   read **live** by the hybrid search (no rebuild needed, so a new row works immediately). It rewrites the
   question before searching — "out to excel" → "export csv schedule". Measured on the 4 vocabulary
   failures: 1 fixed outright (the Excel one, now #1), 1 moved to #2, 1 had its *harmful* top hit removed
   (`create-floor.cs`, the slab creator, no longer answers "add 4 more floor levels"), 1 unchanged. Zero
   regressions across 6 known-good questions.
+
 - 2026-08-06 — **Two rules learned building that table, both recorded inside it.** (1) The matched phrase
   must be REPLACED, not merely supplemented: adding "level" while leaving "floor" in the question still
   returned the slab creator, because the misleading word goes on misleading. (2) **A row earns its place
   by being narrow.** `drawing → view sheet` looked reasonable and made things worse — it fires on almost
   any question, and it buried `filter-by-tag-status.cs` under a view-template fragment. Rejected rows are
   kept in the file with the reason, so they are not helpfully re-added later.
+
 - 2026-08-06 — **Rebuilding the semantic index is now 2-4 s instead of 80 s.** `index-brain.cmd` re-reads
   only the files whose content hash moved (nothing changed 2.3 s · one changed 2.8 s · one added 3.9 s ·
   one deleted 2.7 s · full 79 s). `--full` forces a complete rebuild. This is what makes rebuilding cheap
   enough to do every single time, which was the whole objection to it being a manual step.
+
 - 2026-08-06 — **Two safeguards make the fast path trustworthy, and both are the interesting part.**
   (1) *Ghosts*: a file that made 12 chunks and now makes 8 would leave 4 orphans — text existing nowhere
   in the Brain, still answering questions. Every chunk of a changed file is deleted (by its `path`
@@ -917,6 +1088,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   confirming the removed text was gone, and by an incremental index reporting the **same 2,540 chunks as
   a full rebuild**. Generalise: any cache keyed on "what changed" needs a second key for "what the rules
   were", or it will happily serve results built under rules that no longer exist.
+
 - 2026-08-06 — **Live-verifying `filter-by-category.cs` found a real silent-zero bug in 4 files.** The
   "which level is this element on?" fallback chain never tried `RBS_START_LEVEL_PARAM`, and on a Duct the
   other four parameters are **not present on the element at all** — so every MEP curve resolved to
@@ -926,12 +1098,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `filters/by-identity/filter-by-category.cs`, `filters/by-location/filter-by-elements-on-level.cs`,
   `actions/reporting/action-report-parameters.cs`. Full probe table in
   [`live-model/core.md`](live-model/core.md).
+
 - 2026-08-06 — **The lesson is about how it failed, not what was wrong.** A missing level resolves to
   `InvalidElementId`, and a comparison against it is simply false — so the bug could only ever produce an
   empty result, never an error. That is why it survived a compile check, a 267-fragment compile pass and
   months of review: nothing looks wrong about "0 elements found". **Any filter that can return zero needs
   its zero questioned once against real elements you know exist** — running it and seeing "0" is not
   verification, it is the bug.
+
 - 2026-08-06 — **Content hashes in this repo must flatten line endings first.** The new incremental index
   keys off content hashes; committing the indexer flipped its own line endings LF→CRLF (git
   `core.autocrlf`, this repo is CRLF), every byte-level hash moved without a word changing, and the next
@@ -940,11 +1114,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   check that reads raw bytes will fire spuriously the first time git touches the file** — the same class
   of trap as the PowerShell UTF-8 round-trip already recorded above, and it also shows up as a diff far
   larger than the edit actually made.
+
 - 2026-08-06 — **Filters live-verified against a real model** (`Project1`, Revit 2020): `filter-by-levels`
   (case-insensitivity confirmed with a lowercase term, ascending order asserted), `filter-by-id-list`
   (4 real Ids + 1 bogus — reports found/missing, does not throw), `filter-by-warnings` (9 elements via a
   description filter), `filter-by-connection-status` (**both** branches across 3 categories). Proven count
   73 → 87 across the session.
+
 - 2026-08-06 — **The verification method that actually catches things, now used as standard.** Two habits
   earned their place: (1) **prove a zero is real** — every filter run alongside a deliberately
   non-matching term, so "0 results" is demonstrated rather than assumed (this is what the
@@ -954,11 +1130,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   independently: its 9 open-ended elements were exactly the 9 that `filter-by-warnings` found via
   "open connector". **Two fragments reaching the same physical fact by different routes is worth more
   than either one returning a plausible number.**
+
 - 2026-08-06 — Branches only exercised on their empty/absent path are now recorded as such in
   `scripts/README.md` rather than being marked proven — `filter-by-warnings`'s `errorsOnly` (this model
   has 0 Error-severity warnings), and the workset/link/design-option branches of the `context/` set.
   **A half-tested fragment recorded as proven is worse than one recorded as unknown**, because the next
   session stops checking.
+
 - 2026-08-06 — Two more filters verified, both worth the depth. `filter-by-category-and-numeric-param`
   (the "500mm duct" filter the Brain's own worked example is built on) — **all four comparison modes**
   eq/gte/lte/between, `parameterName` swapped to Width, an absent parameter (Diameter → skipped, no
@@ -967,11 +1145,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `filter-by-multiple-categories` — both scopes, and **dedupe proven by listing one category three times
   and getting 3, not 9**, which is the only way to show a `HashSet<UniqueId>` is actually doing its job.
   Proven count now 89.
+
 - 2026-08-06 — Four more filters verified, taking the count to **93** (73 at session start).
   `filter-by-category-name` (display-name → Id -2008000 → 3 ducts, cross-checked against a
   `BuiltInCategory` baseline that never touches the name), `filter-by-phase` (3 ducts on "New
   Construction"), `filter-by-pin-status`, `filter-by-views` (2 of 35 View-class elements — the part worth
   proving is that it **excluded all 16 view templates and the 1 schedule**).
+
 - 2026-08-06 — **A better way to prove a two-branch filter: change the model, watch it flip, roll back.**
   `filter-by-pin-status` returned "3 unpinned" — true, but equally what a filter that ignores pinning
   entirely would return. So the test pinned one duct inside a `Transaction`, confirmed the counts moved
@@ -979,24 +1159,29 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   proven to track real state rather than to be accidentally right. **Use this wherever a boolean filter's
   "off" state is the model's default** — otherwise the passing result and the broken result are the same
   number.
+
 - 2026-08-06 — **The test model was extended rather than the untestable filters being skipped.** A Room
   (enclosed, 273 m²), a Pipe (5000 mm, 50 mm) and a named Group (`MEP_TestGroup_Terminals`, 5 members)
   were added to `Project1`, unlocking filters that had no reachable main path. `filter-by-room` and
   `filter-by-group` verified immediately after. **Fifteen filters were blocked purely by an empty model,
   not by anything wrong with them** — building the fixture is cheaper than leaving a third of the library
   permanently unprovable, and `scripts/recipes/build-test-fixtures.cs` exists for exactly this.
+
 - 2026-08-06 — **`filter-by-room`'s result is proven by geometry, which is the standard to aim for.**
   It returned 4 of 5 air terminals; the fifth sits at y=15862 while the enclosing wall loop tops out at
   y=12862, so it is genuinely outside. A bare "4 of 5" would have been a plausible number and nothing
   more — printing each terminal's coordinates and in/out verdict is what turns it into evidence. Note the
   fragment tests with the ROOM's Z, not the element's, which is why terminals at Z=0 still resolve.
+
 - 2026-08-06 — Placing that Room also re-confirmed the MEP level finding from earlier today: the new Pipe
   reports its level through `RBS_START_LEVEL_PARAM` (= 311), exactly as the fixed fallback chain now
   expects. Ducts and pipes behave the same way here.
+
 - 2026-08-06 — **The test model became a workshared local file** (`Project1_ajmal.al.rvt`, 2 user
   worksets), which unlocked the last branch of `context-workset-info` and all of `filter-by-workset` —
   both now verified. `filter-by-workset` passed a semantic check, not just a count: "Shared Levels and
   Grids" returned exactly the 4 grids and 2 levels, which is precisely what that workset is for.
+
 - 2026-08-06 — **Second API gotcha of the day, same shape as the level one: `ELEM_PARTITION_PARAM` is an
   INTEGER.** `.AsString()` returns `null`, which reads exactly like "this element has no workset" —
   a probe written earlier in this very session fell for it. Use `.AsValueString()` for the name,
@@ -1004,16 +1189,19 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   code treating `0` as unset silently drops every element on the default workset. Full table in
   [`live-model/core.md`](live-model/core.md). Both of today's gotchas share a lesson: **when a Revit read
   returns null or zero, confirm the parameter's `StorageType` before concluding the model is empty.**
+
 - 2026-08-06 — Test fixture extended again: a **door** (loaded `M_Door-Single-Flush_Panel_Double-Acting`
   from the metric library, hosted in wall 918932) and an **RVT link**. For the link a small purpose-made
   `MEP_TestLink.rvt` was created rather than linking any of the real project files sitting in the same
   folder — those are 200-300 MB of live work and have no business being pulled into a test fixture.
   `filter-by-host`, `filter-by-links` and the links branch of `context-linked-models` all verified.
   Proven count now **99**.
+
 - 2026-08-06 — **`filter-by-host`'s zero is the good kind, and it is worth copying the shape.** It found
   1 hosted element on wall 918932 and **0 on a different wall in the same run**. The same code, same
   model, one wall apart — so the 0 cannot be a broken lookup. Pairing a positive and a negative case in
   one execution is stronger than any amount of reasoning about why a zero might be trustworthy.
+
 - 2026-08-06 — **Design Options cannot be created through the Revit 2020 API.** `DesignOption` exposes
   exactly one static method, `GetActiveDesignOptionId`; there is no `CreateDesignOptionSet` and nothing
   option-related on `Autodesk.Revit.Creation.Document`. Established by **reflecting over the type and
@@ -1021,6 +1209,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   separates "this build lacks the method" from "I got the name wrong", definitively. Design Options
   therefore have to be made by hand in Manage → Design Options before `filter-by-design-option` and
   `action-set-design-option` can ever be proven.
+
 - 2026-08-06 — Ajmal created the option sets by hand, and verifying `filter-by-design-option` against
   them **found a third silent-wrong-answer bug, now fixed live**. Revit names the primary option of
   *every* option set `"Option 1 (primary)"` — so a model with 3 sets has 3 identically-named options. The
@@ -1028,12 +1217,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `designOptionSetName` and **refuses to resolve an ambiguous name**, listing the candidate sets instead.
   Verified across 6 cases: refuses when ambiguous, resolves to the correct distinct Id when the set is
   given, still handles Main Model, and reports name-right/set-wrong as not-found.
+
 - 2026-08-06 — **A default name that Revit assigns automatically is the most dangerous kind of lookup
   key**, because duplicates are the norm rather than the exception. `"Option 1 (primary)"` is the clear
   case, but the same reasoning applies to `"Level 1"`, `"Workset1"` and any other Revit-generated
   default: **match on Id where one is available, and when matching on a name, check how many things
   answer to it before using the first.** Three of today's four bugs were a lookup that could not fail
   loudly — it returned the wrong thing, or nothing, and said success either way.
+
 - 2026-08-06 — **Elements cannot be moved into a Design Option through the API — all six routes are
   read-only** (`Element.DesignOption`, `DESIGN_OPTION_ID`, `DESIGN_OPTION_PARAM`, `View.DesignOption`,
   the view's "Design Option" parameter, and there is no `Document` setter). Established by reflection,
@@ -1042,15 +1233,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   status bar — so the user picks it there, and the bridge then creates elements straight into it. Moving
   *existing* elements stays UI-only (Manage → Design Options → Add to Set). Table in
   [`live-model/core.md`](live-model/core.md).
+
 - 2026-08-06 — `filter-by-length` verified (all four modes against lengths printed first, plus walls, so
   three separate zeros are checkable) and `filter-by-tag-status` verified **on both branches by changing
   the model**: 3 untagged / 0 tagged → create a tag in a transaction → 2 / 1 → roll back → 3 / 0. Proven
   count **102**. This is the second filter where the "off" branch was only meaningful once the model was
   changed and put back — worth treating as the default technique rather than a special case.
+
 - 2026-08-06 — Nine more filters verified in one pass, taking the count to **111 (42%)** and filters
   specifically to **36 of 49**: `filter-by-family`, `filter-by-types`, `filter-by-family-type`,
   `filter-by-grid`, `filter-by-view-templates`, `filter-by-current-selection`,
   `filter-by-category-and-family`, `filter-by-parameter-exists`, `filter-by-insulation-status`.
+
 - 2026-08-06 — **The change-it-then-roll-it-back technique is now the house style, used three times
   today.** `filter-by-pin-status`, `filter-by-tag-status` and `filter-by-insulation-status` all read
   "everything is off" on a fresh model — which is *exactly* what a filter that never matches also
@@ -1058,43 +1252,51 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   wrap 25 mm of Duct Wrap on a duct), confirming the counts flipped, then `RollBack()`. The model is left
   byte-identical every time. **Any boolean filter whose "off" state is the model's default needs this**;
   reading the default and calling it proof is not a test.
+
 - 2026-08-06 — Two other checks worth copying. `filter-by-category-and-family` has a LINQ name path and a
   `FamilyInstanceFilter` path — **running both and getting the same 5 elements by different mechanisms**
   is stronger than either alone. And `filter-by-parameter-exists` demonstrates its three modes rather
   than describing them: `Width` → has 3 / hasvalue 3 / missing 0, while blank `Comments` → has 3 /
   hasvalue 0 / missing 3. The contrast IS the proof that `has` and `hasvalue` differ.
+
 - 2026-08-06 — **This morning's `RBS_START_LEVEL_PARAM` fix is now proven end to end.**
   `filter-by-elements-on-level` returns 3 ducts and 1 pipe on Level 1 — **both were 0 before the fix** —
   plus 8 walls through the never-broken Wall branch, and 0 on Level 2, which is a proven zero because the
   same code gives 3 on Level 1. The bug was found, fixed in 4 files, and closed out against a real model
   in one session. Proven count **114 (43%)**, filters **39 of 49**.
+
 - 2026-08-06 — `filter-by-linked-model-elements` verified, and the check is worth repeating whenever
   something claims to read a *different* document: the link reports **1 level while the host has 2**.
   A matching number would have proved nothing — it is the mismatch that shows it genuinely crossed into
   the linked document instead of quietly re-reading the host. Also `filter-by-size` (both the Size-text
   and numeric branches, rectangular and round).
+
 - 2026-08-06 — **Filters finished: 46 of 49 proven**, overall count **121 (45%)**, up from 73 at the start
   of the day. The last seven — `filter-by-material`, `filter-by-schedules`, `filter-by-insulation-type`,
   `filter-by-region`, `filter-by-element-intersection`, `filter-by-unenclosed-spatial-elements`,
   `filter-by-assembly` — all needed the model changed and put back, which is now routine rather than
   notable.
+
 - 2026-08-06 — **`filter-by-element-intersection` confirms its own header the hard way.** It reports 0 for
   a door against its host wall, and 0 for ducts joined at a connector — both correct, because hosting
   *cuts* an opening and connecting *abuts*; neither is volumetric overlap. Proving that required
   manufacturing a real one: a duct copied 100 mm sideways inside a transaction, each finding the other
   symmetrically, while a second copy 50 m away was correctly ignored. **A filter that returns 0 on every
   natural case in a model can only be proven by creating the unnatural one.**
+
 - 2026-08-06 — Two API details worth keeping. `Document.Create.NewRoom(Phase)` is the unplaced-room call —
   `NewRoom(null, null)` does not compile (ambiguous between `NewRoom(Room, PlanCircuit)` and
   `NewRoom(Level, UV)`). And a freshly created `AssemblyInstance` has an **empty `Name`** until its type
   is named, with `AssemblyTypeName` throwing "No valid type for the assembly instance" — so
   `filter-by-assembly`'s name path stays unproven while its Id path is verified.
+
 - 2026-08-06 — **Three filters end the day genuinely unprovable, and they are recorded as such rather
   than quietly skipped:** `filter-by-electrical-system` (no electrical content of any kind),
   `filter-by-subcomponents` (needs a family with nested shared components), `filter-by-scope-box` (no
   Scope Box, and no API to create one). Also `filter-by-schedules`' template/`<...>` exclusion branch,
   which never ran because the model had none of either — the fragment is marked verified, but that
   limitation is written into its row.
+
 - 2026-08-06 — **`brain-status` was under-reporting, and the cause is worth knowing.** `statusOf()` in
   `tools/fragment-index.mjs` decides "verified" with `/verified 2026/` — a literal, case-sensitive test.
   `connect-equipment-to-air-terminals.cs` read **"✓ verified live 2026-07-26"**, and the word *live*
@@ -1104,12 +1306,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   reworded to the canonical form rather than loosening the regex — **one strict format that is easy to
   check beats a clever matcher**. When adding a row, write exactly `✓ verified YYYY-MM-DD`, with any
   qualifier *after* the date.
+
 - 2026-08-06 — Five `commands/` verified (`clear-selection`, `regenerate`, `zoom-to-fit`, `activate-view`,
   `unhide-all-active-view`), plus `native-undo` re-verified and finally dated. **`PostCommand` is
   asynchronous** — it runs after the API context ends, so the undo cannot be checked in the same call
   that posts it. Proved by committing a throwaway duct copy, posting Undo, and confirming in a *later*
   call that the copy was gone while the room, pipe, group, door, link and 6 design options all remained.
   Count **128 (48%)**.
+
 - 2026-08-06 — **Sixth silent bug, and the level problem has a second half nobody had noticed.**
   `action-count-by-group.cs` grouped by `"Level"` and answered `None | 3` for ducts that are provably on
   Level 1. Cause: it did `LookupParameter("Level")`, and **a Duct's parameter is called "Reference
@@ -1119,22 +1323,26 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   half. Fixed with the same fallback chain the filters use: ducts, walls, pipes and terminals now all
   report Level 1, and Family / Family and Type / Category / Comments / Width were re-checked for
   regressions. Table in [`live-model/core.md`](live-model/core.md).
+
 - 2026-08-06 — **A verification harness can invent a bug that is not there.** While regression-checking
   the above, a trimmed copy of `groupKey` reported "Family" as a *type* name and it briefly looked like a
   second defect. It was not — the trimmed harness had dropped the fragment's own `Family` branch.
   Re-running the complete code gave `M_Supply Diffuser: 5`, correctly. **When a harness paraphrases the
   fragment instead of pasting it, a failure is at least as likely to be in the harness — re-run the real
   thing before reporting a bug.**
+
 - 2026-08-06 — First three `actions/reporting/` verified by **composing them after a filter**, which is
   how they are meant to be used: `action-count-and-report` (with the `preferredParamName` reorder the
   header warns about), `action-count-by-group`, `action-report-location` (all three location branches,
   and the `maxRows` truncation notice). Two actions were also chained after a single filter with no
   variable collision. Count **131 (49%)**.
+
 - 2026-08-06 — **The Open items list had gone stale in two ways, and one of them was a counting bug.**
   Item 1 under "needs Ajmal's machine" *began with the word DONE* and said "nothing outstanding here" —
   but `brain-status` counts list entries, not their contents, so a finished job was reported as open for
   two days. Rewritten as a standing task outside the numbered list; that bucket now reads 0. **A list
   whose items are counted must not contain finished items, however clearly they are labelled.**
+
 - 2026-08-06 — The other staleness: the fixture-blocked bucket still named worksharing, Design Options,
   links and insulation as blockers **after they had been cleared the same day**. Most were unblocked by
   *building the fixture* rather than waiting for a project model, and the rest by create-then-rollback,
@@ -1143,17 +1351,22 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   API), and the PDF print go-ahead. **The lesson is the general one this repo keeps relearning: a
   blocker list is only useful if it is edited on the day the blocker clears**, otherwise it quietly
   argues against work that is already possible.
+
 - 2026-08-06 — Also refreshed today: the knowledge graph (`graphify-out/`, 849 → **955 nodes**, 1,085
   edges) and its Obsidian vault (1,145 → **1,257 notes**), both of which had been stale since
   2026-08-04. Worth noting for anyone rebuilding: graphify's `--update` needs `build_merge` to fold the
   new extraction into the existing graph — building from the changed subset alone produced 307 nodes and
   its shrink-guard correctly refused to overwrite 849. **The guard caught an operator error, which is
   exactly what it is for.**
+
+### 2026-08-07
+
 - 2026-08-07 — New knowledge file `live-model/geometry-and-transforms.md`: transforms that silently do
   NOTHING while reporting success. `MoveElement` and `RotateElement` return normally and change nothing
   on a pinned element or group member; `CopyElement` on the same elements works fine — so "it's grouped"
   is not a blanket answer. Also records why mirroring connected MEP in place re-fits instead of
   reflecting. Found while verifying `action-find-duplicates.cs`, whose zero refused to flip.
+
 - 2026-08-07 — Verification pass, actions/reporting + qa-checks + move-copy-rotate: **3 real bugs fixed**
   — `action-move-elements.cs` and `action-rotate-elements.cs` both counted "the API didn't throw" as
   "it worked" (they reported moving/rotating 5 grouped terminals that never budged), and
@@ -1161,18 +1374,21 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   does not exist. All three now verify against the model itself. `action-flip-elements.cs` and
   `action-report-element-ownership.cs` came off the blocked list — the fixture now has a door and is
   workshared, so both positive paths ran for the first time.
+
 - 2026-08-07 — Second half of the verification pass (visibility, colour-graphics, parameters-naming,
   structural-changes, prelude). Two more bug classes fixed: `SetCategoryOverrides` silently discards the
   cut line and surface fill on a non-cuttable category (Ducts/Pipes/Air Terminals), and **`Parameter.Set()`
   returns a bool that four fragments were throwing away** — Revit refuses a value by returning false, not
   by throwing, so `Set(0.0)` on a duct's Width reported success and changed nothing. `lib/prelude.cs`
   finally ran: every helper PASSed via `examples/prelude-smoke-test.cs`, after 3 days unproven.
+
 - 2026-08-07 — `action-duplicate-view-template.cs` rewritten: it could never have worked (its own
   `CanViewBeDuplicated` guard returns false for every template, and bypassing it throws). The working
   technique — `ElementTransformUtils.CopyElements` plus a second transaction for the rename, because
   Revit auto-suffixes the copy — **was already written down in `live-model/views.md` on 2026-08-01 and I
   re-derived a worse one before finding it.** Standing lesson, and the reason `ask-brain-hybrid` exists:
   search the Brain before writing C#, including when you are only "fixing" a fragment.
+
 - 2026-08-07 — **Adversarial code-read of the 40 still-unverified fragments** (11 parallel readers, no
   bridge access — the bridge takes one connection at a time, so all live runs stayed serial in the main
   thread). They were given the 6 bug shapes already found this session and asked to find the same shapes
@@ -1221,21 +1437,25 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   - `action-duplicate-views.cs` — **[checked live 2026-08-07]** 1.
   - `action-apply-view-template.cs` — **[checked live 2026-08-07]** 1.
   - `action-remove-view-template.cs` — **[checked live 2026-08-07]** 1.
+
 - 2026-08-07 — All four MEP creators fixed: an MEP size can be **accepted AND changed**. `Set()` returns
   true and Revit snaps the value to the type's size table — a pipe asked for 77 mm came out 80 mm — so
   honouring the bool is necessary but not sufficient; only a read-back tells you what the model holds,
   and it must come **after `Document.Regenerate()`** because straight after `Set()` the parameter still
   echoes the request. Filed in `live-model/core.md` beside the `Parameter.Set()` bool note.
+
 - 2026-08-07 — Housekeeping worth knowing: `brain-status` reads a row's "NOT yet live-verified (date)"
   clause as authoritative even when a later "verified 2026-08-07" appears in the same row, so four
   fragments stayed uncounted until the stale clause was removed. **When recording a verification, delete
   the old not-verified claim rather than appending past it.**
+
 - 2026-08-07 — `create-view.cs` section mode fixed: a `BoundingBoxXYZ` starts with an IDENTITY Transform
   and `CreateSection` reads the look direction from its `BasisZ`, so every "section" this produced looked
   straight DOWN — `ViewDirection (0,0,-1)`, a plan-shaped cut — while reporting success. **`views.md` had
   specified the required right-handed basis since before this session; the fragment just never built it.**
   Second time today the Brain already held the answer (see the `duplicate-view-template` entry). The
   standing lesson stands: search the Brain before writing or fixing C#.
+
 - 2026-08-07 — Verification housekeeping worth knowing: **a rolled-back TransactionGroup does not always
   leave the element table byte-identical.** After a `ChangeTypeId` run on 8 walls that was fully rolled
   back (types and thicknesses confirmed restored), 8 new elements remained on the **"Reviewable Warnings"**
@@ -1245,6 +1465,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   ~9 dependents, and that is NOT undone by a rollback either (same class as the active-view switch noted
   in `action-section-box-and-zoom.cs`). **So judge "the model is unchanged" on category counts, parameter
   values and geometry — not on the highest ElementId, which drifts upward from bookkeeping alone.**
+
 - 2026-08-07 — Campaign closed for this session at **223/267 verified (51% -> 84%)**, 16 real bugs found
   and fixed, all one family: a fragment reporting success for work that did not happen. Open items above
   rewritten grouped by what unblocks each, not by folder. Ajmal's instruction for the remainder: **do the
@@ -1254,6 +1475,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   bullets, and `brain-status.mjs` silently reported NO open items, because it counts `**bold**` headings
   with `1.` numbered entries. Fixed by matching the format. **The status tool's silence is not the same
   as zero** — if a section suddenly reads empty, suspect the format before believing the number.
+
 - 2026-08-07 — End-of-session sync of every derived layer, after the verification campaign. All three are
   now current and cross-checked against disk: **semantic index 309/309 content files** (verified live —
   "why did my move do nothing on grouped elements" returns the new `geometry-and-transforms.md` at #1 by
@@ -1269,6 +1491,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (2) `graphify-out/` is **gitignored**. The graph and vault do NOT travel through git — they travel only
       when the FOLDER is copied. If the Brain is ever cloned rather than copied, regenerate them with
       `/graphify . --update` on the new machine.
+
+### 2026-08-09
+
 - 2026-08-09 — Whole-Brain health check, three fixes out of it. (1) **The semantic index now covers
   `mcp-server/tools/README.md`** (310 files, 2,777 chunks) — before this, "how do I count elements
   without writing C#" could only ever land on a C# fragment, because the one doc naming the 17 native
@@ -1284,6 +1509,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   re-synced every derived layer after the doc edits: graph 947 nodes / 985 edges, health OK; vault
   1,265 notes; knowledge routing audited — every knowledge file is reachable from INDEX.md or the
   live-model sub-index.
+
+### 2026-08-10
+
 - 2026-08-10 — New standing habit, stated by the user directly: *"from now if I say something you have to
   remember okkey this is my normal work and you have to remember the words am using."* Routed per
   `brain-self-maintain` Step 1 as a habit that applies to **every** task, so it went to `START-HERE.md`
@@ -1292,6 +1520,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   terms that already caused a misunderstanding. The two are the same rule seen from both ends — the habit
   says *capture the words*, the glossary is *where they go*. Also fixed the stale "Two habits" lead-in in
   START-HERE.md, which had said two while listing three.
+
 - 2026-08-10 — "Grayout for MEP" started being taught, and its first two steps are recorded in
   `glossary.md` (marked candidate until he confirms the numbering). Step 1: all model categories ON,
   Structural Rebar + Rebar Couplers OFF. Step 2: every model category to RGB 150,150,150 on projection
@@ -1304,6 +1533,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   recorded: MEP greys as **lines only** by category override, and five categories (Rooms, Areas, Spaces,
   Raster Images, Point Clouds) take no category override at all. Worth having because it means a whole-view
   grey-out cannot be reported as "all grey with solid fill" without lying about the services.
+
 - 2026-08-10 — **"Grayout for MEP" finished being taught and became the tenth skill.** He dictated it over
   eleven turns against a live view, correcting me four times (windows must not take the wall's fill colour
   as their line; grey *everything* first including MEP, not just the background; patterns are 200 while
@@ -1320,6 +1550,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   than silently "fixing" it. The consistency hook caught all eleven drift points from adding a skill and a
   recipe (README tables, three "9 skills" counts, AGENT-SPEC's 268/21, three index-count claims) — exactly
   the doc-drift failure mode this repo keeps hitting, caught mechanically this time instead of by reading.
+
 - 2026-08-10 — **Pipe and electrical connectors proven in the Family Editor; new recipe
   `recipes/create-equipment-family-from-datasheet.cs`** (268 fragments, 21 recipes). Built the Condair
   EL 20-400V/3~ steam humidifier live from a PDF datasheet — 530×406×780 cabinet, five connectors
@@ -1332,16 +1563,21 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   drive `EXTRUSION_START_PARAM`; family *type* names reject `~` (parameter names accept `/`); and
   reflection over `typeof(...).GetMethods()` is a faster, read-only replacement for the deliberate-
   compile-error signature hunt.
+
 - 2026-08-10 — **`Document.SaveAs`/`Save` are BLOCKED through the bridge**, so
   `commands/command-compact-save.cs` is blocked rather than merely unverified. SaveAs throws *"not
   permitted when there is any open transaction phase started by API client"* while
   `Document.IsModifiable` reads **False** — the bridge holds a `TransactionGroup`, not a `Transaction`,
   so `IsModifiable` is not a valid test for it. A family build ends by handing the user the exact folder
   and filename for File → Save As.
+
 - 2026-08-10 — `glossary.md`: loadable families in the office library use the **`TRG_`** prefix
   (`TRG_<TYPE>_<Description>_<Model>.rfa`); the standing "office prefix is `MEP_`, never TRG" rule covers
   **line styles only**. Two namespaces, not a contradiction. Standing habit: list the destination folder
   before naming a family — the house convention beats the generic ISO 19650 element name.
+
+### 2026-08-11
+
 - 2026-08-11 — **Corrected the Condair humidifier family against the full 107-page submittal; new
   knowledge file [`reading-manufacturer-datasheets.md`](reading-manufacturer-datasheets.md).** The
   family had been built from a screenshot of one data-sheet page. The shop drawings showed four of the
@@ -1353,6 +1589,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   manufacturers group a range into a few housings (Condair EL: S = EL 5/8/10/15, M = EL 20/24/30/35/40/45)
   which share a cabinet AND connection positions, so the right structure is **one family per housing,
   types per capacity** — not one stretched parametric family.
+
 - 2026-08-11 — PDF tool chain for this machine, since poppler/`pdftoppm` is absent and the Read tool
   cannot render PDFs: `pdftotext` ships inside Git for Windows (`mingw64\bin`, already on PATH in Bash),
   and `uv run --with pymupdf` renders pages/crops with nothing installed system-wide. Shop drawings are
@@ -1360,11 +1597,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   measured programmatically. **`pdftotext -layout` silently shifted the left column of a two-column spec
   table up by one row** (each value belonged to the label on the NEXT line) while leaving the right
   column correct — sanity-check extracted spec tables against a rendered image before trusting them.
+
 - 2026-08-11 — Two more Family Editor API facts in `live-model/families.md` § Fourth build: unit
   suffixes are legal inside formulas (`"Height + 60 mm"`), and `EXTRUSION_START_PARAM` and
   `EXTRUSION_END_PARAM` can both be associated to family parameters, so a stub keeps a fixed overlap
   into the body through a resize. `create-equipment-family-from-datasheet.cs` updated to match, and its
   INPUTS block now carries the real dimensioned Condair values instead of the guessed ones.
+
 - 2026-08-11 — **Locking a manufacturer family to its product size**: `SetFormula(p, "530 mm")` on the
   driving dimensions greys them out in the UI so nobody can resize a purchased unit off-product. Verified
   it is safe to do late: a formula-locked parameter still works as a `Dimension.FamilyLabel` AND as an
@@ -1372,6 +1611,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   530x406x780, all nine dependent formulas resolved, all six connectors held. Recorded in
   `live-model/families.md` § Fourth build; `create-equipment-family-from-datasheet.cs` gained a
   `lockToProductSize` input. Reverse with `SetFormula(p, null)`.
+
 - 2026-08-11 — **Family rebuilt to Ajmal's four structural corrections** (his words: *"the back and
   front you make side one side only, you did not make it equal"* / *"each extruction you can make the
   sub categroy"* / *"make all the sides referance lines ... but top is not there"* / *"make all the
@@ -1384,9 +1624,11 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   alternative to associating `EXTRUSION_END_PARAM`, never both**; and **unlock formula-locked driving
   dimensions before rebuilding geometry they constrain**. Standing preferences recorded: EQ-centre both
   plan axes by default, and give every extrusion its own subcategory.
+
 - 2026-08-11 — `create-equipment-family-from-datasheet.cs`: `backAtOrigin` now defaults to **false**
   (EQ both axes), and the header carries a TODO for the two things the hand-rebuild added that the
   recipe still lacks — the top reference plane and per-part subcategories.
+
 - 2026-08-11 — **Work planes: `SketchPlane.Create(doc, plane)` was producing `<not associated>` on every
   extrusion.** Ajmal spotted it in the properties palette. Root cause and six new facts now in
   `live-model/families.md` § Fourth build: the `Plane` overload never hosts — use
@@ -1396,6 +1638,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   plane-to-plane labelled dimensions SURVIVE deleting all geometry and silently duplicate on a rebuild;
   a horizontal reference plane's normal follows endpoint order (swap to flip); and a single full circle
   is accepted but Revit normalises it to two arcs regardless.
+
 - 2026-08-11 — **NEGATIVE RESULT: `NewDiameterDimension` on an extruded cylinder does NOT make the
   circle parametric, and plants a modal "Constraints are not satisfied" error.** All seven calls
   succeeded and accepted a `FamilyLabel`, but changing the parameter moved the connector and left the
@@ -1404,6 +1647,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   2020 has no API route to dimension a sketch curve post-creation (`SketchEditScope` is 2022+). All seven
   removed. For API-built round stubs: drive the CONNECTOR from the OD parameter and leave the drawn
   cylinder fixed, or add the diameter dimension by hand in the Family Editor.
+
 - 2026-08-11 — **CORRECTION to yesterday's "saving is blocked through the bridge".** It is blocked only
   for the document open in Revit's UI. `Application.NewFamilyDocument(template)` returns a document whose
   `SaveAs` **succeeds** — so a family can now be authored end-to-end with no user interaction. Proven by
@@ -1412,11 +1656,13 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   6 connectors, clearance zone — 40/40 verification, 0 Revit warnings. `command-compact-save.cs`,
   `scripts/README.md` and `families.md` all corrected; the fragment stays blocked for its own use case
   (the UI document) but is no longer a dead end for the general problem.
+
 - 2026-08-11 — Two more Family Editor facts: **`nd.ActiveView` is null on an API-created document** (no
   UI window, so the user cannot see or hand-save it — save it from script first, then they open the
   file); and **`FamilyManager.CurrentType = ft` is a document modification needing an open Transaction** —
   to read another type's values use `familyType.AsDouble(param)` directly, no switching and no
   transaction.
+
 - 2026-08-11 — Clearance zones restructured in both humidifier families on Ajmal's instruction
   (*"for the clearance you can make the separate refarance line i think that is better"*): each clearance
   face now has its own named reference plane (Left/Right/Front/Ceiling/Floor) dimensioned **directly off
@@ -1425,6 +1671,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   against the submittal: it carries no clearance figure at all, so the five data-sheet numbers are the
   only source and left/right follows the standard "as you face the unit" convention — unconfirmed either
   way, flagged to Ajmal.
+
 - 2026-08-11 — **New voice layer, `tools/voice/`** (Ajmal: *"i need also one jarvis or some voice mode
   also need to come that what is the ai is doing in short reply in voice"*). Speaks a short line for
   every action, in two British neural voices split by role: Ryan (Claude Code side) says the intent
@@ -1435,6 +1682,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Falls back to the built-in Windows voice with no internet and no Python package. Four hooks added to
   `.claude/settings.json`; `voice.cmd off` silences it. Wording is regression-tested without sound by
   `node tools/voice/test-narration.mjs`.
+
 - 2026-08-11 — **"Running script" told Ajmal nothing, so the voice now works the job out of the code.**
   He asked for a colour change and heard only *"Running script"* — because native tools carry their meaning
   in the tool name (`count_elements` → "Counting air terminals") while a `run_csharp` call carries nothing
@@ -1448,6 +1696,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the old reader searched the whole script for any `//` line and would announce a note from the middle of a
   fifty-line script as if it were the purpose; it now reads only the first four lines and ignores `====`
   separators. Six new cases in `test-narration.mjs` cover the no-comment paths.
+
 - 2026-08-11 — **The second voice was DELETED the same day it started working** (Ajmal: *"totally remove
   that female voice feature, only men voice … remove everything, even the code also related to this"*).
   The two-voice design assumed they carried different news — intent versus result — but the assistant
@@ -1468,6 +1717,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
      straight through Windows, and the test never covered that fallback. Ajmal reporting "still the female
      voice is there" is what caught it. *Verify a cross-component switch against the fallback path, not
      the happy path — the fallback is where an "off" switch goes to die.*
+
 - 2026-08-11 — **The assistant's voice was structurally impossible, and the sandbox is why.** Ajmal
   reported hearing the Revit voice but never the assistant's. Cause: the spoken-line queue lived in
   `%LOCALAPPDATA%\AJTools\voice\`, and **Claude Code writes any path outside the project folder into a
@@ -1483,6 +1733,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (21,600 bytes).** Lesson: *the portability argument for putting runtime state outside the repo was
   right in principle and fatal in practice — a location a component cannot actually write to is not a
   location.*
+
 - 2026-08-11 — **An MCP shell is NOT a safe way around the sandbox — it gave the same false filesystem
   view.** Chasing the voice bug, a Windows-MCP PowerShell reported `voice.log` absent and the audio cache
   empty, while a Python process launched from that same shell, running as the same user with the identical
@@ -1494,6 +1745,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   So: when a filesystem answer decides what you do next, get it from inside the process that owns the
   file, or from Ajmal's own terminal — and do not treat an MCP shell as the escape hatch. The note under
   the original sandbox entry below has been corrected accordingly.
+
 - 2026-08-11 — **A black console window appeared over Revit, and it was the voice.** `say.mjs` launched
   `python.exe` (the console interpreter) with `detached: true`; on Windows a detached child is handed its
   own console, and `windowsHide` does not reliably suppress it for a venv launcher shim, which
@@ -1502,6 +1754,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   pythonw "silently refuses to execute a script"; retested, it runs `-c` code, runs `drainer.py`, and
   writes files. A misdiagnosis recorded as settled fact cost the thing it was written to protect: a
   console covering the model defeats the entire purpose of a voice you use so you can watch the model.
+
 - 2026-08-11 — **The voice had never spoken once, and the guard meant to protect it was the reason.**
   `say.mjs` read "queue deeper than 8 lines with no drainer holding the lock" as proof that starting the
   speaker was futile, and stopped trying. It is the opposite: it means the speaker is **dead**. Since the
@@ -1513,6 +1766,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   not the queue depth — is what stops an impossible spawn from retrying on every line. **Lesson worth
   more than the fix: a guard whose trigger condition can only be cleared by the thing it blocks is a
   deadlock, not a safety net.**
+
 - 2026-08-11 — **The voice now speaks only what touches the model** (Ajmal: *"no too much reply, main
   things only like caveman"*). Counted on one real session, the old every-tool narration spoke 22 lines
   and **not one was about the model** — it read out file names, grep patterns, and at one point its own
@@ -1523,6 +1777,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   process both voices pass through — which shortened the Revit add-in's voice with no C# change and no
   Revit restart.** Regression-tested without sound: `node tools/voice/test-narration.mjs` now checks the
   speak/stay-silent decision as well as the wording, across both stages.
+
 - 2026-08-11 — **Claude Code's Bash and PowerShell tools are sandboxed, and this makes filesystem
   results untrustworthy.** A process they spawn writes into a throwaway overlay: Python reported a file
   written and `os.path.exists` returned True, while the same shell session's `ls` could not see it, and
@@ -1533,12 +1788,16 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   was caught giving the same false view of the same folder.) Same session:
   `tools/verify-consistency.mjs` now survives a file vanishing between listing and reading, which is a
   real race for any transient file, not just the one that exposed it.
+
 - 2026-08-11 — **Third cause of a blank parameter column, recorded in `knowledge/live-model/core.md`:**
   the native `report_parameters` tool reads the INSTANCE only, so a correctly-named parameter that lives
   on the TYPE (door/window `Width` and `Height` on standard families) prints blank. Caught live asking
   for door sizes; `action-report-parameters.cs` with `includeTypeParameters` returned them immediately.
   Logged alongside it: never read a size off the type NAME (`30" x 80"`), which is human-typed and can
   disagree with the real values.
+
+### 2026-08-13
+
 - 2026-08-13 — **Retrieval quality is measurable again: `semantic-index/score-brain.cmd`.** The
   2026-08-06 run — 24 questions, 13 right at #1 — recorded the *score* and threw the *questions* away,
   so the most useful measurement this Brain ever made could not be repeated, and every later change to
@@ -1551,6 +1810,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **a new `.md` file inside `semantic-index/` was silently gitignored** (`semantic-index/*` with
   `README.md` un-ignored by name only), so the test questions would have been written, used, and then
   lost the day the Brain was copied to another machine. `.gitignore` now un-ignores `*.md` there.
+
 - 2026-08-13 — **[`glossary.md`](glossary.md) now displaces the answering skill, exactly as
   `brain-log.md` once did — and it is not discounted.** On its very first run the score card caught
   *"how many diffusers do I need in this room"* returning `glossary.md` at #1 and
@@ -1561,6 +1821,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   glossary has the same property and never got the same treatment. Deliberately NOT fixed in the same
   turn: the fix changes ranking, and it now has a test that will prove whether it worked. Left as the
   first target for the accuracy pass, with the README's stale claim to be corrected alongside it.
+
 - 2026-08-13 — **The semantic index now rebuilds itself; it can no longer go stale.** It was a snapshot
   that refreshed only when someone remembered `index-brain.cmd`, so any session that forgot left every
   later session searching an older copy of the Brain — answering confidently out of text that no longer
@@ -1576,6 +1837,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   list, because the checker exits 2 on drift and the flag must be set regardless. Measured: ~0.15 s when
   there is nothing to do, ~3.5 s for a no-change rebuild, ~12 s after editing this file — 206 of the
   index's 2,984 chunks live in `brain-log.md` alone, so the README's "2.8 s" is the small-file case.
+
 - 2026-08-13 — **Brain search is now an MCP tool, `search_brain`, so it works where `.cmd` files do not.**
   `semantic-index\ask-brain-hybrid.cmd` is a Windows batch file: on Claude Code for web, or any
   Linux/macOS container, it does not fail — it *silently does nothing*, the same shape of failure as the
@@ -1595,6 +1857,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `STALE INDEX` banner told you to run a rebuild "(~90 s)". That is the *full*-rebuild figure, but the
   banner fires on ordinary staleness, which needs the 2–4 s incremental — it was quoting the right
   number for the wrong situation, and now names the automatic rebuild first.
+
 - 2026-08-13 — **Every real question now searches this Brain before the assistant answers it.**
   `tools/auto-search-hook.mjs` (UserPromptSubmit) runs the search on what Ajmal typed and puts the top
   five hits into context *before* the message is read. Retrieval had been optional: nothing forced a
@@ -1608,6 +1871,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   and `meaning#N words#N` — because the normal output carries a long snippet per hit and would bloat
   every message in the session. The `STALE INDEX` warning is carried inline, since the point of
   injecting this is that nobody has to go looking for a warning.
+
 - 2026-08-13 — **First agent: `brain-librarian`, and one shared rules file.** `.claude/agents/` did not
   exist before today. The Librarian files what a session learned — checks it is not already written,
   routes it per `brain-self-maintain`, records Ajmal's own words in `glossary.md`, logs it here, and
@@ -1621,6 +1885,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   to a file is a single tool call) and a "health check" agent (`brain-status.mjs` already does it and
   never forgets). The rule that produced both cuts: **if the job has no judgment in it, it is a hook or
   a script, never an agent.**
+
 - 2026-08-13 — **`glossary.md` discounted to 0.93 — and 0.85 was measurably too harsh.** It had taken #1
   from `ajtools-hvac-terminal-layout` on the diffuser question, the same displacement `brain-log.md` was
   discounted for; `semantic-index/README.md` still claimed the skill ranked first, and had been wrong for
@@ -1631,6 +1896,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   new file away from flipping. Both are now guard rows in `test-questions.md`. **The transferable rule: a
   discount aimed at a file's accidental matches must be checked against the file's own real job, or the
   fix quietly removes a capability.**
+
 - 2026-08-13 — **REFUTED: big files do NOT win by having more chunks.** Worth recording precisely because
   the evidence looked strong and the fix was about to be built. Both remaining test failures had a wrong
   winner 4–5× the size of the right answer (`universal-actions-reference.md` 32 chunks vs
@@ -1648,6 +1914,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   readability, not accuracy, until something measures otherwise. `scripts/README.md` is the largest matcher
   in the index at **251 chunks, 8.4% of all 2,989**, and is deliberately left undiscounted on the same
   reasoning: nothing has shown it is actually displacing better answers.
+
 - 2026-08-13 — **`job-log/` records what this Brain is actually used for.** Nothing did before, so three
   questions were unanswerable: which of the 269 fragments do the work, which have never run, and which
   fail against a real model — the last being the most valuable signal the system produces and the one
@@ -1664,6 +1931,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   slower: every line is a *question → file* pair, which is the shape of data a fine-tune needs, and
   fine-tuning is the only route left at the site-vocabulary failures that re-ranking was proven unable
   to fix earlier the same day.
+
 - 2026-08-13 — **Two more agents: `brain-script-writer` and `brain-investigator`.** The Script Writer's
   whole reason to exist is the one instruction most likely to be skipped — *search all 269 fragments
   first* — and it is told that reporting "this already exists" is a complete, successful outcome, better
@@ -1675,6 +1943,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   The alternative was to give it `run_csharp` and *instruct* it not to write, which is not a boundary at
   all. **The principle, now applied three times: a limit is what an agent was given, never what it was
   told.**
+
 - 2026-08-13 — **Indexing external standards PDFs was built, then reverted the same hour on Ajmal's
   call — scope, not capability.** His words: *"we are making a Revit AJ AI RAG, it's not connected with
   Ashghal standards or something like that — for that we have another skill, or we will create one."*
@@ -1695,6 +1964,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   it as a knowledge note in his own words, having read it** — higher signal than 600 unchecked chunks,
   and it cannot quietly quote a superseded version, which was a live risk here since two editions of the
   Buildings manual sit side by side. `pypdf` was uninstalled so the venv matches `requirements.txt`.
+
 - 2026-08-13 — **Retrieval now re-scores itself whenever something that can change ranking changes.**
   `tools/score-check.mjs` (Stop hook) fingerprints five files — `brain_search_hybrid.py`,
   `brain_common.py`, `brain_index.py`, `test-questions.md`, `site-vocabulary.md` — and re-runs
@@ -1705,6 +1975,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the score card existed all day and nothing ever ran it.** It caught three real problems on 2026-08-13,
   and every one was caught only because a person happened to type the command. Proven by deliberately
   crushing the glossary weight to 0.10 and watching it report `3/5 -> 2/5`, then reverting.
+
 - 2026-08-13 — **Tuned path weights drift as content changes — the cliff moves.** Found while testing the
   above. This morning a sweep put the safe window for `glossary.md` at 0.90–0.96, with 0.85 measurably
   breaking "what does duck mean" (`nfpa13-sprinkler-spacing.md` took #1). By the same evening, 0.85 no
@@ -1714,12 +1985,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   only defence is re-measuring automatically — which is exactly what the hook above now does. 0.93 was
   kept: it sat in the middle of the window then and remains safe now, which is the whole argument for
   choosing a window's centre over its edge.
+
 - 2026-08-13 — **The injected context block now carries an explicit "say so" guardrail.** Retrieval is
   right at #1 on 3 of 5 questions, so roughly two in five put a wrong file at the top — and the silent
   failure mode is the dangerous one: an answer from general Revit knowledge, delivered with the
   confidence of one drawn from Ajmal's own proven files. `brain_context.py` now ends every block with an
   instruction to say plainly when none of the hits actually answer the question. **"The Brain does not
   cover this" is a correct answer; quietly inventing one is not.**
+
 - 2026-08-13 — **A cross-encoder re-ranker is built, works, and ships OFF — because it measured neutral.**
   `semantic-index/rerank.py` runs `ms-marco-MiniLM-L-6-v2` as ONNX through onnxruntime and tokenizers,
   both of which arrive with chromadb, so it adds **no pip dependency**; `sentence-transformers` was
@@ -1738,6 +2011,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   misled by it, in opposite directions, on the same five questions.** Untunable at this sample size, so
   shipping it on would have been exactly the blind change the score card exists to prevent. The 89 MB
   model is git-ignored, so `rerank.py --download` exists rather than living in someone's memory.
+
 - 2026-08-13 — **Housekeeping pass: the ~300-line warning is clear for the first time since it appeared.**
   `core.md` went 328 → **262** lines by moving the Revit 2020 viewport and view-title limits into
   [`live-model/views.md`](live-model/views.md), where they belong on *subject* and not merely on size —
@@ -1753,6 +2027,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   2026-08-09 and were four days behind. **Still outstanding there:** graphify's *semantic* pass over the
   markdown needs either a `GEMINI_API_KEY` or subagents, so doc-level entities are as of 2026-08-09 while
   code-level ones are current — a real, and currently invisible, split-brain in that graph.
+
 - 2026-08-13 — **The graphify split-brain is closed: the markdown side was extracted with subagents, on
   Ajmal's explicit go-ahead.** 58 documents detected, 28 already cached, **30 needing extraction** — exactly
   the files touched since 2026-08-09. Final graph: **1,184 nodes, 1,356 edges, 336 communities**, from 689
@@ -1772,6 +2047,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   than hidden, but it is a real integrity gap and nobody has chased it. **(4) Communities are unlabelled** —
   `graphify label` found no LLM backend, so all 336 keep `Community N` placeholders. Fixable any time with
   `GOOGLE_API_KEY` set and a re-run. Obsidian vault regenerated to 1,503 notes, 325 stale pruned.
+
 - 2026-08-13 — **The 203 dangling edges are fixed: 203 → 0, and 162 edges recovered.**
   [`tools/graphify-repair.py`](../tools/graphify-repair.py) runs on the extraction *before* the graph is
   built. **The loss was invisible by design** — the build never warns, it just drops them, so 1,549
@@ -1790,6 +2066,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   cost:** collapsing concept references onto file nodes raised same-endpoint collapsed edges from 16 to 47.
   That is real information merging, traded knowingly for 162 recovered edges — and it is why the script
   prints what it did rather than running silently. Idempotent: a second run reports nothing to repair.
+
 - 2026-08-13 — **All 328 graph communities are named; zero `Community N` placeholders left.** `graphify
   label` needs an LLM backend and found none — **but the host agent IS the LLM**, which is exactly what the
   skill's Step 5 says: read the analysis, look at each community's node labels, write a 2–5 word name. No
@@ -1802,6 +2079,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   node. **Where they are stored is worth writing down**: not `graph.community_labels` and not
   `node.community_label`, but **`community_name` on each node** — two wrong guesses were made before
   checking, and a "0 labels stored" reading nearly got reported as a failure when the labels were fine.
+
 - 2026-08-13 — **NEAR MISS: `npm test` in `mcp-server/` will DELETE MODEL CONTENT if the bridge is
   connected. Now gated.** The suite invokes every handler with `SAMPLE_ARGS`, and those include
   **`delete_elements: { category: "Ducts", confirm: true }`** plus `move_elements`,
@@ -1817,6 +2095,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   assumption, not state it in a comment.** Two lines of prose at the top of the file were doing the work
   of a guard for months. Also worth noting how it surfaced — the failure looked like an ordinary broken
   assertion (`expected isError`), and the real meaning was the opposite of what it appeared to say.
+
 - 2026-08-13 — **`search_graph`: the knowledge graph is finally reachable from retrieval.** The Brain had
   a 1,192-node graph with 328 named communities and **nothing could query it** — every search went through
   the vector index only, so a fully-built asset sat unused. Studying the public RAG-technique catalogues
@@ -1830,6 +2109,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   their neighbours. Modes: `query`, `explain`, `path`. **Honest limitation recorded in the tool itself:
   the graph does not rebuild itself**, so `search_graph` can be older than `search_brain` in a way that is
   invisible from its output.
+
 - 2026-08-13 — **REVERTED: contextual chunk headers made retrieval WORSE here — 7/14 → 5/14 at top-5.**
   This is **Anthropic's own published Contextual Retrieval**, which reports a 35% drop in retrieval
   failures, and reading our own chunker showed the gap was real: `.cs` **code** chunks were emitted as raw
@@ -1847,6 +2127,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   a published effect size was measured against someone else's corpus and someone else's chunker. This one
   is already structure-aware and kind-weighted, and the same idea double-counts instead of adding.** Fifth
   time today that measuring beat reasoning — and the first where the reasoning was a published paper's.
+
 - 2026-08-13 — **The knowledge graph now rebuilds itself too, and says when its markdown half is stale.**
   `tools/graph-rebuild.mjs` (Stop hook) + `tools/graph-rebuild.py`. This closes the last silent-staleness
   gap: the vector index has self-rebuilt since Phase 1, the graph never did, so `search_graph` could answer
@@ -1864,6 +2145,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the STALE INDEX banner compare content and not dates. Found while building it: the hook first reached for
   `semantic-index/venv`, which does **not** contain graphify — it lives in whichever interpreter
   `graphify` was installed into, recorded by graphify itself in `graphify-out/.graphify_python`.
+
+### 2026-08-14
+
 - 2026-08-14 — **Fixtures can be BUILT, so "fixture-blocked" was never the blocker it looked like.**
   `action-add-remove-insulation.cs` had sat unproven since 2026-07-26 marked *"BLOCKED — no insulation
   fixture in this model"*. It took one `Duct.Create` call to make five ducts in a blank scratch project
@@ -1871,6 +2155,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   insulation elements, not trusted from the report), re-add correctly added 0 and skipped 5, remove
   deleted all 5 and left the ducts intact. **The lesson generalises to the whole "fixture-blocked"
   category: the question is not "does this model contain X" but "can X be created by API".**
+
 - 2026-08-14 — **`action-place-accessory-on-run.cs` DISPROVED live, then rewritten. Three separate causes,
   each of which alone looks like the whole answer.** The original called
   `NewFamilyInstance(point, symbol, run, StructuralType)` and assumed Revit breaks the run automatically
@@ -1892,6 +2177,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   documented in `live-model/core.md` and still walked into.** Status recorded honestly: the METHOD is
   proven (2/2 joined, both halves 1/1), the rewritten file as one uninterrupted run is NOT — a re-test
   threw a null reference and rolled back cleanly, and the null was not isolated before the session ended.
+
 - 2026-08-14 — **`slice-trunk-for-sizing.cs` re-verified, and a SILENT bug found and fixed:
   `Line.Distance()` measures to the SEGMENT, not the line.** `onTrunkLine` tested collinearity with
   `startCurve.Distance(endpoint) < 0.05`, but a `Line` taken from a `LocationCurve` is **bound**
@@ -1911,6 +2197,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   project to make one — a 12 m trunk in 3 pieces with 4 real takeoffs, each producing the
   `ConnectorType.Curve` connector the recipe counts. **"Fixture-blocked" should always be challenged with
   "can this be created by API?" before it is accepted.**
+
 - 2026-08-14 — **`examples/color-isolate-select-by-size.cs` verified live — all three chained actions.**
   Run verbatim on its own default input (Height eq 500 mm) against a deliberately adversarial fixture: 17
   ducts, only 2 at height 500, and 15 negatives at 400/300/250/200 with **different widths on the two
@@ -1924,6 +2211,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   claimed. **The practical rule: if a selection looks empty after this example, re-read it before
   concluding the script failed** — three silent-success bugs in two days makes an unexplained zero worth
   a second look rather than a fourth bug report.
+
 - 2026-08-14 — **The whole non-MEP fixture set was built by API in a blank project, and two more fragments
   cleared with it.** Four room-bounding walls (a closed 8×6 m rectangle), a **Room** and an **MEP Space**
   both computing to 43.2 m², a **Floor** (Generic 300 mm), and **three Sheets** on the A1 metric title
@@ -1936,6 +2224,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   time somebody sees it: a freshly created Zone reports `Area = 0 m²` while the Space inside it reports
   43.2 — the same delayed computation a new Space itself shows, which is why every check here reads state
   back in a later call instead of trusting the value available at creation time.**
+
 - 2026-08-14 — **The last three annotation/sheet-set fragments verified live — and two of their three
   predicted CHECKs were wrong, one dangerously so.** `action-add-aligned-dimensions.cs`: 3 diffusers at
   2500 mm centres produced a 2-segment dimension reading 2500.0 mm each, confirmed from a separate call.
@@ -1961,6 +2250,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   unless `PrintRange = Select` is set first, and that PrintRange change is genuinely non-transactional.
   **The pattern across all three: a CHECK written by reading the code is a hypothesis, not a finding.**
   One was right, one was wrong-and-harmless, one was wrong in a way that would have shipped the bug.
+
 - 2026-08-14 — **"Fixture-blocked" was wrong a third time, and the fix took one call.**
   `action-add-remove-insulation.cs` had been marked BLOCKED since July for "no insulation fixture in this
   model". But that fragment **creates** insulation — it never needed a fixture, only an insulation TYPE,
@@ -1974,6 +2264,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   matters). **Two ducts are left permanently insulated in the test model** so these three stay re-runnable.
   That is now THREE false "fixture-blocked" items in three days. The question to ask first is not "does the
   fixture exist" but "can this fragment build its own fixture, or can the API build one".
+
 - 2026-08-14 — **`tools/brain-status.mjs` was undercounting verified fragments — the drift-detector had
   drifted.** It reads `scripts/README.md` row markers with `/verified 2026/`, but nine rows say
   "verified **live** 2026-08-14", so nine genuinely-verified fragments were being reported as "no status
@@ -1982,6 +2273,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (83% -> 86%) with no fragment changing state. **Lesson: a checker that reads prose markers needs to
   tolerate the ways a human actually writes them, or it quietly reports the library as worse than it is —
   and nobody doubts a number that errs pessimistically.**
+
 - 2026-08-14 — Fixed drift found the same day: `create-hvac-zone.cs` and `create-room-elevations.cs` had
   been verified live and logged, but both fragment headers still read "NOT YET LIVE-VERIFIED", and the two
   insulation filters' headers still read "not yet live-verified" while their README rows recorded a
@@ -1989,6 +2281,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   apart in both directions.** Headers now carry the evidence, including the two gotchas worth keeping: a
   fresh Zone reports `Area = 0 m²` until recomputed, and `phaseName = null` resolves to the document's LAST
   phase, not its first.
+
 - 2026-08-14 — **Electrical was never "fixture-blocked" either — the fixture was built in four calls, and
   `load-family.cs` fell out of the same discovery.** On 2026-08-07 `filter-by-electrical-system.cs` was
   re-checked and called "genuinely blocked, needs electrical content". The unasked question was where
@@ -2018,16 +2311,19 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   end-to-end (duct takeoff off the live model); the other six shapes have proven *fragments* but no
   dashboard built yet. Also logged: **his "visualization" means charts of the model's NUMBERS, never a 3D
   render** — recorded in `glossary.md` because the Revit-normal meaning is the opposite job.
+
 - 2026-08-14 — **"Don't go to Revit" is now an absolute stop** (`live-model/core.md`, Bridge basics).
   When he says another session is running, make zero bridge calls — not even a ping — because the
   one-connection-at-a-time limit means a call preempts his other session rather than queueing. Same limit
   killed one of six parallel calls that day: go sequential.
+
 - 2026-08-14 — **New: [`mcp-ui-surface.md`](mcp-ui-surface.md)** — corrects a claim made in session that
   day: *"no widget, no artifact, no web page can ever reach the bridge."* True of a chat widget or a
   published page; **false for a UI served by our own MCP server**, which is what MCP Apps
   (`io.modelcontextprotocol/ui`) is for. The Revit half already exists — `select_elements`,
   `set_parameter_value`, `report_parameters` since 2026-07-22 — so what is missing is the UI layer, not
   the plumbing. Host support is the real unknown: build a small proof before promising it.
+
 - 2026-08-14 — **Corrected `ajtools-visual-report` within the hour: the chat is the default, a page is
   on request.** The first two reports were published as artifacts he never asked for; he came back with
   *"normaly i need to come in the chat... if i ask the artifects its need to come like this you make html
@@ -2035,24 +2331,18 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   in `glossary.md` as a request word, not a default output**. Also added to the skill: a size/width axis
   sorts smallest→largest in BOTH table and chart, and a grouping that hides another (width hiding height)
   must say so.
+
+### 2026-08-15
+
 - 2026-08-15 — **`recipes/mep-grayout.cs` proven end-to-end on a real model** — run on
   `PLAN AT EL. +100.950_HVAC Ground Floor Layout Copy 2` (1:50, HLR, no view template): 87 categories +
   589 sub-categories written, rebar pair off, and a read-back confirmed every value in the skill's table.
   The 63 categories that lost a slot are exactly the predicted non-cuttable ones. Gap found on this
   project: `MEP_Hidden_Short_Dash` is not loaded, so insulation came out grey but **solid** —
   `recipes/create-mep-line-standards.cs` installs it, and the grayout must be re-run afterwards.
-- **2026-08-20 — the 2026-08-17 gap is closed: `brain-status.mjs` now reports the three derived layers.**
-  It looks for `semantic-index/chroma-db`, `graphify-out/graph.json`, and the biggest `.md` folder inside
-  `graphify-out/` (the Obsidian vault has moved between graphify versions, so it is discovered not
-  hard-coded), prints their build date and how many source files are newer than each. When none are
-  present — every cloud/container session — it says so in those words instead of inventing a staleness
-  number, because a fresh checkout stamps every file with checkout time and would read as "everything is
-  newer than the build". Judge is mtime, a hint not a verdict; the authoritative checks are still the
-  content-comparing STALE INDEX banner from `ask-brain-hybrid` and `python tools/graph-rebuild.py --check`
-  — both named in the output so nobody stops there. `brain-log.md` and `score-history.md` are excluded
-  from the "newer than build" count for the same reason `graph-rebuild.py` excludes score-history: they
-  are machine-written every session and a warning that is always on gets ignored. Fixture-tested on both
-  branches (absent and present).
+
+### 2026-08-17
+
 - 2026-08-17 — **The daily "check AJ Tool / vector index / Graphify / Obsidian" routine cannot see three
   of its four targets, and would have passed silently forever.** It runs in a Claude Code cloud container
   against a fresh `git clone`, and the vector index (`semantic-index/chroma-db`, `venv`, `model-cache`),
@@ -2065,7 +2355,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   answerable on the Windows machine** — and note `brain-status.mjs` does not check any of the three, so
   nothing on either machine reports their age today. That gap is the thing to close, not the routine.
 
-- **2026-08-19 — a schedule's *recipe* is now readable, not just its columns.**
+### 2026-08-19
+
+- 2026-08-19 — **a schedule's *recipe* is now readable, not just its columns.**
   `action-report-schedule-fields.cs` lists the columns of a schedule but nothing could read back the
   rules around them, so "study how this schedule is built" meant hand-written C# every time. New
   `actions/sheets-views/action-report-schedule-definition.cs` reports the category (including the `-1`
@@ -2077,14 +2369,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   member at all, so the fragment detects it by reflection rather than calling `GetFormula()`, which is a
   *compile* error there and therefore unreachable by try/catch.
 
-- **2026-08-19 — the two-open-projects trap, caught live.** With BL006A and BL002A both open, a new
+- 2026-08-19 — **the two-open-projects trap, caught live.** With BL006A and BL002A both open, a new
   schedule was created into the WRONG document because `Document` follows whatever Revit has in front,
   and it changed between two tool calls in the same session. It failed silently — success message, real
   Id, plausible row count. Written up in `knowledge/live-model/core.md`: pin the document by title for
   any WRITE, and echo the document title in the result line. The only thing that exposed it was a count
   that contradicted an earlier reading of the "same" model.
 
-- **2026-08-19 — the MM_ document register became a recipe, not a memory.** Filling the handover register
+- 2026-08-19 — **the MM_ document register became a recipe, not a memory.** Filling the handover register
   (CWA, MM_NP System Type, MM_Discipline Code, MM_Main Document Definition/Statement/Revision,
   Sub-Discipline, MM_Main Drawing Number) was done by hand across four categories on
   `4355-BHVD-3D-60P00-BL006A` — 160 elements — then folded into
@@ -2094,14 +2386,30 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   duct-layout sheets, equipment to the equipment-layout sheet. Getting that second one wrong is silent:
   every element still receives a plausible sheet number. Ajmal caught it, not the script. Exceptions exist
   inside a category too — exhaust louvres are Mechanical Equipment but drawn on the duct sheets.
-- **2026-08-19 — a family formula makes a parameter read-only, and "it's a type parameter" is not the
+
+- 2026-08-19 — **a family formula makes a parameter read-only, and "it's a type parameter" is not the
   reason.** Four air-terminal grille types refused `Description.Set()` even inside a transaction, while the
   round diffusers accepted it — same category, same built-in parameter, both type-level. The difference was
   a material `if()` formula on Description inside the grille families. `Document.EditFamily` +
   `FamilyManager.get_Parameter(...).IsDeterminedByFormula` is how to prove it rather than guess. 74 more
   locked types sit unplaced across 22 other TCM families in the same project.
 
-- **2026-08-20 — fire sprinklers went from one knowledge note to a subject.** Ajmal asked for the whole
+### 2026-08-20
+
+- 2026-08-20 — **the 2026-08-17 gap is closed: `brain-status.mjs` now reports the three derived layers.**
+  It looks for `semantic-index/chroma-db`, `graphify-out/graph.json`, and the biggest `.md` folder inside
+  `graphify-out/` (the Obsidian vault has moved between graphify versions, so it is discovered not
+  hard-coded), prints their build date and how many source files are newer than each. When none are
+  present — every cloud/container session — it says so in those words instead of inventing a staleness
+  number, because a fresh checkout stamps every file with checkout time and would read as "everything is
+  newer than the build". Judge is mtime, a hint not a verdict; the authoritative checks are still the
+  content-comparing STALE INDEX banner from `ask-brain-hybrid` and `python tools/graph-rebuild.py --check`
+  — both named in the output so nobody stops there. `brain-log.md` and `score-history.md` are excluded
+  from the "newer than build" count for the same reason `graph-rebuild.py` excludes score-history: they
+  are machine-written every session and a warning that is always on gets ignored. Fixture-tested on both
+  branches (absent and present).
+
+- 2026-08-20 — **fire sprinklers went from one knowledge note to a subject.** Ajmal asked for the whole
   thing studied properly — spacing, room coverage, "with celling how without celling how", pendent /
   upright / wall, "how mcuh from the wall", "if upraght howmcuh from the slab", and what a beam or a column
   does — then turned into tools. Added `knowledge/fire-sprinkler/` (6 chunks: types, deflector/ceiling
@@ -2126,7 +2434,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   them is proven elsewhere in this library and each header names which, so the honest route is one element
   first, check the real result, then the batch.
 
-- **2026-08-20 — the ceiling void, and a number remembered right with the wrong source.** Ajmal asked
+- 2026-08-20 — **the ceiling void, and a number remembered right with the wrong source.** Ajmal asked
   whether NFPA requires sprinklers in the ceiling void once it is "more than eight hundred or something",
   and flagged himself that he was not sure. Checked: the **800 mm is real but it is BS 5306-2 / BS EN
   12845, not NFPA**. NFPA 13 has no depth trigger for a ceiling void — it tests whether the concealed
@@ -2142,7 +2450,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   the standard incorrectly**, which is the normal shape of site knowledge — so "which standard is this
   project on" now belongs in the opening questions of a sprinkler job, not in an assumption.
 
-- **2026-08-20 — "is there anything like that?" — yes, and the reason it catches people is the agreement,
+- 2026-08-20 — **"is there anything like that?" — yes, and the reason it catches people is the agreement,
   not the disagreement.** Following the ceiling-void finding, Ajmal asked whether there were more rules of
   the same shape. Searched, and the answer has a pattern worth more than the list: **NFPA 13 and BS EN
   12845 agree almost exactly on the headline number and diverge on everything around it.** Max area per
@@ -2159,7 +2467,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   standard named is the same failure as one with no hazard class named, and this session produced the
   evidence for that in one question.
 
-- **2026-08-20 — "can I design sprinklers from zero to finish?" — not yet, and now the gaps are a list
+- 2026-08-20 — **"can I design sprinklers from zero to finish?" — not yet, and now the gaps are a list
   rather than a feeling.** Ajmal asked whether a plain architectural plan could be taken all the way, at
   any scope ("the whole plan", "room one", "something specific"), and separately whether the Brain could
   offer **several layout options** so he can reject one and get another. The second answer was a flat no:
@@ -2188,7 +2496,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **hydraulic** method that belongs with a licensed engineer. Establishing which one a project uses is the
   first move when the gate opens, not an afterthought.
 
-- **2026-08-20 — pipe sizing, and the finding is that you usually are not allowed to use it.** Ajmal asked
+- 2026-08-20 — **pipe sizing, and the finding is that you usually are not allowed to use it.** Ajmal asked
   for pipe sizing to be built (his sequencing: sprinklers first, then sizing, *"not routing, pipe sizing
   only"*). Built: `knowledge/fire-sprinkler/pipe-sizing.md` and
   `scripts/recipes/sprinkler-pipe-schedule-size.cs`, covering the **pipe schedule** method — walk the
@@ -2212,7 +2520,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   sources gave the method's limits clearly and its numbers not at all, so they are an editable input seeded
   `[UNCONFIRMED]` with a warning on every run. **Hydraulic calculation stays permanently out of scope.**
 
-- **2026-08-20 — hazard classification studied in full, and car parks are the finding.** Ajmal asked for
+- 2026-08-20 — **hazard classification studied in full, and car parks are the finding.** Ajmal asked for
   all hazard types, how they are decided, and the understanding behind them, kept in the Brain. The Brain
   had been refusing to run without a hazard class since the first sprinkler session while carrying only a
   four-row table of example occupancies — so this closes the gap it had been pointing at.
@@ -2365,7 +2673,6 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   before writing, and **compile-check fresh C# before he runs it** — a round trip through Revit costs his
   attention, a compile costs a minute of nobody's.
 
-
 - 2026-08-20 — **The two tools built that day were both broken on the Windows PC they were built for,
   and running them is what proved it.** `tools/check-scripts.cmd` — called "the single command that
   answers the whole session" — could not start: the `.ps1` was written in a Linux container as UTF-8
@@ -2388,6 +2695,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `CS0308/0030/0019/0029/1503/1501`), and six fail on **both** 2020 and 2024 — the one that matters most
   being `recipes/mep-grayout.cs`, Ajmal's own standing "do the grayout" job. Full list and the fix order
   are in `docs/HANDOVER.md`.
+
 - 2026-08-20 — Ajmal asked whether the project should be **re-architected "as per the best RAG"**. Answer
   written up as `knowledge/rag-architecture-decisions.md` and routed from `knowledge/INDEX.md`: **no** —
   the pipeline already has hybrid dense+BM25 with RRF, structure-aware chunking, kind and path weighting,
@@ -2440,7 +2748,6 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   search accuracy was "~3 in 4 at #1" — 75%, one of the three discredited figures `CLAUDE.md` warns
   about two paragraphs below, against a measured 3/14. Both now quote `score-history.md`.
 
-
 - 2026-08-20 — **Revit 2020 is now 287/287, and five of the six failures were one word each.** The
   version-proofing pass had left `int` where its own new code returned `ElementId`:
   `mep-grayout.cs` declared `int doorId = IdOf(...)` on the line directly below a correct
@@ -2475,6 +2782,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   hand-checked against all four rooms and came out exact. STATUS blocks updated with what is proven and
   what is still not: the bay-module arithmetic, the services branches, `gridMode "fixed"`, `baySpacingMm`
   and `drawCircles` were all untouched by this model and remain unproven.
+
 - 2026-08-20 — **Two placement traps found, and the "place one first" rule is what found them.** (1) The
   Z of the placement point is **not honoured** on a OneLevelBased family — asked 2,400 mm, got 2,500 mm,
   silently, with the script reporting success; the height must be written to `Elevation from Level`
@@ -2483,9 +2791,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   offset had the opposite sign to the obvious guess. Both written into
   `knowledge/fire-sprinkler/revit-modelling.md`, including the slice-the-solid method for measuring where
   any family's deflector really is. **The family name told us nothing; the geometry told us everything.**
+
 - 2026-08-20 — Recorded that the bridge prelude does not import `Autodesk.Revit.DB.Architecture`, so a
   bare `Room` is `CS0246`. Fully qualify it in anything composed from the sprinkler fragments.
-
 
 - 2026-08-20 — **Every fragment now compiles on every Revit on the PC: 287/287 on 2020, 2024 AND 2027.**
   The thirteen that failed on a newer version were real API removals, not migration slips — they compiled
@@ -2517,7 +2825,6 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   plain words that the job must be done in the Revit UI there. Use this tool before assuming a missing
   member was merely renamed.
 
-
 - 2026-08-20 — **Two Revit sessions can now be connected at once, and the bridge was single-instance by
   construction rather than by oversight.** `McpBridgeService` hosted a FIXED pipe name with
   `maxNumberOfServerInstances: 2`, and those two are not spare capacity: one Revit needs both, one
@@ -2548,7 +2855,6 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   as live. **A false skip costs one test run; a false "not live" costs 354 ducts.** Same lesson in the
   test itself: `%APPDATA%` must be redirected before anything imports `bridge-connection.js`, because ES
   modules are cached — an earlier draft redirected it too late and sent its probe to the real Revit.
-
 
 - 2026-08-20 — **"Which Revit?" and "which project inside it?" are two problems, and the second one was
   still open.** The morning's fix gave each Revit session its own pipe; that says nothing about a Revit
@@ -2605,7 +2911,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   unreferenced commits reachable by direct SHA link until it garbage-collects — ask GitHub Support to
   purge them if that matters.
 
-- **2026-08-20 — the two capabilities from that evaluation rebuilt clean, credit-free.** Ajmal asked for
+- 2026-08-20 — **the two capabilities from that evaluation rebuilt clean, credit-free.** Ajmal asked for
   everything worth keeping to be kept "in our part", so both fragments deleted in the strip above are back
   as this Brain's own, with no outside name anywhere in them:
   [`action-test-view-filter-match.cs`](../scripts/actions/reporting/action-test-view-filter-match.cs)
@@ -2618,6 +2924,7 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   exactly the way recall does, which `START-HERE.md` rule 2 forbids, so every mode re-resolves and reports
   what no longer exists. Library 287 → 289; **289/289 compile-clean on Revit 2020, 2024 and 2027**, both
   still to be live-verified.
+
 - 2026-08-20 — new note [`knowledge/live-model/family-category-change.md`](live-model/family-category-change.md),
   routed from `live-model/README.md`. Written from a live conversion of `TCM_FAL_T001_FreshAirIntakeLouvre`
   from Duct Accessories to Air Terminals on BL006A. Two things it records that were assumed wrong beforehand:
@@ -2626,12 +2933,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   — everything else that vanished was an old-category built-in worth nothing. Adds the pre-flight check:
   walk `Document.ParameterBindings` and test the destination category before changing, not after.
   Snapshot evidence in [`job-log/snapshots/2026-08-20-HWL-fresh-air-louvre-params.md`](../job-log/snapshots/2026-08-20-HWL-fresh-air-louvre-params.md).
+
 - 2026-08-20 — new fragment [`filters/by-identity/filter-by-wrong-category.cs`](../scripts/filters/by-identity/filter-by-wrong-category.cs):
   elements whose family/type name or Equipment Tag prefix says one thing while their **category** says
   another. Written because `--find louvre` returned nothing and the same whole-model sweep got authored
   from scratch **twice in one session** — the exact "not covered, so fresh code gets written" failure
   CLAUDE.md names. Library 289 → 290 (50 filters). Reports OK vs WRONG per category so a loose keyword
   is caught before acting.
+
 - 2026-08-20 — [`live-model/core.md`](live-model/core.md) gains two entries. **`list_revit_instances`
   returns a stale window title** — it named BL006A while the bridge's `Document` was BL003A, which would
   have written into the wrong project silently; the process-level title is not refreshed when the open
@@ -2639,28 +2948,38 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   trip"** section: `IsDeterminedByFormula` lives on `FamilyParameter`, not `Parameter`, and
   `MechanicalSystem` needs its full `Autodesk.Revit.DB.Mechanical.` namespace — both cost a wasted Revit
   round trip this session.
+
 - 2026-08-20 — the vector index now stamps `built_at` and `git_commit` into its manifest, so its age is
   a fact rather than an mtime guess. [`brain_common.py`](../semantic-index/brain_common.py),
   [`brain-status.mjs`](../tools/brain-status.mjs).
+
+### 2026-08-21
+
 - 2026-08-21 — **the search corrects misspellings by itself.** 65% of real logged questions contain a
   word in no file, mostly ordinary Revit words typed fast, which are worth nothing to exact-word search.
   New `correct_spelling`; fires on 44% of real questions. Working and limits:
   [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md).
+
 - 2026-08-21 — **never write a misspelling into any file here, not even as an example.** These folders
   are the dictionary the corrector checks against, so a typo written here becomes a real word and
   switches off its own correction. Rules in [`site-vocabulary.md`](site-vocabulary.md).
+
 - 2026-08-21 — **a rebuild could mark itself finished before it had.** The manifest was written before
   the build was verified, so a crash left 1,200 chunks of 3,895 reporting "UP TO DATE". Both paths now
   count first. **Write the "this is finished" record last** — the general rule, worth more than the fix.
+
 - 2026-08-21 — derived files (`index-manifest.json`, `corpus-vocabulary.txt`, the fragment cache) now
   write-then-rename. A search running during a re-index could read a half-written dictionary.
+
 - 2026-08-21 — the fragment index is cached to disk instead of spawning Node on every query: **426 ms ->
   38 ms**, the largest single cost in a search. A near-duplicate check now runs on every build (0.4 s).
+
 - 2026-08-21 — **claims about the search that were wrong, now corrected**: the live embedding model
   (docs said BGE, it is MiniLM and BGE has never been scored), the cross-encoder (read as inert, it
   changes 88% of answers), and `site-vocabulary.md` rows (documented as additive, they replace).
   All measurements in [`rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md),
   which lives outside the index on purpose — writing about the search inside it costs retrieval.
+
 - 2026-08-21 — **the search no longer loads the model on every message.** A warm process
   ([`brain_server.py`](../semantic-index/brain_server.py) + `brain_client.py`) holds the embedding
   model and the tokenised corpus, and the per-message hook talks to it from Node with no Python at
@@ -2670,12 +2989,14 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Also cached the corpus + BM25 build inside `hybrid_search` itself (763 ms -> ~220 ms per warm
   query), keyed on the index build stamp so a rebuild invalidates it — verified across a real
   rebuild, and verified identical on 30 real questions.
+
 - 2026-08-21 — **the five end-of-turn hooks now run together**
   ([`stop-hooks.mjs`](../tools/stop-hooks.mjs)): 2,105 ms -> 900 ms on a quiet turn, and 31 s -> 20 s
   on a turn that actually re-indexes, re-scores and rebuilds the graph. Re-index runs first and alone
   because the score check reads the index it rebuilds; the other four have no such dependency. Each
   child is isolated and a failure is reported rather than swallowed — five hooks behind one entry
   means a bug here would silently disable all of them, which is this repo's worst failure mode.
+
 - 2026-08-21 — **the warm search server no longer opens a black window over Revit.** The venv's
   `python.exe` is a launcher shim over the Store Python: it re-executes the base interpreter as a
   second process, which never sees `DETACHED_PROCESS`, so that process took a console of its own —
@@ -2685,6 +3006,16 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
   hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
   knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
+
+- 2026-08-21 — **asked whether a KV cache would help; the answer is nothing to build, and it is now on
+  disk.** Two different things wear that name: the model's own KV cache runs on the API side with no
+  setting to reach, and prompt caching — the configurable half — is already handled by the harness, on a
+  1-hour TTL, with `CLAUDE.md` + `START-HERE.md` (23.6 KB, ~6,000 tokens) sitting in the cached prefix.
+  The three Brain-side caches were already settled: fragment index cache built (426 ms -> 38 ms), warm
+  search server built (3,536 ms -> ~220 ms), query cache declined at a 0.6% hit rate. Recorded in
+  `semantic-index/rag-architecture-decisions.md`, not `knowledge/` — a file about the Brain's own
+  machinery costs retrieval accuracy when indexed, which that file itself proved on 2026-08-20.
+
 - 2026-08-21 — **the daily check found six stale fragment counts in the three entry docs, and the drift
   checker now has a ninth check so they cannot drift again.** Disk holds 290; CLAUDE.md said 268 and 285,
   START-HERE.md said 285, README.md said 267 and 266, and README also still quoted the superseded 14-row
@@ -2695,3 +3026,303 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   fragments against 264`) by its `said ... against` shape. Negative-tested: it names file, line and claim.
   Added to both checkers; **the `.ps1` half is ASCII-only and BOM-preserved but has never been parsed —
   no PowerShell in the container, which is exactly the trap `CLAUDE.md` warns about. Run it once on the PC.**
+
+### 2026-08-22
+- 2026-08-22 — **the proven library can now be RUN by name, not retyped.** New MCP tool `run_fragment`
+  ([`run-fragment.js`](../mcp-server/tools/run-fragment.js)): name the fragments, pass the input values,
+  and the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. Until now
+  every scripted job read the file, hand-edited the block and pasted a copy — so "PROVEN" described a
+  file that was never the thing that ran. Four mistakes that used to cost a Revit round trip are now
+  local errors: an unknown or ambiguous fragment name, an input name that is a typo, a wrong-typed
+  value, and a composition C# would reject (two filters both declaring `sb`). Native tools 20 → 21.
+- 2026-08-22 — **one declaration line can declare several inputs, and the first writer for them was
+  wrong.** `byte colorR = 255, colorG = 0, colorB = 0;` — 50 such lines across 28 fragments, every
+  colour job among them. Replacing the initialiser as one string kept `colorR`'s new value and deleted
+  `colorG` and `colorB`. `parseInputs` now expands each declarator, so `--show` lists all three fields
+  as well. Caught by a whole-library sweep, which is now a standing test: rewriting the VALUES must
+  never change the declared types, names or comments, across all 290 fragments.
+- 2026-08-22 — the fragment parser moved to [`tools/fragment-lib.mjs`](../tools/fragment-lib.mjs),
+  shared by `fragment-index.mjs` and `run_fragment`. A runner that re-implemented the parse would drift
+  from the index silently — `--show` printing one form while the tool filled in another. Proof the
+  refactor was safe: `--json` byte-identical before and after.
+- 2026-08-22 — **"widget" is his word for a picture in the chat reply**, confirmed by asking him rather
+  than guessing — a synonym of "visualization" (2026-08-14), never a published page. The part worth
+  keeping: he used it while asking **how the Brain works**, not about model numbers, so
+  [`ajtools-visual-report`](../skills/ajtools-visual-report/SKILL.md) now says explicitly that an
+  explanation gets a diagram too. The old rule was written only around Revit figures.
+- 2026-08-22 — **`run_fragment` benchmarked** on the real library, 30 runs each: build + check a
+  2-fragment job **32 ms**, catch a bad input or a wrong fragment name **28 ms**. Text through the model
+  for one composed colour job: **2,800 tokens → 46**, a 98.3% cut, or roughly 55,000 tokens over a
+  20-job session. **Revit's own execution time is unchanged** — the same C# arrives. No measured figure
+  for a Revit round trip exists anywhere in this Brain, so the cost of a mistake is still stated as a
+  shape, not a number; measure one on the PC and record it here.
+- 2026-08-22 — **the job log was about to go blind.** `job-log-revit.mjs` read fragment names out of
+  the pasted `code`, which only `run_csharp` has. `run_fragment` NAMES its fragments instead, so every
+  call through the new tool recorded zero — and it is the tool meant to carry most jobs. Fixed to read
+  `input.fragments` too, normalised to the same bare `name.cs`, so counts from both paths add up
+  instead of splitting. **Found while building something that depends on that log, not by the log
+  complaining** — nothing would have complained.
+- 2026-08-22 — **the fragments Ajmal really uses are now in front of every message.**
+  [`tools/shortlist.mjs`](../tools/shortlist.mjs) ranks them from his own last 30 days of recorded work
+  and `auto-search-hook.mjs` injects three lines. **0.17 ms on a real log, 2.0 ms on a simulated year
+  of heavy use, ~92 tokens** — against a search that costs 650 ms and is right at #1 on 5 of 28
+  questions. His idea, and his framing of the decision order, now in AGENT-SPEC §2.4.
+  **What he asked for and did NOT get, deliberately:** MCP tools registering and unregistering
+  themselves by usage. That churns the tool list, breaks any skill note naming a tool, only takes
+  effect on a restart, and a machine-made tool is worse than a hand-written one — it cannot invent
+  `category: "Ducts"` in place of `OST_DuctCurves`. The shortlist gives the same benefit (no search)
+  for all 290 fragments instead of ~8, updates every message instead of every restart, and registers
+  nothing so it can break nothing.
+- 2026-08-22 — **run_fragment shrank what promoting to a native tool is worth.** Before it, native was
+  ~15 tokens against ~2,800 for read-and-paste. Now it is ~15 against ~46. The remaining reason to
+  hand-write a native tool is the friendly typed input and skipping the search — not saved code. Judge
+  the next promotion on that, not on the old arithmetic.
+- 2026-08-22 — **five fragment-backed native tools**: `grayout`, `session_start`,
+  `verify_connectivity`, `report_length_by_size`, `color_by_group`. Native tools 21 → 26. They hold
+  **no Revit code** — each names one proven fragment and the shared engine
+  ([`fragment-runner.js`](../mcp-server/shared/fragment-runner.js)) composes it off disk, so there is
+  never a second copy of a proven file to drift. `run-fragment.js` shrank 478 → 122 lines onto the same
+  engine, all 14 of its tests unchanged and passing, which is the proof the extraction changed nothing.
+  **`grayout` is the case that justifies the pattern:** its recipe declares 33 inputs and 32 of them
+  ARE Ajmal's settled standard, so the tool sets one value and leaves the rest byte-identical.
+- 2026-08-22 — **the five were picked from Brain evidence, not from usage** — his job log never travels
+  in git, so it could not be read from the container. Ranked instead by how often each fragment is named
+  across the skills and entry docs, plus AGENT-SPEC §9.4's standing request shapes. **Recorded so it is
+  revisited, not inherited:** `job-report.mjs` and `shortlist.mjs` on the PC give the real ranking, and
+  AGENT-SPEC §11's promotion list is now marked as written-from-memory rather than measured.
+
+- 2026-08-22 — **This log was tidied, and the tidying found four things wrong with it.** Ajmal asked for
+  housekeeping on this file and `semantic-index/rag-architecture-decisions.md`, with *"need full details
+  keep"* — so nothing was compressed and no entry was deleted. All 288 entries are still here, each still
+  carrying its own date line. What changed is structure and honesty:
+  **(1) The open-items header was stale in the flattering direction** — it claimed *237 of 280 verified
+  (85%)* when the live figure was **241 of 290 (83%)**. Both halves wrong. It is now replaced by a pointer
+  to `tools/brain-status.mjs`, which computes it from disk every session, plus a standing warning never to
+  quote a count from this file again. This is the exact failure `CLAUDE.md` opens by warning about, found
+  inside the log that is supposed to catch it.
+  **(2) The entries were not in date order, and four dates were split across two places each** —
+  2026-07-22, 07-23, 07-26 and 08-20 each appeared in two separate runs, so "newest at the bottom" was not
+  true. Stable-sorted by date; within-date order untouched. Verified by asserting the per-date counts were
+  identical before and after, so no entry can have moved days.
+  **(3) Two entry formats had grown up side by side** — 276 wrote `- DATE — **title**` and 12 wrote
+  `- **DATE — title**`, with the date inside the bold. Any tool counting entries by date silently missed
+  those 12. All 288 are now one format.
+  **(4) 2,575 lines with no headings and no index.** Added one `### DATE` heading per day and a jump table
+  at the top of the Log. The date also stays on every entry line, deliberately redundant: a heading is for
+  reading, the line is what greps and tools match on, and an earlier attempt at this that stripped the
+  prefix lost which day 90 entries belonged to.
+  **The rule at the top of this file was also fiction and is now rewritten.** It said *"keep entries to
+  1–3 lines"*; measured, the median is **8 lines and 87 entries are over 10**. A rule 90% of a file breaks
+  is drift with a sentence on top, so it now says to write the length the finding deserves and to link
+  rather than restate.
+
+- 2026-08-22 — **`rag-architecture-decisions.md` was arguing from a number that had doubled underneath
+  it.** Same housekeeping pass. The file's headline conclusion is *"do not rewrite the RAG — the test set
+  is what limits it"*, and limiter 1 read **"the test set is 14 questions… 3/14 at #1, MRR 0.321."** Ajmal
+  added 14 rows from his own question log on **2026-08-21** and that section was never updated. Live:
+  **28 rows, 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267.**
+  **The consequence is not cosmetic.** This file sets its own gate — *"revisit a rewrite when
+  `test-questions.md` holds 30+ rows"* — and at 28 the Brain is **two rows from its own trigger**, with two
+  finished features (the cross-encoder and the skill weighting) switched off only because the set was too
+  small to judge them. Written as 14, that reads as far off; written as 28, "write two more test questions"
+  becomes the highest-value job in the whole file. The stale number was hiding a decision that is nearly
+  due. The declined **adversarial eval rows** verdict carried the same 30-row trigger and is now flagged
+  *"two rows from expiring — re-read it, do not re-apply it."*
+  Also corrected: the corpus line **"352 files, 3,892 chunks"** is now stamped as a 2026-08-20 snapshot and
+  marked **unverifiable from a clone** — `index-manifest.json` is gitignored, so a cloud session cannot
+  check the file count at all; live elsewhere is 353 indexable files and 3,890 chunks.
+  **Nothing measured was deleted.** Every historical `x/14` score stays exactly as recorded — they are the
+  evidence for the decisions written beside them — and a banner at the top now says any `x/14` is the
+  pre-2026-08-21 era and that `score-history.md` wins whenever the two disagree. Added a 14-section table
+  of contents; all anchors checked. The rule this pass keeps proving: **a generated file beats a written
+  one, so a written file should point at the generator instead of copying its number.**
+
+- 2026-08-22 — **The two files still flagged as over the split rule were reviewed, and one of them was
+  wrong about the thing it exists to be right about.** `tools/brain-status.mjs` had been listing
+  `knowledge/live-model/core.md` and `knowledge/revit-version-compatibility.md` as *past the ~300-line
+  rule, not yet reviewed* — the last two without a `split-review` marker. Both are now reviewed and
+  **kept whole**, with the reason recorded in each file. That list is now empty.
+  **`core.md` — its contents list had been lying for weeks.** It advertised eleven topics; nine of them
+  were split out on 2026-08-06 and 2026-08-13 and only their contents-line stayed behind, so a reader
+  scrolled for duct routing, view visibility or undo in a file none of them had been in since. Replaced
+  with what the file really holds, plus a block naming where each of the nine actually went. Also removed
+  an **exact byte-identical duplicate bullet** (the post-commit roll-back lesson, present twice, 8 lines).
+  Kept whole because this is the third time it has passed 300 and grown back: what returns is the residue
+  that cannot be routed away, and `README.md` says in one line that *"core.md is the only file worth
+  reading alongside another"* — splitting the always-read file means every session opens two.
+  **`revit-version-compatibility.md` — four claims had gone stale, all in the same direction.** It led
+  with *"200 of the 282 fragments (71%) touch a changed API"*, which was the **pre-migration** scan; the
+  migration was applied that same day, so a fresh scan of all 290 finds one unmigrated call site, not two
+  hundred. It listed **three deliberate exceptions** when one had already been solved — the electrical
+  unit conversion, fixed by asking the API which unit type its own method takes rather than guessing a
+  factor, which is the general move worth remembering. And it ended *"none of this has been compiled or
+  run"* when `tools\check-scripts.cmd` had taken it to **287/287 on Revit 2020, 2024 and 2027** hours
+  later. Every pre-migration count is kept as the record, under a banner saying a fresh
+  `check-scripts.cmd` run beats any number written here.
+  **The finding worth the most: a one-pass migration does not defend itself.**
+  `filters/by-identity/filter-by-wrong-category.cs` was written on **2026-08-21, the day after** the
+  library was moved off `ElementId.IntegerValue`, and used that exact removed API to compare categories —
+  inside a `.Where()` running once per FamilyInstance in the model. Rewritten to compare `ElementId` to
+  `ElementId` (`new ElementId(expectedCategory)` with the `==` / `!=` operators): correct on 2020 through
+  2027, and no reflection in a per-element loop. Not compile-checked — this session has no Revit — so run
+  `tools\check-scripts.cmd` before trusting it. A **"Keeping it fixed"** section now carries the rule
+  (never take a number out of an `ElementId`) and a two-line grep that re-runs the scan from anywhere,
+  including a container with no Revit on it. The pattern behind all three files this week is one thing:
+  **a sweep fixes the library as it stands and does nothing about the next file somebody writes.**
+
+- 2026-08-22 — **Ajmal asked whether other files had stale numbers like the two just fixed. They did —
+  seventeen of them, across fourteen files, and the audit is now a permanent check.** Every numeric claim
+  in every markdown file was scanned against disk. What was wrong, all of it in the flattering or
+  alarming direction, never the harmless one:
+  **Fragment counts frozen at four different values** — `README.md` said *267* and *266*, both agent
+  definitions (`brain-investigator`, `brain-script-writer`) said *269*, `knowledge/INDEX.md` said *282*,
+  `CLAUDE.md` and `START-HERE.md` said *285*, `job-log/README.md` said *269*. Disk holds **290**.
+  **Native tools** read *17* in `semantic-index/README.md` and *17* / *19* in two places in `AGENT-SPEC.md`
+  against a real **20**.
+  **The checker was wrong about itself, twice.** `CLAUDE.md` promised the PowerShell copy ran *"the same
+  eight checks"*; `brain-self-maintain/SKILL.md` said *"same three checks"* and told you to prefer the
+  PowerShell one — which the hook has not run since 2026-08-04. `README.md` called it *"seven drift
+  checks"* while listing eight.
+  **`CLAUDE.md` carried the failure it opens by warning about**, on line 79, two paragraphs below the
+  line naming *"README said 8 skills against 9"* as the repo's recurring disease.
+  **A generator was stamping a date it did not run on.** `tools/api-surface.mjs` had `2026-08-20` as a
+  string literal in its own header template, so every regeneration re-dated the file to a day it was not
+  produced — the exact lie the generator exists to prevent. Now takes the date from the clock. Rerunning
+  it also moved `revit-api-surface.md` from *285 fragments / 230 types* to the true **290 / 245**, which
+  made `START-HERE.md`'s *"229 types"* wrong by a different route.
+  **The fix that matters is check 9, not the seventeen edits.** `verify-consistency.mjs` had eight checks
+  and only one of them looked at a count — a single hardcoded regex against a single sentence in
+  `AGENT-SPEC.md`, which is why everything above survived. Check 9 scans **every** markdown file for
+  whole-library totals (fragments, skills, native tools) and compares each to disk. It was tested by
+  deliberately breaking `CLAUDE.md` and confirming it fails with the file and line. Today it checks 13
+  live claims and finds nothing.
+  **Its escape hatch is the lesson, not a loophole:** a number is a live claim *unless the line itself
+  carries a date or a `<!-- count-history -->` marker.* A date on the enclosing heading does not count,
+  because nothing downstream can see the heading — which is precisely how *"one pass over all 282
+  fragments"* sat under a dated heading in `revit-version-compatibility.md` and still read as current.
+  **Not ported to PowerShell.** Writing a `.ps1` from a Linux container is the documented encoding trap
+  that has already broken two scripts here, so `verify-consistency.ps1` trails at eight checks and the
+  docs now say so instead of claiming parity.
+
+- 2026-08-22 — **"Is the log too detailed?" — measured instead of argued, and the answer is keep the
+  detail but cap the cost.** Ajmal asked whether this file should be cut back to the main points. Three
+  numbers decided it. **(1) The detail earns its keep:** this same session found a Revit-2024 regression
+  in `filter-by-wrong-category.cs` only by reading what the 2026-08-20 migration had actually done — which
+  exceptions it left, that it hit 287/287 on three Revit versions, when it ran. A 1–3 line log would have
+  recorded "migration applied" and nothing findable. **(2) The detail is not free:** this file sits in
+  `knowledge/`, so every line is indexed and competes with the notes that answer real questions. Measured
+  today at **272 KB — 36% of all knowledge/, and 10% of the entire searchable corpus.** For scale, 604
+  chunks of external standards were indexed on 2026-08-13 and reverted the same hour for being a 20%
+  increase. **(3) Nothing here can prove archiving would help**, because the test set is 28 rows — the
+  same reason the RAG doc declines every other retrieval change.
+  So: **move, never shorten.** Past **20% of the corpus**, entries older than ~60 days go to
+  `docs/brain-log-archive.md`, which is outside `INDEX_TARGETS` — every word survives, git still has it,
+  and it stops crowding the search. At 10% today, nothing to do. `tools/brain-status.mjs` now computes and
+  prints that share every session (loudly past 20%, quietly under `--full` below it), so the trigger fires
+  on a number rather than on somebody's impression of how long the file looks.
+
+- 2026-08-22 — **Ajmal asked for the same stale-number audit over the `.cs` fragments. Two real classes of
+  drift, both the same shape: a sweep over the documentation that never reached the code.**
+  **(1) Nineteen fragment headers said the fragment had never run — for fragments proven three weeks
+  earlier.** `create-wall.cs`, `create-duct.cs`, `create-pipe.cs`, `create-floor.cs` and twelve more still
+  opened with *"NOT YET LIVE-VERIFIED — created 2026-07-26"* while their `scripts/README.md` rows carry
+  hard evidence of a live run: *"length 4000 mm, height 3000 mm, `LevelId` 311"*, *"read back `RevisionId`
+  49030"*, *"12.00 m2"*. The 2026-08-06/07 verification campaign recorded every result in the README and
+  never went back to the files. **This exact bug is already in this log**, on 2026-08-07, from the other
+  side: a stale "NOT yet live-verified" clause left inside a README row hid four fragments from the count.
+  It was fixed in the README and the other half was missed. Sixteen headers now carry the verified date
+  and a pointer to the README row, each quoting its own old wording verbatim so nothing is lost. Three
+  were **not** flatly wrong and were rewritten as `PARTLY VERIFIED` instead, naming which path is proven
+  and which is not — `action-create-view-filter.cs` (contains-rule only), `filter-by-assembly.cs` (by-Id,
+  not by-name), `filter-by-host.cs` (hosted families, not insulation). **The dangerous direction is clean:**
+  no fragment claims to be proven when the README says otherwise. The one hit was a false positive — a
+  GOTCHA saying a *technique* was "proven live in this Brain", which is true.
+  **(2) The 2026-08-20 outside-source strip never touched `scripts/`.** Seven fragment headers still
+  carried a `(Dynamo-package equivalent: X's Y nodes.)` line in the PURPOSE block a modeller reads first —
+  pure attribution, no technical content — plus three more in `scripts/README.md`. All removed, per
+  Ajmal's own words that day: *"do not mention any thing that we took from this web site or repo... the
+  words also remove."* One source citation in `knowledge/live-model/views.md` went too; the fact it
+  supported (the view-title API landed in Revit 2022) stands on its own and is recorded in
+  `revit-version-compatibility.md` anyway.
+  **What was checked and found clean:** every relative path referenced from a fragment (109 of them, 0
+  broken), library counts stated inside `.cs` comments (none), and headers overclaiming their own status.
+  **Two checks added, both tested by deliberately breaking a file first** — the first attempt at check 10
+  had a skip rule broad enough to swallow the very line it was meant to catch, and passed its own test.
+  Check 10 compares each fragment's header status to its README row (241 verified fragments). Check 11
+  scans `scripts/` and `skills/` for outside-source names, and **found three more on its first run**, in
+  `scripts/README.md`, which the `.cs`-only grep had never looked at. That is the argument for a check
+  over a one-off sweep, in one line.
+  **Two things deliberately left for Ajmal**, because both are his call and not a checker's:
+  `knowledge/dynamo-vocabulary-map.md` (a whole file whose second table maps community package names to
+  fragments — it is also the only thing that routes "the Rhythm one" to the right fragment), and the eight
+  external URLs under "Sources consulted" in `knowledge/nfpa13-sprinkler-spacing.md` (fire-code values
+  whose own heading warns they are secondary summaries — removing the sources would leave unverified
+  numbers looking authoritative). Neither is scanned by check 11; the reason is written into the check.
+
+- 2026-08-22 — **Ajmal settled both open outside-source questions, and they went opposite ways.** His
+  words: *"keep the nfpa links and THE DYNAMO FILES NO NEED BECOSE WE DONT HAVE ANYTING RELATED TO
+  DYNAMO."* Both decisions are now recorded where they will be found, not just done.
+  **`knowledge/dynamo-vocabulary-map.md` deleted** (55 lines, his explicit OK). His reason is the right
+  one and it beats the argument for keeping it: the file existed to translate Dynamo node names into
+  fragments, and this setup has never used Dynamo — its own first paragraph said so. The routing it
+  provided was for a vocabulary that is not in play. Removed with it: the `knowledge/INDEX.md` row that
+  pointed at it, and the last stray mention in `live-model/graphic-override-precedence.md` (an API-gap
+  note that read fine without it). Git has the file if it is ever wanted back.
+  **The NFPA links stay, and now say why.** A blockquote above the "Sources consulted" heading in
+  `nfpa13-sprinkler-spacing.md` records that this is a deliberate exception on safety grounds — fire-code
+  values, a heading that already warns they are secondary summaries rather than the standard itself, and
+  stripping the sources would leave unverified life-safety numbers looking authoritative. A future session
+  tidying references will see the decision instead of re-making it.
+  **Check 11 widened from `scripts/` + `skills/` to include `knowledge/`** — 344 files — now that the one
+  file blocking it is gone. Two exemptions remain, each with its reason written into the check itself:
+  `brain-log.md` (dated history — the July package-comparison entries record something that really
+  happened, and rewriting them would make this log lie about the Brain's own past) and the NFPA sources
+  section. Tested by planting a name in `knowledge/glossary.md`; it fired with file and line.
+  **Check 8 earned its keep in the same minute.** Deleting one knowledge file moved the indexable corpus
+  from 353 to 352, and the checker immediately flagged all three "searches all 353 files" claims in
+  `CLAUDE.md`, `START-HERE.md` and `README.md`. Before check 8 existed that would have drifted silently —
+  it is on record as having done exactly that for two days. One delete, three docs corrected, no thought
+  required.
+
+- 2026-08-22 — **Final sweep of the markdown, and the one thing it found was the failure `CLAUDE.md` names
+  by name.** `README.md` was quoting the search accuracy as **"3/14 at #1, 6/14 in top 5, 11/14 retrievable
+  at all"**. Two things wrong with that, and the second is worse than the first: the test set doubled to 28
+  rows on 2026-08-21, *and* that exact combination **matches no line in `score-history.md` that ever
+  happened** — it was a remembered composite, which is precisely what `CLAUDE.md` warns about when it says
+  *"three different numbers (75%, 60%, 29%) were once in circulation here."* Corrected to the real last
+  run, **5/28 at #1, MRR 0.267**, with the note that it is not comparable to any `x/14` above it.
+  **Check 12 added** so a score claim is compared to the last run in `score-history.md` automatically —
+  `score-history.md`, `brain-log.md`, `rag-architecture-decisions.md` and `HANDOVER.md` are exempt because
+  all four quote every era on purpose and the last three already carry a banner saying so. Tested by
+  putting the old number back; it fired with file and line.
+  **Everything else in the markdown came back clean, and the negative results are worth recording** so the
+  next session does not repeat the search: **35 in-file `#anchor` links, all resolving** (check 2 strips
+  the `#`, so these had never been validated — including the jump table added to this log this morning);
+  **every `tools/*.mjs|ps1|py|cmd` named in prose exists on disk**; **0 orphan knowledge files** of 43,
+  so everything is reachable from an index; **no TODO/FIXME/placeholder leftovers** (11 keyword hits, all
+  legitimate — "need todo" is Ajmal's own quoted words, `(XXX)` is a naming regex, "connector placeholder
+  size" is a real term); **no sentence over 150 characters appears in two files**, so the "never duplicate
+  a fact across two files" rule is actually holding; and **no duplicate headings** inside any file.
+  **One measurement error caught in my own audit, worth more than the clean results.** A percentage check
+  flagged two figures in this log as wrong arithmetic. Both were my regex, not the log: one spanned two
+  unrelated numbers, and the other read `1,192` as `1` because of the comma. **Neither was reported as a
+  finding.** The pattern this session keeps proving in both directions: a scan is evidence only after you
+  read what it actually matched.
+  **`docs/HANDOVER.md` rewritten at the top** for the close-out — the whole 2026-08-22 session, the four
+  new checks, the four decisions Ajmal took, and the three things only he can do. Its own stale numbers
+  (270 / 283 / 287 fragments, `3/14`) were stamped or corrected; the 2026-08-20 Windows bridge work below
+  is untouched because it is still unfinished.
+
+- 2026-08-22 — **A conflicted `CLAUDE.md` passed all twelve consistency checks, so there is now a
+  thirteenth.** Found while merging the daily-check branch into main: `CLAUDE.md` still carried
+  `<<<<<<<` / `=======` / `>>>>>>>` from an unresolved merge, and `verify-consistency.mjs` reported
+  **"All checks passed - no drift found."** Every check up to that point reads content looking for a
+  specific claim — a count, a link, a status, a score — and **not one of them asks whether the file is
+  coherent at all.** A conflict marker shipped into `CLAUDE.md` would corrupt the instructions every
+  session loads first, and nothing would have said a word. Check 13 scans all 449 tracked text files for
+  the markers; tested by planting one. It goes last because it guards everything above it.
+  **How the marker survived:** the conflict was in a file I had not listed in my own `grep -c` after
+  resolving — I checked the three files git named in the conflict output and moved on, and README.md and
+  CLAUDE.md had conflicted too. That is the same error shape as the truncated `head -25` earlier today
+  and the phantom log entry this morning: **a scan is evidence only for what it actually covered.** The
+  fix each time is the same, and it is now a check rather than a resolution to be careful.

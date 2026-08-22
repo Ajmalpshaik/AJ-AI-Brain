@@ -58,6 +58,18 @@ try {
     (m) => m[1]
   );
 
+  // run_fragment NAMES its fragments instead of pasting their code, so there is no `code` field
+  // to read them out of. Without this the log went blind the moment that tool started being used
+  // - and it is the tool meant to carry most jobs, so the usage record would have quietly become
+  // a record of the OLD way only. Normalised to the same bare "name.cs" the regex above produces,
+  // so counts from both paths add up instead of splitting in two.
+  const named = input.fragments;
+  for (const f of Array.isArray(named) ? named : named ? [named] : []) {
+    if (typeof f !== "string" || !f.trim()) continue;
+    const base = f.trim().replace(/\\/g, "/").split("/").pop();
+    fragments.push(base.endsWith(".cs") ? base : base + ".cs");
+  }
+
   const entry = {
     date: new Date().toISOString().slice(0, 10),
     tool: toolName.replace(/^mcp__[^_]*__/, "").replace(/^mcp__.*?__/, ""),

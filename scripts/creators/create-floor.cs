@@ -11,7 +11,10 @@
 //         no `structural` flag - it is set afterwards via FLOOR_PARAM_IS_STRUCTURAL.
 // GOTCHA: the boundary auto-closes (last point connects back to the first) and must not self-intersect;
 //         Revit throws on a crossed loop and the transaction rolls back cleanly.
-// NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap backlog; run once on a small test slab.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap
+//          backlog; run once on a small test slab.", which the README had already superseded. The verification was
+//          recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

@@ -375,38 +375,232 @@ for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
 }
 console.log(`Checked ${claimCount} "searches all N files" claim(s) against ${indexable} indexable file(s) on disk.`);
 
-// === 9. Fragment-count claims in the entry documents ===
-// Check 5 covers AGENT-SPEC.md and check 8 covers the "searches all N files" line, but the entry docs
-// also each quote how many FRAGMENTS a tool covers ("compile-checks all N fragments", "search the N
-// fragments"). Nothing checked those, and on 2026-08-21 all four were stale at once against 290 on
-// disk: CLAUDE.md said 268 and 285, START-HERE.md said 285, README.md said 267 and 266. That is the
-// exact failure this repo keeps naming - the docs quietly getting ahead of reality - so it is a check
-// now rather than a note. Only 'all N' / 'the N' forms count as a live claim; the historical example
-// in CLAUDE.md ("AGENT-SPEC said 206 fragments against 264") deliberately records a PAST drift and
-// must never be rewritten to match disk, so the `said ... against` shape is skipped explicitly.
-console.log("\n=== 9. Fragment-count claims in entry documents ===");
-const fragTotal = walk(path.join(brainRoot, "scripts"), (n) => n.endsWith(".cs")).length;
-const FRAG_CLAIM_RE = [/(?:all|the) (\d+)(?: C#)? fragments/g, /searches all (\d+) by purpose/g];
-let fragClaimCount = 0;
-for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
-  const p = path.join(brainRoot, file);
-  if (!fs.existsSync(p)) continue;
-  const lines = fs.readFileSync(p, "utf8").split(/\r?\n/);
-  lines.forEach((line, i) => {
-    if (/\bsaid\b.*\bagainst\b/.test(line)) return; // documented past drift, not a live claim
-    for (const re of FRAG_CLAIM_RE) {
+// === 9. Live counts stated anywhere in markdown ===
+// Check 5 above guards ONE sentence in ONE file. Everything else went unchecked, and on 2026-08-22 an
+// audit found nine wrong live claims across CLAUDE.md, START-HERE.md, README.md, AGENT-SPEC.md,
+// knowledge/INDEX.md, semantic-index/README.md, job-log/README.md and two agent definitions - fragment
+// counts frozen at 267/269/282/285 while disk held 290, and native tools at 17/19 against 20. CLAUDE.md
+// itself opens by warning about exactly this failure and was carrying it on line 79.
+//
+// A number is treated as a LIVE CLAIM unless one of these is true, which is also how you fix a false
+// positive - and both fixes make the prose better rather than papering over it:
+//   * the line carries a yyyy-mm-dd date, so it is a stamped historical measurement;
+//   * the line carries an explicit <!-- count-history --> marker;
+//   * the file is an append-only dated record (brain-log, a log.md, score-history, a job-log snapshot).
+// A heading's date does NOT cover the lines under it: nothing downstream can see the heading, so a
+// historical figure has to say so on its own line.
+console.log("\n=== 9. Live counts stated anywhere in markdown ===");
+const liveCounts = {
+  fragments: walk(scriptsDir, (n) => n.endsWith(".cs")).length,
+  skills: fs.existsSync(skillsDir)
+    ? fs.readdirSync(skillsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).length
+    : 0,
+  "native tools": walk(path.join(brainRoot, "mcp-server", "tools"), (n) => n.endsWith(".js")).length,
+};
+// Only phrasings that assert a WHOLE-LIBRARY total. A bare "93 fragments" is usually a subset
+// ("93 fragments use DisplayUnitType") and must not be flagged, so every pattern needs a totalising
+// article or an explicit scope.
+const countPatterns = [
+  [/\ball (\d+) (?:C# )?fragments\b/gi, "fragments"],
+  [/\bthe (\d+) (?:C# )?fragments\b/gi, "fragments"],
+  [/\b(\d+) fragments in `scripts\//gi, "fragments"],
+  [/\b(?:all|the|its|holds|has|carries|only) (\d+) skills\b/gi, "skills"],
+  [/\b(\d+) skills ·/gi, "skills"],
+  [/\b(\d+) native tools\b/gi, "native tools"],
+  [/\b(\d+) tool files\b/gi, "native tools"],
+];
+const datedRecord = /(brain-log\.md|score-history\.md|\/log\.md|job-log\/snapshots\/|HANDOVER\.md)$/;
+let countClaims = 0;
+for (const file of walkAll(brainRoot).filter((f) => f.endsWith(".md"))) {
+  const rel = path.relative(brainRoot, file).split(path.sep).join("/");
+  if (datedRecord.test(rel)) continue;
+  const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/20\d\d-\d\d-\d\d/.test(line)) continue;
+    if (/<!-- count-history -->/.test(line)) continue;
+    for (const [re, key] of countPatterns) {
       re.lastIndex = 0;
       let m;
-      while ((m = re.exec(line))) {
-        fragClaimCount++;
-        if (Number(m[1]) !== fragTotal) {
-          issues.push(`FRAGMENT COUNT DRIFT in ${file}:${i + 1}: says "${m[0]}" but scripts/ holds ${fragTotal} fragments`);
+      while ((m = re.exec(line)) !== null) {
+        countClaims++;
+        if (Number(m[1]) !== liveCounts[key]) {
+          issues.push(
+            `LIVE COUNT DRIFT in ${rel}:${i + 1}: says "${m[0]}" but disk has ${liveCounts[key]} ${key}` +
+              ` - update it, or if the figure is historical give the line a date or a <!-- count-history --> marker`,
+          );
         }
       }
     }
-  });
+  }
 }
-console.log(`Checked ${fragClaimCount} fragment-count claim(s) against ${fragTotal} fragment(s) on disk.`);
+console.log(
+  `Checked ${countClaims} live count claim(s) against disk ` +
+    `(${liveCounts.fragments} fragments, ${liveCounts.skills} skills, ${liveCounts["native tools"]} native tools).`,
+);
+
+// === 10. Fragment header status vs its scripts/README.md row ===
+// scripts/README.md is the verification record - brain-status.mjs counts from it, and it carries the
+// evidence ("length 4000 mm, LevelId 311"). But a modeller opening a fragment reads the HEADER, and on
+// 2026-08-22 nineteen headers still said "NOT YET LIVE-VERIFIED" for fragments proven on 2026-08-06/07:
+// the big verification campaign updated the README row and never went back to the file. The log had
+// already recorded the mirror image of this bug on 2026-08-07 (a stale "NOT yet live-verified" clause
+// left INSIDE a README row hid four fragments from the count) - it was fixed in the README and the other
+// half was missed. Two records of the same fact drift apart unless something compares them.
+//
+// Only the README-says-verified / header-says-never-ran direction is checked. The reverse (a header
+// overclaiming) cannot be caught by keyword: fragments legitimately write "proven live in this Brain"
+// about a TECHNIQUE inside a GOTCHA block, which is true and not a status claim.
+console.log("\n=== 10. Fragment header status vs README row ===");
+const readmeRows = new Map();
+for (const line of fs.readFileSync(path.join(scriptsDir, "README.md"), "utf8").split(/\r?\n/)) {
+  if (!line.startsWith("| [`")) continue;
+  const m = line.match(/\]\(([^)]+\.cs)\)/);
+  if (m) readmeRows.set(path.normalize(path.join("scripts", m[1])), line);
+}
+// A status DECLARATION opens a comment line. Text quoted inside a later correction note, and prose in a
+// GOTCHA continuation, must not count - that is why this anchors to the start of the line and skips the
+// correction wording explicitly.
+const neverRan = /^\/\/\s*(?:STATUS:\s*)?(?:BLOCKED[^—-]*[—-]\s*)?NOT ?(?:YET )?LIVE-VERIFIED\b/i;
+let statusChecked = 0;
+for (const f of walk(scriptsDir, (n) => n.endsWith(".cs"))) {
+  const rel = path.relative(brainRoot, f);
+  const row = readmeRows.get(path.normalize(rel));
+  if (!row) continue;
+  const readmeVerified =
+    /verified(?:\s+\w+)? 2026-\d\d-\d\d/.test(row) && !/NOT yet live-verified/.test(row);
+  if (!readmeVerified) continue;
+  statusChecked++;
+  const head = fs.readFileSync(f, "utf8").split(/\r?\n/).slice(0, 45);
+  for (let i = 0; i < head.length; i++) {
+    // The anchor above is what excludes quoted text: a correction note's continuation line starts with a
+    // date, not with the keyword, so it cannot match. An earlier version ALSO skipped any line containing
+    // "Header corrected", which silently swallowed the declaration line itself - the check then passed a
+    // deliberately broken header during its own test. A skip broad enough to hide the bug is worse than no
+    // skip, so the anchor does the work alone now.
+    if (/still read "/.test(head[i])) continue;
+    if (neverRan.test(head[i])) {
+      issues.push(
+        `FRAGMENT STATUS DRIFT in ${rel.split(path.sep).join("/")}:${i + 1}: the header still says it has` +
+          ` never run, but its scripts/README.md row records a live verification - update the header, or` +
+          ` if only one code path is proven say which (see the PARTLY VERIFIED headers for the wording)`,
+      );
+      break;
+    }
+  }
+}
+console.log(`Checked ${statusChecked} README-verified fragment(s) against their own header status.`);
+
+// === 11. Outside sources named in fragments and skills ===
+// Ajmal's instruction, 2026-08-20: "do not mention any thing that we took from this web site or repo...
+// the words also remove". Everything of that kind was stripped that day - from the docs. The strip never
+// reached scripts/, and on 2026-08-22 seven fragment headers still carried a "(Dynamo-package
+// equivalent: X's Y nodes.)" line: pure attribution, no technical content, in the PURPOSE block a
+// modeller reads first. Same shape of miss as the verification campaign that updated README rows and not
+// the fragment headers - a sweep over documentation does not reach code.
+//
+// Now covers knowledge/ too. It was scoped to scripts/ and skills/ only while one file's fate was open -
+// knowledge/dynamo-vocabulary-map.md, which mapped community package names to fragments. Ajmal settled it
+// on 2026-08-22: "the dynamo files no need becose we dont have anyting related to dynamo". Deleted, so
+// the exception is gone and knowledge notes are scanned like everything else.
+//
+// Two things stay excluded, each for a stated reason rather than convenience:
+//   * knowledge/brain-log.md - dated, append-only history. Entries from July record a package comparison
+//     that really happened; rewriting them would make the log lie about the Brain's own past.
+//   * the "Sources consulted" section of knowledge/nfpa13-sprinkler-spacing.md - Ajmal's decision the
+//     same day: "keep the nfpa links". Fire-code values whose own heading warns they are secondary
+//     summaries; removing the sources would leave unverified life-safety numbers looking authoritative.
+console.log("\n=== 11. Outside sources in fragments, skills and knowledge ===");
+const outsideNames = /\b(rhythm|clockwork|bimorph|genius ?loci|archi-?lab|mepover|data-?shapes|spring nodes|orchid|dynamo)\b/i;
+const sourceExempt = /(brain-log\.md|nfpa13-sprinkler-spacing\.md)$/;
+let sourceScanned = 0;
+for (const dir of ["scripts", "skills", "knowledge"]) {
+  for (const f of walk(path.join(brainRoot, dir), (n) => n.endsWith(".cs") || n.endsWith(".md"))) {
+    const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+    if (sourceExempt.test(rel)) continue;
+    sourceScanned++;
+    const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(outsideNames);
+      if (m) {
+        issues.push(
+          `OUTSIDE SOURCE NAMED in ${rel}:${i + 1}: "${m[0]}" - Ajmal's 2026-08-20 rule is that no other` +
+            ` people's repos, tools, products or names appear in this Brain. If the technique is worth` +
+            ` having, state it in this Brain's own words; do not record where it came from`,
+        );
+      }
+    }
+  }
+}
+console.log(`Scanned ${sourceScanned} fragment/skill/knowledge file(s) for outside-source names.`);
+
+// === 12. Retrieval-score claims vs semantic-index/score-history.md ===
+// CLAUDE.md names this as a failure that already happened: "three different numbers (75%, 60%, 29%) were
+// once in circulation here". It happened again - on 2026-08-21 the test set doubled from 14 rows to 28,
+// and on 2026-08-22 README.md was still quoting "3/14 at #1, 6/14 in top 5, 11/14 retrievable", a figure
+// that matches no single line in score-history.md at all. It was a remembered composite, which is exactly
+// what that file exists to stop. score-history.md is append-only and stamped with the model and settings
+// that produced each run, so its LAST line is the only current answer.
+console.log("\n=== 12. Retrieval-score claims vs score-history ===");
+const historyPath = path.join(brainRoot, "semantic-index", "score-history.md");
+if (fs.existsSync(historyPath)) {
+  const runLines = fs.readFileSync(historyPath, "utf8").split(/\r?\n/)
+    .filter((l) => /^\s*-\s*\d+\/\d+ at #1/.test(l));
+  const last = runLines[runLines.length - 1] || "";
+  const truth = last.match(/(\d+)\/(\d+) at #1/);
+  let scoreClaims = 0;
+  if (truth) {
+    const [, top1, rows] = truth;
+    for (const f of walkAll(brainRoot).filter((x) => x.endsWith(".md"))) {
+      const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+      // score-history is the source; brain-log and the rag doc are dated records that quote every era on
+      // purpose, and both already carry a banner saying an x/14 figure is the pre-2026-08-21 set.
+      if (/score-history\.md|brain-log\.md|rag-architecture-decisions\.md|HANDOVER\.md$/.test(rel)) continue;
+      const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+      for (let i = 0; i < lines.length; i++) {
+        for (const m of lines[i].matchAll(/(\d+)\/(\d+) at #1/g)) {
+          scoreClaims++;
+          if (m[1] !== top1 || m[2] !== rows) {
+            issues.push(
+              `SCORE CLAIM DRIFT in ${rel}:${i + 1}: says "${m[0]}" but the last run in` +
+                ` semantic-index/score-history.md is ${top1}/${rows} at #1 - quote that file, never a` +
+                ` remembered number, and say which run it came from`,
+            );
+          }
+        }
+      }
+    }
+    console.log(`Checked ${scoreClaims} retrieval-score claim(s) against the last run (${top1}/${rows} at #1).`);
+  } else {
+    issues.push("SCORE HISTORY UNREADABLE: no 'N/M at #1' run line found in semantic-index/score-history.md");
+  }
+} else {
+  issues.push("MISSING FILE: semantic-index/score-history.md not found");
+}
+
+// === 13. Merge-conflict markers left in tracked files ===
+// Found the hard way on 2026-08-22, resolving a branch against main: CLAUDE.md still carried
+// <<<<<<< / ======= / >>>>>>> and ALL TWELVE CHECKS ABOVE PASSED. Every one of them reads content
+// looking for a specific claim; none asks whether the file is even coherent. A conflict marker shipped
+// into CLAUDE.md would corrupt the instructions every session loads first, and nothing here would say a
+// word. Cheap to catch, catastrophic to miss, so it goes last and guards everything.
+console.log("\n=== 13. Merge-conflict markers ===");
+let conflictScanned = 0;
+for (const f of ourTextFiles()) {
+  conflictScanned++;
+  const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+  const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    if (/^(<{7}|={7}|>{7})(\s|$)/.test(lines[i])) {
+      issues.push(
+        `MERGE CONFLICT MARKER in ${rel}:${i + 1}: "${lines[i].slice(0, 40)}" - an unresolved merge is` +
+          ` still in this file. Resolve it before committing; nothing else in this checker would notice.`,
+      );
+      break;
+    }
+  }
+}
+console.log(`Scanned ${conflictScanned} tracked text file(s) for unresolved merge markers.`);
 
 // === Result ===
 console.log("\n=== Result ===");
