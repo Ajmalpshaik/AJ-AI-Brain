@@ -7,7 +7,7 @@
 // This file only wires things together. See:
 //   - bridge-connection.js  — the named-pipe plumbing
 //   - shared/               — helpers every native tool reuses
-//   - tools/README.md       — index of all 17 Revit tools, one file each
+//   - tools/README.md       — index of all 21 Revit tools, one file each
 //   - brain-tools/          — tools that do NOT touch Revit (search_brain), kept out of tools/
 //                             so brain-status.mjs keeps counting Revit tools truthfully
 
@@ -15,6 +15,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { register as registerRunCsharp } from "./tools/run-csharp.js";
+import { register as registerRunFragment } from "./tools/run-fragment.js";
 import { register as registerPing } from "./tools/ping.js";
 import { register as registerListRevitInstances } from "./tools/list-revit-instances.js";
 import { register as registerUseRevitInstance } from "./tools/use-revit-instance.js";
@@ -42,6 +43,7 @@ import { register as registerSearchGraph } from "./brain-tools/search-graph.js";
 const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.4.0" });
 
 registerRunCsharp(server);
+registerRunFragment(server);
 registerPing(server);
 registerListRevitInstances(server);
 registerUseRevitInstance(server);

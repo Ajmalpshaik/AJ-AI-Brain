@@ -60,7 +60,11 @@ the full explanation and the user's own worked example (500mm-height ducts → c
 Pick the matching filter fragment from `filters/` (or a `creators/` fragment instead, when the elements
 the user wants don't exist yet — "add N of X on level Y", "create levels up to N" — creators produce
 `elements` the same way filters do, so an action can chain onto them too), pick one or more action
-fragments from `actions/`, paste them together in order, fill in each `INPUTS` block, run once. If the
+fragments from `actions/`, then **run them with `run_fragment` — name them and pass the input values,
+rather than pasting edited copies into `run_csharp`.** That sends the proven files themselves, so a
+fragment's verified status still means something at the moment it runs, and a wrong fragment name, a
+misspelled input or a composition C# would reject comes back here in milliseconds instead of costing a
+round trip through Revit. `preview: true` shows the exact composed script first. If the
 element type changes next time (pipes instead of ducts, a different family), only the filter/creator
 fragment needs to change — every action fragment already works on whatever `elements` it's handed. Only
 fall back to a genuinely new, one-off script when no filter/creator+action combination covers the

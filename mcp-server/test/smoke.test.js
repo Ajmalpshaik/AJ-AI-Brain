@@ -12,6 +12,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { register as registerRunCsharp } from "../tools/run-csharp.js";
+import { register as registerRunFragment } from "../tools/run-fragment.js";
 import { register as registerPing } from "../tools/ping.js";
 import { register as registerModelSummary } from "../tools/model-summary.js";
 import { register as registerListElements } from "../tools/list-elements.js";
@@ -30,8 +31,8 @@ import { register as registerMoveElements } from "../tools/move-elements.js";
 import { register as registerDeleteElements } from "../tools/delete-elements.js";
 
 // Not a Revit tool, and deliberately NOT added to the lists below: the two tests there assert
-// exactly 17 registrations and that every handler fails with a bridge error. search_brain never
-// touches the bridge, so it gets its own test at the bottom of this file and the 17-tool guard
+// exactly 18 registrations and that every handler fails with a bridge error. search_brain never
+// touches the bridge, so it gets its own test at the bottom of this file and the 18-tool guard
 // stays meaningful.
 import { register as registerSearchBrain } from "../brain-tools/search-brain.js";
 import { register as registerSearchGraph } from "../brain-tools/search-graph.js";
@@ -40,6 +41,14 @@ import { register as registerSearchGraph } from "../brain-tools/search-graph.js"
 // handler's own C#-building code (category resolution, optional fields, view targeting, etc.).
 const SAMPLE_ARGS = {
   run_csharp: { code: '"smoke-test"' },
+  // A real PROVEN fragment with a real input, so this exercises resolution, the INPUTS rewrite and the
+  // composition decision — not just the registration. preview is deliberately OFF: like every other
+  // handler here, it must reach the bridge and fail gracefully there.
+  run_fragment: {
+    describe: "Smoke test the fragment runner",
+    fragments: "filter-by-category",
+    inputs: { targetCategory: "OST_DuctCurves" },
+  },
   ping: {},
   model_summary: { category: "ducts", parameter: "Height" },
   list_elements: { category: "Ducts" },
@@ -73,7 +82,7 @@ function createFakeServer() {
 test("every tool module registers exactly one well-formed tool", () => {
   const server = createFakeServer();
   for (const register of [
-    registerRunCsharp, registerPing, registerModelSummary, registerListElements, registerCountElements,
+    registerRunCsharp, registerRunFragment, registerPing, registerModelSummary, registerListElements, registerCountElements,
     registerHideElements, registerUnhideElements, registerIsolateElements, registerResetIsolation,
     registerSetColor, registerResetGraphicOverrides, registerSetTransparency, registerSelectElements,
     registerSetParameterValue, registerReportParameters, registerMoveElements, registerDeleteElements,
@@ -81,7 +90,7 @@ test("every tool module registers exactly one well-formed tool", () => {
     register(server);
   }
 
-  assert.equal(server.registrations.length, 17, "expected exactly 17 registered tools");
+  assert.equal(server.registrations.length, 18, "expected exactly 18 registered tools");
 
   const names = server.registrations.map((r) => r.name).sort();
   assert.deepEqual(names, EXPECTED_TOOL_NAMES, "registered tool names drifted from this test's expectations");

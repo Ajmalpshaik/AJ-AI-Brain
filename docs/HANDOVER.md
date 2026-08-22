@@ -1,13 +1,63 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-20**, end of the Windows PC session — read THE BRIDGE section first, then the UPDATE section. This replaces the 2026-08-14 handover, which
-had gone stale (it said 270 fragments; there are now 287).
+Last updated: **2026-08-22** — read RUN_FRAGMENT first (it is the newest and it is untested on a real
+model), then THE BRIDGE section, then the UPDATE section. The 2026-08-20 header said 287 fragments;
+there are now 290.
 
 ## The prompt
 
 ```text
 Read D:\Ajmal\AJ AI Brain\docs\HANDOVER.md and CLAUDE.md first, then continue the work listed there.
 ```
+
+---
+
+## RUN_FRAGMENT — built 2026-08-22, needs ONE real run to be believed
+
+**What it is.** A new MCP tool, `run_fragment`. Name one or more fragments, pass their input values, and
+the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. It replaces the
+read-the-file / hand-edit / paste-into-`run_csharp` loop that every scripted job used until now.
+
+**Why it was built, in one line:** "PROVEN" described a file that was never the thing that ran. Every job
+sent a retyped copy. Two Revit round trips were lost to exactly that on 2026-08-20 alone.
+
+**What is proven, and it is all off-model.** 14 tests, `mcp-server/test/run-fragment.test.js`, all
+passing — including a sweep that rewrites **all 247 input-bearing fragments** and asserts the declared
+types, names and comments come through unchanged, and a byte-identical check on everything outside the
+INPUTS block. It has **never been run against a real Revit document.**
+
+**So do this first, and it is two minutes.** Ajmal must close and reopen Revit only if the add-in
+changed — it did not, this is Node-side only — but the MCP server must be reloaded to see the new tool.
+Then, on the test model:
+
+1. `run_fragment(describe: "Count the ducts", fragments: "filter-by-category",
+   inputs: {targetCategory: "OST_DuctCurves"}, preview: true)` — read the composed script, confirm it is
+   the fragment plus one `return sb.ToString();`.
+2. Same call without `preview` — check the count against `count_elements` for the same category. Two
+   independent mechanisms agreeing is the proof.
+3. A composed one: `fragments: ["filter-by-category", "action-set-color-uniform"]`, with
+   `colorR/colorG/colorB`. This exercises the multi-field declaration line, which is where the one real
+   bug was found while building it.
+
+Then mark it in `knowledge/brain-log.md` as live-verified, with the numbers.
+
+**Known limits, recorded rather than hidden:**
+- It does **not** compile-check. Only Revit and `tools\check-scripts.cmd` do. It validates the form —
+  names, inputs, types, whether the composition is legal C# structurally.
+- 43 of the 290 fragments have no `INPUTS` block; those still go through `run_csharp` unchanged.
+- Two filters cannot be composed (both declare `sb` and `elements`) — it refuses with that message,
+  which is correct, not a bug to fix.
+
+**The two follow-ups this makes cheap**, both agreed as the ranking on 2026-08-22 and neither started:
+promoting the ~10 remaining everyday jobs to native tools (`AGENT-SPEC.md` §11 names them), and the
+test-set work that would let the cross-encoder and skill-weighting be judged (`semantic-index/
+rag-architecture-decisions.md`, "What is actually limiting the search").
+
+**One thing to check on the PC that is not code.** `.mcp.json` in the repo hard-codes
+`D:\Ajmal\AJ AI Brain\mcp-server\index.js` — that is SETUP.md's Option B, the per-folder path. If the
+Brain is running that way rather than as an installed plugin, it only exists when that folder is open.
+Installing it as a plugin (SETUP.md step 1, Option A) makes all 11 skills and the bridge available in
+every project on the machine. **Do not run both** — same server key registered twice.
 
 ---
 

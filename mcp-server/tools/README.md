@@ -9,12 +9,30 @@ tool is registered from `../index.js`; nothing here runs on its own.
 ## Original tools (flexible, always available)
 | Tool | File | Job |
 |---|---|---|
-| `run_csharp` | [`run-csharp.js`](run-csharp.js) | Run any C# against the live document — the fallback for anything the native tools below don't cover |
+| `run_fragment` | [`run-fragment.js`](run-fragment.js) | Run the PROVEN library by NAME with its INPUTS filled in — reach for this before `run_csharp` |
+| `run_csharp` | [`run-csharp.js`](run-csharp.js) | Run any C# against the live document — the fallback for anything the native tools and the fragment library don't cover |
 | `ping` | [`ping.js`](ping.js) | Check the bridge is connected |
 | `model_summary` | [`model-summary.js`](model-summary.js) | Fast count/breakdown for a fixed set of common MEP categories |
 | `list_revit_instances` | [`list-revit-instances.js`](list-revit-instances.js) | Show every connected Revit session, by version and open document |
 | `use_revit_instance` | [`use-revit-instance.js`](use-revit-instance.js) | Pin this chat to one Revit session, by pid |
 | `use_revit_document` | [`use-revit-document.js`](use-revit-document.js) | Pin this chat to one open project inside that Revit, by title |
+
+**About `run_fragment` (added 2026-08-22).** It is the difference between *having* 290 proven fragments
+and *running* them. Before it, every scripted job read the `.cs` file, hand-edited its `INPUTS` block and
+pasted the result into `run_csharp` — so what actually reached Revit was a freshly retyped copy, and the
+fragment's PROVEN mark said nothing about it. This sends the file **byte-identical apart from the
+declarations**, so the proof survives the run.
+
+It also moves three whole classes of mistake off Revit and onto this machine, where they cost
+milliseconds instead of a round trip: a **fragment name that does not exist** (it answers with the near
+misses), an **input name that is a typo** (it answers with the real field names, rather than silently
+running on the file's value), and a **composition that cannot compile** — two filters both declaring
+`sb`, or two fragments declaring the same input. `preview: true` returns the exact composed C# without
+sending it.
+
+What it does **not** do is compile-check the C#; only Revit and `tools/check-scripts.cmd` do that. It
+checks the *form*, which is the half that is checkable without Revit. Rules and the whole-library sweep
+that guards the rewrite: [`../test/run-fragment.test.js`](../test/run-fragment.test.js).
 
 **About the last three (added 2026-08-20).** More than one Revit can host a bridge now: each session owns a
 pipe named by its process id and publishes itself in `%APPDATA%\AJTools\bridges\<pid>.json`. They are

@@ -115,7 +115,9 @@ for generic Revit questions with no live model involved.
 ### 2.4 Decision hierarchy (what to reach for, in order)
 1. **Native fast-path tool** (`model_summary`) — plain counts/one-parameter breakdowns.
 2. **Filter + action composition** (`scripts/filters/` + `scripts/actions/`) — the default for "which
-   elements" + "what to do to them" requests; covers the large majority of daily work.
+   elements" + "what to do to them" requests; covers the large majority of daily work. **Run it with
+   `run_fragment`, not by pasting into `run_csharp`**: name the fragments, pass the inputs, and the
+   proven file is sent as-is rather than as a retyped copy — see §3.4a.
 3. **A recipe** (`scripts/recipes/`) — genuinely bespoke, order-dependent, multi-stage builds that create
    new elements with real geometric/transactional dependencies between steps (duct routing, MEP tracing,
    family authoring). Never force this shape into filter+action.
@@ -190,7 +192,7 @@ same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the
 needed **no changes** — it already accepts any C# generically; the whole upgrade lives on the Node side.
 As of the same day, `mcp-server/` is split one-file-per-tool (mirrors the `scripts/` fragment pattern) —
 `mcp-server/index.js` is now just the entry point; see [`mcp-server/tools/README.md`](mcp-server/tools/README.md)
-for the routing index into all 17 tool files.
+for the routing index into all 21 tool files.
 
 | Tool | Covers |
 |---|---|
@@ -219,6 +221,34 @@ bridge connected. **It walks a hardcoded list, so a new tool is not covered by i
 `search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
 for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
+
+### 3.4a `run_fragment` — running the library instead of retyping it (added 2026-08-22)
+The 290 fragments in `scripts/` were proven one at a time against a real model. Until this tool, none of
+that proof reached the moment of running: every job read the `.cs` file, hand-edited its `INPUTS` block
+and pasted the result into `run_csharp`, so what Revit received was a fresh copy that had never been
+verified. `run_fragment` sends the file **byte-identical apart from its declarations**.
+
+```
+run_fragment(describe, fragments[], inputs{}, prelude?, preview?, requireAllInputs?, allowDestructive?)
+```
+
+It applies §5 of `scripts/README.md`'s composition rules automatically — optional prelude, filter or
+creator, then actions, then exactly one `return sb.ToString();` — and puts `describe` on line 1 as the
+`//` comment the voice reads out before the model changes.
+
+**What it refuses, locally, in milliseconds** — each of these used to be found by Revit, mid-job:
+- a fragment name that does not exist, or is ambiguous → the error lists the real candidates
+- an input name that is not declared → the error lists the real field names, instead of the value being
+  silently dropped and the job running on the file's value
+- a value of the wrong type for its declared C# type
+- a composition C# would reject — two filters that both declare `sb`, or two fragments declaring the
+  same input name
+
+**What it does not do:** compile-check. Only Revit and `tools/check-scripts.cmd` do that. This checks
+the *form*, which is the half that is checkable without Revit — a floor, not a ceiling. `preview: true`
+returns the composed script without sending it. Every unset input is reported as *left at the file's
+value*, never as a default (§2.1, rule 3), and an unproven fragment says so in the result rather than
+passing quietly as if it were verified.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
@@ -615,6 +645,8 @@ When something new is saved (a fragment, a knowledge fact, a skill), log one dat
   thing was a Node-side addition, now split one-file-per-tool under `mcp-server/tools/`. 14 tools built;
   the remaining ~5-10 candidates from the original "top 15-20" estimate can follow the same pattern
   (copy an existing `tools/*.js` file's shape) on request.
+- ~~A way to run the fragment library by name instead of pasting a hand-edited copy~~ — **DONE,
+  2026-08-22.** `run_fragment`, see §3.4a. Like the native tools before it, it needed no add-in change.
 - **Combined Model Health Report** — one action aggregating warnings + unused elements + family bloat +
   worksharing status, beyond what any single existing action currently reports alone.
 - **Lean/decision-tree variant of this spec** for smaller or local models, if this Brain is ever handed to

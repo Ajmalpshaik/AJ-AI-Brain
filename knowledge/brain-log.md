@@ -2685,3 +2685,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   Verified: no `conhost.exe` under the new server, no terminal host running at all. The same trap
   hit the voice drainer on 2026-08-11 and the lesson lived only as a code comment, so it is now a
   knowledge note: [`windows-console-window-trap.md`](windows-console-window-trap.md).
+- 2026-08-22 — **the proven library can now be RUN by name, not retyped.** New MCP tool `run_fragment`
+  ([`run-fragment.js`](../mcp-server/tools/run-fragment.js)): name the fragments, pass the input values,
+  and the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. Until now
+  every scripted job read the file, hand-edited the block and pasted a copy — so "PROVEN" described a
+  file that was never the thing that ran. Four mistakes that used to cost a Revit round trip are now
+  local errors: an unknown or ambiguous fragment name, an input name that is a typo, a wrong-typed
+  value, and a composition C# would reject (two filters both declaring `sb`). Native tools 20 → 21.
+- 2026-08-22 — **one declaration line can declare several inputs, and the first writer for them was
+  wrong.** `byte colorR = 255, colorG = 0, colorB = 0;` — 50 such lines across 28 fragments, every
+  colour job among them. Replacing the initialiser as one string kept `colorR`'s new value and deleted
+  `colorG` and `colorB`. `parseInputs` now expands each declarator, so `--show` lists all three fields
+  as well. Caught by a whole-library sweep, which is now a standing test: rewriting the VALUES must
+  never change the declared types, names or comments, across all 290 fragments.
+- 2026-08-22 — the fragment parser moved to [`tools/fragment-lib.mjs`](../tools/fragment-lib.mjs),
+  shared by `fragment-index.mjs` and `run_fragment`. A runner that re-implemented the parse would drift
+  from the index silently — `--show` printing one form while the tool filled in another. Proof the
+  refactor was safe: `--json` byte-identical before and after.
