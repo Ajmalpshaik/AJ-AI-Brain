@@ -190,7 +190,7 @@ same `callBridge()` pipe mechanism `run_csharp` uses. `McpBridgeService.cs` (the
 needed **no changes** — it already accepts any C# generically; the whole upgrade lives on the Node side.
 As of the same day, `mcp-server/` is split one-file-per-tool (mirrors the `scripts/` fragment pattern) —
 `mcp-server/index.js` is now just the entry point; see [`mcp-server/tools/README.md`](mcp-server/tools/README.md)
-for the routing index into all 17 tool files.
+for the routing index into all 20 tool files.
 
 | Tool | Covers |
 |---|---|
@@ -217,7 +217,7 @@ hide/unhide/isolate/set_color/reset_graphic_overrides/set_transparency) also tak
 names/schemas and that every handler's C#-generation runs to completion and fails gracefully with no
 bridge connected. **It walks a hardcoded list, so a new tool is not covered by it merely by existing** —
 `search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
-for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
+for that reason (20 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
 
 ### 3.5 The rest of the action library — composed code, not separate tools

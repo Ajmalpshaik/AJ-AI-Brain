@@ -3083,3 +3083,37 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   (never take a number out of an `ElementId`) and a two-line grep that re-runs the scan from anywhere,
   including a container with no Revit on it. The pattern behind all three files this week is one thing:
   **a sweep fixes the library as it stands and does nothing about the next file somebody writes.**
+
+- 2026-08-22 — **Ajmal asked whether other files had stale numbers like the two just fixed. They did —
+  seventeen of them, across fourteen files, and the audit is now a permanent check.** Every numeric claim
+  in every markdown file was scanned against disk. What was wrong, all of it in the flattering or
+  alarming direction, never the harmless one:
+  **Fragment counts frozen at four different values** — `README.md` said *267* and *266*, both agent
+  definitions (`brain-investigator`, `brain-script-writer`) said *269*, `knowledge/INDEX.md` said *282*,
+  `CLAUDE.md` and `START-HERE.md` said *285*, `job-log/README.md` said *269*. Disk holds **290**.
+  **Native tools** read *17* in `semantic-index/README.md` and *17* / *19* in two places in `AGENT-SPEC.md`
+  against a real **20**.
+  **The checker was wrong about itself, twice.** `CLAUDE.md` promised the PowerShell copy ran *"the same
+  eight checks"*; `brain-self-maintain/SKILL.md` said *"same three checks"* and told you to prefer the
+  PowerShell one — which the hook has not run since 2026-08-04. `README.md` called it *"seven drift
+  checks"* while listing eight.
+  **`CLAUDE.md` carried the failure it opens by warning about**, on line 79, two paragraphs below the
+  line naming *"README said 8 skills against 9"* as the repo's recurring disease.
+  **A generator was stamping a date it did not run on.** `tools/api-surface.mjs` had `2026-08-20` as a
+  string literal in its own header template, so every regeneration re-dated the file to a day it was not
+  produced — the exact lie the generator exists to prevent. Now takes the date from the clock. Rerunning
+  it also moved `revit-api-surface.md` from *285 fragments / 230 types* to the true **290 / 245**, which
+  made `START-HERE.md`'s *"229 types"* wrong by a different route.
+  **The fix that matters is check 9, not the seventeen edits.** `verify-consistency.mjs` had eight checks
+  and only one of them looked at a count — a single hardcoded regex against a single sentence in
+  `AGENT-SPEC.md`, which is why everything above survived. Check 9 scans **every** markdown file for
+  whole-library totals (fragments, skills, native tools) and compares each to disk. It was tested by
+  deliberately breaking `CLAUDE.md` and confirming it fails with the file and line. Today it checks 13
+  live claims and finds nothing.
+  **Its escape hatch is the lesson, not a loophole:** a number is a live claim *unless the line itself
+  carries a date or a `<!-- count-history -->` marker.* A date on the enclosing heading does not count,
+  because nothing downstream can see the heading — which is precisely how *"one pass over all 282
+  fragments"* sat under a dated heading in `revit-version-compatibility.md` and still read as current.
+  **Not ported to PowerShell.** Writing a `.ps1` from a Linux container is the documented encoding trap
+  that has already broken two scripts here, so `verify-consistency.ps1` trails at eight checks and the
+  docs now say so instead of claiming parity.

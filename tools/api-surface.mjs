@@ -53,9 +53,14 @@ for (const file of files) {
 const rows = [...types.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
 const byCount = (m) => [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
+// The generation date must come from the clock, not a literal. It was hardcoded to 2026-08-20, so every
+// later run restamped the file with a date it did not run on - a generator telling the exact lie it
+// exists to prevent. Found 2026-08-22 while auditing stale counts across the Brain.
+const stamp = new Date().toISOString().slice(0, 10);
+
 let out = `# Which Revit API this Brain actually uses
 
-Generated from the ${files.length} fragments on 2026-08-20 — **not** copied from documentation. Regenerate with the
+Generated from the ${files.length} fragments on ${stamp} — **not** copied from documentation. Regenerate with the
 command at the bottom; do not hand-edit.
 
 ## Why this file exists instead of a copy of the API docs
@@ -66,7 +71,7 @@ The instinct is right and the scale is the problem. Measured:
 | | |
 |---|---|
 | Revit API | ~1,700 classes, 50 interfaces, 500 enumerations, **30,000+ documented members** |
-| This Brain's whole index today | **3,786 chunks** from 341 files |
+| This Brain's whole index | **3,786 chunks** from 341 files, measured 2026-08-20 |
 | Types the ${files.length} fragments actually use | **${types.size}** |
 
 Indexing the API into the main search would make the Brain roughly **11% of its own index** — every

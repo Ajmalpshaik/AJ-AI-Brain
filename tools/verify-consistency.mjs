@@ -375,6 +375,70 @@ for (const file of ["CLAUDE.md", "START-HERE.md", "README.md"]) {
 }
 console.log(`Checked ${claimCount} "searches all N files" claim(s) against ${indexable} indexable file(s) on disk.`);
 
+// === 9. Live counts stated anywhere in markdown ===
+// Check 5 above guards ONE sentence in ONE file. Everything else went unchecked, and on 2026-08-22 an
+// audit found nine wrong live claims across CLAUDE.md, START-HERE.md, README.md, AGENT-SPEC.md,
+// knowledge/INDEX.md, semantic-index/README.md, job-log/README.md and two agent definitions - fragment
+// counts frozen at 267/269/282/285 while disk held 290, and native tools at 17/19 against 20. CLAUDE.md
+// itself opens by warning about exactly this failure and was carrying it on line 79.
+//
+// A number is treated as a LIVE CLAIM unless one of these is true, which is also how you fix a false
+// positive - and both fixes make the prose better rather than papering over it:
+//   * the line carries a yyyy-mm-dd date, so it is a stamped historical measurement;
+//   * the line carries an explicit <!-- count-history --> marker;
+//   * the file is an append-only dated record (brain-log, a log.md, score-history, a job-log snapshot).
+// A heading's date does NOT cover the lines under it: nothing downstream can see the heading, so a
+// historical figure has to say so on its own line.
+console.log("\n=== 9. Live counts stated anywhere in markdown ===");
+const liveCounts = {
+  fragments: walk(scriptsDir, (n) => n.endsWith(".cs")).length,
+  skills: fs.existsSync(skillsDir)
+    ? fs.readdirSync(skillsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).length
+    : 0,
+  "native tools": walk(path.join(brainRoot, "mcp-server", "tools"), (n) => n.endsWith(".js")).length,
+};
+// Only phrasings that assert a WHOLE-LIBRARY total. A bare "93 fragments" is usually a subset
+// ("93 fragments use DisplayUnitType") and must not be flagged, so every pattern needs a totalising
+// article or an explicit scope.
+const countPatterns = [
+  [/\ball (\d+) (?:C# )?fragments\b/gi, "fragments"],
+  [/\bthe (\d+) (?:C# )?fragments\b/gi, "fragments"],
+  [/\b(\d+) fragments in `scripts\//gi, "fragments"],
+  [/\b(?:all|the|its|holds|has|carries|only) (\d+) skills\b/gi, "skills"],
+  [/\b(\d+) skills ·/gi, "skills"],
+  [/\b(\d+) native tools\b/gi, "native tools"],
+  [/\b(\d+) tool files\b/gi, "native tools"],
+];
+const datedRecord = /(brain-log\.md|score-history\.md|\/log\.md|job-log\/snapshots\/|HANDOVER\.md)$/;
+let countClaims = 0;
+for (const file of walkAll(brainRoot).filter((f) => f.endsWith(".md"))) {
+  const rel = path.relative(brainRoot, file).split(path.sep).join("/");
+  if (datedRecord.test(rel)) continue;
+  const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/20\d\d-\d\d-\d\d/.test(line)) continue;
+    if (/<!-- count-history -->/.test(line)) continue;
+    for (const [re, key] of countPatterns) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(line)) !== null) {
+        countClaims++;
+        if (Number(m[1]) !== liveCounts[key]) {
+          issues.push(
+            `LIVE COUNT DRIFT in ${rel}:${i + 1}: says "${m[0]}" but disk has ${liveCounts[key]} ${key}` +
+              ` - update it, or if the figure is historical give the line a date or a <!-- count-history --> marker`,
+          );
+        }
+      }
+    }
+  }
+}
+console.log(
+  `Checked ${countClaims} live count claim(s) against disk ` +
+    `(${liveCounts.fragments} fragments, ${liveCounts.skills} skills, ${liveCounts["native tools"]} native tools).`,
+);
+
 // === Result ===
 console.log("\n=== Result ===");
 if (issues.length === 0) {

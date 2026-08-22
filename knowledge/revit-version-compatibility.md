@@ -273,8 +273,8 @@ is exactly what `MakeId` exists to avoid.
 
 ## What was actually changed (2026-08-20)
 
-One pass over all 282 fragments. Applied by a balanced-paren parser rather than regex, because the value
-arguments contain nested calls.
+One pass over the whole library as it stood on 2026-08-20 — 282 fragments then, 290 now. Applied by a
+balanced-paren parser rather than regex, because the value arguments contain nested calls.
 
 | | Sites | Change |
 |---|---|---|

@@ -76,7 +76,7 @@ questions; make the code decisions yourself and tell him what you did.
 
 He named two problems. Both have an answer that already exists:
 
-- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 285 fragments against
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 290 fragments against
   every Revit installed on the PC **without opening Revit**, in about a minute. Offer it the moment a
   version change is mentioned. It catches the whole "worked in 2020, errors in 2024" class before he
   hits it mid-job.
@@ -92,10 +92,15 @@ He named two problems. Both have an answer that already exists:
   → [`tools/verify-consistency-hook.mjs`](tools/verify-consistency-hook.mjs)) that runs the full
   consistency check — skill frontmatter, markdown link targets, scripts README sync, skill coverage in
   the entry docs, AGENT-SPEC's fragment counts, text encoding, the `// SOURCE:` cross-references
-  inside script fragments, and the "searches all N files" semantic-index coverage claims. If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
+  inside script fragments, the "searches all N files" semantic-index coverage claims, and **every live
+  fragment/skill/native-tool count stated anywhere in markdown** (check 9, added 2026-08-22 after an
+  audit found nine wrong ones — including one on line 79 of this file). If it reports drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
-  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — same eight checks.
+  [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — but know that it
+  **trails the Node checker and is not its equal**: the Node version is what the hook runs and is the
+  authority, and check 9 has not been ported to PowerShell. Porting it from a Linux container is exactly
+  the `.ps1` encoding trap described below, so it waits for a session on Windows that can run the result.
 - **Never name an outside source in anything written here — no other people's repos, tools, products,
   websites or personal names.** Ajmal's instruction, 2026-08-20: *"do not mention any thing that we took
   from this web site or repo... the words also remove... remove his name and do not use like that."*

@@ -66,9 +66,11 @@ the same step.
 5. **Write the index to route by request shape** — "if the request is about X → open this file" — never
    by filename or today's noun.
 6. **Retarget pointers to the topic file, not the folder.**
-7. **Run the checker**: `powershell -ExecutionPolicy Bypass -File tools\verify-consistency.ps1` — or,
-   in a session without PowerShell (e.g. Claude Code on the web), `node tools/verify-consistency.mjs`
-   (same three checks, portable Node).
+7. **Run the checker**: `node tools/verify-consistency.mjs`. That is the authority — it is what the
+   edit hook runs, it works on every platform, and it holds one check the PowerShell copy does not
+   (check 9, every live fragment/skill/native-tool count stated in markdown).
+   `powershell -ExecutionPolicy Bypass -File tools\verify-consistency.ps1` still works on Windows and
+   trails it. Do not quote a check count here — the checker prints its own numbered list when it runs.
 
 ## The size rule
 
