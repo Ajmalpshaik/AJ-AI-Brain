@@ -3050,3 +3050,36 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   pre-2026-08-21 era and that `score-history.md` wins whenever the two disagree. Added a 14-section table
   of contents; all anchors checked. The rule this pass keeps proving: **a generated file beats a written
   one, so a written file should point at the generator instead of copying its number.**
+
+- 2026-08-22 — **The two files still flagged as over the split rule were reviewed, and one of them was
+  wrong about the thing it exists to be right about.** `tools/brain-status.mjs` had been listing
+  `knowledge/live-model/core.md` and `knowledge/revit-version-compatibility.md` as *past the ~300-line
+  rule, not yet reviewed* — the last two without a `split-review` marker. Both are now reviewed and
+  **kept whole**, with the reason recorded in each file. That list is now empty.
+  **`core.md` — its contents list had been lying for weeks.** It advertised eleven topics; nine of them
+  were split out on 2026-08-06 and 2026-08-13 and only their contents-line stayed behind, so a reader
+  scrolled for duct routing, view visibility or undo in a file none of them had been in since. Replaced
+  with what the file really holds, plus a block naming where each of the nine actually went. Also removed
+  an **exact byte-identical duplicate bullet** (the post-commit roll-back lesson, present twice, 8 lines).
+  Kept whole because this is the third time it has passed 300 and grown back: what returns is the residue
+  that cannot be routed away, and `README.md` says in one line that *"core.md is the only file worth
+  reading alongside another"* — splitting the always-read file means every session opens two.
+  **`revit-version-compatibility.md` — four claims had gone stale, all in the same direction.** It led
+  with *"200 of the 282 fragments (71%) touch a changed API"*, which was the **pre-migration** scan; the
+  migration was applied that same day, so a fresh scan of all 290 finds one unmigrated call site, not two
+  hundred. It listed **three deliberate exceptions** when one had already been solved — the electrical
+  unit conversion, fixed by asking the API which unit type its own method takes rather than guessing a
+  factor, which is the general move worth remembering. And it ended *"none of this has been compiled or
+  run"* when `tools\check-scripts.cmd` had taken it to **287/287 on Revit 2020, 2024 and 2027** hours
+  later. Every pre-migration count is kept as the record, under a banner saying a fresh
+  `check-scripts.cmd` run beats any number written here.
+  **The finding worth the most: a one-pass migration does not defend itself.**
+  `filters/by-identity/filter-by-wrong-category.cs` was written on **2026-08-21, the day after** the
+  library was moved off `ElementId.IntegerValue`, and used that exact removed API to compare categories —
+  inside a `.Where()` running once per FamilyInstance in the model. Rewritten to compare `ElementId` to
+  `ElementId` (`new ElementId(expectedCategory)` with the `==` / `!=` operators): correct on 2020 through
+  2027, and no reflection in a per-element loop. Not compile-checked — this session has no Revit — so run
+  `tools\check-scripts.cmd` before trusting it. A **"Keeping it fixed"** section now carries the rule
+  (never take a number out of an `ElementId`) and a two-line grep that re-runs the scan from anywhere,
+  including a container with no Revit on it. The pattern behind all three files this week is one thing:
+  **a sweep fixes the library as it stands and does nothing about the next file somebody writes.**
