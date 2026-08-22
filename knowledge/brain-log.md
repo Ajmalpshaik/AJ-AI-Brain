@@ -3341,7 +3341,23 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   clearest argument yet for the checks over the fixes: the fixes were obsolete within a day; the check
   was not.
   **What could not be done:** deleting the three merged `claude/*` branches. `git push --delete` returns
-  **HTTP 403** through the container's git proxy, and the GitHub tools available here have no
-  delete-branch call. Nothing depends on them and `main` contains every commit, so this is cosmetic — but
-  it is a two-click job on GitHub that a cloud session cannot do, and `docs/HANDOVER.md` now says so
-  instead of leaving it to be rediscovered.
+  **HTTP 403**, and the GitHub tools available here have `create_branch` and no delete counterpart.
+  Nothing depends on them and `main` contains every commit, so this is cosmetic — recorded in
+  `docs/HANDOVER.md` rather than left to be rediscovered.
+
+- 2026-08-22 — **The branch-delete 403 was blamed on the wrong thing, and the correction is the useful
+  part.** Earlier today this log and `docs/HANDOVER.md` both recorded that deleting the merged `claude/*`
+  branches fails because *"the container's git proxy returns 403"*. Asked to try again, the proxy's own
+  diagnostics settled it: `curl $HTTPS_PROXY/__agentproxy/status` reports **`recentRelayFailures: []`**
+  immediately after a failed delete, so the proxy never saw a failure — **the request reached GitHub and
+  GitHub refused it.** The session's git credentials can push refs but not delete them. That is a
+  deliberate guardrail, not a misconfiguration, and `/root/.ccr/README.md` is explicit that a 403 is to be
+  reported rather than routed around. Both files now say so.
+  **Two accurate lessons instead of one wrong one.** First, a plausible cause is not a cause: "it is
+  behind a proxy, the proxy returned 403" was coherent and false, and one status endpoint disproved it in
+  a second. Second, the fix is not a workaround but a repo setting — **Settings → General →
+  "Automatically delete head branches"** makes every future merged branch clean itself up, which removes
+  the whole class of job rather than this instance of it.
+  Safety was confirmed before any of this: all three branches are **0 commits ahead of `main`**. Two of
+  them show files differing from `main`, which is only them being *behind* it — `rev-list --count
+  main..branch` is the test that answers "is anything lost", and `diff --stat` is not.
