@@ -578,6 +578,30 @@ if (fs.existsSync(historyPath)) {
   issues.push("MISSING FILE: semantic-index/score-history.md not found");
 }
 
+// === 13. Merge-conflict markers left in tracked files ===
+// Found the hard way on 2026-08-22, resolving a branch against main: CLAUDE.md still carried
+// <<<<<<< / ======= / >>>>>>> and ALL TWELVE CHECKS ABOVE PASSED. Every one of them reads content
+// looking for a specific claim; none asks whether the file is even coherent. A conflict marker shipped
+// into CLAUDE.md would corrupt the instructions every session loads first, and nothing here would say a
+// word. Cheap to catch, catastrophic to miss, so it goes last and guards everything.
+console.log("\n=== 13. Merge-conflict markers ===");
+let conflictScanned = 0;
+for (const f of ourTextFiles()) {
+  conflictScanned++;
+  const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+  const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    if (/^(<{7}|={7}|>{7})(\s|$)/.test(lines[i])) {
+      issues.push(
+        `MERGE CONFLICT MARKER in ${rel}:${i + 1}: "${lines[i].slice(0, 40)}" - an unresolved merge is` +
+          ` still in this file. Resolve it before committing; nothing else in this checker would notice.`,
+      );
+      break;
+    }
+  }
+}
+console.log(`Scanned ${conflictScanned} tracked text file(s) for unresolved merge markers.`);
+
 // === Result ===
 console.log("\n=== Result ===");
 if (issues.length === 0) {

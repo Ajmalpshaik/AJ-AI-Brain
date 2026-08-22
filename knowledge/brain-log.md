@@ -3016,6 +3016,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   `semantic-index/rag-architecture-decisions.md`, not `knowledge/` — a file about the Brain's own
   machinery costs retrieval accuracy when indexed, which that file itself proved on 2026-08-20.
 
+- 2026-08-21 — **the daily check found six stale fragment counts in the three entry docs, and the drift
+  checker now has a ninth check so they cannot drift again.** Disk holds 290; CLAUDE.md said 268 and 285,
+  START-HERE.md said 285, README.md said 267 and 266, and README also still quoted the superseded 14-row
+  search score and "seven drift checks". Check 5 only ever covered `AGENT-SPEC.md` and check 8 only the
+  "searches all N files" line, so fragment counts in the entry docs were the one uncovered number — the
+  repo's own named failure mode, live in four places at once. Check 9 reads `scripts/*.cs` and matches the
+  `all N` / `the N` forms only, skipping the deliberate historical example in CLAUDE.md (`said 206
+  fragments against 264`) by its `said ... against` shape. Negative-tested: it names file, line and claim.
+  Added to both checkers; **the `.ps1` half is ASCII-only and BOM-preserved but has never been parsed —
+  no PowerShell in the container, which is exactly the trap `CLAUDE.md` warns about. Run it once on the PC.**
+
 ### 2026-08-22
 - 2026-08-22 — **the proven library can now be RUN by name, not retyped.** New MCP tool `run_fragment`
   ([`run-fragment.js`](../mcp-server/tools/run-fragment.js)): name the fragments, pass the input values,
@@ -3301,3 +3312,17 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   new checks, the four decisions Ajmal took, and the three things only he can do. Its own stale numbers
   (270 / 283 / 287 fragments, `3/14`) were stamped or corrected; the 2026-08-20 Windows bridge work below
   is untouched because it is still unfinished.
+
+- 2026-08-22 — **A conflicted `CLAUDE.md` passed all twelve consistency checks, so there is now a
+  thirteenth.** Found while merging the daily-check branch into main: `CLAUDE.md` still carried
+  `<<<<<<<` / `=======` / `>>>>>>>` from an unresolved merge, and `verify-consistency.mjs` reported
+  **"All checks passed - no drift found."** Every check up to that point reads content looking for a
+  specific claim — a count, a link, a status, a score — and **not one of them asks whether the file is
+  coherent at all.** A conflict marker shipped into `CLAUDE.md` would corrupt the instructions every
+  session loads first, and nothing would have said a word. Check 13 scans all 449 tracked text files for
+  the markers; tested by planting one. It goes last because it guards everything above it.
+  **How the marker survived:** the conflict was in a file I had not listed in my own `grep -c` after
+  resolving — I checked the three files git named in the conflict output and moved on, and README.md and
+  CLAUDE.md had conflicted too. That is the same error shape as the truncated `head -25` earlier today
+  and the phantom log entry this morning: **a scan is evidence only for what it actually covered.** The
+  fix each time is the same, and it is now a check rather than a resolution to be careful.

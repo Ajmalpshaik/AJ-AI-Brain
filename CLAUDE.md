@@ -27,7 +27,7 @@ that's what you're doing. It is never a reason to refuse the job. Run
 `node tools/brain-status.mjs --capabilities` when you need what this Brain can actually do.
 
 **Before writing any new C#, look for an existing fragment first** —
-`node tools/fragment-index.mjs --find <word>` searches all 268 by purpose and input field and shows each
+`node tools/fragment-index.mjs --find <word>` searches all 290 by purpose and input field and shows each
 one's proven status; `--show <path>` prints what a given fragment needs filled in. That is one lookup
 instead of reading `scripts/README.md` end to end, which is the read that gets skipped when it feels
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
@@ -102,7 +102,10 @@ He named two problems. Both have an answer that already exists:
   `semantic-index/score-history.md`** (check 12 — `README.md` was quoting a top-1 figure from the
   retired 14-row era next to a top-5 figure that matched no run that ever happened, i.e. a remembered
   composite; the check fired on this very sentence when it first carried the literal numbers, which is
-  the check working, so quote the file instead of the digits). **Twelve checks in the Node version.** If it reports
+  the check working, so quote the file instead of the digits). and **unresolved merge-conflict markers in any tracked file** (check 13, added the
+  same day after a conflicted `CLAUDE.md` passed all twelve checks above — every other check reads
+  content for a specific claim, none asks whether the file is coherent at all). **Thirteen checks in the
+  Node version.** If it reports
   drift, fix the drift in the same turn, before finishing. The hook runs the **Node** checker on purpose: the PowerShell wrapper
   it replaced fired only on Windows and silently did nothing everywhere else, so a whole session on
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
