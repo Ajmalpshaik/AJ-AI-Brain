@@ -11,7 +11,9 @@
 //          To test this filter alone, add `return sb.ToString();` as your own last line.
 // SOURCE: the technique was run live twice on 2026-08-20 — louvres on 4355-BHVD-3D-60P00-BL006A
 //         (7 found, 0 correctly categorised) and on BL003A (10 found, 2 correct) — and its findings
-//         drove a real re-categorisation. This generalised file is compile-checked, not yet run
+//         drove a real re-categorisation. Its two id comparisons were moved off the removed
+//         `ElementId.IntegerValue` on 2026-08-22 — see ../../../knowledge/revit-version-compatibility.md.
+//         This generalised file is compile-checked, not yet run
 //         verbatim; run it on one job and mark it PROVEN. See
 //         ../../../knowledge/live-model/family-category-change.md for what changing the category costs.
 // ============================================================
@@ -77,8 +79,11 @@ foreach (var fi in new FilteredElementCollector(Document)
     if (hit) matched.Add(fi);
 }
 
-int expectedId = (int)expectedCategory;
-var wrong = matched.Where(f => { try { return f.Category == null || f.Category.Id.IntegerValue != expectedId; } catch { return true; } }).ToList();
+// Compare ElementId to ElementId, never to an int: `ElementId.IntegerValue` was removed at Revit 2024
+// and `new ElementId(BuiltInCategory)` + the `==`/`!=` operators are correct on 2020 through 2027 with
+// no reflection — which matters here, because this comparison runs once per FamilyInstance in the model.
+ElementId expectedId = new ElementId(expectedCategory);
+var wrong = matched.Where(f => { try { return f.Category == null || f.Category.Id != expectedId; } catch { return true; } }).ToList();
 var right = matched.Count - wrong.Count;
 
 List<Element> elements = (onlyMismatches ? wrong : matched).Cast<Element>().ToList();
@@ -90,7 +95,7 @@ foreach (var f in matched)
 {
     string cat = ""; try { cat = f.Category?.Name ?? "(no category)"; } catch { cat = "(no category)"; }
     string fam = ""; try { fam = f.Symbol?.Family?.Name ?? ""; } catch { }
-    bool ok = false; try { ok = f.Category != null && f.Category.Id.IntegerValue == expectedId; } catch { }
+    bool ok = false; try { ok = f.Category != null && f.Category.Id == expectedId; } catch { }
     string key = (ok ? "OK   " : "WRONG") + "\t" + cat + "\t" + fam;
     if (!rows.ContainsKey(key)) { rows[key] = 0; tags[key] = ""; }
     rows[key] = rows[key] + 1;

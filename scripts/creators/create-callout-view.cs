@@ -10,7 +10,9 @@
 //         parent; leave it null to let Revit pick the parent's own type, which is what you want most days.
 // GOTCHA: the rectangle is in MODEL coordinates (mm), not screen or paper — take the numbers from a real
 //         element's bounding box (action-report-bounding-box.cs) rather than estimating them.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.", which the
+//          README had already superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

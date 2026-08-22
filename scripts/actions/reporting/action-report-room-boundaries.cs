@@ -2,8 +2,7 @@
 // FRAGMENT (action) — action-report-room-boundaries.cs
 // PURPOSE: Report each Room/Space's boundary loops as mm segments — start/end coordinates + the wall (or
 //          other element) that generates each segment. The geometry feed for "build something along this
-//          room's edge" jobs (create-wall.cs, create-line.cs, terminal layouts). (Dynamo-package
-//          equivalent: Genius Loci / Clockwork room boundary nodes.)
+//          room's edge" jobs (create-wall.cs, create-line.cs, terminal layouts).
 // ASSUMES: elements (List<Element>, Rooms and/or Spaces — filter-by-category.cs or
 //          filter-by-unenclosed-spatial-elements.cs's opposite) and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. Read-only, model never changes.

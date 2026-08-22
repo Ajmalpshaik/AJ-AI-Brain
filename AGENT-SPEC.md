@@ -228,7 +228,7 @@ hide/unhide/isolate/set_color/reset_graphic_overrides/set_transparency) also tak
 names/schemas and that every handler's C#-generation runs to completion and fails gracefully with no
 bridge connected. **It walks a hardcoded list, so a new tool is not covered by it merely by existing** —
 `search_brain`, and the two Revit-instance tools added 2026-08-20, each carry their own structural test
-for that reason (19 native tools in total now). **Still not live-verified against a running Revit** — the test can't reach a real
+for that reason (26 native tools in total now, after the five fragment-backed ones). **Still not live-verified against a running Revit** — the test can't reach a real
 document; verify each tool on one element before trusting it for a batch.
 
 ### 3.4b Fragment-backed native tools (5, added 2026-08-22)

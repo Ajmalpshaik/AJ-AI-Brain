@@ -13,7 +13,9 @@
 //         the type name in daily use — set it deliberately, don't leave the source's.
 // GOTCHA: this creates the system TYPE (the classification). The system INSTANCES ("DXS 1") are created
 //         by Revit automatically when elements are connected — see live-model/mep-trace.md.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.", which the
+//          README had already superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

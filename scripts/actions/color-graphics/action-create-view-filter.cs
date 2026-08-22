@@ -9,8 +9,13 @@
 // UNLIKE OTHER ACTIONS HERE: does NOT consume `elements` — self-contained (declares its own `sb`, ends
 //          with its own `return`). Pair with action-apply-view-filter.cs to actually put it on a view
 //          with a color/visibility, and action-remove-view-filter.cs to take it back off.
-// STATUS: not yet live-verified — ParameterFilterRuleFactory's exact overload set should be confirmed
-//         against the real installed API before trusting a batch of filters built from this.
+// STATUS: PARTLY VERIFIED — the contains-rule path ran live 2026-07-22 (see scripts/README.md).
+//         The OTHER rule kinds are still unproven: equals/begins/ends and their not-variants, the
+//         numeric comparisons, and has-value/has-no-value all go through different
+//         ParameterFilterRuleFactory overloads whose exact signatures shift between Revit versions.
+//         Confirm the overload against the installed API before trusting a batch built on one of those.
+//         (Corrected 2026-08-22: this line said a flat "not yet live-verified" for a month after the
+//         contains path was proven, which understated it in the one direction nobody checks.)
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

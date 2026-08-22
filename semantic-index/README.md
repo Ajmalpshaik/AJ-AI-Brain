@@ -17,7 +17,7 @@ Nothing here touches Revit, the AJ AI Bridge, or the compile checker. It only
 reads `skills/`, `knowledge/`, `scripts/`, the five top-level guides
 (`AGENT-SPEC.md`, `START-HERE.md`, `README.md`, `SETUP.md`, `CLAUDE.md`), and
 one named file from `mcp-server/`: `tools/README.md`, the reference table of
-the bridge's 17 native tools — the doc, never the bridge's JS code.
+the bridge's 26 native tools — the doc, never the bridge's JS code.
 
 ---
 
@@ -191,7 +191,11 @@ unchanged so the two can be compared on the same question.
 | Changed one file | **2.8 s** |
 | Added one file | **3.9 s** |
 | Deleted one file | **2.7 s** |
-| Full rebuild (all 307 files) | ~79 s |
+| Full rebuild (all files) | ~79 s |
+
+Those timings were measured on 2026-08-13 at 307 files. The corpus is larger now, so a full rebuild
+takes longer than 79 s — the point of the table is the *shape*, that an incremental run is ~30x cheaper
+than a full one, and that holds at any size.
 
 You can double-click the file. Add `--full` to force a complete rebuild.
 
@@ -289,7 +293,7 @@ is rebuildable and is ignored, so the repo stays small.
 
 Every message typed at a session runs a search. Measured 2026-08-21 that cost **3,536 ms**, and
 almost none of it was searching: **1,856 ms** went on loading the embedding model and **548 ms** on
-pulling and re-tokenising all 3,888 chunks to rebuild the BM25 index — both repeated identically
+pulling and re-tokenising every chunk to rebuild the BM25 index (3,888 of them when this was measured) — both repeated identically
 every single time, over data that only changes when the index is rebuilt.
 
 `brain_server.py` keeps one process alive holding both. Nothing about retrieval changes: it calls

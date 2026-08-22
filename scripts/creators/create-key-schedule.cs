@@ -14,7 +14,9 @@
 //         the user usually types those few rows in Revit faster than any script could.
 // GOTCHA: only fields that belong to the category can be columns; unschedulable names are skipped and
 //         REPORTED with the available list, same as create-sheet-list.cs.
-// NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.
+// VERIFIED LIVE 2026-08-07 — evidence in this fragment's row in scripts/README.md. Header corrected
+//          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26, round 4.", which the
+//          README had already superseded. The verification was recorded there and never here.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

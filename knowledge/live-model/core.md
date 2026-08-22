@@ -15,19 +15,45 @@ the scripts README for the user's own worked example) — and `recipes/`, for th
 order-dependent, multi-stage builds below (HVAC placement/routing, MEP trace) that create new elements
 rather than just act on existing ones and don't fit the filter+action shape.
 
-**Contents** (this file is long — jump to the section you need, don't re-derive what's already here):
-- Bridge basics — ping first, report version+model, script globals, what's blocked
-- Revit version + unit conversion — 2020 `DisplayUnitType`, mm↔feet, fully-qualified types
-- View visibility patterns — isolate/hide/reset, verify view state fresh each turn
-- Tracing real MEP connectivity — bulk clustering, geometric trace, color-coding
-- Undoing a mistake — native Revit Undo via PostCommand, never a delete script
-- HVAC air terminal layout — Space airflow params, matched counts, checkerboard `(row+col)%2`,
-  near-square row formula, grid orientation, Flow-parameter gotcha, multi-FCU zoning, `IsPointInRoom` Z
-- Rotating equipment to face a target — connector identification (Fresh Air decoy), rotation math
-- Drawing a duct between two points — sizing to the source connector, BreakCurve + explicit reconnect
-- Branch duct from terminal to main duct — riser + real elbow + takeoff, cap-end recipe (7 steps)
-- Slicing a main trunk for duct sizing — HIGH RISK, offset-cut recipe, orphaned-branch recovery
-- Posting AJ Tools' own ribbon commands — doesn't work, don't re-attempt
+> **split-review: kept whole** (reviewed 2026-08-22, when it stood at 331 lines — an exact duplicate
+> bullet came out, a corrected contents list and this marker went in, so it is longer now and more of it
+> is true; `tools/brain-status.mjs` prints the live count, and this line deliberately does not copy it).
+> Past the ~300-line rule and staying that way, and this is the third time it has passed it —
+> content was split out on 2026-08-06 and again on 2026-08-13, and both times the file grew back over the
+> line. That is the finding, not a failure to tidy: what keeps coming back is the residue that **cannot be
+> routed away**, because it applies to every script regardless of topic. [`README.md`](README.md) says so
+> in one line — *"core.md is the only file worth reading alongside another"* — so splitting the
+> always-read file just means every session opens two files instead of one, which is exactly the
+> "splitting adds hops" case the rule names. The one visible seam (session/connection protocol vs.
+> script-writing traps) is a false one: the roll-back bullet and the verify-after-changing bullets are one
+> lesson from two directions, and so are "re-check the document identity" and "`Document` is whatever is
+> in front". A split would put each pair in different files. Re-check this decision if the file passes
+> ~400 lines or if a genuinely self-contained topic appears in it.
+
+**Contents.** This file holds the rules that apply to *every* bridge script, so it is the one file worth
+reading alongside whichever topic file the job needs.
+
+- **Bridge basics** — ping first and follow it with the session snapshot; the destructive-op guard; what
+  is hard-blocked; how a late exception rolls back committed work; which `Document` you are really
+  writing to when two projects are open
+- **Writing bridge C# — API surface traps that cost a round trip**
+- **Revit version + unit conversion** — 2020 `DisplayUnitType`, mm↔feet, fully-qualified types
+- **Category ID quick reference** — for reading raw output only, never hardcoded into a script
+
+> **Nine topics this list used to name are not in this file, and have not been for weeks.** They were
+> split out on 2026-08-06 and 2026-08-13, but the contents list above them was never updated — so it went
+> on advertising sections that had already moved, which sends a reader scrolling for something that was
+> never going to be here. Corrected 2026-08-22. Where they actually live:
+> view visibility and view titles → [`views.md`](views.md) ·
+> tracing real MEP connectivity → [`mep-trace.md`](mep-trace.md) ·
+> undoing a mistake → [`undo.md`](undo.md) ·
+> air terminal layout → [`hvac-terminals.md`](hvac-terminals.md) ·
+> rotating equipment to face a target → [`hvac-equipment-placement.md`](hvac-equipment-placement.md) ·
+> drawing a duct and branching off a main → [`hvac-ducts.md`](hvac-ducts.md) ·
+> slicing a trunk for duct sizing → [`hvac-duct-sizing.md`](hvac-duct-sizing.md) ·
+> an element's level, workset or design option → [`element-identity.md`](element-identity.md) ·
+> posting AJ Tools' own ribbon commands → [`tagging.md`](tagging.md).
+> [`README.md`](README.md) is the full routing table — go there, not to a contents list inside a topic file.
 
 ## Bridge basics
 - **"Don't go to Revit" is an absolute stop — obey it without asking why** (the user's rule, stated
@@ -203,14 +229,6 @@ rather than just act on existing ones and don't fit the filter+action shape.
   detail is the difference between a size report that is true and one that merely echoes the request.
   `create-duct.cs`, `create-pipe.cs`, `create-cable-tray.cs` and `create-conduit.cs` all now report
   ACTUAL size and flag a REFUSED or SNAPPED value explicitly.
-- **A script that throws AFTER its transaction committed still rolls back COMPLETELY — the bridge wraps
-  the whole script, so a late exception undoes even committed work.** Verified live 2026-08-09: a wall
-  trim committed its Transaction, then a stray `Document.Regenerate()` AFTER the commit threw
-  ("Modification of the document is forbidden" — Regenerate needs an open transaction), and the read-back
-  showed the wall untouched. Two rules fall out: (1) never call `Regenerate()` outside a transaction —
-  `Commit()` already regenerates, so a post-commit Regenerate is both illegal and pointless; (2) this
-  rollback is protective, not a bug — a bridge script either fully lands or fully doesn't, so after ANY
-  script error re-read the model instead of assuming the pre-error lines stuck.
 - **A script that throws AFTER its transaction committed still rolls back COMPLETELY — the bridge wraps
   the whole script, so a late exception undoes even committed work.** Verified live 2026-08-09: a wall
   trim committed its Transaction, then a stray `Document.Regenerate()` AFTER the commit threw

@@ -1,9 +1,9 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-22**. Read top-down, newest first: the **2026-08-22** section is
-`run_fragment` and five new native tools, none of it yet run on a real model; **2026-08-21** is the
-search work; **2026-08-20** is the bridge record, whose Revit-side work is still open. The 2026-08-20
-header said 287 fragments; there are now 290.
+Last updated: **2026-08-22.** Read top-down. Two separate 2026-08-22 sessions are recorded below and
+neither has been near a real model: first the **`run_fragment` + five native tools** work, then the
+**number audit** that added four consistency checks. Under those, **2026-08-21** is the search work and
+**2026-08-20** is the bridge record, whose Revit-side work is the only thing still genuinely open.
 
 ---
 
@@ -87,6 +87,66 @@ Brain is running that way rather than as an installed plugin, it only exists whe
 Installing it as a plugin (SETUP.md step 1, Option A) makes all 11 skills and the bridge available in
 every project on the machine. **Do not run both** — same server key registered twice.
 
+## 2026-08-22 — a documentation-only session, and what it left for you
+
+No Revit, no bridge, no model touched. The whole session was one job: **find every place this Brain states
+a number about itself and check it against disk.** It found a lot, and the durable outcome is not the
+fixes — it is four new checks that make the same drift impossible to ship again.
+
+### What was wrong
+
+| Where | What it claimed | Truth |
+|---|---|---|
+| 8 documents | 267 / 269 / 282 / 285 fragments | **290** |
+| 3 places | 17 or 19 native tools | **20** at the time; **26** once `run_fragment` and the five fragment-backed tools merged the same day |
+| 19 fragment headers | "NOT YET LIVE-VERIFIED" | proven live 2026-08-06/07, recorded in `scripts/README.md` only |
+| 7 fragment headers + 4 docs | named outside tools | stripped, per the 2026-08-20 rule that never reached `scripts/` |
+| `README.md` | search scores `3/14 at #1` | **5/28 at #1, MRR 0.267** — and `6/14 in top 5` matched no run at all |
+| `tools/api-surface.mjs` | stamped every regeneration `2026-08-20` | a hardcoded literal; now reads the clock |
+| this file | 270 / 283 / 287 fragments, `3/14` | stamped or corrected above |
+
+### The four checks added, all tested by deliberately breaking a file first
+
+- **9** — every fragment / skill / native-tool count stated anywhere in markdown, against disk.
+- **10** — each fragment's own header status against its `scripts/README.md` row (241 verified fragments).
+- **11** — outside-source names in `scripts/`, `skills/` and `knowledge/` (344 files). Found 3 more on its
+  first run, in a file the hand-written grep had never looked at.
+- **12** — any `N/M at #1` retrieval score against the last run in `semantic-index/score-history.md`.
+
+`tools/verify-consistency.mjs` now runs **12 checks** and the edit hook runs it on every file change. The
+PowerShell copy trails at 8 and the docs say so — do not port checks 9–12 from a Linux container, that is
+the `.ps1` encoding trap this repo has already been bitten by twice.
+
+### Decisions taken by Ajmal this session, so they are not re-argued
+
+1. **KV cache / prompt caching — nothing to build.** Every layer that pays is already on by default or
+   already built and measured here. Full record in `semantic-index/rag-architecture-decisions.md`.
+2. **`knowledge/dynamo-vocabulary-map.md` deleted** — *"we dont have anyting related to dynamo."* Git has it.
+3. **The NFPA source links stay** — *"keep the nfpa links."* Fire-code values whose own heading warns they
+   are secondary summaries; a blockquote in that file now records the decision, and check 11 skips it.
+4. **brain-log.md keeps its full detail** — it is 11% of the searchable corpus; at 20%, move entries older
+   than 60 days to `docs/brain-log-archive.md` (outside the index). `brain-status.mjs --full` prints the
+   share every session. Move, never shorten.
+
+### What Ajmal still has to do — none of it possible from a cloud session
+
+1. **Merge PR #30** — https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/30 ("Ready for review", then "Merge").
+2. **Run `tools\check-scripts.cmd`.** One fragment was rewritten this session without a compiler:
+   `filters/by-identity/filter-by-wrong-category.cs` used `ElementId.IntegerValue`, removed at Revit 2024.
+   It was written on 2026-08-21, *the day after* the whole library was migrated off that API — which is why
+   check 11's lesson is that a sweep fixes what exists and does nothing about the next file somebody writes.
+3. **Two more test questions, in his own words.** The set is at **28 of 30**. Two finished features — the
+   cross-encoder re-ranker and skill weighting — are switched off only because the set is too small to
+   judge them. `semantic-index/rag-architecture-decisions.md` records that assistant-written questions do
+   not count, so this one genuinely cannot be done for him.
+
+Everything below this line is the 2026-08-20 Windows session and is unchanged.
+
+---
+
+This replaces the 2026-08-14 handover, which
+had gone stale (it said 270 fragments; there were 287 that day, and 290 now — which is the point).
+
 ## 2026-08-21 — the search was measured, corrected and made ~5x faster
 
 Ajmal walked a RAG checklist through the Brain under one rule: *check whether we already have it,
@@ -139,6 +199,8 @@ downloaded and still has no score line); the cross-encoder is not inert — it c
   usage evidence the five tools should have been picked on**, and were not: the job log never travels
   in git, so they were ranked by how often each fragment is named across the skills instead. Check them
   against the real ranking before promoting any more.
+
+---
 
 ---
 
@@ -250,7 +312,7 @@ reference to assembly 'System.Runtime, Version=10.0.0.0'`. Revit 2027 runs on **
 `RevitAPI.dll` references `System.Runtime 10.0.0.0`, while `verify-fragments-compile.ps1` still compiles
 against the .NET Framework reference set. The checker's own advice covers this case exactly: *"unless the
 error names a type the harness failed to supply"*. **Fix the harness to pass the .NET 10 reference
-assemblies for 2027+; do not touch the 283 fragments.**
+assemblies for 2027+; do not touch the fragments themselves.**
 
 **The real fragment failures — these are genuine and worth fixing:**
 
@@ -346,7 +408,7 @@ fragment touched on 2026-08-20 as unproven until step 1 below says otherwise.
 
 What changed:
 
-1. **All 287 fragments were made version-proof** — one source now runs on Revit 2020 through 2027. 202
+1. **The whole library was made version-proof** (287 fragments that day; 290 now) — one source now runs on Revit 2020 through 2027. 202
    unit conversions became arithmetic (`mm / 304.8`, which no Revit version can deprecate) and element
    ids stayed as `ElementId` instead of being turned into numbers. No `#if`, no fork.
 2. **A new opening check** — `scripts/context/context-session-start.cs`, one call that reports the Revit
@@ -379,7 +441,7 @@ tools\check-scripts.cmd
 ```
 
 Double-click it. Revit does **not** need to be open and nothing is changed. It finds every Revit on the
-PC and compile-checks all 287 fragments against each, then says in plain words which versions are safe.
+PC and compile-checks every fragment against each, then says in plain words which versions are safe.
 
 **This single command answers the whole session.** Green everywhere means the version-proofing worked.
 Any FAIL list is a small fix — send it to Claude, because every change follows one of three patterns, so
@@ -436,7 +498,7 @@ index-brain.cmd --full                              (~80 s)
 score-brain.cmd
 ```
 
-**The number to beat is `3/14 at #1, MRR 0.325` on `all-MiniLM-L6-v2`** — in
+**The number to beat, as of 2026-08-21, is `5/28 at #1, MRR 0.267` on `all-MiniLM-L6-v2`** (the test set doubled from 14 rows to 28 that day, so it is not comparable to the `3/14, MRR 0.325` this line used to quote) — in
 `semantic-index/score-history.md`, stamped with the model that produced it.
 
 **Read the note at the bottom of `score-history.md` before you judge the result.** That row is
