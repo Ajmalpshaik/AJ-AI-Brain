@@ -131,10 +131,16 @@ the `.ps1` encoding trap this repo has already been bitten by twice.
 ### What Ajmal still has to do — none of it possible from a cloud session
 
 1. ~~**Merge PR #30.**~~ **DONE 2026-08-22** — merged, along with PR #31 (the daily check's PowerShell
-   port). All three merged branches still exist on GitHub: the container's git proxy returns 403 on a
-   branch delete and the API tools here have no delete-branch call, so **deleting `claude/*` branches is a
-   two-click job on GitHub** and cannot be done from a cloud session. Nothing depends on them; `main`
-   contains every commit.
+   port). **All three merged `claude/*` branches still exist, and a cloud session cannot remove them.**
+   Diagnosed properly 2026-08-22 rather than guessed: `git push origin --delete` returns **HTTP 403**,
+   and the egress proxy's own `recentRelayFailures` log stays **empty** — so the request reached GitHub
+   and *GitHub* refused it. The session's git credentials allow pushing refs but not deleting them, which
+   is a deliberate guardrail, not a misconfiguration; the proxy README says to report a 403 rather than
+   route around it. The GitHub API tools available here have `create_branch` and no delete counterpart.
+   **Two ways to clear them, both yours:** delete each on GitHub (Branches → the bin icon, ~20 seconds
+   total), or better, turn on **Settings → General → "Automatically delete head branches"** so every
+   future merged branch cleans itself up and this never comes back. Verified safe first — each branch is
+   **0 commits ahead of `main`**, so nothing is lost either way.
 2. **Run `tools\check-scripts.cmd`.** One fragment was rewritten this session without a compiler:
    `filters/by-identity/filter-by-wrong-category.cs` used `ElementId.IntegerValue`, removed at Revit 2024.
    It was written on 2026-08-21, *the day after* the whole library was migrated off that API — which is why
