@@ -22,6 +22,19 @@ them.**
 
 (Entries before 2026-07-23 were compressed from long-form with the user's OK — git history has the original.)
 
+**When this file gets too big — asked 2026-08-22, and the answer is not "shorten it".** Ajmal asked
+whether the detail was worth keeping. It is: this file being detailed is what let the same session find a
+Revit-2024 regression, by reading what a migration two days earlier had actually done. A 1–3 line log
+could not have. But detail is not free — this file sits inside `knowledge/`, so **every line of it is
+indexed and competes with the notes that answer real questions.** Measured that day: **10% of the whole
+searchable corpus**, against the 20% that got 604 chunks of external standards reverted in an hour on
+2026-08-13.
+
+So the rule is **move, never shorten**: when `tools/brain-status.mjs` reports this file past **20% of the
+corpus**, cut entries older than ~60 days into `docs/brain-log-archive.md` — `docs/` is outside
+`INDEX_TARGETS`, so every word survives, git still has it, and it stops crowding the search. The share is
+printed by `brain-status.mjs --full` every session, so nobody has to argue about it from memory again.
+
 ## Open items — the single current list (supersedes any "Next" list in older entries)
 
 Rewritten 2026-08-07 at the end of the big verification campaign so the next session can resume without
@@ -3117,3 +3130,20 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   **Not ported to PowerShell.** Writing a `.ps1` from a Linux container is the documented encoding trap
   that has already broken two scripts here, so `verify-consistency.ps1` trails at eight checks and the
   docs now say so instead of claiming parity.
+
+- 2026-08-22 — **"Is the log too detailed?" — measured instead of argued, and the answer is keep the
+  detail but cap the cost.** Ajmal asked whether this file should be cut back to the main points. Three
+  numbers decided it. **(1) The detail earns its keep:** this same session found a Revit-2024 regression
+  in `filter-by-wrong-category.cs` only by reading what the 2026-08-20 migration had actually done — which
+  exceptions it left, that it hit 287/287 on three Revit versions, when it ran. A 1–3 line log would have
+  recorded "migration applied" and nothing findable. **(2) The detail is not free:** this file sits in
+  `knowledge/`, so every line is indexed and competes with the notes that answer real questions. Measured
+  today at **272 KB — 36% of all knowledge/, and 10% of the entire searchable corpus.** For scale, 604
+  chunks of external standards were indexed on 2026-08-13 and reverted the same hour for being a 20%
+  increase. **(3) Nothing here can prove archiving would help**, because the test set is 28 rows — the
+  same reason the RAG doc declines every other retrieval change.
+  So: **move, never shorten.** Past **20% of the corpus**, entries older than ~60 days go to
+  `docs/brain-log-archive.md`, which is outside `INDEX_TARGETS` — every word survives, git still has it,
+  and it stops crowding the search. At 10% today, nothing to do. `tools/brain-status.mjs` now computes and
+  prints that share every session (loudly past 20%, quietly under `--full` below it), so the trigger fires
+  on a number rather than on somebody's impression of how long the file looks.

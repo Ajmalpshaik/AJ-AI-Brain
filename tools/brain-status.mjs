@@ -345,6 +345,33 @@ if (oversized.length) {
   console.log("\nPast the ~300-line split rule (knowledge/INDEX.md) — not yet reviewed:");
   for (const f of oversized) console.log(`  ${f.rel} (${f.lines} lines)`);
 }
+// brain-log.md is exempt from the 300-line rule (it is append-only history, not a routed topic file),
+// but it is NOT exempt from costing the search: it sits inside knowledge/, so every line of it is
+// indexed and competes with the notes that actually answer questions. Ajmal asked on 2026-08-22 whether
+// it had grown too detailed. The answer was "keep the detail, it is the asset" - today's own session
+// found a real bug by reading it - but that answer is only safe while the log stays a small share of
+// the corpus. So the share is measured here rather than argued about again: at 20% it is a decision,
+// not an opinion, and the fix is to move old entries to docs/ (outside INDEX_TARGETS) keeping every word.
+const logPath = path.join(brainRoot, "knowledge", "brain-log.md");
+if (fs.existsSync(logPath)) {
+  let corpus = 0;
+  for (const folder of ["scripts", "knowledge", "skills"]) {
+    for (const f of walk(path.join(brainRoot, folder), (n) => n.endsWith(".md") || n.endsWith(".cs"))) {
+      corpus += fs.statSync(f).size;
+    }
+  }
+  const logBytes = fs.statSync(logPath).size;
+  const share = corpus ? (logBytes / corpus) * 100 : 0;
+  if (share >= 20) {
+    console.log(`\nbrain-log.md is ${share.toFixed(0)}% of the searchable corpus — past the 20% line.`);
+    console.log("  Archive entries older than ~60 days into docs/brain-log-archive.md (docs/ is outside");
+    console.log("  INDEX_TARGETS, so every word survives and stops competing with real answers).");
+    console.log("  Ajmal's standing rule: keep the detail. Move it, never shorten it.");
+  } else if (args.has("--full")) {
+    console.log(`\nbrain-log.md is ${share.toFixed(0)}% of the searchable corpus (archive at 20%, see the note in this tool).`);
+  }
+}
+
 if (keptWhole.length && args.has("--full")) {
   console.log("\nOver 300 lines but reviewed and deliberately kept whole:");
   for (const f of keptWhole) console.log(`  ${f.rel} (${f.lines} lines) — reason in the file's split-review marker`);
