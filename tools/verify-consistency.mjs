@@ -499,18 +499,26 @@ console.log(`Checked ${statusChecked} README-verified fragment(s) against their 
 // modeller reads first. Same shape of miss as the verification campaign that updated README rows and not
 // the fragment headers - a sweep over documentation does not reach code.
 //
-// Scoped to scripts/ and skills/ deliberately. knowledge/brain-log.md is dated history and rewriting it
-// destroys the record; knowledge/dynamo-vocabulary-map.md is a routing table for Ajmal's own vocabulary
-// (he says "the Rhythm one" and something has to translate it) and whether it stays is his call, not
-// this checker's. Neither is scanned here. If he decides either way, widen or narrow this list - do not
-// silently let scripts/ drift back.
-console.log("\n=== 11. Outside sources in fragments and skills ===");
+// Now covers knowledge/ too. It was scoped to scripts/ and skills/ only while one file's fate was open -
+// knowledge/dynamo-vocabulary-map.md, which mapped community package names to fragments. Ajmal settled it
+// on 2026-08-22: "the dynamo files no need becose we dont have anyting related to dynamo". Deleted, so
+// the exception is gone and knowledge notes are scanned like everything else.
+//
+// Two things stay excluded, each for a stated reason rather than convenience:
+//   * knowledge/brain-log.md - dated, append-only history. Entries from July record a package comparison
+//     that really happened; rewriting them would make the log lie about the Brain's own past.
+//   * the "Sources consulted" section of knowledge/nfpa13-sprinkler-spacing.md - Ajmal's decision the
+//     same day: "keep the nfpa links". Fire-code values whose own heading warns they are secondary
+//     summaries; removing the sources would leave unverified life-safety numbers looking authoritative.
+console.log("\n=== 11. Outside sources in fragments, skills and knowledge ===");
 const outsideNames = /\b(rhythm|clockwork|bimorph|genius ?loci|archi-?lab|mepover|data-?shapes|spring nodes|orchid|dynamo)\b/i;
+const sourceExempt = /(brain-log\.md|nfpa13-sprinkler-spacing\.md)$/;
 let sourceScanned = 0;
-for (const dir of ["scripts", "skills"]) {
+for (const dir of ["scripts", "skills", "knowledge"]) {
   for (const f of walk(path.join(brainRoot, dir), (n) => n.endsWith(".cs") || n.endsWith(".md"))) {
-    sourceScanned++;
     const rel = path.relative(brainRoot, f).split(path.sep).join("/");
+    if (sourceExempt.test(rel)) continue;
+    sourceScanned++;
     const lines = fs.readFileSync(f, "utf8").split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const m = lines[i].match(outsideNames);
@@ -524,7 +532,7 @@ for (const dir of ["scripts", "skills"]) {
     }
   }
 }
-console.log(`Scanned ${sourceScanned} fragment/skill file(s) for outside-source names.`);
+console.log(`Scanned ${sourceScanned} fragment/skill/knowledge file(s) for outside-source names.`);
 
 // === Result ===
 console.log("\n=== Result ===");

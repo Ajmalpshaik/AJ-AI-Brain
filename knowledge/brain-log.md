@@ -3185,3 +3185,28 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   external URLs under "Sources consulted" in `knowledge/nfpa13-sprinkler-spacing.md` (fire-code values
   whose own heading warns they are secondary summaries — removing the sources would leave unverified
   numbers looking authoritative). Neither is scanned by check 11; the reason is written into the check.
+
+- 2026-08-22 — **Ajmal settled both open outside-source questions, and they went opposite ways.** His
+  words: *"keep the nfpa links and THE DYNAMO FILES NO NEED BECOSE WE DONT HAVE ANYTING RELATED TO
+  DYNAMO."* Both decisions are now recorded where they will be found, not just done.
+  **`knowledge/dynamo-vocabulary-map.md` deleted** (55 lines, his explicit OK). His reason is the right
+  one and it beats the argument for keeping it: the file existed to translate Dynamo node names into
+  fragments, and this setup has never used Dynamo — its own first paragraph said so. The routing it
+  provided was for a vocabulary that is not in play. Removed with it: the `knowledge/INDEX.md` row that
+  pointed at it, and the last stray mention in `live-model/graphic-override-precedence.md` (an API-gap
+  note that read fine without it). Git has the file if it is ever wanted back.
+  **The NFPA links stay, and now say why.** A blockquote above the "Sources consulted" heading in
+  `nfpa13-sprinkler-spacing.md` records that this is a deliberate exception on safety grounds — fire-code
+  values, a heading that already warns they are secondary summaries rather than the standard itself, and
+  stripping the sources would leave unverified life-safety numbers looking authoritative. A future session
+  tidying references will see the decision instead of re-making it.
+  **Check 11 widened from `scripts/` + `skills/` to include `knowledge/`** — 344 files — now that the one
+  file blocking it is gone. Two exemptions remain, each with its reason written into the check itself:
+  `brain-log.md` (dated history — the July package-comparison entries record something that really
+  happened, and rewriting them would make this log lie about the Brain's own past) and the NFPA sources
+  section. Tested by planting a name in `knowledge/glossary.md`; it fired with file and line.
+  **Check 8 earned its keep in the same minute.** Deleting one knowledge file moved the indexable corpus
+  from 353 to 352, and the checker immediately flagged all three "searches all 353 files" claims in
+  `CLAUDE.md`, `START-HERE.md` and `README.md`. Before check 8 existed that would have drifted silently —
+  it is on record as having done exactly that for two days. One delete, three docs corrected, no thought
+  required.
