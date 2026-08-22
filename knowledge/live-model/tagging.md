@@ -330,3 +330,50 @@
   [`recipes/tag-elements-in-active-view.cs`](../../scripts/recipes/tag-elements-in-active-view.cs)
   (superseded the tag-vs-tag-only version from earlier this session).
 
+## Centring a room tag — four ways to find "the centre", and the order matters
+
+Harvested 2026-08-22 from the add-in's Center Room Tags. The fragment is
+[`../../scripts/actions/sheets-views/action-center-room-tags.cs`](../../scripts/actions/sheets-views/action-center-room-tags.cs).
+
+`tag.TagHeadPosition` is what you set — setting the tag's `Location` does not move it. The hard part is
+the target point, and a bounding-box centre is wrong often enough to matter:
+
+1. **True area-weighted boundary centroid** — walk `room.GetBoundarySegments(...)` and sum the polygon
+   centroid across **every loop**, so a room with a hole in it still lands correctly.
+2. **Bounding-box centre** — only when the boundary cannot be read at all.
+3. **An interior grid point** — because **on an L-shaped or U-shaped room the true centroid can fall
+   OUTSIDE the room**, in the corridor or the next tenancy. Sample points across the bounding box and
+   take the first `IsPointInRoom` accepts. Without this step a script "works" and silently puts those
+   tags in the wrong space, which nobody notices until a drawing is issued.
+4. **The room's `Location` point** — last resort.
+
+Check every candidate with `IsPointInRoom` before trusting it, including the centroid.
+
+**A tag on a LINKED room needs the link transform.** A tag in this model can tag a room in a link; the
+room's centre then comes back in the **link's** coordinates and must go through
+`RevitLinkInstance.GetTotalTransform()`. Skip that and every such tag lands at the wrong end of the site.
+
+**Read `TagHeadPosition` back after setting it** — on a pinned tag the set is a silent no-op, the same
+trap as `MoveElement` in [`geometry-and-transforms.md`](geometry-and-transforms.md).
+
+**A room with zero Area is unplaced** and has no centre — count it separately from a genuine failure, as
+should an **orphaned** tag whose room was deleted.
+
+## Flow-direction arrows — the direction is on the CONNECTORS, not the curve
+
+Also harvested 2026-08-22, from Duct Flow Annotations
+([`../../scripts/actions/sheets-views/action-place-flow-arrows.cs`](../../scripts/actions/sheets-views/action-place-flow-arrows.cs)).
+
+**A duct's `LocationCurve` runs whichever way it happened to be drawn.** Start-to-end says nothing about
+which way the air goes. Take the connector whose `Direction` is `In` and the one that is `Out`, and
+point the arrow from In toward Out. Use the curve direction instead and roughly half the drawing points
+backwards — with nothing to warn you, because nothing errors.
+
+Three more that apply to placing any annotation symbol along a run:
+
+- **Activate the `FamilySymbol` before the first placement** (`symbol.Activate()` + `Regenerate()`) or
+  `NewFamilyInstance` throws — the classic first-use-in-a-session trap.
+- **Rotate about the VIEW's normal** (`view.ViewDirection`), not world Z. World Z is wrong in any view
+  that is not a plain plan.
+- **Skip near-vertical runs.** A riser has no meaningful arrow in a plan, so give it none rather than a
+  nonsense one.

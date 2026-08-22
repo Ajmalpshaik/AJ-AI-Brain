@@ -39,6 +39,19 @@
 //   face, so dropping the self-hit left "nothing found" (1 hit instead of 11). Fixed to Find-all →
 //   drop-self → take-nearest. Geometry cross-checked: the plan-diagonal hits came back at 8910 mm where
 //   the axis hits were 6300 mm, and 6300 x root-2 = 8910. The maths is right.
+// ✱ UPGRADED 2026-08-22 — RAYS NOW SEE INTO LINKED MODELS (`FindReferencesInRevitLinks = true`).
+//   Before this they could only hit elements in THIS document, so on a normal project — where the
+//   architecture, and therefore the CEILINGS and SLABS, live in a linked model — every ray found
+//   nothing and the fragment reported "no hit". That reads as the tool being broken when the model is
+//   simply arranged the usual way. Harvested from the add-in's Game Mode collision service, whose note
+//   says it plainly: "architecture usually lives in a linked model".
+// GOTCHA: A LINKED HIT'S `Reference.ElementId` IS THE `RevitLinkInstance`, NOT WHAT YOU HIT. The thing
+//         you actually hit is `Reference.LinkedElementId`, and it must be fetched from the LINK's own
+//         document via `RevitLinkInstance.GetLinkDocument()`. Resolve it the lazy way and the report
+//         names the RVT file instead of the ceiling.
+// GOTCHA: set `includeLinkedModels = false` to get exactly the behaviour that was live-verified in
+//         July — that verification was done on a model with no links, so it neither proves nor
+//         disproves the linked path. The linked path is compile-checked only.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -50,6 +63,7 @@ string sampleMode = "centre";       // "centre" = 1 ray per direction from the i
                                     // "fan"    = 3x3 rays spread across each FACE — see the header;
                                     //            essential for anything physically large (AHU, FCU)
 int maxElementsReported = 25;       // detail cap; the summary always covers the whole set
+bool includeLinkedModels = true;    // rays see into LINKED models too — architecture usually IS linked
 // ---- END INPUTS ----
 
 Func<double, double> toMm = v => v * 304.8;
@@ -118,12 +132,14 @@ else
                         sb.AppendLine($"*** WARNING: category '{targetCategoryName}' is HIDDEN in view '{rayView.Name}'. Rays cannot see it — every result below will be empty. Use a 3D view where it is visible.");
                 } catch { }
                 intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+                if (includeLinkedModels) intersector.FindReferencesInRevitLinks = true;
             }
         }
         else
         {
             intersector = new ReferenceIntersector(rayView);
             intersector.TargetType = FindReferenceTarget.Face;
+            if (includeLinkedModels) intersector.FindReferencesInRevitLinks = true;
         }
 
         if (intersector != null)
@@ -212,9 +228,19 @@ else
 
                     foreach (var h in real.Take(nearestOnly ? 1 : 5))
                     {
-                        var hitEl = Document.GetElement(h.GetReference().ElementId);
-                        var gp = h.GetReference().GlobalPoint;
-                        sb.AppendLine($"    {d.Key,-8} {toMm(h.Proximity):F0} mm -> '{hitEl?.Name ?? "?"}' (Id {h.GetReference().ElementId}, {hitEl?.Category?.Name ?? "?"}) at ({toMm(gp.X):F0}, {toMm(gp.Y):F0}, {toMm(gp.Z):F0})");
+                        // A LINKED hit's ElementId is the RevitLinkInstance, not the thing you hit —
+                        // resolve through the link or the report names the RVT file, not the ceiling.
+                        var href = h.GetReference();
+                        Element hitEl = null; string hitFrom = "";
+                        if (href.LinkedElementId != ElementId.InvalidElementId)
+                        {
+                            var li = Document.GetElement(href.ElementId) as RevitLinkInstance;
+                            var ldoc = li != null ? li.GetLinkDocument() : null;
+                            if (ldoc != null) { hitEl = ldoc.GetElement(href.LinkedElementId); hitFrom = "  [link: " + li.Name + "]"; }
+                        }
+                        if (hitEl == null) hitEl = Document.GetElement(href.ElementId);
+                        var gp = href.GlobalPoint;
+                        sb.AppendLine($"    {d.Key,-8} {toMm(h.Proximity):F0} mm -> '{hitEl?.Name ?? "?"}' (Id {h.GetReference().ElementId}, {hitEl?.Category?.Name ?? "?"}) at ({toMm(gp.X):F0}, {toMm(gp.Y):F0}, {toMm(gp.Z):F0}){hitFrom}");
                         totalHits++;
                     }
                 }

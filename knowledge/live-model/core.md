@@ -347,3 +347,45 @@ point at the wrong category with no warning. This table is only useful for recog
 when it shows up in raw output (a warning, an export, a debug dump) — converting int→enum in a script is
 always a live one-line cast (`(BuiltInCategory)someInt`) or `Category.GetCategory(doc, id).Name`, which is
 authoritative for every category, not just these 27 common ones.
+
+## Ray-casting must be told to look inside LINKED models — it does not by default
+
+Found 2026-08-22, harvested from the add-in's Game Mode collision service, whose own note puts it
+plainly: *"architecture usually lives in a linked model"*.
+
+`ReferenceIntersector` only sees elements in **this** document unless you set:
+
+```
+intersector.FindReferencesInRevitLinks = true;
+```
+
+On a normal project the ceilings and slabs are in a **linked architectural model**, so without that flag
+every ray finds nothing and a fragment reports *"no hit"*. That reads as the tool being broken when the
+model is simply arranged the usual way — the worst kind of failure, because it looks like an answer.
+
+**A linked hit's `Reference.ElementId` is the `RevitLinkInstance`, not the thing you hit.** The real
+element is `Reference.LinkedElementId`, fetched from the link's own document via
+`RevitLinkInstance.GetLinkDocument()`. Resolve it the lazy way and the report names the RVT file instead
+of the ceiling.
+
+**Two more ray facts from the same source, both live-verified there on Revit 2020 (2026-07-28):**
+
+- **`ReferenceIntersector` works on a PERSPECTIVE `View3D`**, giving the same results as an orthographic
+  one, at roughly 0.1 ms per hitting ray. There is no need to hunt for an orthographic view.
+- The intersector only reports what is **visible in that view**, so Visibility/Graphics, view filters and
+  hidden elements all shape the result. This Brain already learned that the hard way — see the DANGER
+  block in `actions/move-copy-rotate/action-move-to-ray-hit.cs`.
+
+**Status across the ray fragments (2026-08-22):**
+
+| Fragment | Sees into links? |
+|---|---|
+| [`../../scripts/actions/reporting/action-report-ray-hits.cs`](../../scripts/actions/reporting/action-report-ray-hits.cs) | **yes** — upgraded, with link resolution |
+| [`../../scripts/actions/move-copy-rotate/action-move-to-ray-hit.cs`](../../scripts/actions/move-copy-rotate/action-move-to-ray-hit.cs) | **yes** — upgraded |
+| [`../../scripts/actions/qa-checks/action-check-surface-fit.cs`](../../scripts/actions/qa-checks/action-check-surface-fit.cs) | **not yet** |
+| [`../../scripts/recipes/ray-trace-to-ceiling.cs`](../../scripts/recipes/ray-trace-to-ceiling.cs) | **not yet** |
+| [`../../scripts/recipes/sprinkler-deflector-height.cs`](../../scripts/recipes/sprinkler-deflector-height.cs) | **not yet** |
+
+The three "not yet" ones need the same one-line flag **and** the linked-hit resolution. They were left
+rather than rushed at the end of a long session — the linked path is compile-checked, not live-proven,
+and it deserves one real test against a model with links before being pushed through five files.

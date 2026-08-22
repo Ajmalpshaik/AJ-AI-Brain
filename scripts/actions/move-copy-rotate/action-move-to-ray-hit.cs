@@ -35,6 +35,19 @@
 //   at DIFFERENT heights (2100 / 2400 / 3000 mm) and every terminal found the one above ITSELF: 6, 6 and 5
 //   respectively, 0 misses. A fixed-Z approach would have buried 11 of them in the wrong slab. Dry run was
 //   run first and matched the result exactly; read-back confirmed each Z equals its ceiling's underside.
+// ✱ UPGRADED 2026-08-22 — RAYS NOW SEE INTO LINKED MODELS (`FindReferencesInRevitLinks = true`).
+//   Before this they could only hit elements in THIS document, so on a normal project — where the
+//   architecture, and therefore the CEILINGS and SLABS, live in a linked model — every ray found
+//   nothing and the fragment reported "no hit". That reads as the tool being broken when the model is
+//   simply arranged the usual way. Harvested from the add-in's Game Mode collision service, whose note
+//   says it plainly: "architecture usually lives in a linked model".
+// GOTCHA: A LINKED HIT'S `Reference.ElementId` IS THE `RevitLinkInstance`, NOT WHAT YOU HIT. The thing
+//         you actually hit is `Reference.LinkedElementId`, and it must be fetched from the LINK's own
+//         document via `RevitLinkInstance.GetLinkDocument()`. Resolve it the lazy way and the report
+//         names the RVT file instead of the ceiling.
+// GOTCHA: set `includeLinkedModels = false` to get exactly the behaviour that was live-verified in
+//         July — that verification was done on a model with no links, so it neither proves nor
+//         disproves the linked path. The linked path is compile-checked only.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -43,6 +56,7 @@ string direction = "up";             // "up" | "down" | "+X" | "-X" | "+Y" | "-Y
 string targetCategoryName = null;    // WHAT to snap to this time — "Floors", "Ceilings", "Walls", ...; null = nearest anything
 double offsetMm = 0;                 // signed, along the ray: negative pulls back toward the element
 double maxRayDistanceMm = 5000;      // ignore hits farther than this
+bool includeLinkedModels = true;    // rays see into LINKED models too — architecture usually IS linked
 // ---- END INPUTS ----
 
 Func<double, double> toMm = v => v * 304.8;
@@ -90,13 +104,18 @@ else
                         ready = false;
                     }
                 } catch { }
-                if (ready) intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+                if (ready)
+                {
+                    intersector = new ReferenceIntersector(new ElementCategoryFilter(cat.Id), FindReferenceTarget.Face, rayView);
+                    if (includeLinkedModels) intersector.FindReferencesInRevitLinks = true;
+                }
             }
         }
         else
         {
             intersector = new ReferenceIntersector(rayView);
             intersector.TargetType = FindReferenceTarget.Face;
+            if (includeLinkedModels) intersector.FindReferencesInRevitLinks = true;
         }
 
         if (ready)

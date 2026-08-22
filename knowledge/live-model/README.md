@@ -18,12 +18,17 @@ feet↔mm conversion every script needs.
 | Space airflow params; how many air terminals; terminal grid layout; a terminal's Flow value | [`hvac-terminals.md`](hvac-terminals.md) |
 | Changing a family's CATEGORY (e.g. Duct Accessory → Air Terminal) — what survives, what is silently dropped, what to check first | [`family-category-change.md`](family-category-change.md) |
 | Drawing duct between points; branch duct (riser + elbow + takeoff); connecting to an existing open end; drawing FROM a connector | [`hvac-ducts.md`](hvac-ducts.md) |
+| Putting diffusers/sprinklers/lights on the CEILING TILE CENTRES — reading a ceiling's real tile size and angle, and which elements actually sit over an L-shaped ceiling | [`ceiling-grid.md`](ceiling-grid.md) |
+| Two runs already exist and DON'T MEET — closing the gap, the offset crank, stretch-vs-create, one sub-transaction per attempt | [`mep-connect-existing-runs.md`](mep-connect-existing-runs.md) |
 | Slicing a trunk into progressively smaller segments for duct sizing; why the trunk gets split; recovering an orphaned branch | [`hvac-duct-sizing.md`](hvac-duct-sizing.md) |
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
+| **Grids and levels** — extents short in one view but not another, the 2D/3D toggle, resetting to the shared 3D extent, stretching levels to a section box, moving the bubble to the other end | [`datums.md`](datums.md) |
+| **Cutting openings / sleeves** where MEP passes through a wall, floor or beam — finding the real crossing, and the three different `NewOpening` calls | [`mep-openings.md`](mep-openings.md) |
 | Moving/copying/rotating elements — and why a transform can silently do NOTHING while reporting success (pinned elements, group members) | [`geometry-and-transforms.md`](geometry-and-transforms.md) |
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |
 | Turning a color STYLE word ("pastel", "neon", "muted") into real RGB; guaranteeing distinct colors across several groups | [`color-vocabulary.md`](color-vocabulary.md) |
 | A color/override change isn't showing — which graphic mechanism beats which (Linework, per-element, Filters, Category, Object Styles, ...) | [`graphic-override-precedence.md`](graphic-override-precedence.md) |
+| **Dimensioning by script** — why it fails, the three ways to get a geometry `Reference`, and the one option that makes a duct's centreline reachable | [`dimensioning.md`](dimensioning.md) |
 | Placing tags by script; finding the right tag family; leader elbows/side; tag overlap; view scale and clearances | [`tagging.md`](tagging.md) |
 | Revisions and revision sequences | [`revisions.md`](revisions.md) |
 | Building a parametric family in the Family Editor (geometry, parameters, resize test) | [`families.md`](families.md) |

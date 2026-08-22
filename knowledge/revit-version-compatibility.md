@@ -368,3 +368,58 @@ The fragment status counts in `tools/brain-status.mjs` describe the **pre-migrat
 a fragment marked verified was verified before its source was rewritten. That does not make the counts
 wrong — the method was proven — but it does mean the first live run on each rewritten fragment is worth
 watching rather than assuming.
+
+## Two more breaks, from the add-in's own compat shims (2026-08-22)
+
+Harvested from `RevitCompat`, `TagCompat`, `FilterRuleCompat` and `CeilingGridApiCompat` — four classes
+that each exist because a Revit version removed something. Both of the ones below are **invisible to a
+compile check when the call is made by reflection**, which is exactly how this Brain reaches tag
+properties.
+
+### `IndependentTag` lost its single-reference members in Revit 2023
+
+**Removed:** `LeaderElbow`, `LeaderEnd`, `GetTaggedReference()`, `TaggedLocalElementId`.
+**Replaced by** the per-reference API: `SetLeaderElbow(Reference, XYZ)`, `GetLeaderEnd(Reference)`,
+`GetTaggedReferences()`, `GetTaggedLocalElements()`.
+
+**Proved here, not taken on trust** — a probe fragment referencing all three was compiled against the
+installed assemblies on 2026-08-22: **PASS on 2020, FAIL on 2024 and on 2027**, with
+*"'IndependentTag' does not contain a definition for 'LeaderElbow'"*. (2023 itself is not installed on
+this machine; the shim names 2023 as the boundary and nothing contradicts that.)
+
+**Why this is worse than a normal break: reflection hides it completely.** A fragment that reads
+`GetType().GetProperty("LeaderElbow")` **compiles perfectly on every version** and simply finds nothing
+on 2023+ — so every duct, pipe and equipment tag reports "no writable LeaderElbow" and the run does
+nothing while looking like it worked. It was caught here only because the shim existed to compare
+against. **`RoomTag` and `SpaceTag` were NOT changed** and still carry the plain properties, so a
+general tag fragment needs BOTH routes, chosen at runtime.
+
+Fixed in [`../scripts/actions/sheets-views/action-force-tag-leader-lshape.cs`](../scripts/actions/sheets-views/action-force-tag-leader-lshape.cs)
+and [`../scripts/actions/sheets-views/action-stack-tags.cs`](../scripts/actions/sheets-views/action-stack-tags.cs):
+try the property first, then fall back to `GetTaggedReferences()` + the per-reference method.
+
+### `ParameterFilterRuleFactory` string rules lost `caseSensitive`
+
+`CreateEqualsRule(id, text, caseSensitive)` and its seven siblings (`NotEquals`, `Contains`,
+`NotContains`, `BeginsWith`, `NotBeginsWith`, `EndsWith`, `NotEndsWith`): the three-argument form was
+**deprecated in Revit 2023** — string comparison became case-insensitive only — and **removed outright
+in Revit 2026**.
+
+**This Brain already handles it.** `action-create-view-filter.cs` reflects over the factory and picks
+whichever overload the running Revit actually offers, with the `caseSensitive` input accepted and then
+ignored on 2023+. Nothing to change; recorded so the next person meeting it does not re-derive it.
+
+### The other two shims — nothing owed
+
+- **`RevitCompat`** covers units and `SpecTypeId`/`ParameterType`, both already in this file, plus
+  `GroupTypeId.Data` vs `BuiltInParameterGroup.PG_DATA` — the same 2022 ForgeTypeId migration.
+- **`CeilingGridApiCompat`** wraps `Ceiling.GetCeilingGridLines` (2025.3+), already recorded in
+  [`live-model/ceiling-grid.md`](live-model/ceiling-grid.md) as deliberately not used, because the
+  type-pattern route works on every version.
+
+### The general lesson
+
+**A compile check cannot see a break that is reached by reflection.** Where a fragment reflects on a
+member name to stay version-agnostic, it has bought compilation safety at the cost of silent failure —
+so the member's own version history has to be checked by hand, or a probe compiled against each
+installed Revit as was done here.

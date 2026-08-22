@@ -3387,3 +3387,301 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   it covered. Markdown was swept and declared done while code sat untouched — exactly as the 2026-08-20
   outside-source strip covered docs and missed `scripts/`, and as the verification campaign updated
   `scripts/README.md` and missed nineteen fragment headers.
+- 2026-08-22 — **started harvesting the AJ Tools add-in into the Brain**, one tool at a time, on
+  Ajmal's instruction: read each tool's real source, then give it one of four verdicts — build it,
+  upgrade ours, keep ours and say why, or skip. The ledger is [`docs/addin-harvest.md`](../docs/addin-harvest.md)
+  (in `docs/`, outside the search index, same as the handover) so a fresh session never re-reads a
+  tool already judged. **First result closes a whole branch:** all **77** C# fragments in the
+  add-in's own `.claude/scripts` are already here among the 290 — the two that looked missing
+  (`action-length-by-size`, `action-material-takeoff`) were renamed into `actions/reporting/`, not
+  absent. Checked by basename with the `action-`/`filter-` prefixes stripped, because the Brain
+  reorganised that library into sub-folders. The untouched material is the compiled add-in itself:
+  ~62 ribbon tools over 34 service groups, plus 27 helper/compat classes.
+- 2026-08-22 — **harvested the AJ Tools MEP panel** (first round of the add-in harvest). Three of four
+  tools were real gaps, one was skipped on Ajmal's call. New: [`plumbing-pipe-sizing.md`](plumbing-pipe-sizing.md)
+  — a domain this Brain had nothing on (water supply fixture units -> Hunter's curve -> velocity sizing
+  -> Hazen-Williams, with all four lookup tables) and its fragment
+  [`recipes/size-domestic-water-pipe.cs`](../scripts/recipes/size-domestic-water-pipe.cs);
+  [`live-model/ceiling-grid.md`](live-model/ceiling-grid.md) — reading a ceiling's real tile size off the
+  type's **model** surface pattern (a drafting pattern's Offset is a paper distance and changes with view
+  scale), the exact over-this-ceiling test via `Face.Project` rather than a bounding box, and the
+  tile-CENTRE snap math, with its fragment
+  [`actions/move-copy-rotate/action-snap-to-ceiling-grid.cs`](../scripts/actions/move-copy-rotate/action-snap-to-ceiling-grid.cs);
+  and [`live-model/mep-connect-existing-runs.md`](live-model/mep-connect-existing-runs.md) — closing the
+  gap between two runs that already exist (stretch-don't-create, `canTrim` vs `mayMove`, one
+  sub-transaction per attempt, and the crank sign trap where adding the axial gap instead of subtracting
+  it folds the bridge back over the run it just left). **No fragment for that last one on purpose** —
+  the add-in's builder is ~2,200 lines; the note is what to build from the day a job needs it. HVAC
+  Schematic skipped: unfinished in the add-in. Ledger: [`../docs/addin-harvest.md`](../docs/addin-harvest.md).
+- 2026-08-22 — **`filter-by-wrong-category.cs` could not compile on Revit 2027** and nothing had noticed.
+  It compared categories through `ElementId.IntegerValue`, which is **gone** on 2027 (it survived the
+  2024 64-bit widening, so the 2020 and 2024 passes were both clean and hid it). Now compares `ElementId`
+  to `ElementId`; re-verified passing on 2020 and 2027. Found only because the two new fragments above
+  were compile-checked against **every** installed Revit rather than the oldest — which is now the
+  standing rule for anything harvested: **check the newest, not just the oldest.**
+- 2026-08-22 — **harvested the AJ Tools View panel** (6 tools): 3 KEEP OURS, 3 UPGRADE, 0 build — a
+  well-covered area where half of it genuinely had nothing to teach us. **`action-set-view-crop.cs`
+  had a real, silent defect and it is now fixed**: it merged world-aligned bounding boxes and assigned
+  a Transform-less `BoundingBoxXYZ`, but `CropBox` Min/Max are read in the box's OWN transform — so on
+  any rotated plan, section or elevation the crop landed elsewhere while the fragment reported success.
+  It only looked right on a plain north-up plan, which is what its 2026-07-22 live test used, so the
+  test passed and the defect survived; its header had even recorded the gap as a known simplification.
+  Now projects all eight corners through `CropBox.Transform.Inverse` and writes back keeping the view's
+  own transform and Z. It also gained the four refusal checks — **three of which do not throw**: no
+  crop box, a **scope box** owning the crop, a **view template** controlling it.
+  **`action-highlight-vs-rest.cs`** now pulls insulation and lining along with their host in both
+  directions (`HostElementId` one way, `InsulationLiningBase.GetInsulationIds`/`GetLiningIds` the
+  other) — without it an insulated duct highlights half-grey. Those getters throw for an id that cannot
+  host a wrap, so the per-element catch IS the category filter.
+  **[`graphic-override-precedence.md`](live-model/graphic-override-precedence.md)** gained two sections
+  the Brain had **no mention of anywhere**: filter-versus-filter order inside one view (there is no
+  reorder API — capture overrides and visibility, remove all, re-add, restore, and skipping the capture
+  silently resets every filter), `View.GetFilters()` returning **new `ElementId` wrappers that are not
+  reference-equal**, and a view template blocking every filter change without throwing.
+  Kept unchanged, with the reason recorded: Unhide All, Toggle Links, Colorize.
+  Ledger: [`../docs/addin-harvest.md`](../docs/addin-harvest.md).
+- 2026-08-22 — **harvested the AJ Tools Graphics panel** (3 tools): one BUILD, one UPGRADE, one KEEP.
+  New [`action-match-graphics.cs`](../scripts/actions/color-graphics/action-match-graphics.cs) — copy
+  the graphic overrides off one source element onto a filtered set, per-element or category-to-category.
+  The Brain could set a colour you name and clear a colour, but had no way to **copy the look off
+  something already right**. `action-reset-category-graphics.cs` gained **`allCategories`**: it could
+  only clear categories named by hand, which cannot serve the request it exists for — "I ran grayout
+  over this view, put it back", where `recipes/mep-grayout.cs` alone has written 87 categories and 589
+  sub-categories. Four API facts went into
+  [`graphic-override-precedence.md`](live-model/graphic-override-precedence.md), none of which appeared
+  anywhere in this Brain: **"no override" is a sentinel** (`Color.InvalidColorValue`,
+  `OverrideGraphicSettings.InvalidPenNumber`, `ElementId.InvalidElementId`) and writing `0` as a line
+  weight clears nothing (valid weights are 1-16); **a pattern id and its visible flag are two separate
+  writes**, so setting the id alone leaves the pattern present but undrawn; **`new
+  OverrideGraphicSettings(existing)` is a copy constructor**, and re-setting properties one at a time
+  turns every property you forget into "no override"; and **`view.IsCategoryOverridable(id)`** is the
+  real test, not `CategoryType`. Apply Graphics kept as-is — our small composable fragments beat one
+  dialog. `GraphicsOverrideMemoryService` skipped: it remembers last-used dialog values, the opposite of
+  this Brain's every-number-is-a-per-request-input rule.
+- 2026-08-22 — **harvested the AJ Tools Datums panel** (3 tools, all BUILD — the emptiest area yet).
+  `fragment-index --find datum` answered "Nothing matched", and `DatumExtentType`, `SetCurvesInView`
+  and `DatumPlane` appeared nowhere in the Brain: grids and levels could be listed and created, but
+  their extents could not be touched. New [`live-model/datums.md`](live-model/datums.md) plus three
+  fragments — `action-reset-datum-extents.cs`, `action-set-datum-bubbles.cs` and
+  `recipes/maximize-level-extents.cs`. The subject is the **2D/3D trap**: a datum has one shared
+  **Model** extent and a **per-view 2D override**, the toggle at the grid end picks which you drag, and
+  dragging on 2D makes an override that never follows the model again. Reset = both ends back to
+  `DatumExtentType.Model`, **per end and per view**. Also recorded: a Level is a line only in
+  elevation/section/3D (`GetCurvesInView` returning nothing is the normal answer, not an error); both
+  ends must be set to `Model` **before** writing a Model curve; and a bubble "flip" is not one call —
+  Revit has only Is/Show/Hide per end, so the neither-visible and both-visible cases must be decided
+  explicitly. The section-box recipe carries the same own-transform trap as the view crop box, and
+  builds its new line **along the datum's own direction** by projecting the box corners onto its
+  unbound line — an axis-aligned line is wrong on any rotated building.
+- 2026-08-22 — **check 9 was reporting drift inside `graphify-out/` and asking for generated files to
+  be hand-edited.** Adding three fragments produced 19 such lines, several from a stale 2026-08-13
+  snapshot still quoting 269 fragments and 9 skills. That folder is derived, gitignored and rebuilt
+  wholesale from the sources, so it duplicates every library total quoted in Brain prose and any edit
+  to it is overwritten on the next rebuild. `graphify-out` is now in the checker's `skipDir`; check 9
+  still covers 22 live claims in real source files. Whether the derived layers have gone stale is a
+  genuine question answered by the STALE INDEX banner and `python tools/graph-rebuild.py --check` —
+  not by the consistency checker.
+- 2026-08-22 — **harvested the Modify, Opening and Coordination panels** (9 tools: 5 BUILD, 1 UPGRADE,
+  2 KEEP, 1 SKIP). New [`live-model/mep-openings.md`](live-model/mep-openings.md) and
+  [`recipes/create-mep-openings.cs`](../scripts/recipes/create-mep-openings.cs) — the add-in's largest
+  service (~136 KB) and a subject this Brain had nothing on. Two facts carry the round.
+  **`Document.Create.NewOpening` has three completely different overloads**: a wall takes two opposite
+  corner POINTS, a floor takes a CurveArray profile plus `true`, and a beam takes a profile plus an
+  `eRefFace` **whose correct value is not predictable** — CenterY, CenterZ, CenterX are tried in turn.
+  A crossing is found by a real `BooleanOperationsType.Intersect` with non-zero volume, never by
+  overlapping bounding boxes, and some Revit solids throw on a boolean so each solid PAIR is caught
+  individually. **Re-pointing an element's level MOVES IT unless the offset is compensated** —
+  `newOffset = oldOffset + oldLevel.Elevation - newLevel.Elevation` — and nothing throws, so 400 ducts
+  jump a storey invisibly in plan; there is no single level parameter either (`RBS_START_LEVEL_PARAM`
+  for MEP curves, `FAMILY_LEVEL_PARAM` / `INSTANCE_REFERENCE_LEVEL_PARAM` for family instances). Also
+  new: `action-align-mep-elevation.cs`, which aligns by TOP/BOTTOM/CENTRE using each element's real
+  size — `action-align-elements.cs` aligns insertion points, i.e. centrelines, so it leaves a 600 mm
+  duct and a 100 mm pipe with soffits 250 mm apart; and `create-workset-3d-views.cs`.
+- 2026-08-22 — **a duplicate fragment was written and deleted the same turn, and the cause is worth
+  keeping.** `action-set-pin-state.cs` already existed at `actions/visibility/` and was PROVEN;
+  `fragment-index --find pin` **did report it**, but the output was piped through `head -12` and the
+  negative conclusion drawn from the truncated list. The duplicate was removed and the existing proven
+  fragment upgraded instead — it gained a dry run and a **read-back**, because `Element.Pinned` does not
+  throw when the state will not stick, so the old version counted a failed write as `updated`. Rule:
+  **never draw a "we don't have this" conclusion from a truncated search — grep the full list for the
+  name.**
+- 2026-08-22 — **harvested the Data and Manage panels** (14 buttons, five real jobs: 4 BUILD, 1 UPGRADE,
+  2 KEEP, 1 deliberately DEFERRED). New [`duct-sheet-metal-takeoff.md`](duct-sheet-metal-takeoff.md) and
+  `action-report-duct-weight.cs` — the Duct Standard tool turns out to be a **sheet-metal weight
+  takeoff**, not duct sizing, and the Brain had nothing on it. **Fabrication allowances add +24% over
+  bare sheet (+29% reinforced)**, so quoting bare weight understates a job by a quarter; an oval duct
+  carries width, height AND diameter, so shape must be tested oval-first or every oval is called round
+  and gets the wrong perimeter (Ramanujan's approximation, not `pi x (w+h)/2`). Also new:
+  `action-transfer-views-between-documents.cs`, `action-purge-unplaced-views.cs`, and
+  `action-assign-location-data.cs`; `action-purge-unused.cs` gained a **groups** mode (a `GroupType`
+  with an empty `Groups` set has no placed instances). Two more silent-wrong-answer traps recorded:
+  **a schedule is NOT placed via a Viewport** — sheets hold schedules as `ScheduleSheetInstance`, so a
+  Viewport-only scan reports every schedule in the project as unplaced; and the document-to-document
+  `CopyElements` copies the view **SHELL ONLY**, so a legend or drafting view arrives empty and its
+  contents need a second copy. **Purge unused family parameters was deliberately NOT built** — it needs
+  opening and editing every family document in turn, which is its own job.
+- 2026-08-22 — **first recorded job the fragment harness structurally cannot do.** Resolving a duplicate
+  TYPE name during a cross-document copy needs an `IDuplicateTypeNamesHandler` passed on
+  `CopyPasteOptions`, and that handler **must be a class** — but the bridge wraps every fragment inside a
+  single method body, so `class ... : IDuplicateTypeNamesHandler` will not compile. Proved on the
+  compile checker. `action-transfer-views-between-documents.cs` therefore copies each view in its own
+  try/catch and names any that fail, pointing at Revit's own Transfer Project Standards for those. Worth
+  knowing before someone spends an hour trying to make a handler work in a fragment.
+- 2026-08-22 — **harvested the Family and Dimensions panels** (7 tools: 1 BUILD, 2 KEEP, 3 SKIP, plus a
+  correction to our own work). New [`live-model/dimensioning.md`](live-model/dimensioning.md) and
+  `action-dimension-mep-runs.cs`. **The gap it closes had been written off by this Brain.**
+  `action-add-aligned-dimensions.cs` measured on 2026-08-14 that MEP fittings expose zero of all four
+  `FamilyInstanceReferenceType` values and concluded "this fragment can never dimension them" — the
+  measurement is right, the conclusion was too broad. Ducts, pipes, conduit and trays dimension fine by
+  **walking the geometry** for a `.Reference`, provided **`Options.IncludeNonVisibleObjects = true`**,
+  because a run's CENTRELINE is a non-visible geometry object. That header is corrected. Also recorded:
+  `new Reference(element)` works for a datum but THROWS for a pipe, and in a chained dimension one bad
+  reference takes down every good one sharing the array; only `Linear`/`LinearFixed` dimension types are
+  legal; a Coarse view returns non-null geometry containing only lines, so a null-check never triggers a
+  model-geometry fallback; `PlanarFace.Origin` can sit OUTSIDE its face; `view.CropBox` is stale when the
+  crop is off. **Shared to Family: KEEP OURS** — the add-in solves the `ReplaceParameter` name clash with
+  a temp-name detour, but this Brain has a measured corruption incident for that family of sequence, so
+  `families.md` now records both orderings and why the script-side caution stays stricter.
+- 2026-08-22 — **`fragment-index.mjs` was under-reporting proven fragments by ELEVEN, and the fix had
+  already been made once in the wrong place.** Its status test was the literal `verified 2026`, so a
+  README row reading "verified **live** 2026-08-14" failed to match and the fragment reported as
+  UNPROVEN. `brain-status.mjs` found this same bug on 2026-08-14 and fixed it **in itself** with a looser
+  regex — but `tools/fragment-lib.mjs`, which `fragment-index.mjs` uses, kept the strict one. So the two
+  tools disagreed about the same fact, and the one CLAUDE.md tells every session to search with was the
+  wrong one. Measured 231 -> 242 proven. Fixed in `fragment-lib.mjs`; the `NOT yet live-verified` test
+  still runs first, so explicit not-yet rows are unaffected. **Lesson: when a bug is found in a shared
+  fact, fix the shared library, not the caller you happened to be standing in.**
+- 2026-08-22 — **`ElementId.IntegerValue` was written three times in one day, by the session that wrote
+  the warning about it that morning.** It compiles on 2020 and 2024 and fails only on 2027, so nothing
+  catches it until the newest-Revit pass. Root cause: the rule lived only in
+  [`revit-version-compatibility.md`](revit-version-compatibility.md), which is not the file a fragment
+  author opens. It is now its own section in [`../scripts/README.md`](../scripts/README.md) with a table
+  of what to write instead — print `elem.Id`, compare `ElementId` to `ElementId`, and use the
+  `lib/prelude.cs` reflection helper only when the number itself is genuinely needed.
+- 2026-08-22 — **harvested AJ Annotation's Family and Annotation panels** (4 tools: 3 BUILD, 1 SKIP).
+  **Ajmal caught a miss**: there are TWO Family panels — AJ Tools -> Family (Shared to Family, done
+  earlier) and AJ Annotation -> Family (Center Annotation), which had not been touched. The ledger row
+  was honest about it; the summary was not. New fragments: `action-center-room-tags.cs`,
+  `action-revision-cloud-around-elements.cs`, `action-place-flow-arrows.cs`, plus two sections in
+  [`live-model/tagging.md`](live-model/tagging.md). **The best fact of the round is how to find "the
+  centre of a room"** — four methods in order: the true area-weighted BOUNDARY CENTROID summed across
+  every loop (so a room with a hole works), the bounding-box centre, then **an interior grid point**,
+  because on an L-shaped or U-shaped room **the true centroid falls OUTSIDE the room** and a script
+  without that step silently tags the corridor; then the Location point. Check every candidate with
+  `IsPointInRoom`. A tag on a LINKED room needs `GetTotalTransform()` or it lands at the wrong end of
+  the site, and `TagHeadPosition` must be read back because on a pinned tag the set is a silent no-op.
+  **Flow arrows: the direction is on the CONNECTORS, never the location curve** — a duct's curve runs
+  whichever way it was drawn, so using it points half the drawing backwards with nothing to warn you;
+  arrow runs `In` -> `Out`. Also: activate the FamilySymbol before first placement, and rotate about the
+  VIEW's normal rather than world Z or sections come out wrong.
+- 2026-08-22 — **a limitation was stated instead of faked.** The add-in's Revision Clouds by Elements
+  rasterises element footprints into a grid, extracts connected components, traces each boundary loop
+  and simplifies it, so its cloud follows the real STEPPED shape of what changed. Half-implementing that
+  would produce plausible-looking wrong outlines, so `action-revision-cloud-around-elements.cs` does the
+  honest simpler thing — cluster by proximity, one rectangle per cluster, which gets the main benefit of
+  several clouds following the groups — and its header says plainly what it does not do. The full
+  algorithm is described there for the day it is genuinely wanted.
+- 2026-08-22 — **harvested the Tags panel** (8 tools: 3 BUILD, 3 KEEP OURS, 1 already done, 1 SKIP) —
+  **and the prediction was wrong.** Every earlier round called Tags "the biggest uncovered area"; it was
+  the most-covered one. The reason is on the record: on **2026-07-14 Ajmal pointed this Brain straight
+  at the add-in's own `SmartTagPlacementEngine`** and it was read in full and adapted then, so the crown
+  jewel was harvested six weeks before this harvest began — and `tagging.md` documents it with better
+  measured outcomes than the add-in carries (1092/1092 tags, 546/546 flow-direction match, 3.3%
+  fallback, 0 own-leader clashes). New: `action-force-tag-leader-lshape.cs`, `action-stack-tags.cs`,
+  `action-set-section-mark-visibility.cs`.
+- 2026-08-22 — **TAG CLASSES SHARE NO BASE exposing `LeaderElbow`, `LeaderEnd`, `TagHeadPosition` or
+  `LeaderEndCondition`.** `IndependentTag`, `RoomTag`, `SpaceTag` and `AreaTag` each declare their own,
+  with no common interface. A fragment that casts to `IndependentTag` **silently skips every room and
+  space tag** in the selection — no error, just a smaller number than expected. Both new tag fragments
+  read and write these **by reflection, by name**. Second fact from the same tool: setting `LeaderElbow`
+  often fails until `LeaderEndCondition` is set to **`Free`**, and the ORIGINAL condition must then be
+  restored or every tag ends up detached from its element. Third: a tag stack must be ordered
+  **nearest-element-first**, or the leaders cross and it looks like the tool is broken. Section marks:
+  what you hide is the section's **`Viewer`** element (`OST_Viewers`), never the view, "is it on a
+  sheet" comes from the section view's own `VIEWER_SHEET_NUMBER` parameter, and the pass must **unhide
+  everything first** or a mark hidden on an earlier run never returns once its section IS placed.
+- 2026-08-22 — **`knowledge/live-model/tagging.md` is now 379 lines across 14 sections and is a genuine
+  split candidate**, raised rather than actioned. It has grown past one job — it now covers placement
+  scoring, clash resolution, leader logic, room-tag centring and flow arrows. It was deliberately NOT
+  split at the end of a long session: the rule requires cutting mechanically at the section seams and
+  proving the result lossless against a backup, and a careless split loses content. Recommended as the
+  next maintenance action, with `families.md` (466 lines) the only larger file.
+- 2026-08-22 — **Game Mode was the surprise of the harvest: its collision service found a real defect in
+  five of this Brain's ray-casting fragments.** It raycasts against the model and its own notes say
+  plainly *"architecture usually lives in a linked model"*, so it sets
+  `ReferenceIntersector.FindReferencesInRevitLinks = true`. **None of our five ray fragments did.** On a
+  normal project the ceilings and slabs ARE in a linked architectural model, so "snap the terminals up
+  to the ceiling" would find nothing and report "no hit" — a failure that reads as a broken tool when
+  the model is merely arranged the usual way. Fixed in `action-report-ray-hits.cs` and
+  `action-move-to-ray-hit.cs`, including the part that is easy to get wrong: **a linked hit's
+  `Reference.ElementId` is the `RevitLinkInstance`, not what you hit** — the real element is
+  `Reference.LinkedElementId`, fetched from the link's own document via `GetLinkDocument()`. Resolve it
+  lazily and the report names the RVT file instead of the ceiling. **Three fragments still owe the same
+  fix** (`action-check-surface-fit.cs`, `ray-trace-to-ceiling.cs`, `sprinkler-deflector-height.cs`) —
+  left deliberately, because the linked path is compile-checked and not yet live-proven and deserves one
+  real test against a model with links first; tracked in a table in
+  [`live-model/core.md`](live-model/core.md). Two more ray facts came with it, both live-verified in the
+  add-in on Revit 2020: `ReferenceIntersector` **works on a PERSPECTIVE `View3D`**, same results as
+  orthographic at ~0.1 ms per hitting ray, so there is no need to hunt for an orthographic view; and it
+  only reports what is VISIBLE in that view. **Quick Menu: SKIP** — ribbon UI, and the Brain has no
+  ribbon. **The lesson: the two panels that looked like they had nothing produced one of the session's
+  most material findings. Reading them cost ten minutes.**
+- 2026-08-22 — **harvested the settled values out of the add-in's `*Settings` classes** into
+  [`ajtools-settled-values.md`](ajtools-settled-values.md) — Ajmal's own numbers, decided once on real
+  work and shipped as his tools' defaults. Framed deliberately as **material to ASK with, never to apply
+  silently**: rule 3 of START-HERE still holds that every number is a per-request input, but knowing his
+  number turns "what clearance do you want?" into "your openings tool uses a 25 mm duct buffer and
+  merges within 100 mm — same here?", which he can answer in one word. Covers tagging (300 mm offset,
+  1000 mm minimum run, 12 mm stack spacing, 5 fix passes, **50 mm maximum drift** — a tag that cannot be
+  fixed within 50 mm is reported rather than dragged across the drawing), openings (pipe 20 mm circle,
+  duct and tray 25 mm rectangle, merge at 100 mm, **insulation included**), connecting (90 deg, fallback
+  45/30/60/90, copy insulation and workset), dimensioning (8 mm first row, 6 mm spacing, 150 mm search
+  band, all PAPER mm), view crop (300 mm margin, **datums OFF**), and the duct allowances.
+- 2026-08-22 — **two places where his tools and this Brain's fragments disagree, now visible instead of
+  surprising.** His MEP Openings tool **includes insulation** in the opening size;
+  `recipes/create-mep-openings.cs` measures the bare service. His View Crop **excludes datums**;
+  `actions/visibility/action-set-view-crop.cs` crops to whatever `elements` it is handed, so grids and
+  levels would give a crop the size of the site. Neither is a bug in either place — they are different
+  defaults for the same job. Both are flagged in the values note rather than silently reconciled,
+  because which one is right is Ajmal's call, not ours.
+- 2026-08-22 — **harvested the four version-compat shims, and `TagCompat` caught a defect in fragments
+  written the same day.** **Revit 2023 REMOVED `IndependentTag.LeaderElbow`, `.LeaderEnd`,
+  `.GetTaggedReference()` and `.TaggedLocalElementId`** in favour of a per-reference API
+  (`SetLeaderElbow(Reference, XYZ)`, `GetLeaderEnd(Reference)`, `GetTaggedReferences()`). **Proved, not
+  assumed** — a probe fragment naming all three compiled PASS on 2020 and FAIL on both 2024 and 2027.
+  **The dangerous part is that reflection hides it completely**: `action-force-tag-leader-lshape.cs` and
+  `action-stack-tags.cs`, both written earlier today, read `GetProperty("LeaderElbow")` /
+  `GetProperty("LeaderEnd")` by name — which compiles perfectly on every version and simply finds
+  nothing on 2023+, so every duct tag would report "no writable LeaderElbow" and the run would do
+  nothing while looking like it worked. `RoomTag` and `SpaceTag` were NOT changed and still carry the
+  plain properties, so both routes are needed and chosen at runtime. Both fragments now bridge; all six
+  compile checks pass on 2020/2024/2027. `FilterRuleCompat` (the `caseSensitive` argument, deprecated
+  2023 and removed 2026) was **already handled** by `action-create-view-filter.cs`, which reflects over
+  the factory and picks whichever overload the running Revit offers. `RevitCompat` and
+  `CeilingGridApiCompat` owed nothing new.
+- 2026-08-22 — **general lesson: a compile check cannot see a break that is reached by reflection.**
+  Where a fragment reflects on a member NAME to stay version-agnostic, it has bought compilation safety
+  at the price of silent failure — so that member's own version history has to be checked by hand, or a
+  probe compiled against each installed Revit, as was done here. Recorded at the end of
+  [`revit-version-compatibility.md`](revit-version-compatibility.md).
+- 2026-08-22 — **transaction discipline: KEEP OURS, and this one was measured rather than assumed.** The
+  add-in's `TransactionHelper` guards its rollback with `if (t.HasStarted() && !t.HasEnded())`, which
+  looked at first like a robustness gap in this Brain's 195 unguarded `t.RollBack()` calls. It is not.
+  The guard exists because the add-in starts the transaction **inside** the try, so a failing `Start()`
+  reaches its own catch and `RollBack()` would throw a second exception that masks the real message.
+  **This Brain starts the transaction OUTSIDE the try** — measured that day: **184 fragments outside, 0
+  inside** — so a failing `Start()` propagates straight out with its real reason and the catch never
+  runs. Safe by construction rather than by a check that has to be remembered. Written into the
+  transaction section of [`../scripts/README.md`](../scripts/README.md) so the convention is defended
+  rather than accidental.
+- 2026-08-22 — **selection filters: SKIP as code, BUILD as knowledge.** They are `ISelectionFilter`
+  classes for mouse picking and this Brain has no pick — but `SmartConnectSelectionFilter` writes down
+  the whole answer to *"what counts as a connectable MEP element"*, now in
+  [`live-model/mep-connect-existing-runs.md`](live-model/mep-connect-existing-runs.md): pipe/duct/tray
+  curves always, then conduit, flex duct and flex pipe **separately** (split in v3 because a flex run
+  can never be trimmed longer), air terminals, fittings, accessories — and **Equipment as a CATCH-ALL**
+  for any other connector-bearing family instance. The catch-all is the lesson: naming only the four
+  explicit categories *"would have silently dropped everything else, which used to be pickable"* — a
+  real regression that happened there. **Prefer "connector-bearing family instance" as the test and use
+  the category list only to classify, never to gate**, or sprinklers and plumbing fixtures vanish with
+  no message.
