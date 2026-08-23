@@ -13,6 +13,14 @@
 // native Purge Unused command too for families/patterns — this is a supplement, not a substitute.
 // GOTCHA: Materials mode does a WHOLE-MODEL element scan (every non-type element's GetMaterialIds()) — can
 //         be slow on a large model, same caution as any unbounded scan in this repo.
+//
+// ✱✱ FIXED 2026-08-23 — A MATERIAL USED ONLY AS PAINT WAS BEING REPORTED AS UNUSED. `GetMaterialIds(bool)`
+//    returns TWO DIFFERENT SETS depending on the flag: `false` gives geometry and compound-structure
+//    materials, `true` gives PAINT materials — the ones applied face-by-face with Modify > Paint. This
+//    mode read only the `false` set, so a finish applied purely as paint (a wall face painted a different
+//    colour, a floor with a painted screed) had no user and was offered for deletion. Deleting it strips
+//    the paint off every face it was on. Both sets are now unioned. The same flaw was in
+//    action-report-material-takeoff.cs and is fixed there too.
 // MANDATORY per README's explorer-first rule: run with dryRun = true first, read the actual list of what
 // would be deleted, confirm with the user, THEN set dryRun = false.
 // * UPGRADED 2026-08-22 (harvested from the add-in's Purge Unused Groups): added a "groups" mode.
@@ -94,10 +102,20 @@ else if (mode == "materials")
     var usedMaterialIds = new HashSet<ElementId>();
     foreach (var e in new FilteredElementCollector(Document).WhereElementIsNotElementType())
     {
-        ICollection<ElementId> matIds;
-        try { matIds = e.GetMaterialIds(false); } catch { continue; }
-        if (matIds == null) continue;
-        foreach (var id in matIds) usedMaterialIds.Add(id);
+        // BOTH sets, always. false = geometry + compound structure, true = paint. A material that is
+        // only ever painted onto faces appears in the second set alone; reading one set marks it unused.
+        try
+        {
+            var geomIds = e.GetMaterialIds(false);
+            if (geomIds != null) foreach (var id in geomIds) usedMaterialIds.Add(id);
+        }
+        catch { }
+        try
+        {
+            var paintIds = e.GetMaterialIds(true);
+            if (paintIds != null) foreach (var id in paintIds) usedMaterialIds.Add(id);
+        }
+        catch { }
     }
 
     targets = new FilteredElementCollector(Document).OfClass(typeof(Material))

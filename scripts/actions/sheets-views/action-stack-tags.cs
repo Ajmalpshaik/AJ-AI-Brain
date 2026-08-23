@@ -15,7 +15,24 @@
 //         distance. Every mm clearance constant in tag work depends on the view scale — see the
 //         dedicated section in tagging.md; it is the commonest mistake in this whole subject.
 // GOTCHA: the gap must clear the TAG'S OWN HEIGHT or the stack overlaps itself. If `gapMm` is left at 0
-//         this measures the tallest tag in the view and uses that plus a margin, and says which it used.
+//         this measures the tallest tag in the set and uses that plus a margin, and says which it used.
+//
+// ✱✱ FIXED 2026-08-23 — THE AUTO GAP WAS MEASURING THE LEADER, NOT THE TAG.
+//    `tag.get_BoundingBox(view)` on a tag WITH A LEADER returns the box around the head AND the leader
+//    line, so on a busy plan the "tallest tag" came back as however far the leader stretched — metres,
+//    not millimetres — and the automatic gap blew the stack apart. The head is only the text box when
+//    the tag has no leader.
+//    **So the measurement now uses LEADERLESS TAGS ONLY**, which are the only ones whose box is honest.
+//    If every tag in the set has a leader there is nothing safe to measure, and rather than quietly
+//    using a wrong number the fragment says so and falls back to a stated paper default — or, if
+//    `measureByTemporaryLeaderRemoval` is turned on, takes the measurement properly:
+//        open a transaction group -> set HasLeader = false on every tag -> COMMIT (the geometry only
+//        regenerates on commit) -> measure the now-honest boxes -> ROLL THE GROUP BACK so the leaders
+//        are exactly as they were -> then do the real work.
+//    That temporary-change-then-rollback is a general measuring technique worth knowing: it is the only
+//    way to measure something whose geometry depends on state you do not want to keep. It is OFF by
+//    default because it means a dry run touches the model (and rolls back), which this fragment
+//    otherwise never does.
 // GOTCHA: tag classes DO NOT share a base exposing `TagHeadPosition` — `IndependentTag`, `RoomTag`,
 //         `SpaceTag` and the rest each declare their own. Reflection by name is used so a mixed
 //         selection works; casting to `IndependentTag` would silently skip every room tag.
@@ -35,6 +52,9 @@ double gapMm = 0;                    // PAPER mm between tags; 0 = measure the t
 string direction = "down";           // "down" | "up" — which way the stack grows from the start point
 bool dryRun = true;                  // true = report the moves only; false = actually move
 int? targetViewIdInt = null;         // null = active view
+bool measureByTemporaryLeaderRemoval = false; // only when gapMm = 0 AND every tag has a leader:
+                                     // strip leaders, commit, measure, roll back. Touches the model
+                                     // (and undoes it) even on a dry run — read the header first.
 // ---- END INPUTS ----
 
 const double MM = 304.8;
@@ -70,11 +90,27 @@ Func<Element, XYZ, bool> setHead = (el, v) =>
     catch { return false; }
 };
 
+// HasLeader is declared separately on IndependentTag, SpatialElementTag and friends — no shared base,
+// same reason TagHeadPosition needs reflection. A tag class with no such property is treated as
+// leaderless, which is the safe assumption for measuring.
+Func<Element, bool> hasLeader = el =>
+{
+    try
+    {
+        var p = el.GetType().GetProperty("HasLeader");
+        if (p == null) return false;
+        var v = p.GetValue(el, null);
+        return v is bool && (bool)v;
+    }
+    catch { return false; }
+};
+
 // the tags we can actually move, and where each one's ELEMENT sits (for the ordering)
 XYZ rt = view.RightDirection, up = view.UpDirection, o = view.Origin;
 var items = new List<Tuple<Element, XYZ, double>>();   // tag, current head, sort key
 int noHead = 0, pinnedSkipped = 0;
 double tallest = 0;
+int measuredFrom = 0, leaderedSkippedFromMeasure = 0;
 
 foreach (var el in elements)
 {
@@ -84,17 +120,23 @@ foreach (var el in elements)
     var head = headOf(el);
     if (head == null) { noHead++; continue; }
 
-    // measure this tag's height in the view, for the default gap
-    try
+    // Measure this tag's height for the default gap — but ONLY if it has no leader. A leadered tag's
+    // bounding box encloses the leader line too, so its "height" is the leader's reach, not the head's.
+    if (!hasLeader(el))
     {
-        var bb = el.get_BoundingBox(view);
-        if (bb != null)
+        try
         {
-            double h = Math.Abs((bb.Max - bb.Min).DotProduct(up));
-            if (h > tallest) tallest = h;
+            var bb = el.get_BoundingBox(view);
+            if (bb != null)
+            {
+                double h = Math.Abs((bb.Max - bb.Min).DotProduct(up));
+                if (h > tallest) tallest = h;
+                measuredFrom++;
+            }
         }
+        catch { }
     }
-    catch { }
+    else leaderedSkippedFromMeasure++;
 
     // sort by the TAGGED ELEMENT's position, so leaders fan out instead of crossing
     // Revit 2023 REMOVED IndependentTag.LeaderEnd for GetLeaderEnd(Reference) — proved by compiling a
@@ -136,15 +178,70 @@ if (items.Count == 0)
     return sb.ToString();
 }
 
+// If nothing could be measured honestly (every tag is leadered) and we are allowed to, take the
+// measurement the only correct way: strip the leaders, COMMIT so the geometry regenerates, measure,
+// then roll the whole group back so the leaders are exactly as they were.
+if (gapMm <= 0 && tallest <= 0 && leaderedSkippedFromMeasure > 0 && measureByTemporaryLeaderRemoval)
+{
+    using (var tg = new TransactionGroup(Document, "AJ Tools - Measure tags (temporary)"))
+    {
+        tg.Start();
+        try
+        {
+            using (var tm = new Transaction(Document, "AJ Tools - Strip leaders to measure"))
+            {
+                tm.Start();
+                var fo = tm.GetFailureHandlingOptions();
+                fo.SetForcedModalHandling(false);
+                fo.SetClearAfterRollback(true);
+                tm.SetFailureHandlingOptions(fo);
+
+                foreach (var it in items)
+                {
+                    try
+                    {
+                        var p = it.Item1.GetType().GetProperty("HasLeader");
+                        if (p != null && p.CanWrite) p.SetValue(it.Item1, false, null);
+                    }
+                    catch { }
+                }
+                tm.Commit();   // the box is only honest AFTER the commit regenerates the tag
+            }
+
+            foreach (var it in items)
+            {
+                try
+                {
+                    var bb = it.Item1.get_BoundingBox(view);
+                    if (bb != null)
+                    {
+                        double h = Math.Abs((bb.Max - bb.Min).DotProduct(up));
+                        if (h > tallest) tallest = h;
+                        measuredFrom++;
+                    }
+                }
+                catch { }
+            }
+        }
+        catch (Exception exM) { sb.AppendLine("(temporary measurement failed: " + exM.Message + ")"); }
+        finally { if (tg.HasStarted()) tg.RollBack(); }   // ALWAYS put the leaders back
+    }
+}
+
 // gap: PAPER mm -> model, or the tallest tag plus a margin
 double gapFt;
 string gapSource;
 if (gapMm > 0) { gapFt = (gapMm * scale) / MM; gapSource = gapMm + " mm paper at 1:" + scale; }
+else if (tallest > 0)
+{
+    gapFt = tallest * 1.25;
+    gapSource = "measured tallest of " + measuredFrom + " leaderless tag(s), " + Math.Round(tallest * MM) + " mm model + 25%";
+}
 else
 {
-    gapFt = tallest > 0 ? tallest * 1.25 : (4.0 * scale) / MM;
-    gapSource = tallest > 0
-        ? "measured tallest tag " + Math.Round(tallest * MM) + " mm model + 25%"
+    gapFt = (4.0 * scale) / MM;
+    gapSource = leaderedSkippedFromMeasure > 0
+        ? "fallback 4 mm paper at 1:" + scale + " — ALL " + leaderedSkippedFromMeasure + " tag(s) have leaders, so none could be measured honestly (a leadered tag's bounding box includes its leader). Set gapMm yourself, or turn on measureByTemporaryLeaderRemoval"
         : "fallback 4 mm paper at 1:" + scale;
 }
 

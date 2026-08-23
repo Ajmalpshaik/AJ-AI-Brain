@@ -135,7 +135,7 @@ else
         foreach (var pair in targets)
         {
             Wall wall = pair.Item1; XYZ roomCtr = pair.Item2;
-            string name = "Wall " + wall.Id.IntegerValue;
+            string name = "Wall " + wall.Id;  // not .IntegerValue - removed in Revit 2027
 
             var lc = wall.Location as LocationCurve;
             var runLine = lc != null ? lc.Curve as Line : null;

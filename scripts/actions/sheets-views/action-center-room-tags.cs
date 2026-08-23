@@ -31,6 +31,15 @@
 // GOTCHA: "already centred" is a SUCCESS and is counted separately, so "0 moved" on a tidy drawing
 //         reads as "nothing to do" rather than "it failed".
 // NOTE: this only moves the HEAD. Revit draws the leader automatically; it does not need setting.
+// ⚠ THAT NOTE IS PROVEN ONLY FOR TAGS WITHOUT A LEADER (flagged 2026-08-23). The live verification below
+//   ran on three centred room tags, and a room tag sitting on its own room normally has no leader — so
+//   the leadered case was never exercised. A room tag's leader END is a settable point
+//   (`SpatialElementTag.LeaderEnd`), and moving the head can drag it: other implementations of this job
+//   deliberately read that end BEFORE the move and write it back after. If a leadered tag comes out with
+//   its arrow in the wrong place, that is the reason and the fix is to capture/restore `LeaderEnd`
+//   around the `TagHeadPosition` write. Left as a flagged unknown rather than a speculative change to a
+//   proven fragment — see ../../../knowledge/live-model/tagging.md § Moving a tag moves its leader end.
+//   The direction of travel here helps: this moves tags INTO their room, where a leader is least likely.
 // ✓ LIVE-VERIFIED 2026-08-22 on `school.rvt`, Revit 2020.2.9, via run_fragment composed with
 //   filter-by-category (OST_RoomTags). Dry run predicted moves of 1761 / 3035 / 1877 mm on three tags;
 //   the real run moved exactly those three; a second dry run then reported "would move 0 | already

@@ -3924,3 +3924,517 @@ and **2** entries for 2026-08-22 when that day already held 49. Re-derive, don't
   `lastIndex` between calls**, so `re.test(s)` then `s.replace(re, …)` skips every other match. Together
   they made it report success while changing 4 claims instead of 17. It preserves a UTF-8 BOM
   byte-for-byte, which matters because `tools/verify-fragments-compile.ps1` is one of the files it edits.
+
+### 2026-08-23
+
+- **Harvested a pyRevit extension Ajmal supplied — 69 tools, all judged; 8 new fragments, 1 knowledge
+  note, 1 corrected verdict, and 2 fragments here that could not compile at all.** Ledger with every
+  tool's verdict: [`docs/pyrevit-harvest.md`](../docs/pyrevit-harvest.md). Method and four-way verdict
+  as in the add-in harvest. Source not named anywhere, per the standing rule.
+
+  **Python was not kept, and the reason is structural rather than taste.** The bridge runs C# only —
+  `run_csharp` takes a C# string and nothing else, `run_fragment` compiles `.cs`, and there is no
+  Python path in `mcp-server/`. Worse than unrunnable: `tools/check-scripts.cmd` has nothing to
+  compile, so any Python fragment would be the single part of the library with no version safety net —
+  failing exactly the way Ajmal named as his problem, mid-job on a newer Revit. And
+  `fragment-lib.mjs:25` only collects `.cs`, so it would be invisible to search and to every count.
+  Converting costs almost nothing: pyRevit calls the same Revit API, so only the syntax changes.
+
+  **The harvest was again worth more for what it found HERE than for what it copied.**
+
+  - **`action-maximize-datum-extents.cs` had never compiled on ANY Revit** — 2020, 2024 or 2027. It
+    reads `d.Curve` off a `DatumPlane`, which has no such property on any version; only `Grid` does.
+    It carries a detailed `✓ LIVE-VERIFIED 2026-08-22` note with real measured before/after numbers,
+    and that note is almost certainly honest — it was proved while the list was typed as `Grid`, then
+    widened to `DatumPlane` to accept Levels, and the reporting helpers were never re-checked. **A
+    verified fragment can be broken by a later edit in the same session and keep its verified badge.**
+    Only the length/span *reporting* needed the cast; `Maximize3DExtents()` — the actual work — is on
+    `DatumPlane` and was always fine. This is the argument for running the compile check after an edit,
+    not only after a version change.
+  - **`ElementId.IntegerValue` is REMOVED in Revit 2027.** Six of the eight new fragments used it and
+    failed their first compile check on 2027 alone. `ElementId.ToString()` prints the same number on
+    every version from 2020 up and needs no reflection — that is the fix for a label; the
+    `_idValueProp` helper in `prelude.cs` stays the answer where a real number is needed.
+    `action-dimension-wall-openings.cs` had the same break and could not compile on 2027 either.
+  - **`Definition.ParameterType` is removed after Revit 2023** (`GetDataType()` replaced it), and
+    **a try/catch does not save you — it is a COMPILE error, not a runtime one.** Both names are now
+    reached by reflection in `action-replace-material.cs`, the same technique the floor/ceiling
+    creators use for `Floor.Create`/`Ceiling.Create`.
+  - **A fragment cannot implement `IFailuresPreprocessor`** — the documented answer to "swallow the
+    warning dialog during bulk creation". The bridge wraps every fragment in one method, so no callback
+    interface can be declared. **This is the SECOND instance of that limit** (the first was
+    `IDuplicateTypeNamesHandler`, 2026-08-22), which is what promotes it from a footnote to a general
+    rule with its own note: *any technique whose answer is "implement this interface" is out of a
+    fragment's reach.* `FailureHandlingOptions.SetForcedModalHandling(false)` is settings rather than
+    an interface and covers most of the need —
+    [`live-model/failure-handling-without-a-class.md`](live-model/failure-handling-without-a-class.md).
+
+  **UPGRADE — `create-ceiling.cs` was talking the Brain out of a job it can do.** It was a stub reading
+  *"CONFIRMED IMPOSSIBLE on Revit 2020 — `Ceiling.Create` only exists from Revit 2022"*. The API fact
+  is correct and unchanged. The **verdict** was wrong: written against 2020, then stated with no version
+  qualifier, so it read as "ceilings cannot be made, full stop". **This PC runs Revit 2020, 2024 AND
+  2027**, and on 2024/2027 ceiling creation works normally. Now creates the ceiling where the method
+  exists (reached by name, so one source still covers 2020–2027) and reports the limitation only where
+  it genuinely applies. **The rule this earns: an "impossible" recorded against one version must SAY
+  which version, or it silently becomes a lie the day another Revit is installed.**
+
+  **Built (8):** `action-create-from-room-boundaries.cs` (rooms → floors/ceilings/regions/lines —
+  the loop list is outer edge + HOLES, and `create-floor.cs` explicitly does not do openings),
+  `create-section-at-element.cs` (a section aimed at each element — `create-view.cs`'s section mode
+  is a typed axis-aligned box and cannot look at anything on an angle),
+  `action-align-viewports-across-sheets.cs`, `action-place-views-on-new-sheets.cs`,
+  `action-change-wall-constraints.cs` (re-host without the wall moving — set the level alone and the
+  offset stays, so every wall jumps silently), `action-disallow-join.cs` (a pinned element accepts the
+  call and changes nothing), `action-copy-view-filters.cs` (`AddFilter` applies EMPTY overrides, so a
+  naive copy leaves views carrying the filters and looking unchanged), `action-replace-material.cs`
+  (three hiding places, and `<By Category>` is `InvalidElementId`, not null).
+
+  **Kept ours, with the reason recorded** for warnings, purge, rotate, match-overrides, find/replace,
+  duplicate-sheets, revisions, unhide, renumber, workset views, transfer-templates and the eleven
+  selection buttons — all in the ledger. Two of theirs were better in one detail each and both are
+  written down there rather than silently dropped: re-assigning views after overwriting a same-named
+  view template, and unioning arbitrary 2D outlines by extruding them to solids and taking the top
+  faces back. Neither is built — the first would build on an unproven fragment, the second has never
+  been asked for.
+
+  **State: all 13 consistency checks pass; all 323 scripts compile on Revit 2020, 2024 and 2027.**
+  None of the 8 new fragments has been run against a real model. Every one is dry-run by default and
+  says so in its own header.
+
+- **Second harvest the same day: the pyRevit platform's own 203-tool library. 3 new fragments — and one
+  finding that corrected a note written six hours earlier.** Ledger:
+  [`docs/pyrevit-platform-harvest.md`](../docs/pyrevit-platform-harvest.md).
+
+  **Scope, stated honestly, because the ask was "check each and everything word by word".** All 203 tools
+  were surveyed mechanically — name, size, every Revit API call made, every BuiltInCategory touched — so
+  nothing was judged by its button label. They were not all read line by line, and that was a decision
+  rather than an omission: a large share are WPF windows (3232 lines, 2246, 2041, 1700) whose bulk is
+  XAML wiring and printer plumbing, none of which crosses to a bridge with no UI. Read in full: every
+  tool whose API surface suggested a gap, plus the shared library. Also **explicitly out of scope**: the
+  `dev/` folder is that platform's own C# engine and loader, and START-HERE.md already rules out working
+  on the add-in that provides a bridge.
+
+  **The finding that mattered was not a tool.** `pyrevitlib/pyrevit/revit/db/failure.py` is a mature
+  general-purpose failure swallower, and reading it **corrected the note written this morning**
+  ([`live-model/failure-handling-without-a-class.md`](live-model/failure-handling-without-a-class.md)).
+  That note recorded that a fragment cannot implement `IFailuresPreprocessor` and framed it as a harness
+  limitation. Half right. A blanket swallower is dangerous in ANY harness: with no resolution available
+  it dismisses the warning, but otherwise it asks Revit for `GetDefaultResolutionType()` and applies it —
+  and the resolution set includes `DeleteElements`, `DetachElements` and `UnlockConstraints`. Handlers
+  keep an ordered list described as "least destructive to most", **but the default is checked FIRST and
+  used if it matches, wherever it sits in that list.** So for any failure whose Revit default is
+  `DeleteElements`, "just swallow the warnings" deletes model elements silently inside a transaction
+  that then commits. The honest framing is not "the harness stops us doing the right thing" — what is
+  nearly always wanted is narrower, and `SetForcedModalHandling(false)` plus a per-item try/catch gives
+  exactly that without handing Revit permission to resolve by deleting. Note updated.
+
+  **Built (3):**
+  - `filter-by-openings.cs` — **openings are not one category and not one class.** They are spread across
+    `OST_ShaftOpening`, `OST_FloorOpening`, `OST_SWallRectOpening`, `OST_RoofOpening` AND a separate
+    `Opening` class, so any single query reports clean while the shafts are still there. Plus holes cut
+    by a family (cast-in sleeve, void component), which are in none of those categories.
+    `create-mep-openings.cs` could make them; nothing could find what already exists.
+  - `action-report-constraints.cs` — the third answer to "why won't this move", next to pinned and
+    grouped. `OST_Constraints` appeared nowhere in the library. A constraint is not a property of the
+    element; it is a separate element holding References back to it, so the only way to find one is to
+    walk every constraint in the model. Also records that **deleting a locked dimension deletes the
+    dimension off the drawing** — `unlockOnly` is the mode that matches what "unlock it" usually means.
+  - `action-find-overlapping-lines.cs` — lines drawn on top of each other. `action-find-duplicates.cs`
+    cannot do this because **two lines can overlap without being duplicates.** The technique is the
+    value: key each line by the INFINITE LINE it sits on (normalised direction + perpendicular offset
+    from origin), then overlap is 1-D interval arithmetic. **Normalising the direction is the step that
+    decides whether it works at all** — a line drawn right-to-left has the opposite vector and never
+    matches its twin without it, which is why a naive overlap check "finds nothing".
+
+  **Recorded, deliberately not built** — so nobody re-finds them and nobody builds an unproven fragment
+  for a job nobody has: colour-by-parameter-VALUE with a generated legend (a real addition to
+  `action-color-by-group.cs`), remapping line styles *inside sketches* (`action-set-line-style.cs` does
+  not reach those), imported CAD to `DirectShape`/`FreeFormElement` (`DirectShape.CreateElement` appears
+  nowhere here), family parameter export/import, and non-rectangular view crop from a drawn shape.
+
+  **All 326 fragments compile on 2020, 2024 and 2027 — first pass, no failures.** Yesterday's two
+  version traps (`ElementId.IntegerValue` gone in 2027, `Definition.ParameterType` gone after 2023) did
+  not recur, which is the point of writing them down. None of the 3 has been run against a real model;
+  each is report-or-dry-run by default.
+
+- **Ajmal pushed back on the harvest above — "each and everyting hard chek" — and he was right. The full
+  read found three things the survey structurally could not, including a defect in a fragment written
+  four hours earlier.** Ledger updated: [`docs/pyrevit-platform-harvest.md`](../docs/pyrevit-platform-harvest.md).
+
+  The first pass surveyed all 203 tools mechanically — every API call, every category. Good verdicts, and
+  it produced three sound fragments. But **a survey can only see what a tool CALLS, never what it KNOWS**,
+  and the gap between those two is exactly where the value sits. The second pass read all 22,149 lines of
+  real code in size bands (140 tools under 60 lines, 40 between 60 and 200, 23 over 200).
+
+  **What only the full read could find:**
+
+  1. **`action-place-views-on-new-sheets.cs` — written by me four hours earlier — had a rule that was a
+     guess dressed as a fact.** It treated LEGENDS as the only view type that can appear on more than one
+     sheet, and would have wrongly skipped placeable views. The real list is **Legend, Schedule,
+     DraftingView, ColumnSchedule, PanelSchedule, CostReport, LoadsReport**; everything else is one sheet
+     only. Fixed. Recording it as a pattern, not a typo: a fragment written confidently from one source
+     carried an invented rule, and **only reading a second implementation caught it.**
+  2. **`action-change-element-type.cs` was quietly losing data.** It called `ChangeTypeId` and nothing
+     else. **A type change drops every instance parameter the new type does not also carry** — Mark,
+     Comments, a shared parameter only the old family had — silently, with the element still looking
+     right. On a batch of 200 nobody notices for weeks. Now captures every writable instance parameter
+     before the swap and writes it back after, matched by NAME (the Id changes with the type), never
+     restoring the six identity parameters since those ARE the change. **This is invisible to an API
+     survey, because the entire finding is about a call that was never made.**
+  3. **`action-report-geometry-complexity.cs` (new)** — which families are making the model slow, as
+     triangle count per type at each detail level. Nothing here measured geometry weight at all. The
+     actionable part is the comparison: 40 triangles Coarse against 40,000 Fine is a family behaving; the
+     same big number at all three levels means no detail-level control and full price in every working
+     view. Multiplied by instance count, because 400 instances of a 12,000-triangle family is 4.8 million
+     triangles from one library choice.
+
+  **Ten small traps recorded** in the ledger rather than built into anything — each one a wasted round
+  trip if met cold. The two worth repeating here: **flipping a wall about its centreline MOVES it** unless
+  you set the location line to Core Centerline first and restore it after; and **a revision reaches a
+  sheet through two separate lists** (`GetAllRevisionIds` + `GetAdditionalRevisionIds`), so reading one
+  misses revisions — checked, and this Brain already does the union correctly, which is why it is recorded
+  as verified rather than as a fix.
+
+  **All 327 fragments compile on Revit 2020, 2024 and 2027.** None of the new work has been run against a
+  real model; every fragment is report-or-dry-run by default.
+
+  **The transferable lesson, and the reason this entry is long:** the survey was not wrong, it was
+  *incomplete in a way that looked complete*. It produced confident verdicts on 203 tools and missed a bug
+  in our own code. **An API surface tells you what a tool does and never what it had to learn.** When the
+  question is "what does this know that we don't", there is no substitute for reading it.
+
+- **Round 3 on the same repo — the "deliberately not built" list was built, because the reasoning behind
+  it was a misapplied rule.** Ajmal: *"is that ll you take??"*
+
+  **The rule I misapplied:** "wait for evidence before adding" is written in START-HERE.md about
+  **indexing external documents** — where the measured cost is real (the 604-chunk standards case, a 20%
+  index increase with no way to measure the damage). **A fragment is nothing like a document chunk.** It
+  is additive, compile-checked, invisible until someone searches for it, and costs nothing to carry.
+  Applying a retrieval-pollution rule to code left five real capabilities unbuilt for no benefit. Worth
+  recording because the same wrong move is available every time this Brain grows.
+
+  **Built (5):** `action-create-view-filters-by-value.cs` (one PERSISTENT filter per distinct parameter
+  value — `action-color-by-group.cs` writes per-element overrides, which live in one view and give an
+  element drawn tomorrow nothing; one is for investigating, the other for setting a standard),
+  `action-remap-line-styles.cs` (**lines inside SKETCHES are why the old style will not purge** — owned
+  by a Sketch, never selectable in a view), `action-report-views-showing-element.cs` (**there is no
+  "which views show this" API** — visibility is crop + view range + filters + categories + phase +
+  discipline resolved together, so a collector scoped to each view is the only truthful answer),
+  `action-set-view-crop-to-shape.cs` (non-rectangular crop; `CropBox` is a box and can only be a
+  rectangle however well rotated), `action-convert-cad-to-directshape.cs` (**an ImportInstance is ONE
+  element holding all the geometry** — the bodies are one level down via `GetInstanceGeometry()`, and
+  `IncludeNonVisibleObjects` must be true or you convert a fraction and never notice).
+
+  **Three still not built, and those reasons hold:** batch PAT import (a file-format problem, not a Revit
+  one), family parameter export/import (needs a file format decided first — a conversation, not a
+  fragment), and transfer-view-templates-with-reassignment, which belongs on a fragment that **has never
+  been run against a real model.** Building on unproven ground is the one case where waiting is correct.
+
+  **All 332 fragments compile on Revit 2020, 2024 and 2027 — first pass.** None of the five has been run
+  against a real model; every one is dry-run by default.
+
+- **Closed the balance: the first extension's remaining 48 tools read in full — and it found three defects
+  in fragments written the same day.** Ajmal: *"is there anyting balance ??"* There was. Ledger updated:
+  [`docs/pyrevit-harvest.md`](../docs/pyrevit-harvest.md).
+
+  All 5,702 lines of that extension are now read (69 of 69 tools; about 21 had been read in the first
+  pass). **Every one of the three defects is the class an API survey structurally cannot see, because each
+  is about a call that was NOT made:**
+
+  1. **`action-remap-line-styles.cs` missed filled-region borders entirely.** A FilledRegion's border
+     style is **not** a `CurveElement` and is **not** reached through `LineStyle` — it lives on the region
+     via `SetLineStyleId()`, and accepts only what `GetValidLineStyleIdsForFilledRegion()` returns. The
+     fragment walked CurveElements alone, so it would have reported "nothing left to move" while every
+     region border still held the old style and the style still refused to purge. **That is precisely the
+     false-clean the fragment was written to prevent, reproduced by the fragment itself.**
+  2. **`action-replace-material.cs` had no guard for elements inside a GROUP.** An instance parameter on a
+     grouped element only varies per instance when flagged "Varies across groups"
+     (`Definition.VariesAcrossGroups`); otherwise the write either refuses or **changes every instance of
+     that group across the model**, silently. Also added the Curtain Wall / Sloped Glazing / Basic Ceiling
+     exclusion — those report a CompoundStructure that is not a real layer stack.
+  3. **`action-change-element-type.cs` had the same group trap** on the parameter-restore pass added
+     hours earlier. Worse there: the restore exists to PREVENT data loss, and unguarded it could have
+     propagated one element's values across every instance of its group.
+
+  **The pattern is the finding.** All three were written confidently, all three compiled clean on 2020,
+  2024 and 2027, and all three were wrong in a way no compile check can reach. The library already says
+  *"compiling is a floor, not a ceiling"* — this is what that sentence looks like when it bites.
+
+  **Recorded, not built:** renaming a sheet number does not refresh the Project Browser (force it by
+  hiding/re-showing the dockable pane); `FilledRegion.GetBoundaries()` returns `IList<CurveLoop>` usable
+  directly in `Ceiling.Create` with none of the loop assembly a Room needs; matching wall constraints FROM
+  a picked wall is a real variant of `action-change-wall-constraints.cs`; attached detail groups are
+  hidden per view and need `ShowAttachedDetailGroups`; and duplicating a sheet properly means copying
+  eleven separate things, because `ViewSheet.Create` copies none of them.
+
+  **Both source repos are now fully read — 272 tools, 27,851 lines. Nothing outstanding on either.**
+
+- 2026-08-23 — **third harvest of the day, and the first one where the source could not run.** Ajmal
+  supplied a repository that is not a tool library at all: a Revit add-in that retrieves API
+  documentation for a plain-English question, has an LLM write IronPython, runs it inside a transaction
+  it opened itself, and retries up to five times on error. Kept scripts land in a folder labelled
+  successful. Full ledger, with every verdict: [`docs/rag-addin-harvest.md`](../docs/rag-addin-harvest.md).
+
+  **What "successful" turned out to mean, and why it matters here.** The add-in calls a script successful
+  when IronPython returns without throwing — it never checks what the script did. Three proofs, and the
+  third is the one worth keeping: **twenty-six of the 584 kept scripts call Revit API members that do not
+  exist on any Revit on this PC.** `ParameterFilterElement.IsNameUnique` (13 files),
+  `View.IsFilterApplicable` (5), `View.CanApplyFilter` (5), `View.CanApplyFilterOverrides` (3),
+  `RevitLinkGraphicsSettings.SetHalftone` / `.SetTransparent` / `.SetCategoryOverrides`,
+  `RevitLinkGraphicsType`, `ParameterFilterUtilities.IsParameterApplicableToCategory` — checked against
+  the shipped `RevitAPI.dll` by reflection on 2020 and 2024 and by compiling on 2027. Six more of the 584
+  contain no executable code at all, just a comment saying the task is impossible; a comment executes
+  without error, so it counted as a success.
+
+  **Every one of those names is plausible.** `IsNameUnique` is what the method *should* be called.
+  Reading the code does not catch it, running it costs a round trip through Revit, and compiling it costs
+  a minute. This is the strongest evidence this Brain has for `tools\check-scripts.cmd` existing — and
+  the first harvest where the compile gate caught a defect in the *source* rather than in our own new
+  work. It also cost two compile rounds of our own: the link fragment was first written against the
+  API the source claimed, and had to be rebuilt against the API that is actually there.
+
+  **Method addition worth reusing: a completeness proof, not just a read.** Survey then full read as
+  before, but then every API token in all 584 files (1,049 distinct) was set-differenced against every
+  `.cs` in `scripts/`. **400 tokens appear nowhere in this Brain**, and that list — not a judgement — is
+  what the six builds were chosen from. It is also how the invented-API finding surfaced: several of the
+  400 were absent from Revit too.
+
+  **BUILT — 6 fragments, all compiling on 2020/2024/2027, none yet run on a real model:**
+  [`action-set-link-overrides.cs`](../scripts/actions/color-graphics/action-set-link-overrides.cs),
+  [`action-report-curtain-elements.cs`](../scripts/actions/reporting/action-report-curtain-elements.cs),
+  [`action-audit-view-filters.cs`](../scripts/actions/qa-checks/action-audit-view-filters.cs),
+  [`action-report-tags-and-targets.cs`](../scripts/actions/reporting/action-report-tags-and-targets.cs),
+  [`action-set-view-underlay.cs`](../scripts/actions/visibility/action-set-view-underlay.cs),
+  [`action-report-areas.cs`](../scripts/actions/reporting/action-report-areas.cs).
+
+  **The one that matters most is a hole in his own standard.** `recipes/mep-grayout.cs` is his measured
+  grayout, and neither it nor the skill mentions a link — the word appears in neither file. Category
+  overrides do not reach inside a Revit link, so on the normal coordination setup, where the architecture
+  arrives as a link, the recipe greys nothing and reports success. Nothing errors, because nothing is
+  wrong: the host has no walls to grey. The recipe now carries that warning and points at the new
+  fragment. **Curtain walls were the other total blank** — `CurtainGrid`, `Mullion` and `Panel` were in
+  no fragment at all — and `OST_Areas` in none either.
+
+  **UPGRADED — 2, both replacing a hand-written rule with Revit's own answer.**
+  `action-place-views-on-new-sheets.cs` decided "can this view repeat on sheets" from a list of seven
+  view types that had already been corrected once, earlier the same day; `View.GetPlacementOnSheetStatus()`
+  answers it directly from 2022, and is now used first with the list kept as the 2020/2021 fallback.
+  `action-set-view-crop-to-shape.cs` called a loop "valid" on its own geometry checks and found out
+  whether Revit agreed by trying to write it; `IsCropRegionShapeValid` exists on every Revit here and the
+  dry run now asks it.
+
+  **Checked, not assumed, and left alone:** ~~paint materials are already handled correctly in
+  `action-report-material-takeoff.cs`~~ — **WRONG, corrected the same day, see the library harvest entry
+  below.** That fragment read only `GetMaterialIds(false)` and excluded paint entirely; the sibling
+  `action-purge-unused.cs` had the same blind spot and could offer a paint-only material for deletion.
+  Recorded rather than quietly edited, because the phrase "checked, not assumed" was itself the
+  assumption; per-view datum extents are already handled; and the room lookup in
+  `action-assign-location-data.cs` is better than `doc.GetRoomAtPoint` for our purpose because it probes
+  at the room's own mid-height, so a ceiling-mounted element still resolves.
+
+  **Recorded, deliberately not built — query expansion.** Their retrieval does not search the user's
+  words: an LLM first rewrites the question into about five technical Revit-API queries, all five are
+  searched, results merged by best distance per document. That is a direct answer to the one weakness
+  `CLAUDE.md` records about our own search — site vocabulary the files don't use — and we already have
+  the site-word → Revit-word map in `knowledge/glossary.md` to expand from. It belongs to
+  `semantic-index/`, whose whole discipline is that changes are measured against the 28-row set in
+  `semantic-index/score-history.md`. Adding it without a before-and-after would be exactly the unmeasured
+  change that file exists to prevent. **Next improvement to that layer; needs its own session with the
+  eval in front of it.**
+
+  **And a note on the indexing question.** Their knowledge base is the entire Revit 2025 API
+  documentation — precisely what `START-HERE.md` rules out. A system with the whole API indexed still
+  produced twenty-six scripts calling members that do not exist. That does not prove the indexing caused
+  it, and the entry should not claim it does — the generator matters more. It is evidence against the
+  assumption that indexing the reference is what makes the difference.
+
+- **Harvested a set of Revit developer LIBRARIES — 12 repositories, ~139,000 lines of C# — and the read
+  found five defects in our own code, two of them silent data loss.** Ledger:
+  [`docs/revit-libraries-harvest.md`](../docs/revit-libraries-harvest.md). Third harvest of the day and
+  the first whose target was libraries rather than tools, which changed the method: **a library has no
+  button label to be misled by, so the mechanical pass became an API-surface diff** — extract every
+  `*Utils` / `*Filter` / `*Manager` class the harvest touches, check each against our 347 fragments, and
+  let the gaps set the build list. Worth repeating on the next library-shaped harvest.
+
+  **The two silent ones, both from the same API fact.** `Element.GetMaterialIds(bool)` returns two
+  DIFFERENT sets: `false` is geometry and compound structure, `true` is PAINT — applied face by face with
+  Modify > Paint. `action-purge-unused.cs` materials mode read only the first, so **a finish that exists
+  purely as paint had no user and was offered for deletion**; removing it strips the paint off every face
+  it was on. `action-report-material-takeoff.cs` had the same blind spot and reported painted finishes as
+  zero. Both fixed, and with the nuance that decides whether the fix is right: **paint has area but never
+  volume** — there is no paint overload of `GetMaterialVolume` — so a paint-only material now shows an
+  area against a blank volume, and the table sorts by area so painted finishes are not buried at the
+  bottom. The area call must be given the same flag as the id call, which a quick fix would have missed.
+  **The earlier entry today that said this was "checked, not assumed, and left alone" was wrong**, and is
+  struck through above rather than deleted — the phrase was itself the assumption.
+
+  **The loud one.** `action-report-clashes.cs` wrapped `ElementIntersectsElementFilter` in
+  `catch { continue; }` and still reported "checked N elements". A coordination report that quietly
+  under-reports is worse than one that fails, because nobody goes back to it. Revit answers in advance —
+  `ElementIntersectsFilter.IsElementSupported()` / `.IsCategorySupported()` — so both sets are pre-checked
+  and anything untestable is now listed by Id under UNTESTED, with "tested" separated from "in the set".
+  `filter-by-element-intersection.cs` had the same gap in the throwing direction and was fixed with it.
+
+  **A ceiling that was not there.** `load-family.cs` recorded that overwriting an existing family "needs
+  an `IFamilyLoadOptions` implementation" — which read as out of reach, since a fragment cannot declare a
+  class. True of a class WE would write; not true here, because **`UIDocument.GetRevitUIFamilyLoadOptions()`
+  returns Revit's own implementation**, the one behind File > Load Family. It asks the question in Revit's
+  own dialog, so the reload path is available AND nothing is silently overwritten — better than either the
+  old "cannot" or a handler of ours. The general rule now sits in
+  [`failure-handling-without-a-class.md`](live-model/failure-handling-without-a-class.md): **before
+  recording a technique as impossible because it needs an interface, check whether Revit already ships an
+  implementation.** `IFailuresPreprocessor` and `IDuplicateTypeNamesHandler` genuinely have none; this one
+  did, and it sat in a header as a fact.
+
+  **And one thing we were not asking.** `model-health-audit.cs` never ran Revit's own rule engine —
+  `PerformanceAdviser.ExecuteAllRules`, behind Manage > Performance Adviser. Added as section 9, with
+  section 10 listing the add-in UPDATERS registered in the session: other people's code that runs whenever
+  matching elements change, and the honest answer to "why did that value change by itself".
+
+  **BUILT — 9 fragments**, each filling a gap the API diff exposed: element dependencies before a delete
+  (`GetDependentElements` + `CanDeleteElement`), air-terminal-to-duct connection (`ConnectAirTerminalOnDuct`
+  — the step every terminal layout here was missing, so layouts ended as loose components), open pipe ends
+  (`HasOpenConnector` / `PlaceCapOnOpenEnds`), all external file references (not just RVT links), add-in
+  Extensible Storage data, batch family-library upgrade to a newer Revit, global parameters, view
+  references on section marks, and assembly shop-drawing sets. Plus a sixth upgrade: `filter-by-phase.cs`
+  could only ask about Phase CREATED, and a phase plan is drawn from `GetPhaseStatus` — a wall created in
+  Phase 1 is *Existing* viewed in Phase 3, so "give me the existing services" was unanswerable.
+
+  **Two API facts the compile check taught us, which reading could not.** `GlobalParameter.GetLabels()`
+  does not exist — the real member is `GetLabeledDimensions()`, on 2020 through 2027. And **`DataStorage`
+  is inaccessible to a fragment**: a normal-looking public type whose name is a compile error
+  ("inaccessible due to its protection level"), so it is recognised by `GetType().Name`. Settling "what is
+  this member actually called" by grepping the member-name strings straight out of `RevitAPI.dll` was
+  faster than any other route and is worth remembering.
+
+  **New knowledge:** [`live-model/query-cost.md`](live-model/query-cost.md) — what a collector actually
+  costs (view-scoped ~6x faster, existence check ~80x cheaper than a count, ids cheaper than elements,
+  `UnionWith` ~2.6x the multi-argument filter), stated with the honesty that the ratios come from a small
+  seeded model so the direction transfers and the microseconds do not. And
+  [`revit-version-compatibility.md`](revit-version-compatibility.md) gained the MECHANISM behind a rule it
+  already stated: the runtime resolves a method's types when the method is ENTERED, so
+  `if (version >= 2023) { NewApi(); }` throws before the `if` is evaluated — the guard is inside the thing
+  it guards. Library code escapes with a separate non-inlined method; a fragment has no methods, so
+  reflection is the only route. Also: a major version number is no longer enough, because the API changed
+  within Revit 2026.
+
+  **One deliberate refusal, recorded so nobody re-derives it as a good idea.** The harvest contained a
+  working technique for reading vendor-LOCKED Extensible Storage: resolve an undocumented exported symbol
+  in one of Revit's own DLLs and overwrite the access-check function pointer with zero. Ingenious, and not
+  going in this Brain — it defeats another vendor's decision about their own data, depends on a mangled
+  C++ symbol that changes without notice, and patches live process memory in a session holding Ajmal's
+  open model. `action-report-addin-data.cs` asks `ReadAccessGranted()`, reports the refusal, and stops.
+
+  All 13 consistency checks pass and all 347 fragments compile on Revit 2020, 2024 and 2027. **None of
+  the 9 new fragments or the 6 upgrades has been run against a real model** — every one is report-only or
+  dry-run by default and says so in its own header.
+
+- **Harvested a tag alignment add-in (9 files, 1,849 lines) — and it caught a live defect in
+  `action-stack-tags.cs`.** Addendum in
+  [`docs/revit-libraries-harvest.md`](../docs/revit-libraries-harvest.md). Small repo, four findings,
+  three of them about our own code — which is now five harvests in a row where that was the better half.
+
+  **THE DEFECT: a tag's bounding box includes its LEADER.** `action-stack-tags.cs` derived its automatic
+  row gap from `el.get_BoundingBox(view)` and its header called that "the tallest tag in the view". It is
+  not: on a leadered tag that box encloses the head AND the leader line, so on a congested plan the
+  "tag height" is however far the leader reaches — metres. The stack would have been spaced by somebody's
+  leader length. The fragment had never been run, so this was waiting to appear as "why are my tags three
+  metres apart" the first time he used it. Now measures **leaderless tags only**, and when every tag in
+  the set has a leader it says so and uses a stated paper default instead of a wrong measured one.
+
+  **The proper measurement, kept as an opt-in and written into
+  [`tagging.md`](live-model/tagging.md): measure-then-roll-back.** Open a TransactionGroup, strip the
+  leaders, **COMMIT** — the box only regenerates on commit, so measuring inside the open transaction
+  returns the old geometry — take the measurements, then roll the group back so the leaders are exactly
+  as they were. Same family as the create-then-roll-back fixture trick in
+  `action-report-sheet-title-blocks.cs`, but for measuring rather than for fixtures, and it is the general
+  answer to "how do I measure something whose geometry depends on state I do not want to keep".
+
+  **A guessed version boundary, contradicted and corrected honestly.**
+  [`revit-version-compatibility.md`](revit-version-compatibility.md) said `IndependentTag` lost its
+  single-reference members in **2023**, with the caveat "2023 is not installed on this machine; the shim
+  names it and nothing contradicts that". Two independent sources now do: the harvested add-in's
+  conditional compilation splits at **2022**, and this Brain's own `action-report-tags-and-targets.cs`
+  independently records the change "from 2022". It still cannot be PROVED here (2021–2023 are not
+  installed), so the note now says probably-2022, names both sources, and keeps what is proved — present
+  on 2020, gone by 2024. Nothing in code depends on it; every fragment reaches those members by name.
+  **The point of the entry is the shape: the year was the guessed part, and a contradicted guess should
+  say so rather than quietly becoming a different confident number.**
+
+  **A proven fragment with an unproven line in it, flagged not rewritten.**
+  `action-center-room-tags.cs` says "this only moves the HEAD, Revit draws the leader automatically". Its
+  live verification ran on three CENTRED room tags — and a room tag over its own room has no leader, so
+  the leadered case was never exercised. A `SpatialElementTag`'s leader end is settable and the harvested
+  code deliberately captures and restores it around the move. Recorded in the header as a named unknown
+  with the fix written out. **Rewriting the move path of a proven, frequently-run fragment on somebody
+  else's evidence is how a working tool gets broken.**
+
+  **BUILT — [`action-arrange-tags-to-view-edges.cs`](../scripts/actions/sheets-views/action-arrange-tags-to-view-edges.cs):**
+  park every tag in a column down the left and right crop edges, leaders fanned so they do not cross. The
+  opposite job to `tag-elements-in-active-view.cs` (which places tags NEAR their elements and is better at
+  that than anything harvested) — this is for views where nothing can sit near its element without
+  covering something. Three things it had to learn: **the crop box is the coordinate system** (left and up
+  on the paper are not model X and Y on a rotated view — everything goes through
+  `CropBox.Transform.Inverse` and back), **the crop must be ON and that is a refusal not a default**, and
+  **uncrossing is a swap** between the two tags holding each other's slot, two passes, with the remainder
+  reported honestly rather than claimed as zero. Also: a room/space/area tag parked outside its own room
+  is GIVEN a leader, because Revit does not add one and it would otherwise read as naming whatever it
+  landed on.
+
+  Compile-checked on Revit 2020, 2024 and 2027. **Neither the new fragment nor the stack-tags fix has been
+  run against a real model**; both are dry-run by default.
+
+- 2026-08-23 — **fourth repository of the day, and the smallest: 8 teaching samples, 37 C# files, 2,155
+  lines, read in full.** Ledger with every verdict:
+  [`docs/book-samples-harvest.md`](../docs/book-samples-harvest.md).
+
+  **Two things the mechanical survey settled before any reading.** Two of the nine folders hold
+  byte-identical code — one just adds a ribbon — so it is 8 samples, not 9. And the ratio gave the
+  harvest away: `MessageBox.Show` 20, `FolderBrowserDialog` 7, WPF binding throughout, against a real
+  Revit API list short enough to write out. Most of a teaching sample is the window, which is why SKIP
+  is the biggest column.
+
+  **BUILT — 3, all compiling on 2020/2024/2027, none run on a real model yet.**
+  [`action-export-families.cs`](../scripts/actions/sheets-views/action-export-families.cs) —
+  **`Document.EditFamily` appeared in no fragment here**, so "get me that family out of this model" had
+  no answer at all, which is the exact reverse of `creators/load-family.cs`. It works for the same
+  reason the folder upgrade does: `EditFamily` returns a document with no UI window, and the bridge's
+  save restriction is about the UI document only. Three kinds of family will not come out and **none is
+  an error** — system, in-place, and unopenable — so they are named as skipped rather than counted as
+  failures. Name clashes are real and silent (two families can share a name; the second would overwrite
+  the first), so the second is numbered.
+  [`action-export-3d-to-fbx.cs`](../scripts/actions/sheets-views/action-export-3d-to-fbx.cs) — the
+  library exported to IFC, NWC, PDF, DWG, images and CSV and had no FBX. **The export call is one line;
+  the value is the view state**, because FBX carries exactly what the view draws — a live section box
+  ships a sliced building, a hidden category ships a missing trade, Coarse ships ducts as sticks.
+  [`create-grid-series.cs`](../scripts/creators/create-grid-series.cs) — a bay grid from spacings rather
+  than from endpoint pairs. **Spacings are gaps, not positions**: four spacings make five grids.
+
+  **UPGRADED — `action-batch-upgrade-revit-files.cs`, written by the other session about an hour
+  earlier.** It saved without nominating a preview view, so an upgraded copy can come out with a blank
+  thumbnail — and **for a family library browsed by thumbnail in Revit's own dialog, that is most of how
+  anyone finds anything.** Now: keep whatever the file already nominated, else the first 3D view Revit
+  will accept, else the first plan, gated by `IsViewIdValidForPreview` (handing `SaveAs` a view that
+  cannot be a preview makes it throw). Plus `Compact = true`, which is free during an upgrade because
+  the file is being rewritten anyway.
+
+  **KEEP OURS, and one of them is worth restating.** Their family loader hand-writes an
+  `IFamilyLoadOptions` class — which a fragment cannot do. Ours does not need to:
+  `UIDocument.GetRevitUIFamilyLoadOptions()` returns **Revit's own implementation**, so Revit asks in its
+  own dialog and nothing is overwritten silently. That was found earlier the same day and is already in
+  `creators/load-family.cs`; this harvest is the second confirmation that **before recording a technique
+  as impossible for needing an interface, check whether Revit already ships one.**
+
+  **A defect in their code, recorded because the idea underneath is sound:** a sample called
+  RoomNumbering sets `room.Name`, not `room.Number` — it writes the name and leaves the number alone.
+  The pattern is still worth having: derive a level ordinal by regex on the level NAME, then number as
+  `level*100 + index`, sign flipped for basements so B1 runs -100, -101.
+
+  **Two ledgers were written in this repo at the same time by two sessions** — this one and
+  `docs/revit-libraries-harvest.md`. The overlap changed a verdict: the batch upgrader was going to be a
+  BUILD until their fragment appeared, and became an UPGRADE instead. **Worth knowing that concurrent
+  sessions in one repo are survivable but change what you should build** — check what is on disk now,
+  not what was there when the survey started.
+
+  **State: all 13 consistency checks pass, and the full library compiled clean on Revit 2020, 2024 and
+  2027 in this session.**

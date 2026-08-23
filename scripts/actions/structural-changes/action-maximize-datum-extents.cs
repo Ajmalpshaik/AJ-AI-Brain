@@ -58,13 +58,21 @@ const double MM_PER_FT = 304.8;
 var datums = elements.OfType<DatumPlane>().Where(d => d is Grid || d is Level).ToList();
 int ignored = elements.Count - datums.Count;
 
+// DatumPlane itself has NO Curve property on any Revit version - only Grid does, and a Level is a
+// horizontal plane with no curve at all. Reading curveOf(d) off a DatumPlane is a COMPILE error, which is
+// why this fragment could not build on 2020, 2024 or 2027 until 2026-08-23 despite its verified note
+// (the note is real: it was proved while this list was typed as Grid, then widened to DatumPlane to
+// take Levels, and the reporting helpers below were never re-checked). Maximize3DExtents - the actual
+// work - IS on DatumPlane and is untouched; only the length/span REPORTING needed the cast.
+Func<DatumPlane, Curve> curveOf = d => (d as Grid)?.Curve;
+
 Func<DatumPlane, double> lengthMm = d =>
-{ try { return d.Curve != null && d.Curve.IsBound ? d.Curve.Length * MM_PER_FT : double.NaN; } catch { return double.NaN; } };
+{ try { return curveOf(d) != null && curveOf(d).IsBound ? curveOf(d).Length * MM_PER_FT : double.NaN; } catch { return double.NaN; } };
 Func<DatumPlane, string> spanMm = d =>
 {
     try
     {
-        var c = d.Curve; if (c == null || !c.IsBound) return "(unbounded)";
+        var c = curveOf(d); if (c == null || !c.IsBound) return "(unbounded)";
         var a = c.GetEndPoint(0); var b = c.GetEndPoint(1);
         bool alongX = Math.Abs(b.X - a.X) > Math.Abs(b.Y - a.Y);
         return alongX
@@ -112,11 +120,11 @@ if (!dryRun && datums.Count > 1)
 {
     sb.AppendLine();
     sb.AppendLine("ALIGNMENT CHECK — every datum of one direction should now share both ends:");
-    foreach (var grp in datums.Where(d => { try { return d.Curve != null && d.Curve.IsBound; } catch { return false; } })
-        .GroupBy(d => { var a = d.Curve.GetEndPoint(0); var b = d.Curve.GetEndPoint(1);
+    foreach (var grp in datums.Where(d => { try { return curveOf(d) != null && curveOf(d).IsBound; } catch { return false; } })
+        .GroupBy(d => { var a = curveOf(d).GetEndPoint(0); var b = curveOf(d).GetEndPoint(1);
                         return Math.Abs(b.X - a.X) > Math.Abs(b.Y - a.Y); }))
     {
-        var ends = grp.Select(d => { var a = d.Curve.GetEndPoint(0); var b = d.Curve.GetEndPoint(1);
+        var ends = grp.Select(d => { var a = curveOf(d).GetEndPoint(0); var b = curveOf(d).GetEndPoint(1);
             return grp.Key ? new[] { Math.Min(a.X, b.X) * MM_PER_FT, Math.Max(a.X, b.X) * MM_PER_FT }
                            : new[] { Math.Min(a.Y, b.Y) * MM_PER_FT, Math.Max(a.Y, b.Y) * MM_PER_FT }; }).ToList();
         double sLo = ends.Max(e => e[0]) - ends.Min(e => e[0]);

@@ -58,10 +58,11 @@ else
 
         foreach (var el in elements)
         {
-            string label = $"{el.Category?.Name ?? "element"} {el.Id.IntegerValue}";
+            string label = $"{el.Category?.Name ?? "element"} {el.Id}";
             bool isWall = el is Wall;
+            // Compared as ElementId, not as an int: ElementId.IntegerValue was REMOVED in Revit 2027.
             bool isFraming = el.Category != null
-                && el.Category.Id.IntegerValue == (int)BuiltInCategory.OST_StructuralFraming;
+                && el.Category.Id == new ElementId(BuiltInCategory.OST_StructuralFraming);
 
             if (!isWall && !isFraming)
             {

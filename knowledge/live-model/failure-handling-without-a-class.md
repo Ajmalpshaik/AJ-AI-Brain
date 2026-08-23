@@ -48,8 +48,34 @@ using (var t = new Transaction(Document, "..."))
 - `SetClearAfterRollback(true)` matters when the work is in a loop: without it a rolled-back attempt can
   leave its warning attached to the document.
 
-This does **not** give per-warning control — you cannot say "swallow overlap but stop on anything else".
-For that, three things remain, in order of preference:
+## Before wishing for the preprocessor: a generic "swallow everything" handler can DELETE elements
+
+Added 2026-08-23, from reading a mature platform's own failure handler. This is the part that makes the
+harness limit less painful than it first looks.
+
+A general-purpose swallower cannot decide what a failure *means*, so it defers to Revit:
+
+- `failure.HasResolutions()` is false and the severity is Warning → the handler just dismisses it
+  (`DeleteWarning`). Harmless.
+- Otherwise it asks Revit for `GetDefaultResolutionType()` and applies that. **Revit's default wins**,
+  and the available resolutions include `DeleteElements`, `DetachElements` and `UnlockConstraints`.
+
+Writers of these handlers keep an ordered list — MoveElements, CreateElements, DetachElements,
+FixElements, UnlockConstraints, SkipElements, DeleteElements, QuitEditMode, SetValue, SaveDocument —
+described as "least destructive to most". **That ordering is not the safety net it appears to be**,
+because the default is checked FIRST and used if it matches, whatever its position in the list. So for
+any failure whose Revit default is `DeleteElements`, a "just swallow the warnings" handler deletes
+model elements, silently, inside a transaction that then commits.
+
+**So the honest framing is not "the harness stops us doing the right thing".** A blanket swallower is a
+loaded gun in any harness. What is actually wanted is nearly always narrower — *ignore this one known
+warning during this one bulk operation* — and that is what `SetForcedModalHandling(false)` plus a
+per-item try/catch gives you, without ever handing Revit permission to resolve by deleting.
+
+## Per-warning control
+
+`FailureHandlingOptions` does **not** give per-warning control — you cannot say "swallow overlap but
+stop on anything else". For that, three things remain, in order of preference:
 
 1. **Avoid the warning.** Usually possible and always better. A floor per room overlaps because rooms
    share a wall centreline; building on the room's finish face instead of its centre boundary removes
@@ -59,6 +85,39 @@ For that, three things remain, in order of preference:
    [`action-create-from-room-boundaries.cs`](../../scripts/actions/structural-changes/action-create-from-room-boundaries.cs).
 3. **Do it in the Revit UI**, where a person can answer. Say so plainly rather than shipping a script
    that half-works.
+
+## Before recording anything as impossible: check whether Revit already ships the implementation
+
+Added 2026-08-23, and it changes the scope of this whole note. The limit here is real but narrower than
+it was written: **a fragment cannot DECLARE a class, so it cannot write its own implementation of an
+interface. It can still USE one that already exists.** And for some of these interfaces, Autodesk ships
+one.
+
+The proven case is family loading. `Document.LoadFamily(path, IFamilyLoadOptions, out family)` needs an
+`IFamilyLoadOptions`, which looked out of reach, so [`load-family.cs`](../../scripts/creators/load-family.cs)
+recorded that overwriting an existing family "needs an IFamilyLoadOptions implementation" and stopped
+there. But:
+
+```csharp
+UIDocument.GetRevitUIFamilyLoadOptions()   // static — returns Revit's OWN implementation
+```
+
+That is the handler behind File > Load Family. Handing it to `LoadFamily` makes Revit ask the question
+in its own dialog, so the reload path is available from a fragment *and* nobody's content gets silently
+overwritten — a better outcome than either "impossible" or a handler we wrote ourselves. It is reached
+by reflection in that fragment so one source still compiles on every Revit here.
+
+**So the rule is a two-step, not a verdict:**
+
+1. Does Revit ship an implementation of this interface? Look for a `Get…Options()` / `Get…Handler()`
+   static, usually on `UIDocument` or `UIApplication`. If yes, the technique is available.
+2. Only if there is none is it genuinely out of reach — and then say which interface, so the next
+   session does not re-derive it.
+
+The two recorded as out of reach still are: `IFailuresPreprocessor` (Revit ships no general
+implementation, and per the section above a blanket one is dangerous anyway) and
+`IDuplicateTypeNamesHandler`. `ISelectionFilter` belongs in the same family — but it is moot here,
+because a bridge fragment never picks interactively.
 
 ## How to recognise this class of problem
 

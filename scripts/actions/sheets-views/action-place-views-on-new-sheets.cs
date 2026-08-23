@@ -6,12 +6,19 @@
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist — Views, e.g. from
 //          filter-by-views.cs.
 //
-// ✱✱ A VIEW CAN ONLY BE ON ONE SHEET, EVER. Revit does not warn you politely — Viewport.Create throws,
-//    and if that happens after the sheet is made you are left with an empty sheet that then has to be
-//    hunted down and deleted. So this CHECKS FIRST: the view's Sheet Number parameter reads "---" when
-//    the view is not placed anywhere. Already-placed views are listed with the sheet they are on and
-//    skipped BEFORE any sheet is created. (Legends are the exception — the same legend can go on many
-//    sheets — so they are never skipped for this reason.)
+// ✱✱ MOST VIEWS CAN ONLY BE ON ONE SHEET, EVER. Revit does not warn you politely — Viewport.Create
+//    throws, and if that happens after the sheet is made you are left with an empty sheet that then has
+//    to be hunted down and deleted. So this CHECKS FIRST: the view's Sheet Number parameter reads "---"
+//    when the view is not placed anywhere. Already-placed views are listed with the sheet they are on
+//    and skipped BEFORE any sheet is created.
+//
+//    ✱ CORRECTED 2026-08-23, same day it was written. The first version treated LEGENDS as the only
+//      view type that may repeat across sheets. That is wrong and would have wrongly skipped views that
+//      are perfectly placeable. The full list of view types that CAN go on more than one sheet is:
+//          Legend · Schedule · DraftingView · ColumnSchedule · PanelSchedule · CostReport · LoadsReport
+//      Everything else — plans, sections, elevations, 3D, callouts — is one-sheet-only. Note this also
+//      means SCHEDULES are repeatable, which is separate from the fact that they are placed with
+//      ScheduleSheetInstance rather than Viewport (see the gotcha below).
 //
 // ✱✱ A DUPLICATE SHEET NUMBER ALSO THROWS. The series is checked against the numbers already in the
 //    model before anything is created, and a clash stops the run with the list, rather than creating
@@ -41,6 +48,11 @@ bool dryRun = true;                // true = report only, create nothing
 var views = elements.OfType<View>().Where(v => !v.IsTemplate && !(v is ViewSheet)).ToList();
 int created = 0, skippedPlaced = 0, skippedSchedule = 0, failed = 0;
 var notes = new List<string>();
+
+// Revit's own answer to "is this view free to place on a sheet", from 2022 onward. Absent on 2020/2021,
+// so it is looked up by name once — naming it in code would stop this fragment compiling there, and a
+// try/catch does NOT help because that is a compile error, not a runtime one.
+var _mPlacementStatus = typeof(View).GetMethod("GetPlacementOnSheetStatus", Type.EmptyTypes);
 
 var titleBlocks = new FilteredElementCollector(Document)
     .OfCategory(BuiltInCategory.OST_TitleBlocks).WhereElementIsElementType()
@@ -81,8 +93,47 @@ else
             continue;
         }
 
-        // The one check that has to happen before any sheet exists.
-        if (v.ViewType != ViewType.Legend)
+        // The one check that has to happen before any sheet exists — but only for the view types that
+        // genuinely cannot repeat. See the corrected list in the header.
+        //
+        // 2026-08-23: Revit answers this itself, from 2022 onward, with `View.GetPlacementOnSheetStatus()`
+        // — no sheet needed, no list to maintain. It is used FIRST where it exists and the hand-written
+        // list below is the fallback for Revit 2020/2021, which do not have it. Reached by reflection
+        // because naming a method that is absent is a COMPILE error and a try/catch does not help.
+        // (Confirmed against the shipped RevitAPI.dll: absent on 2020, present on 2024.)
+        // The list stayed wrong once already — it is a rule written by hand where Revit has a fact.
+        bool askedRevit = false;
+        if (_mPlacementStatus != null)
+        {
+            try
+            {
+                var status = _mPlacementStatus.Invoke(v, null);
+                string s = status != null ? status.ToString() : "";
+                askedRevit = true;
+                // "NotPlaced" is the only status that means "free to place on a new sheet". Anything
+                // else — already on a sheet, or not placeable at all — is a skip, and the status name
+                // is reported so the reason is Revit's own words rather than an inference.
+                if (!string.Equals(s, "NotPlaced", StringComparison.OrdinalIgnoreCase))
+                {
+                    skippedPlaced++;
+                    notes.Add($"  '{v.Name}': Revit reports placement status {s} — not free to place on a new sheet.");
+                    continue;
+                }
+            }
+            catch { askedRevit = false; }
+        }
+
+        bool mayRepeat = v.ViewType == ViewType.Legend
+                      || v.ViewType == ViewType.Schedule
+                      || v.ViewType == ViewType.DraftingView
+                      || v.ViewType == ViewType.ColumnSchedule
+                      || v.ViewType == ViewType.PanelSchedule
+                      || v.ViewType == ViewType.CostReport
+                      || v.ViewType == ViewType.LoadsReport;
+
+        // Only reached when Revit could not be asked (2020/2021). Where it could, the status above is
+        // authoritative and this list is not consulted at all.
+        if (!askedRevit && !mayRepeat)
         {
             var p = v.get_Parameter(BuiltInParameter.VIEWER_SHEET_NUMBER);
             var on = p?.AsString();

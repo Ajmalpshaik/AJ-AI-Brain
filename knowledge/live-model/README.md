@@ -28,6 +28,8 @@ feet↔mm conversion every script needs.
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |
 | Turning a color STYLE word ("pastel", "neon", "muted") into real RGB; guaranteeing distinct colors across several groups | [`color-vocabulary.md`](color-vocabulary.md) |
 | A color/override change isn't showing — which graphic mechanism beats which (Linework, per-element, Filters, Category, Object Styles, ...) | [`graphic-override-precedence.md`](graphic-override-precedence.md) |
+| A bulk change raises Revit warnings, or a script "succeeds" and the model is unchanged — and why the usual `IFailuresPreprocessor` answer cannot be written in a fragment at all | [`failure-handling-without-a-class.md`](failure-handling-without-a-class.md) |
+| **A query is slow, or I am about to write a new one** — what a `FilteredElementCollector` actually costs, and the four choices that change it (view-scoped is ~6x faster, an existence check ~80x cheaper than a count, ids cheaper than elements, `UnionWith` the expensive way to say "or") | [`query-cost.md`](query-cost.md) |
 | **Dimensioning by script** — why it fails, the three ways to get a geometry `Reference`, and the one option that makes a duct's centreline reachable | [`dimensioning.md`](dimensioning.md) |
 | Placing tags by script; finding the right tag family; leader elbows/side; tag overlap; view scale and clearances | [`tagging.md`](tagging.md) |
 | Revisions and revision sequences | [`revisions.md`](revisions.md) |

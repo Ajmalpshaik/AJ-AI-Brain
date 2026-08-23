@@ -73,7 +73,7 @@ else
 
         foreach (var wall in walls)
         {
-            string label = $"Wall {wall.Id.IntegerValue}";
+            string label = $"Wall {wall.Id}";
 
             // Worksharing: someone else's wall cannot be touched.
             try

@@ -31,6 +31,13 @@
 //   * Sub-categories hold only line colour and line weight — never fill, never transparency.
 //   Measured in full: ../../knowledge/live-model/graphic-override-precedence.md
 //
+// ✱✱ THIS ONLY GREYS THE HOST DOCUMENT. Category overrides do not reach inside a Revit LINK, so on the
+//    normal coordination setup — architecture and structure arriving as links — this recipe greys
+//    nothing, reports success, and the view looks untouched. Nothing errors, because nothing is wrong:
+//    the host simply has no walls to grey. Run
+//    ../actions/color-graphics/action-set-link-overrides.cs alongside it for the linked half. Noted
+//    2026-08-23; the recipe itself is unchanged and still correct for host geometry.
+//
 // SCOPE: one view, per view. Nothing here is project-wide — the project Line Weights table is NOT
 //        touched (and is not reachable from the API anyway). To reuse the result across many views,
 //        apply this to one view and then save that view as a View Template by hand.

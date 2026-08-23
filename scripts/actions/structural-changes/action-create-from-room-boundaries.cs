@@ -130,7 +130,7 @@ else
                     if (maxCreate > 0 && madeElements.Count >= maxCreate) break;
 
                     var spatial = el as SpatialElement;
-                    string roomName = spatial == null ? $"Id {el.Id.IntegerValue}" : $"{spatial.Name}";
+                    string roomName = spatial == null ? $"Id {el.Id}" : $"{spatial.Name}";
 
                     // An unenclosed room reports zero area and gives no usable boundary.
                     var areaParam = el.get_Parameter(BuiltInParameter.ROOM_AREA);
@@ -228,7 +228,7 @@ else
                         }
 
                         madeElements.Add(made);
-                        sb.AppendLine($"  '{roomName}' -> {createWhat} Id {made.Id.IntegerValue}"
+                        sb.AppendLine($"  '{roomName}' -> {createWhat} Id {made.Id}"
                             + (curveLoops.Count > 1 ? $" ({curveLoops.Count - 1} hole(s) cut)" : ""));
                     }
                     catch (Exception ex)

@@ -6,10 +6,24 @@
 // PRODUCES: elements (List<Element>, every FamilySymbol/type of each newly loaded family — the things
 //          placement fragments consume), sb
 // NOT STANDALONE — see scripts/README.md for how to compose.
-// GOTCHA: if a family with the same name is ALREADY in the project, LoadFamily returns false — reported,
-//         not overwritten. Overwriting an existing family's parameter values on purpose needs an
-//         IFamilyLoadOptions implementation, deliberately NOT done here (silent overwrites are how office
-//         content gets corrupted; rename or remove the old family first, on explicit request).
+// GOTCHA: if a family with the same name is ALREADY in the project, the plain LoadFamily returns false —
+//         reported, not overwritten. Silent overwrites are how office content gets corrupted, so that
+//         stays the default.
+//
+// ✱✱ REVIT SHIPS ITS OWN IFamilyLoadOptions, AND THAT CHANGES WHAT IS POSSIBLE HERE (found 2026-08-23).
+//    The header used to say overwriting "needs an IFamilyLoadOptions implementation", which read as
+//    out of reach — a fragment body cannot declare a class, so it cannot implement an interface. That
+//    is true of a class WE would have to write. It is not true here, because
+//        UIDocument.GetRevitUIFamilyLoadOptions()
+//    returns Revit's own implementation — the one File > Load Family uses. Handing it to LoadFamily
+//    makes Revit ASK, in its own dialog, exactly as if Ajmal had loaded the family by hand. So the
+//    reload path is available without ever overwriting anything silently: set reloadExisting = true and
+//    Revit puts the question to him.
+//    THE GENERAL LESSON, and it is bigger than this fragment: before recording a technique as
+//    impossible because it needs an interface, CHECK WHETHER REVIT ALREADY SHIPS AN IMPLEMENTATION.
+//    See ../../knowledge/live-model/failure-handling-without-a-class.md.
+//    ⚠ reloadExisting SHOWS A MODAL DIALOG. Ajmal must be at the machine to answer it — do not use it in
+//      an unattended batch, and never assume it went through: read the count back afterwards.
 // GOTCHA: a freshly loaded FamilySymbol is NOT active until first placed — placement code must call
 //         .Activate() + Regenerate before NewFamilyInstance (create-point-based-element.cs handles this).
 // LIVE-VERIFIED 2026-08-14 — loaded M_Electrical Panel.rfa (3 types) and M_Outlet-Duplex.rfa (1 type)
@@ -28,6 +42,8 @@
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string[] rfaPaths = new[] { @"C:\Temp\families\MyFamily.rfa" }; // full paths to .rfa files
+bool reloadExisting = false; // true = use Revit's OWN load dialog for families already in the project.
+                             // SHOWS A MODAL PROMPT — Ajmal has to be at the screen to answer it.
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
@@ -49,7 +65,31 @@ using (var t = new Transaction(Document, "AJ Tools - Load Families"))
             }
             Family fam = null;
             bool ok = false;
-            try { ok = Document.LoadFamily(path, out fam); }
+            try
+            {
+                if (reloadExisting)
+                {
+                    // Revit's own handler — the same prompt as File > Load Family. Reached by reflection
+                    // so this fragment still COMPILES on a Revit that predates the method; a try/catch
+                    // around a direct call would not help, because a missing member is a COMPILE error.
+                    var opts = typeof(UIDocument).GetMethod("GetRevitUIFamilyLoadOptions",
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (opts != null)
+                    {
+                        var handler = (IFamilyLoadOptions)opts.Invoke(null, null);
+                        ok = Document.LoadFamily(path, handler, out fam);
+                    }
+                    else
+                    {
+                        sb.AppendLine("(reloadExisting asked for, but this Revit has no GetRevitUIFamilyLoadOptions — falling back to plain load)");
+                        ok = Document.LoadFamily(path, out fam);
+                    }
+                }
+                else
+                {
+                    ok = Document.LoadFamily(path, out fam);
+                }
+            }
             catch (Exception exOne) { sb.AppendLine($"FAILED '{path}': {exOne.Message}"); }
 
             if (ok && fam != null)

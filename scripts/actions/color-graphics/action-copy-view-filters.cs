@@ -108,7 +108,7 @@ else
                     int appliedHere = 0;
                     foreach (var fid in toCopy)
                     {
-                        var fname = Document.GetElement(fid)?.Name ?? fid.IntegerValue.ToString();
+                        var fname = Document.GetElement(fid)?.Name ?? fid.ToString();
                         if (dryRun) { appliedHere++; continue; }
 
                         try

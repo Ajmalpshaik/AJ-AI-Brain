@@ -20,8 +20,17 @@
 //    same type are ONE type: change it via either and both change. That is Revit working correctly, but
 //    it surprises people, so this counts and reports TYPES touched separately from elements in.
 //
+// ⚠⚠ AN ELEMENT INSIDE A GROUP IS A TRAP, added 2026-08-23. An instance parameter on a grouped element
+//    can only vary per instance if the parameter is flagged "Varies across groups"
+//    (`Definition.VariesAcrossGroups`). If it is NOT, then either the set is refused, or — worse — it
+//    takes and changes EVERY instance of that group across the whole model. Neither outcome announces
+//    itself. Grouped elements are therefore skipped for instance parameters unless the parameter really
+//    does vary across groups, and the count is reported so the skip is visible rather than silent.
+//    Compound-structure layers are unaffected: they live on the TYPE, which a group does not own.
 // GOTCHA: A MATERIAL LOCKED BY A FAMILY FORMULA WILL NOT SET and does not throw a useful error — the
 //         same class of refusal recorded for formula-driven Description parameters. Those are named.
+// GOTCHA: CURTAIN WALLS, SLOPED GLAZING and BASIC CEILING types report a CompoundStructure that is not
+//         a real layer stack; writing to it misbehaves. Those three families are skipped by name.
 // GOTCHA: DRY RUN BY DEFAULT — it lists every layer and parameter it would touch.
 // RELATED: action-report-compound-structure.cs shows what the layers currently are, first.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Run it on ONE wall type and check the
@@ -37,9 +46,11 @@ bool doTypeParams = true;          // swap material parameters on their types (a
 bool dryRun = true;                // true = report only, change nothing
 // ---- END INPUTS ----
 
-int layersChanged = 0, instParams = 0, typeParams = 0, typesTouched = 0, refused = 0;
+int layersChanged = 0, instParams = 0, typeParams = 0, typesTouched = 0, refused = 0, skippedGrouped = 0;
 var notes = new List<string>();
-var doneTypes = new HashSet<int>();
+// Keyed by ElementId itself, not by an int: ElementId.IntegerValue was REMOVED in Revit 2027.
+var doneLayerTypes = new HashSet<ElementId>();
+var doneParamTypes = new HashSet<ElementId>();
 
 var allMaterials = new FilteredElementCollector(Document).OfClass(typeof(Material)).Cast<Material>().ToList();
 bool findIsByCategory = findMaterialName == "<By Category>";
@@ -70,15 +81,49 @@ else
     sb.AppendLine($"Replacing '{findMaterialName}' with '{replaceMaterialName}' across {elements.Count} element(s).");
     sb.AppendLine();
 
+    // ---- is this parameter a MATERIAL parameter? ----
+    // `Definition.ParameterType` was REMOVED after Revit 2023 and replaced by `GetDataType()`. Neither
+    // name may appear directly in the source or the fragment stops compiling on the other side of that
+    // line, so BOTH are reached by reflection — the same technique the floor/ceiling creators use.
+    // Naming ParameterType directly is what made this fragment fail its first compile check on 2024
+    // and 2027 (2026-08-23); a try/catch does not help, because it is a COMPILE error, not a runtime one.
+    var _defType = typeof(Definition);
+    var _getDataTypeM = _defType.GetMethod("GetDataType", Type.EmptyTypes);
+    var _paramTypeProp = _defType.GetProperty("ParameterType");
+
+    Func<Parameter, bool> looksLikeMaterialParam = (p) =>
+    {
+        try
+        {
+            if (_getDataTypeM != null)
+            {
+                var dt = _getDataTypeM.Invoke(p.Definition, null);
+                if (dt != null && dt.ToString().IndexOf("material", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            else if (_paramTypeProp != null)
+            {
+                var pt = _paramTypeProp.GetValue(p.Definition);
+                if (pt != null && pt.ToString() == "Material") return true;
+            }
+        }
+        catch { }
+
+        // Last resort: it is holding a Material right now. This cannot recognise a material parameter
+        // that is currently "<By Category>", which is why the reflection above is tried first.
+        try
+        {
+            var v = p.AsElementId();
+            return v != ElementId.InvalidElementId && Document.GetElement(v) is Material;
+        }
+        catch { return false; }
+    };
+
     // Every material-valued parameter on an element, instance or type.
     Func<Element, List<Parameter>> materialParams = (e) =>
         e.Parameters.Cast<Parameter>()
          .Where(p => p.StorageType == StorageType.ElementId && !p.IsReadOnly)
-         .Where(p => { try { return p.Definition.ParameterType == ParameterType.Material; }
-                       catch { // newer API dropped ParameterType — fall back to what the value IS
-                               try { var v = p.AsElementId();
-                                     return v != ElementId.InvalidElementId && Document.GetElement(v) is Material; }
-                               catch { return false; } } })
+         .Where(p => looksLikeMaterialParam(p))
          .ToList();
 
     using (var t = new Transaction(Document, "AJ Tools - Replace material"))
@@ -87,13 +132,21 @@ else
 
         foreach (var el in elements)
         {
-            string label = $"{el.Category?.Name ?? "element"} {el.Id.IntegerValue}";
+            string label = $"{el.Category?.Name ?? "element"} {el.Id}";
             var typeEl = Document.GetElement(el.GetTypeId());
 
             // ---- 1. compound structure layers, on the TYPE ----
-            if (doCompoundLayers && typeEl is HostObjAttributes && !doneTypes.Contains(typeEl.Id.IntegerValue))
+            if (doCompoundLayers && typeEl is HostObjAttributes && !doneLayerTypes.Contains(typeEl.Id))
             {
                 var hoa = (HostObjAttributes)typeEl;
+
+                // These report a CompoundStructure that is not a real layer stack - see the header.
+                var excludedFamilies = new[] { "Curtain Wall", "Sloped Glazing", "Basic Ceiling" };
+                string famName = null;
+                try { famName = hoa.FamilyName; } catch { }
+                if (famName != null && excludedFamilies.Contains(famName))
+                { doneLayerTypes.Add(typeEl.Id); continue; }
+
                 CompoundStructure cs = null;
                 try { cs = hoa.GetCompoundStructure(); } catch { }
 
@@ -129,16 +182,26 @@ else
                             }
                         }
                     }
-                    doneTypes.Add(typeEl.Id.IntegerValue);
+                    doneLayerTypes.Add(typeEl.Id);
                 }
             }
 
             // ---- 2. material parameters on the instance ----
             if (doInstanceParams)
             {
+                bool grouped = el.GroupId != null && el.GroupId != ElementId.InvalidElementId;
                 foreach (var p in materialParams(el))
                 {
                     if (p.AsElementId() != findId) continue;
+
+                    // Grouped element: setting a parameter that does not vary across groups either
+                    // refuses, or changes EVERY instance of the group. Neither is announced.
+                    if (grouped)
+                    {
+                        bool varies = false;
+                        try { varies = ((InternalDefinition)p.Definition).VariesAcrossGroups; } catch { }
+                        if (!varies) { skippedGrouped++; continue; }
+                    }
                     if (dryRun) { sb.AppendLine($"  would set {label} · '{p.Definition.Name}'"); instParams++; continue; }
                     try
                     {
@@ -151,7 +214,7 @@ else
             }
 
             // ---- 3. material parameters on the type ----
-            if (doTypeParams && typeEl != null && !doneTypes.Contains(-typeEl.Id.IntegerValue))
+            if (doTypeParams && typeEl != null && !doneParamTypes.Contains(typeEl.Id))
             {
                 foreach (var p in materialParams(typeEl))
                 {
@@ -165,7 +228,7 @@ else
                     }
                     catch (Exception ex) { refused++; notes.Add($"  TYPE '{typeEl.Name}' · '{p.Definition.Name}': {ex.Message}"); }
                 }
-                doneTypes.Add(-typeEl.Id.IntegerValue);
+                doneParamTypes.Add(typeEl.Id);
             }
         }
 
@@ -179,6 +242,8 @@ else
     sb.AppendLine($"  type parameters: {typeParams}");
     if (layersChanged + instParams + typeParams == 0)
         sb.AppendLine($"  NOTHING USES '{findMaterialName}' among these elements — check the name, or widen the filter above.");
+    if (skippedGrouped > 0)
+        sb.AppendLine($"  skipped, element is in a GROUP and the parameter does not vary across groups: {skippedGrouped}");
     if (refused > 0) sb.AppendLine($"  refused: {refused}");
     foreach (var n in notes) sb.AppendLine(n);
 }

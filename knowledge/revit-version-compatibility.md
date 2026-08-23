@@ -384,8 +384,21 @@ properties.
 
 **Proved here, not taken on trust** — a probe fragment referencing all three was compiled against the
 installed assemblies on 2026-08-22: **PASS on 2020, FAIL on 2024 and on 2027**, with
-*"'IndependentTag' does not contain a definition for 'LeaderElbow'"*. (2023 itself is not installed on
-this machine; the shim names 2023 as the boundary and nothing contradicts that.)
+*"'IndependentTag' does not contain a definition for 'LeaderElbow'"*.
+
+**The boundary is more likely 2022 than 2023 — corrected 2026-08-23.** The heading above said 2023 on the
+strength of one shim, with the note "2023 itself is not installed on this machine; nothing contradicts
+that". Something now does. Two independent implementations that have to compile against every release
+split it at **2022**: one uses `LeaderEnd` under `REVIT2019 || REVIT2020 || REVIT2021` and
+`GetLeaderEnd(Reference)` from 2022; and this Brain's own
+[`action-report-tags-and-targets.cs`](../scripts/actions/reporting/action-report-tags-and-targets.cs)
+independently records the target members as changing "from 2022".
+
+**It still cannot be PROVED on this PC** — 2021, 2022 and 2023 are not installed, and all three of those
+sources are somebody's conditional rather than a compile. What is proved here is only: present on 2020,
+gone by 2024. Recorded this way on purpose: **the exact year is the part that was guessed, and a guess
+that has been contradicted should say so rather than quietly change from one confident number to
+another.** No code depends on it — every fragment reaches these members by name at run time.
 
 **Why this is worse than a normal break: reflection hides it completely.** A fragment that reads
 `GetType().GetProperty("LeaderElbow")` **compiles perfectly on every version** and simply finds nothing
@@ -423,3 +436,63 @@ ignored on 2023+. Nothing to change; recorded so the next person meeting it does
 member name to stay version-agnostic, it has bought compilation safety at the cost of silent failure —
 so the member's own version history has to be checked by hand, or a probe compiled against each
 installed Revit as was done here.
+
+### Settling "what is this member actually called, and does this version have it" in one command
+
+Reflection makes the compiler stop telling you when a name is wrong, so the name has to be checked some
+other way — and opening Revit to find out is the slow route. **The member names are plain text inside
+`RevitAPI.dll`** (they live in the metadata string heap), so a grep answers it directly, per version,
+without opening Revit or loading the assembly:
+
+```bash
+grep -aoE "GetLabel[A-Za-z]*|LabelDimension" "/c/Program Files/Autodesk/Revit 2027/RevitAPI.dll" | sort -u
+```
+
+That is how `GlobalParameter.GetLabels()` — which does not exist — was corrected to
+**`GetLabeledDimensions()`** on 2026-08-23, and how it was confirmed present on Revit 2020 as well by
+running the same grep against that version's DLL. Two greps, no Revit.
+
+Note `-a` (treat the binary as text) and `-o` (print only the match). It proves a name EXISTS in the
+assembly; it does not prove which type owns it or what its signature is — for that, write the call and let
+`tools\check-scripts.cmd` answer, which is one minute and no attention.
+
+## Why reflection, and not a version check — the mechanism (2026-08-23)
+
+This file already says "reach it by reflection" in several places, and a fragment written here in a hurry
+will reach instead for the obvious-looking thing:
+
+```csharp
+if (int.Parse(Document.Application.VersionNumber) >= 2023)
+{
+    BoundaryValidation.IsValidBoundaryOnView(doc, viewId, loops);   // 2023+ only
+}
+```
+
+**That does not work, and the reason is worth knowing rather than memorising.** The .NET runtime prepares
+a method before it executes any of it: entering the method resolves the types and members its whole body
+refers to. So on Revit 2020 the missing type is looked for the moment the enclosing method is entered —
+**before the `if` is ever evaluated** — and it throws there. The guard is written inside the thing it was
+meant to guard. A `try/catch` around the call has the same problem for the same reason, and if the fragment
+is compiled against 2020 in the first place it never even gets that far: a missing member is a compile
+error, not a runtime one.
+
+Two ways out, and this library uses the first:
+
+1. **Reflection.** `typeof(X).GetMethod("Name")` names nothing at compile time and resolves nothing at
+   method entry — so one source compiles and runs on every version, and a `null` back from `GetMethod` is
+   the version answer. This is what [`load-family.cs`](../scripts/creators/load-family.cs) does for
+   `GetRevitUIFamilyLoadOptions`, and what `action-replace-material.cs` does for `ParameterType`.
+2. **Put the version-gated call in its own method** that the guard calls, so preparing the outer method
+   never touches the missing type. Real code does this and marks the inner method "do not inline" so the
+   compiler cannot fold it back into the caller and undo the isolation. **A fragment cannot use this at
+   all** — it has no methods of its own to put the call in. Recorded because it explains why library code
+   looks the way it does, not as something to copy here.
+
+### A major version number is not enough any more
+
+`Application.VersionNumber` gives "2026". Revit's API has changed **within** a major version: parts of the
+2026 API surface exist only from 2026.3, and `Application.VersionBuild` / the version's minor component is
+what distinguishes them. Anything gated on a 2026-or-later member therefore has to be reached by
+reflection like everything else — the major number alone will say yes on a build that does not have it.
+Nothing in this library depends on a 2026.3 member today; this is here so the first fragment that wants
+one does not gate on the wrong number.

@@ -17,7 +17,7 @@ that one file — don't read the whole folder.**
 | Building a family from a supplier's PDF submittal — which page to trust for sizes vs positions, how many families the product range needs, and how to get text/images out of the PDF on this machine | [`reading-manufacturer-datasheets.md`](reading-manufacturer-datasheets.md) |
 | An ambiguous or misheard term in a request | [`glossary.md`](glossary.md) |
 | A search missed because the site word isn't the Revit word ("floor levels", "light fitting", "out to excel") — **add a row, it works immediately, no rebuild** | [`site-vocabulary.md`](site-vocabulary.md) (data, read live by `semantic-index\ask-brain-hybrid.cmd`) |
-| **Will these scripts run on Revit 2024/2025/2026+** — what breaks when the Revit version moves, which .NET goes with which release, how many of the 323 fragments are affected | [`revit-version-compatibility.md`](revit-version-compatibility.md) |
+| **Will these scripts run on Revit 2024/2025/2026+** — what breaks when the Revit version moves, which .NET goes with which release, how many of the 351 fragments are affected | [`revit-version-compatibility.md`](revit-version-compatibility.md) |
 | **Which Revit API class/parameter/category does this Brain already use, and which fragment shows it working** — reach for this before looking anything up online: 283 proven examples beat a signature | [`revit-api-surface.md`](revit-api-surface.md) (generated — `node tools/api-surface.mjs`) |
 | How to format a reply (counts, tables, the Final Report) | [`reply-style.md`](reply-style.md) |
 | A change to the Brain itself (new skill, split file, retired script) — recording it, not making it | [`brain-log.md`](brain-log.md) |

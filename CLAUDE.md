@@ -33,7 +33,7 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 395 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 424 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
@@ -76,7 +76,7 @@ questions; make the code decisions yourself and tell him what you did.
 
 He named two problems. Both have an answer that already exists:
 
-- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 323 fragments against
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 351 fragments against
   every Revit installed on the PC **without opening Revit**, in about a minute. Offer it the moment a
   version change is mentioned. It catches the whole "worked in 2020, errors in 2024" class before he
   hits it mid-job.
@@ -143,6 +143,15 @@ He named two problems. Both have an answer that already exists:
 - This repo doubles as an installable Claude Code **plugin** — manifest in `.claude-plugin/`, install
   steps in [`SETUP.md`](SETUP.md) step 1. Keep `skills/` at the repo root; that's where the plugin
   loader finds them.
+- **More than one session can be working in this repo at the same time** — observed 2026-08-23, when two
+  peer sessions were adding fragments during a harvest and files appeared on disk that nobody in that
+  conversation had written. The consistency hook and every count are computed from disk on each edit, so
+  a second session's work shows up as drift in yours. **Do the private per-file work first** (new
+  fragments, upgrades, knowledge notes — those never collide), and leave everything touching a SHARED
+  file to one pass at the very end: `scripts/README.md` rows, `sync-counts`, `verify-consistency`,
+  `brain-log.md`, `plugin-release`. Running the checks earlier just reports someone else's half-finished
+  work. And **a `check-scripts` FAIL naming a file you did not write belongs to another session — report
+  it, do not fix it**; editing a file another session is mid-way through corrupts both.
 - **Before pushing anything a plugin user should receive, run
   [`node tools/plugin-release.mjs`](tools/plugin-release.mjs)** and commit the bumped version with the
   change. Claude Code pins an installed plugin to the `version` string in `plugin.json` — its own

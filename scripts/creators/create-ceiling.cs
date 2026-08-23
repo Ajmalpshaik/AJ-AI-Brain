@@ -107,7 +107,7 @@ else
 
                     elements.Add(made);
                     t.Commit();
-                    sb.AppendLine($"Created Ceiling Id {made.Id.IntegerValue} — type '{chosen.Name}', "
+                    sb.AppendLine($"Created Ceiling Id {made.Id} — type '{chosen.Name}', "
                                 + $"level '{level.Name}', {heightAboveLevelMm} mm above it.");
                 }
             }

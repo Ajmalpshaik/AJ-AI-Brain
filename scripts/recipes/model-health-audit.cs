@@ -15,6 +15,12 @@
 //         "delete via"). The bridge's destructive-operation guard scores the whole script's TEXT, including
 //         plain output strings, and several deletion words together tripped it on this read-only script
 //         (found live 2026-07-26 — story in ../../knowledge/live-model/core.md). Keep the wording mild.
+// * UPGRADED 2026-08-23: two sections added that this recipe was working out for itself, or not at all.
+//   Section 9 runs REVIT'S OWN performance rules (PerformanceAdviser.ExecuteAllRules) — Autodesk's
+//   opinion of the model, which knows things a hand-written audit cannot. Section 10 lists the ADD-IN
+//   UPDATERS registered in this session, the honest answer to "what else is changing my model".
+//   Neither section has been run against a real model yet; both are read-only and both report their own
+//   failure rather than staying quiet.
 // ✓ LIVE-VERIFIED 2026-07-26 — ran clean on Project1 after the wording fix; found 3 unenclosed rooms,
 //   16 views off sheets, 16 unused templates, 6 unused filters, 0 warnings.
 // ============================================================
@@ -22,6 +28,7 @@
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int topWarnings = 10;       // how many most-frequent warning descriptions to list
 int maxIdsPerList = 15;     // Element-Id cap per detail list (rest summarized as "+N more")
+bool runPerformanceAdviser = true; // Revit's own rule engine — the slowest section; false skips it
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
@@ -95,5 +102,49 @@ foreach (var v in allViews.Where(v => !v.IsTemplate))
 int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(FilterElement)).Count(f => !usedFilterIds.Contains(f.Id));
 sb.AppendLine($"\n--- Unused, removable later: {unusedTemplates} view template(s), {unusedFilters} filter(s) ---");
 sb.AppendLine("  -> see actions/structural-changes/action-purge-unused.cs (dry-run first, per its own rule)");
+
+// --- 9. Revit's OWN performance rules (added 2026-08-23) ---------------------------------------------
+// Revit ships a rule engine that nothing here was asking. PerformanceAdviser holds Autodesk's own model
+// checks — the ones behind Manage > Performance Adviser — and ExecuteAllRules returns them as
+// FailureMessages. It is worth having because these rules know things this recipe cannot work out from
+// the outside, and because they are Autodesk's opinion of the model rather than ours.
+// It walks the model, so on a large file it is the slowest section here — hence the switch.
+if (runPerformanceAdviser)
+{
+    try
+    {
+        var adviser = PerformanceAdviser.GetPerformanceAdviser();
+        var results = adviser.ExecuteAllRules(Document);
+        sb.AppendLine($"\n--- Revit's own performance rules: {results.Count} finding(s) ---");
+        foreach (var msg in results.Take(topWarnings))
+        {
+            string sev;
+            try { sev = msg.GetSeverity().ToString(); } catch { sev = "?"; }
+            sb.AppendLine($"  [{sev}] {msg.GetDescriptionText()}");
+        }
+        if (results.Count > topWarnings) sb.AppendLine($"  ... {results.Count - topWarnings} more not shown.");
+        if (results.Count == 0) sb.AppendLine("  (nothing flagged)");
+    }
+    catch (Exception ex)
+    {
+        // Some rules need an active graphical view and refuse otherwise — reported, never swallowed,
+        // so a blank section is never mistaken for a clean one.
+        sb.AppendLine($"\n--- Revit's own performance rules: could not run — {ex.Message} ---");
+    }
+}
+
+// --- 10. Which add-ins are wired into this session ---------------------------------------------------
+// A registered updater is another add-in's code that Revit runs whenever matching elements change. It is
+// the honest answer to "why did that value change by itself" and to "what else is touching this model",
+// and it appears nowhere else in this audit. Session-wide, not saved in the file.
+try
+{
+    var updaters = UpdaterRegistry.GetRegisteredUpdaterInfos();
+    sb.AppendLine($"\n--- Add-in updaters active in this Revit session: {updaters.Count} ---");
+    foreach (var u in updaters.Take(topWarnings))
+        sb.AppendLine($"  {u.UpdaterName}{(string.IsNullOrEmpty(u.AdditionalInformation) ? "" : " — " + u.AdditionalInformation)}");
+    if (updaters.Count > topWarnings) sb.AppendLine($"  ... {updaters.Count - topWarnings} more not shown.");
+}
+catch (Exception ex) { sb.AppendLine($"\n--- Add-in updaters: could not read — {ex.Message} ---"); }
 
 return sb.ToString();

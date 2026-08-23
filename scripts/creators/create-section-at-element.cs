@@ -73,7 +73,7 @@ else
             if (maxCreate > 0 && madeViews.Count >= maxCreate) break;
             if (el is View) continue; // a filter that returned views would otherwise section a view
 
-            string label = string.IsNullOrWhiteSpace(el.Name) ? $"Id {el.Id.IntegerValue}" : el.Name;
+            string label = string.IsNullOrWhiteSpace(el.Name) ? $"Id {el.Id}" : el.Name;
 
             var bb = el.get_BoundingBox(null);
             if (bb == null)

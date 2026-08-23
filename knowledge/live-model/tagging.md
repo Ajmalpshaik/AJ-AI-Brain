@@ -377,3 +377,67 @@ Three more that apply to placing any annotation symbol along a run:
   that is not a plain plan.
 - **Skip near-vertical runs.** A riser has no meaningful arrow in a plan, so give it none rather than a
   nonsense one.
+
+## A tag's bounding box includes its LEADER — so it cannot be used to measure the tag
+
+Found 2026-08-23 and it was a live defect in [`action-stack-tags.cs`](../../scripts/actions/sheets-views/action-stack-tags.cs).
+
+`tag.get_BoundingBox(view)` on a tag **that has a leader** returns the box around the head **and the
+leader line**. So "how tall is this tag" comes back as however far the leader reaches — on a congested
+plan that is metres, not millimetres. Any automatic spacing derived from it is then wrong by that much,
+and wrong in the direction that looks like the script is broken: tags flung metres apart.
+
+**The box is only the text head when the tag has no leader.** Three ways out, in order of preference:
+
+1. **Measure leaderless tags only.** Free, no model touch, and on a real drawing there is nearly always
+   one. This is what `action-stack-tags.cs` and
+   [`action-arrange-tags-to-view-edges.cs`](../../scripts/actions/sheets-views/action-arrange-tags-to-view-edges.cs)
+   now do, reporting how many they measured from.
+2. **Say so and use a stated paper default** when every tag in the set is leadered. A named default that
+   the user can override beats a measured number that is silently wrong.
+3. **Measure-then-roll-back**, when the real number genuinely matters: open a TransactionGroup, set
+   `HasLeader = false` on every tag, **COMMIT** (the geometry only regenerates on commit — measuring
+   inside the open transaction still returns the old box), take the measurements, then **roll the group
+   back** so the leaders are exactly as they were. It is the only correct way to measure something whose
+   geometry depends on state you do not want to keep, and it is the same family as the
+   create-then-roll-back fixture trick used in `action-report-sheet-title-blocks.cs`. It is opt-in
+   because it means even a dry run touches the model.
+
+The same applies to a `TextNote`: `note.GetLeaders()` must be removed before its box means anything.
+
+## Moving a tag moves its leader end with it — capture and restore
+
+Two separate facts, and the second is the one that bites.
+
+**A leader whose `LeaderEndCondition` is `Attached` follows its element** and needs nothing done. **A
+`Free` leader has its own end point**, and moving the head drags that end along. So a bulk tidy-up that
+sets `TagHeadPosition` on free-leadered tags quietly pulls every arrow off the thing it was pointing at.
+The fix is to read the leader end BEFORE the move and write it back after — for `IndependentTag` via
+`GetLeaderEnd(Reference)` / `SetLeaderEnd(Reference, XYZ)` (or the pre-2022 `LeaderEnd` property, reached
+by name — see [`../revit-version-compatibility.md`](../revit-version-compatibility.md)), and for a
+`TextNote` by saving each `Leader`'s `End` **and `Elbow`** and restoring both.
+
+**A room, space or area tag moved OUTSIDE its own room must be given a leader**, or it reads on the paper
+as naming whatever it landed on. Revit does not add one. The test is the tag's own:
+`roomTag.Room.IsPointInRoom(roomTag.TagHeadPosition)` — false means turn `HasLeader = true`.
+`SpaceTag` has `IsPointInSpace`; an **`AreaTag` always needs the leader** once moved, because an area has
+no equivalent containment test worth trusting. Handled in `action-arrange-tags-to-view-edges.cs`.
+
+## Aligning annotation: do the arithmetic in the VIEW's coordinates, not the model's
+
+"Left", "right", "up" and "down" on the paper are not model X and Y — on a rotated plan, a section or a
+sloped view they are none of them. Every alignment or stacking calculation therefore belongs in the
+view's own flat 2D space:
+
+```csharp
+Transform toView   = view.CropBox.Transform.Inverse;   // model point -> view space
+Transform fromView = view.CropBox.Transform;           // view vector/point -> model
+```
+
+Push each head and each anchor through `toView`, drop Z, do the arithmetic as plain 2D, then push the
+result back with `fromView`. `view.RightDirection` / `view.UpDirection` give the same axes and are fine
+for a simple offset, but the crop transform is what makes a whole layout consistent.
+
+**Related trap already recorded elsewhere:** a `BoundingBoxXYZ` reports `Min`/`Max` in ITS OWN transform,
+so a crop box or section box read back has to be transformed before its numbers mean anything in the
+model — see [`../../scripts/actions/visibility/action-set-view-crop.cs`](../../scripts/actions/visibility/action-set-view-crop.cs).

@@ -16,6 +16,18 @@
 // genuine physical clashes (two things occupying the same space) — for "what's connected to this MEP
 // element", use filter-by-connection-status.cs or recipes/trace-mep-circuits.cs instead, not this fragment.
 // The target element itself is always excluded from the result — it always "intersects" itself.
+//
+// ✱✱ NOT EVERY ELEMENT CAN BE THE TARGET, and the old version found out by throwing. Revit answers the
+//    question directly, before you build the filter:
+//        ElementIntersectsFilter.IsCategorySupported(element)  — is this CATEGORY testable at all
+//        ElementIntersectsFilter.IsElementSupported(element)   — is THIS element testable
+//    Added 2026-08-23. It matters more than a nicer error message: the same blind spot in
+//    action-report-clashes.cs was silently dropping elements from a coordination report, so the pair of
+//    fixes went in together. Typically refused: annotation and view-specific elements, anything with no
+//    solid geometry, and elements living in a linked document (a link needs its own transform).
+//    NOTE the candidates are not pre-checked — a candidate that cannot be tested simply never passes the
+//    filter, which is Revit's own behaviour and cannot be distinguished from "does not clash" here. If
+//    you need that distinction, use action-report-clashes.cs, which reports both sets.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int targetElementIdInt = 0; // the element everything else is tested against — set explicitly
@@ -26,10 +38,28 @@ BuiltInCategory targetCategory = BuiltInCategory.OST_DuctCurves; // category of 
 var sb = new System.Text.StringBuilder();
 List<Element> elements = new List<Element>(); // declared outside the branch so it's visible to any action fragment pasted below
 
+// Ask Revit whether the target can be geometrically tested at all, instead of letting the filter throw.
+Func<Element, string> whyUntestable = el =>
+{
+    bool catOk = true, elOk = true;
+    try { catOk = ElementIntersectsFilter.IsCategorySupported(el); } catch { }
+    try { elOk = ElementIntersectsFilter.IsElementSupported(el); } catch { }
+    if (!catOk) return $"category '{el.Category?.Name ?? "(none)"}' is not supported by geometric intersection";
+    if (!elOk) return "element is not supported (usually it has no solid geometry)";
+    return null;
+};
+
 var targetElement = Document.GetElement(new ElementId(targetElementIdInt));
+string untestableReason = targetElement == null ? null : whyUntestable(targetElement);
+
 if (targetElement == null)
 {
     sb.AppendLine($"Target element Id {targetElementIdInt} not found.");
+}
+else if (untestableReason != null)
+{
+    sb.AppendLine($"Target '{targetElement.Name}' (Id {targetElement.Id}) CANNOT be clash-tested: {untestableReason}.");
+    sb.AppendLine("This is not 'nothing clashes with it' — nothing was tested. Pick a target with real solid geometry, or use filter-by-region.cs for a bounding-box test.");
 }
 else
 {
