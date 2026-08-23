@@ -239,6 +239,24 @@ is exactly the one a fresh session cannot route.
   parameter, not its Element Id and not its Name — filter with `filter-by-id-list.cs` after looking the
   number up, never dimension every room in the model.
 
+**"linsilation" / "isulation"** (2026-08-23, *"if the items there is linsilation you have to color the
+  isulation also"*) — → **insulation**, i.e. the separate `DuctInsulation` / `DuctLining` /
+  `PipeInsulation` elements wrapped round a host. Both spellings are dictation for the same word; neither
+  means lining specifically, so treat it as "the wrap, whichever kind". The rule attached to it is
+  standing and applies to every colouring job:
+  [`live-model/insulation-follows-host.md`](live-model/insulation-follows-host.md).
+
+**"remaining all gray"** (2026-08-23, *"red only vcd remaning all gray"*) — → the **highlight-vs-rest**
+  job, not the drawing-standard grayout. One named thing gets a colour, *everything else currently in the
+  view* goes grey: `filter-by-category-and-family.cs` + `action-highlight-vs-rest.cs`. Distinct from his
+  **"do the grayout for MEP"**, which is the full sheet standard with view filters, line weights and
+  sub-categories. Same English word, two different jobs — "remaining all gray" is the quick on-screen one.
+
+**"Support hide"**, **"red only vcd"**, **"can i see now the duct heaters"** (2026-08-23) — → more of the
+  `<noun> <verb>` command shape already recorded for "duck hide". **"can i see now the X"** is not a
+  question; mid-session it means *make X the red one and grey the rest*, continuing whatever colour job
+  is already on the view. Answer it by doing it, not by reporting a count.
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one

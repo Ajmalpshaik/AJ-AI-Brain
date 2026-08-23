@@ -6,6 +6,24 @@
 //          back only when told to explicitly.
 // STANDALONE — has its own sb and returns.
 // SOURCE: ../../knowledge/fire-sprinkler/pipe-sizing.md   (both methods, the gate, and the tables)
+//
+// ✓ FIRST LIVE RUN 2026-08-23, Revit 2020, on a 22-pipe / 8-tee / 5-elbow sprinkler tree feeding 9
+//   upright heads in one room. The GATE, the head counts and the table lookup are all CORRECT — every
+//   count was checked by hand against the table and every one matched. writeSizeBack wrote 16 diameters,
+//   0 refused, and a separate read-back confirmed all 22 landed EXACTLY with no snapping. The system
+//   stayed connected through the resize (9/9 heads, 1 deliberate open end) and Revit inserted 28
+//   transition fittings by itself where the diameter steps.
+//
+// ⚠ THREE FALSE POSITIVES FOUND IN THAT RUN — the sizing is sound, the network warnings are not:
+//   1. "N loop edge(s) detected — this network is LOOPED or GRIDDED" fired on a pure TREE. The network
+//      is built by clustering connector origins within clusterToleranceMm; at a tee THREE elements meet
+//      at one point, so the cluster becomes a triangle and every tee invents a loop. 8 tees produced
+//      24 phantom loop edges. **A loop warning is only believable if the pipework really loops — look
+//      at the model before accepting it.** Fixing it means edging pipe→fitting only, never pipe→pipe
+//      inside a shared cluster.
+//   2. "N apparent branch line(s) carry more than 8 heads" fired on branches carrying 3 each.
+//   3. "no diameter read" on every FITTING. Fittings have no RBS_PIPE_DIAMETER_PARAM — expected, not a
+//      fault, but it inflates the "segments sized" count with elements that were never sizable.
 // VERSION-PROOF (2026-08-20, brought in line with the library-wide migration): unit conversion is
 //         plain arithmetic (1 ft = exactly 304.8 mm) and every id collection is keyed by ElementId,
 //         so this runs on Revit 2020 through 2027 from one source. The id INPUT is still declared

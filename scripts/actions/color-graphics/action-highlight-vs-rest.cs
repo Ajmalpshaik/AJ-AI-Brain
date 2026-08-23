@@ -27,9 +27,14 @@
 //         not let one throw kill the loop.
 // GOTCHA: only wraps ALREADY IN THE VIEW are pulled in. A wrap outside the view has nothing to
 //         override and adding it would inflate the reported count with elements nobody can see.
-// ⚠ The insulation expansion is compile-checked on Revit 2020, 2024 and 2027 but NOT yet live-run;
-//   the 2026-07-15 verification above predates it. Set `expandInsulationAndLining = false` to get
-//   exactly the proven behaviour back.
+// SOURCE: insulation expansion verified live 2026-08-23 on Revit 2020 — "red only VCD, remaining all
+//         gray" on a 2,134-element view: 41 VCDs matched, 40 duct-insulation sleeves followed their
+//         hosts, 81 red / 2,053 gray / 0 skipped. One VCD carried no insulation, which is why the
+//         wrap count is 40 and not 41 — an unequal count is normal, not a miss.
+// ⚠ LEAVE `expandInsulationAndLining = true`. Ajmal's standing rule, 2026-08-23: *"if you are coloring
+//   the ducts or duct accessorys or any thing it means if the items there is linsilation you have to
+//   color the isulation also other vise we ccant see."* Turning it off is what makes a highlight look
+//   half-applied on screen — see ../../../knowledge/live-model/insulation-follows-host.md.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

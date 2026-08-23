@@ -4438,3 +4438,59 @@ and **2** entries for 2026-08-22 when that day already held 49. Re-derive, don't
 
   **State: all 13 consistency checks pass, and the full library compiled clean on Revit 2020, 2024 and
   2027 in this session.**
+
+## 2026-08-23 — insulation follows its host into every colour change (Ajmal's standing rule)
+
+Working a live highlight job on `4355-BHVD-3D-60A10-BL003A.rvt`, `action-highlight-vs-rest.cs` was run
+twice with `expandInsulationAndLining = false` — deliberately, to stay on the proven path, since the
+2026-08-22 insulation upgrade was compile-checked but never live-run. Ajmal stopped it: *"if you are
+coloring the ducts or duct accessorys or any thing it means if the items there is linsilation you have
+to color the isulation also other vise we ccant see."*
+
+He is right, and the caution was the wrong call. That model holds **620 duct insulation elements**, so
+41 red VCDs sat inside 40 grey jackets and read as grey from outside. The tool reported "41 highlighted,
+0 skipped" while he was looking at a grey model.
+
+- **New:** [`knowledge/live-model/insulation-follows-host.md`](live-model/insulation-follows-host.md) —
+  the rule, why the sleeve is a separate element, and the measured before/after.
+- **Changed:** `action-highlight-vs-rest.cs` header — the "NOT yet live-run" warning is replaced by a
+  live SOURCE line (Revit 2020, 41 matched → 40 wraps followed → 81 red / 2,053 grey / 0 skipped) and a
+  ⚠ that says leave the switch **on**. It is the only fragment carrying `expandInsulationAndLining`.
+- **Glossary:** "linsilation"/"isulation", "remaining all gray" (highlight-vs-rest, NOT the sheet
+  grayout — same English word, two different jobs), and "can i see now the X" as a command not a question.
+
+**The general lesson: an unproven flag whose whole purpose is "make the result visible" is not the safe
+one to leave off.** Defaulting to `false` there does not protect anything — it silently produces the
+wrong picture and reports success. Weigh what the flag is *for*, not just whether it has been run.
+
+## 2026-08-23 — size the pipe BEFORE fitting it up (Ajmal's fitting-size rule)
+
+Drew a 9-head sprinkler tree in Room 7 of a test model — 22 pipes, 8 tees, 5 elbows, every head
+connected — then applied the pipe-schedule sizes to the pipes afterwards. **The fittings did not follow.**
+Revit left every tee at the 25 mm it was born at, left the branch-end elbows at 15 mm, and reconciled the
+mismatch with **28 transitions**: 41 elements where 22 would do, and an entry bend that read as
+`50 pipe → reducer → 25 elbow → reducer → 50 pipe`.
+
+Ajmal spotted it from the 3D view and named the rule himself: *"all the time what is the bieest size of
+connect pipe that will be the fittings full size am i right ??"* He is right — a fitting carries the size
+of the largest pipe on it, so a 50 mm run to a 32 mm branch is one 50×50×32 reducing tee.
+
+Rebuilding at final sizes (delete, redraw sized, then fit) took it to **22 fittings, 9 transitions**, and
+the elbows came out 50/50 and 32/32 as they should. The 9 that remain are **not** a fault: placed
+`M_Tee - Generic` reports `Minimum Size == Maximum Size`, so the out-of-box generic tee is a single-size
+family and physically cannot reduce. That is a content fix — load a reducing-tee family onto the Pipe
+Type's Routing Preferences → Junctions.
+
+- **New:** [`knowledge/live-model/fitting-size-follows-biggest-pipe.md`](live-model/fitting-size-follows-biggest-pipe.md)
+  — the rule, the two failure modes, and the one-read test that tells them apart
+  (`Minimum Size == Maximum Size` means content, not geometry).
+- **`recipes/sprinkler-pipe-schedule-size.cs` had its first live run** and is now marked verified: gate,
+  head counts and table lookup all correct, hand-checked; 16 diameters written, 0 refused, all read back
+  exactly with no snapping. **But three of its network warnings are false positives** — the loop detector
+  fired on a pure tree (clustering makes every tee a triangle: 8 tees → 24 phantom loop edges), the
+  8-per-branch rule fired on branches of 3, and "no diameter read" is just the fittings. Header and
+  README row both record it.
+
+**The general lesson: an order-of-operations bug looks like a geometry bug.** Nothing about the squeezed
+junction said "you sized too late" — it took reading `Minimum Size`/`Maximum Size` off a placed instance
+to separate "the fitting is stale" from "the family cannot do this".
