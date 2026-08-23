@@ -143,3 +143,13 @@ He named two problems. Both have an answer that already exists:
 - This repo doubles as an installable Claude Code **plugin** — manifest in `.claude-plugin/`, install
   steps in [`SETUP.md`](SETUP.md) step 1. Keep `skills/` at the repo root; that's where the plugin
   loader finds them.
+- **Before pushing anything a plugin user should receive, run
+  [`node tools/plugin-release.mjs`](tools/plugin-release.mjs)** and commit the bumped version with the
+  change. Claude Code pins an installed plugin to the `version` string in `plugin.json` — its own
+  documentation says "users only receive updates when you change this field" — so a push without a
+  bump publishes the work and delivers it to nobody. There is no error and no warning; the colleague
+  simply never sees the new fragments. This is the one release step that cannot be inferred from the
+  files, which is why it is written here rather than left to memory. Their **search index re-syncs
+  itself**: `tools/brain-setup.mjs --check` runs at every SessionStart, and when the files are newer
+  than the index it starts an incremental rebuild in the background (detached, ~200 ms to fire,
+  lock-guarded against two sessions racing). That half is automatic; the version bump is not.

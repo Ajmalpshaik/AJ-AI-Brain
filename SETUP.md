@@ -172,6 +172,26 @@ semantic-index\index-brain.cmd --full
 Expect a few minutes, and a final `DONE (full rebuild)` line stating the file and chunk counts. It
 verifies its own count before recording success, so if it says done, it is done.
 
+### Step C2 — turn auto-update on, once
+
+This is the only other thing he ever has to do, and it takes one keystroke. Claude Code enables
+auto-update for its own marketplaces but **leaves it off for third-party ones by default**, so without
+this he stays on the version he first installed:
+
+1. `/plugin`
+2. **Marketplaces** tab → `aj-ai-brain`
+3. **Enable auto-update**
+
+From then on Claude Code refreshes the marketplace in the background shortly after each session starts
+and pulls new plugin versions down on its own.
+
+**Nothing else needs doing when an update lands.** The files change, and the next session's
+`brain-setup --check` notices the index is older than the files and starts an incremental rebuild in
+the background — a couple of hundred milliseconds to fire, no waiting, and the search picks up the new
+fragments within the minute. That is the whole reason the check re-runs every session rather than only
+on first install: **a plugin update replaces files and nothing else**, and an index describing
+yesterday's library would hide exactly the newest work.
+
 For the knowledge graph and the Obsidian vault, follow
 [`skills/brain-update-layers/SKILL.md`](skills/brain-update-layers/SKILL.md) — it is the maintained
 procedure for all three derived layers and it says which steps are no-ops. The graph's document side is

@@ -576,6 +576,19 @@ def main():
     removed = sorted(r for r in recorded if r not in current)
 
     if not (changed or added or removed):
+        # RE-STAMP EVEN THOUGH NOTHING CHANGED, because built_at means "the index was verified
+        # current at this moment", not "the index was rewritten at this moment". Those read the
+        # same on the happy path and come apart the instant anything judges staleness by DATE
+        # rather than by content hash - which tools/brain-setup.mjs now does at every SessionStart,
+        # since it must decide in milliseconds and cannot hash 395 files to do it.
+        #
+        # Found 2026-08-23 by testing that check: `touch` moves a file's mtime without changing a
+        # byte, so this branch was taken, the stamp stayed old, and the date check concluded the
+        # index was behind FOREVER - re-spawning a background rebuild on every single session that
+        # then also changed nothing. A silent infinite loop, and the manifest was telling the truth
+        # about content the whole time. Writing the stamp here costs one small file and makes the
+        # date honest.
+        cfg.write_manifest([rel for _, rel, _ in targets])
         print("  UP TO DATE — nothing has changed since the last build.")
         print(f"  files : {len(targets)}   chunks : {collection.count()}")
         print(f"  time taken    : {time.time() - start:.1f} seconds")
