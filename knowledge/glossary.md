@@ -257,6 +257,21 @@ is exactly the one a fresh session cannot route.
   question; mid-session it means *make X the red one and grey the rest*, continuing whatever colour job
   is already on the view. Answer it by doing it, not by reporting a count.
 
+**"update the brain"** vs **"update the ALL brain"** (2026-08-23) — → two different jobs, and the word
+  **all** is the whole difference. His own instruction: *"if i say update the brain it will update only
+  use full things like vector db... if i say specificaly update the all brain"* → everything.
+  - **"update the brain" / "update brain" / "end of day" / "is everything up to date"** = the **vector
+    index only**, about 30 seconds. This is the default.
+  - **"update the all brain" / "update all the brain" / "update everything" / "full update"** = that
+    **plus** the knowledge graph's document side and the Obsidian vault — LLM subagents, roughly an hour
+    and ~800k tokens.
+
+  Getting this backwards is expensive in one direction only, which is why the default is the cheap one:
+  an unasked-for full run costs him an hour for layers he does not use, while a missed one costs a
+  sentence. He set the split himself after the measurement — the vector index answered 247 of 247 real
+  questions, `search_graph` had been called **zero** times ever, and the vault had never been opened.
+  Routing lives in [`../skills/brain-update-layers/SKILL.md`](../skills/brain-update-layers/SKILL.md).
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one
