@@ -46,6 +46,18 @@ else
         t.Start();
         try
         {
+            // A KEY schedule is allowed on a much narrower set of categories than an ordinary one, and
+            // CreateKeySchedule throws rather than explaining. Ask Revit first. Added 2026-08-24.
+            bool okForKey = true;
+            try { okForKey = ViewSchedule.IsValidCategoryForKeySchedule(category.Id); } catch { }
+            if (!okForKey)
+            {
+                t.RollBack();
+                sb.AppendLine($"'{category.Name}' cannot take a KEY schedule - Revit only allows them on categories that support key parameters (Rooms, Spaces, Doors and a handful more).");
+                sb.AppendLine("For an ordinary schedule of this category use create-schedule.cs instead.");
+                return sb.ToString();
+            }
+
             var schedule = ViewSchedule.CreateKeySchedule(Document, category.Id);
             try { schedule.Name = scheduleName; } catch { } // name collision — keeps generated name
 

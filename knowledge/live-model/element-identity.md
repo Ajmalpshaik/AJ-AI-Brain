@@ -106,3 +106,44 @@ Nothing looks wrong. Measured side by side on the same model: fixed chain 3 duct
 walls unaffected at 8. Fixed in `lib/prelude.cs`, `filters/by-identity/filter-by-category.cs`,
 `filters/by-location/filter-by-elements-on-level.cs` and `actions/reporting/action-report-parameters.cs`
 — check any new level-resolution code against this list rather than re-deriving the chain.
+
+## Which Revit types can be used as a Dictionary key — and the two that look safe and are not
+
+**Checked by reflection against the shipped `RevitAPI.dll` on 2026-08-24, not assumed.** The question is
+which types override `GetHashCode`, because that decides whether a `HashSet<T>` or `Dictionary<T,...>`
+groups by VALUE or by object identity — and getting it wrong fails silently, never loudly.
+
+| Type | `GetHashCode` declared by | What that means |
+|---|---|---|
+| `ElementId` | **`ElementId`** | Overridden — hashes by the id VALUE. **Safe as a key**, and it is what this library uses everywhere |
+| `GeometryObject` (and `Solid`, `Face`) | **`GeometryObject`** | Overridden — **but not by geometry value.** See below |
+| `Element` | `Object` | NOT overridden — reference identity only |
+| `XYZ` | `Object` | NOT overridden — reference identity only |
+
+### `XYZ` and `Element` are reference-keyed, so a HashSet of them does not do what it looks like
+
+Two `XYZ` objects at the same coordinates are **different keys**, because nothing overrides equality.
+So a `HashSet<XYZ>` built to find coincident points finds nothing, and reports zero duplicates on a model
+full of them. The same applies to `Element`: Revit hands back a fresh managed wrapper on each call, so
+`HashSet<Element>` can hold the *same* element several times over.
+
+**The fix is always the same and this library already follows it — key on `ElementId`**, or for points on
+a rounded tuple of the coordinates. Checked on 2026-08-24: **no fragment keys a collection on `XYZ` or
+`Element`**, so this is a trap to keep avoiding rather than one to go and fix. `action-find-overlapping-lines.cs`
+is the worked example of doing it properly — it keys lines by a rounded direction-plus-offset string
+precisely because the geometry objects themselves cannot be compared that way.
+
+### `GeometryObject.GetHashCode()` is the dangerous one, because it IS overridden
+
+It is overridden, which makes it look like a value hash — and it is not one. It reflects the address of
+the underlying native object, so it is **not stable between Revit sessions, and not necessarily even
+stable for the same geometry within one session.**
+
+**Never use it to answer "has this geometry changed" or "are these two shapes the same".** It will agree
+when it should not and differ when nothing moved, and either way it will do so quietly. For "has this
+changed", Revit has real answers: `Element.VersionGuid` (2021+, a per-element stamp) and
+`Document.GetChangedElements(episodeGuid)` (2023+) — both used by
+[`../../scripts/actions/qa-checks/action-compare-models.cs`](../../scripts/actions/qa-checks/action-compare-models.cs).
+For "are these the same shape", the honest routes are comparing the geometry structure yourself, or
+tessellating and comparing meshes — which is slow, and is the reason the pointer-hash shortcut is
+tempting in the first place.

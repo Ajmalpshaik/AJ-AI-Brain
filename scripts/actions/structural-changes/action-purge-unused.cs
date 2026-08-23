@@ -5,12 +5,21 @@
 //          below computes "unused" from a real reverse-lookup, not a heuristic guess).
 // DOES NOT consume `elements` — this always scans/acts on the WHOLE document for the chosen mode.
 // NOT STANDALONE — see scripts/README.md for how to compose (though this fragment is usually run alone).
-// HONESTY NOTE: this does NOT replace Revit's native Purge Unused command. Families, Line Patterns, Fill
-// Patterns, and several other categories in that dialog rely on internal Revit heuristics with no public
-// API equivalent — this fragment only covers what can be checked correctly: View Templates (is it assigned
-// to any view), Filters (is it applied to any view), Materials (does any element in the whole model
-// actually reference it, via the same GetMaterialIds() scan action-report-material-takeoff.cs uses). Run the
-// native Purge Unused command too for families/patterns — this is a supplement, not a substitute.
+// HONESTY NOTE, CORRECTED 2026-08-24 — IT WAS TRUE ONLY OF REVIT 2020, AND IT DID NOT SAY SO.
+// This note used to state flatly that families, line patterns and fill patterns "rely on internal Revit
+// heuristics with no public API equivalent", so the four hand-computed modes below were all that was
+// possible. **On Revit 2024 and 2027 that is wrong.** `Document.GetAllUnusedElements(ISet<ElementId>)`
+// and `Document.GetUnusedElements(...)` are the public API behind the native Purge Unused dialog, and
+// they cover what it covers — families, patterns, the lot. They do NOT exist on Revit 2020, which is
+// where the original claim came from.
+// So there is now a fifth mode, "revit_native", reached by reflection so one source still runs
+// everywhere: on 2024+ it gives Revit's own full purge list, and on 2020 it says plainly that this
+// version has no such API and points back at the four computed modes.
+// **This is the same mistake create-ceiling.cs made** (fixed 2026-08-23): an "impossible" recorded
+// against one version, stated without naming the version, becomes a lie the day another Revit is
+// installed. This PC has had 2024 and 2027 on it the whole time.
+// The four computed modes stay — they work on every version, and each is a provable reverse-lookup
+// rather than a call into a black box.
 // GOTCHA: Materials mode does a WHOLE-MODEL element scan (every non-type element's GetMaterialIds()) — can
 //         be slow on a large model, same caution as any unbounded scan in this repo.
 //
@@ -38,7 +47,7 @@
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-string mode = "view_templates"; // "view_templates" | "filters" | "materials" | "groups"
+string mode = "view_templates"; // "view_templates" | "filters" | "materials" | "groups" | "revit_native"
 bool dryRun = true; // true = report what WOULD be deleted, delete nothing; false = actually delete
 // ---- END INPUTS ----
 
@@ -96,6 +105,51 @@ else if (mode == "groups")
     }
     if (attachedSkipped > 0)
         sb.AppendLine($"({attachedSkipped} attached detail group type(s) skipped - they belong to a parent model group.)");
+}
+else if (mode == "revit_native")
+{
+    // Revit's OWN purge list - the same set the native Purge Unused dialog offers. Reached by name
+    // because these members do not exist on Revit 2020: naming them directly is a COMPILE error there,
+    // which no try/catch can rescue.
+    var mGetAll = typeof(Document).GetMethod("GetAllUnusedElements");
+    var mGetOne = typeof(Document).GetMethod("GetUnusedElements");
+
+    if (mGetAll == null && mGetOne == null)
+    {
+        sb.AppendLine("This Revit has no GetUnusedElements/GetAllUnusedElements - that API arrives after Revit 2020.");
+        sb.AppendLine("Use a computed mode instead: view_templates, filters, materials or groups. Those work on every version.");
+        return sb.ToString();
+    }
+
+    // The argument is a set of ids to TREAT AS ALREADY DELETED. An empty set means "what is unused now".
+    var emptySet = new HashSet<ElementId>();
+    ICollection<ElementId> single = null, cascading = null;
+    try { if (mGetOne != null) single = mGetOne.Invoke(Document, new object[] { emptySet }) as ICollection<ElementId>; } catch (Exception exU) { sb.AppendLine("GetUnusedElements failed: " + exU.Message); }
+    try { if (mGetAll != null) cascading = mGetAll.Invoke(Document, new object[] { emptySet }) as ICollection<ElementId>; } catch (Exception exA) { sb.AppendLine("GetAllUnusedElements failed: " + exA.Message); }
+
+    // The two differ in whether the purge CASCADES - removing one unused element can leave another
+    // unused. Both counts are reported rather than assuming which is which: that is checkable on a real
+    // model, and a guess here would be a confident wrong number.
+    if (single != null)    sb.AppendLine($"GetUnusedElements: {single.Count} element(s).");
+    if (cascading != null) sb.AppendLine($"GetAllUnusedElements: {cascading.Count} element(s).");
+    if (single != null && cascading != null && single.Count != cascading.Count)
+        sb.AppendLine($"The larger ({Math.Max(single.Count, cascading.Count)}) includes what becomes unused once the first pass is gone - a difference of {Math.Abs(cascading.Count - single.Count)}.");
+
+    var chosen = cascading ?? single;
+    if (chosen == null) { sb.AppendLine("Neither call returned a list."); return sb.ToString(); }
+
+    targets = chosen.Select(id => Document.GetElement(id)).Where(e => e != null).ToList();
+
+    // Grouped, because a flat list of 4000 ids says nothing about what you are about to lose.
+    sb.AppendLine();
+    sb.AppendLine("What Revit considers unused, by category:");
+    sb.AppendLine("Category | Count | Examples");
+    sb.AppendLine("--- | --- | ---");
+    foreach (var g in targets.GroupBy(e => e.Category != null ? e.Category.Name : e.GetType().Name).OrderByDescending(g => g.Count()).Take(40))
+        sb.AppendLine($"{g.Key} | {g.Count()} | {string.Join(", ", g.Take(3).Select(e => "'" + e.Name + "'"))}");
+    sb.AppendLine();
+    sb.AppendLine("This is Revit's own list and it is BROAD - every unloaded family type, every unused pattern.");
+    sb.AppendLine("Read the categories above before setting dryRun = false. Removing all of it is what the native dialog does, and that is not always what you want.");
 }
 else if (mode == "materials")
 {

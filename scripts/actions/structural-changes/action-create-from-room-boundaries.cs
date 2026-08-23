@@ -30,6 +30,18 @@
 //          Revit 2022 replaced Document.Create.NewFloor(CurveArray,...) with Floor.Create(IList<CurveLoop>,...);
 //          naming either directly stops it compiling on the other side. CEILINGS ARE 2022+ ONLY — on
 //          2020 Ceiling.Create does not exist and this reports that instead of throwing.
+// ⚠⚠ KNOWN GAP, flagged 2026-08-24 — THIS DOES NOT HANDLE ROOMS IN A LINKED MODEL, and on an MEP job
+//    that is the normal case. The architect owns the rooms; the MEP model links them. So "put a ceiling
+//    in every room" — the job this fragment exists for — currently cannot be done at all on the model
+//    Ajmal actually works in, because `elements` can only hold rooms from THIS document.
+//    The fix is known and is the same shape used in action-center-room-tags.cs and create-mep-openings.cs:
+//    collect the rooms from `RevitLinkInstance.GetLinkDocument()`, and push every boundary point through
+//    `RevitLinkInstance.GetTotalTransform()` before building anything, because the link's coordinates
+//    are not this document's. Skipping the transform puts the floor at the wrong end of the site.
+//    Flagged rather than changed: this fragment has careful per-item failure handling that is easy to
+//    break blind, and it has never been run against a real model, so adding a whole new source of rooms
+//    to unproven code would be building on sand. Do it in a session that can test it.
+//
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Every Revit call in it is proven elsewhere in
 //   this library (boundary walk: action-report-room-boundaries.cs; floor creation: create-floor.cs).
 //   Run it on ONE room first, look at the result, then use it for the batch.

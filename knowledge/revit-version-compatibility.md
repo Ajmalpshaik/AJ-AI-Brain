@@ -394,7 +394,14 @@ split it at **2022**: one uses `LeaderEnd` under `REVIT2019 || REVIT2020 || REVI
 [`action-report-tags-and-targets.cs`](../scripts/actions/reporting/action-report-tags-and-targets.cs)
 independently records the target members as changing "from 2022".
 
-**It still cannot be PROVED on this PC** — 2021, 2022 and 2023 are not installed, and all three of those
+**A third source, and it splits the members apart (2026-08-24).** The second explorer's overrides guard
+`GetLeaderElbow`, `GetLeaderEnd` and `HasLeaderElbow` behind a **2022-minimum** conditional, and
+`IsLeaderVisible` behind a **2023-minimum** one. So "the IndependentTag API changed at X" is too coarse a
+statement to be true: **the members moved in at least two waves**, 2022 for the leader geometry and 2023
+for leader visibility. Anything reaching for `IsLeaderVisible` by name needs its own null check, not the
+same one used for `GetLeaderEnd`.
+
+**It still cannot be PROVED on this PC** — 2021, 2022 and 2023 are not installed, and all of those
 sources are somebody's conditional rather than a compile. What is proved here is only: present on 2020,
 gone by 2024. Recorded this way on purpose: **the exact year is the part that was guessed, and a guess
 that has been contradicted should say so rather than quietly change from one confident number to
@@ -496,3 +503,26 @@ what distinguishes them. Anything gated on a 2026-or-later member therefore has 
 reflection like everything else — the major number alone will say yes on a build that does not have it.
 Nothing in this library depends on a 2026.3 member today; this is here so the first fragment that wants
 one does not gate on the wrong number.
+
+### Two ways to probe for an API member, and each one lies on its own
+
+Both are needed, because they fail in opposite directions (learned 2026-08-24 while writing
+`action-report-mep-pressure-drop.cs`, which named four members that do not exist).
+
+**The DLL string grep** proves a NAME appears somewhere in the assembly. It does not prove which type
+owns it. `PressureDrop`, `HydraulicDiameter` and `Diameter` all appear in `RevitAPI.dll` — on other
+types. Grepping found them and the fragment failed to compile four times.
+
+**The compile probe** — write the candidate members into a throwaway fragment and let `csc` name the bad
+ones — is authoritative about ownership. But **the harness prints a TRUNCATED error list.** A probe with
+nine candidates printed four failures, and the five it did not mention were assumed to exist. Three of
+them did not. The complete list is written to `fragment-compile-failures.txt`, and that is the file to
+read:
+
+```bash
+grep "does not contain a definition for" fragment-compile-failures.txt
+```
+
+**The rule: grep the DLL to find candidate names, compile-probe to find which type owns them, and read
+the FAILURES FILE rather than the console summary.** Either half alone produces a confident wrong
+answer, which is the expensive kind.

@@ -39,12 +39,32 @@ foreach (var ty in typesToReport)
 
     withStructure++;
     var layers = cs.GetLayers();
-    sb.AppendLine($"- Type '{ty.FamilyName}: {ty.Name}' (Id {ty.Id}) — {layers.Count} layer(s), total {toMm(cs.GetWidth()):F0} mm (exterior/top first):");
+
+    // The CORE total, not just which layers are core. This is the number behind the three different
+    // dimensions the same wall can give you: total width is the outside-face-to-outside-face figure,
+    // the core width is what the structure actually is, and the difference is the finishes. A room
+    // measured to Finish, to Center and to CoreBoundary differs by exactly these amounts — see
+    // action-report-room-dimensions.cs and the boundary-location note in action-report-room-boundaries.cs.
+    // Added 2026-08-24.
+    double coreWidthFt = 0;
+    int firstCore = 0, lastCore = -1;
+    try { firstCore = cs.GetFirstCoreLayerIndex(); lastCore = cs.GetLastCoreLayerIndex(); } catch { }
+    for (int ci = firstCore; ci <= lastCore && ci < layers.Count; ci++)
+    {
+        if (ci < 0) continue;
+        try { coreWidthFt += layers[ci].Width; } catch { }
+    }
+    double totalFt = 0;
+    try { totalFt = cs.GetWidth(); } catch { }
+    double finishesFt = totalFt - coreWidthFt;
+
+    sb.AppendLine($"- Type '{ty.FamilyName}: {ty.Name}' (Id {ty.Id}) — {layers.Count} layer(s), total {toMm(totalFt):F0} mm (exterior/top first):");
+    sb.AppendLine($"    core {toMm(coreWidthFt):F0} mm + finishes {toMm(finishesFt):F0} mm  <- the gap between a Finish dimension and a CoreBoundary one");
     int idx = 0;
     foreach (var layer in layers)
     {
         var mat = layer.MaterialId != ElementId.InvalidElementId ? Document.GetElement(layer.MaterialId)?.Name : null;
-        bool isCore = idx >= cs.GetFirstCoreLayerIndex() && idx <= cs.GetLastCoreLayerIndex();
+        bool isCore = idx >= firstCore && idx <= lastCore;
         sb.AppendLine($"    {idx + 1}. {layer.Function}, {toMm(layer.Width):F1} mm, material: {mat ?? "(by category)"}{(isCore ? "  [CORE]" : "")}");
         idx++;
     }

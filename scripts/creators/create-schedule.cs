@@ -48,6 +48,34 @@ else
         t.Start();
         try
         {
+            // ASK FIRST. Not every category can carry a schedule, and CreateSchedule throws a bare
+            // ArgumentException on the ones that cannot - which reaches the user as a stack trace
+            // instead of "that category cannot be scheduled". Revit will answer directly.
+            // Added 2026-08-24.
+            bool okForSchedule = true;
+            try { okForSchedule = ViewSchedule.IsValidCategoryForSchedule(categoryElement.Id); } catch { }
+            if (!okForSchedule)
+            {
+                t.RollBack();
+                sb.AppendLine($"'{categoryElement.Name}' cannot be scheduled - Revit does not allow a schedule on that category.");
+                // Revit will also hand over the WHOLE valid list, so the refusal can name the alternatives
+                // instead of leaving the user to guess. GetValidCategoriesForSchedule is a static.
+                try
+                {
+                    var valid = ViewSchedule.GetValidCategoriesForSchedule();
+                    if (valid != null && valid.Count > 0)
+                    {
+                        var names = valid.Select(id => Category.GetCategory(Document, id))
+                                         .Where(c => c != null).Select(c => c.Name)
+                                         .OrderBy(x => x).Take(40).ToList();
+                        sb.AppendLine($"Revit accepts {valid.Count} categories here. The first {names.Count} alphabetically: {string.Join(", ", names)}");
+                    }
+                }
+                catch { }
+                sb.AppendLine("Annotation, view and datum categories are the usual refusals. Or use create-key-schedule.cs for a key schedule.");
+                return sb.ToString();
+            }
+
             var schedule = ViewSchedule.CreateSchedule(Document, categoryElement.Id);
             schedule.Name = scheduleName;
 

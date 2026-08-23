@@ -4494,3 +4494,385 @@ Type's Routing Preferences → Junctions.
 **The general lesson: an order-of-operations bug looks like a geometry bug.** Nothing about the squeezed
 junction said "you sized too late" — it took reading `Minimum Size`/`Maximum Size` off a placed instance
 to separate "the fitting is stale" from "the family cannot do this".
+
+- 2026-08-24 — **fifth harvest: five repos in one batch, with a second session working the other five.**
+  Ajmal asked for ten GitHub repos, split them, and took the other half to a parallel session. Ledger:
+  [`docs/bridge-mep-diff-harvest.md`](../docs/bridge-mep-diff-harvest.md). The two batches were split by
+  TARGET FOLDER rather than by topic, so the sessions would not collide — this one in `qa-checks/`,
+  `color-graphics/` and `reporting/`, the other in `reporting/`, `context/` and `sheets-views/`.
+
+  **The method step worth reusing: intersect the API diff against the Revit API itself.** The
+  library-harvest technique says "diff the API surface, not the file list", and the first attempt was
+  useless — extracting capitalised tokens from five repos and diffing against the Brain returned their
+  own class names, `JsonSerializer` and `TaskScheduler`. **The fix was to reflect every public type and
+  member out of the shipped `RevitAPI.dll` — 34,901 names — and keep only the intersection.** The diff
+  then became "really Revit API, used by them, in none of our fragments", and it was short enough to
+  act on: 159 names for the MEP library, 67 for the model-comparison add-in, 55 for the AI agent, 16 for
+  the test runner, **8 for the async wrapper**. That last number decided a whole repo before it was read.
+
+  **BUILT — 3, all compiling on 2020/2024/2027, none run on a real model.**
+  [`action-show-analysis-heatmap.cs`](../scripts/actions/color-graphics/action-show-analysis-heatmap.cs)
+  — the `Analysis` namespace appeared in **no fragment**, so "show me this number on the model" had only
+  one answer here: flat colour overrides, which silently discard magnitude. 26 l/s and 260 l/s were the
+  same blue. This is a continuous scale with Revit's own legend.
+  [`action-report-routing-preferences.cs`](../scripts/actions/reporting/action-report-routing-preferences.cs)
+  — which fitting Revit inserts and at which sizes; the silent failure it catches is a size outside every
+  rule's window, which gets NO fitting and no warning.
+  [`action-compare-models.cs`](../scripts/actions/qa-checks/action-compare-models.cs) — two models
+  compared. `action-compare-elements.cs` only ever worked inside one.
+
+  **The finding worth more than any of the three builds, and it is not Revit knowledge.** The AI-agent
+  repo is a peer to our own bridge, and its policy gate carries a tuning lesson in a code comment:
+  *"Double-gating at code level caused 2-3x confirmation roundtrips and confused weaker LLMs into
+  infinite loops."* Our equivalent is a CONVENTION — dry-run by default in every fragment header, plus
+  the agent's judgement — with no code-level gate at all. **The lesson is not "add one". It is that
+  gating the same operation twice is worse than gating it once**, so if a gate is ever added to
+  `mcp-server/`, the header convention for that operation should come out in the same change. Recorded
+  rather than built: it changes `mcp-server/`, not `scripts/`, and that is a separate decision.
+
+  **Three SKIPs with reasons that hold.** The async wrapper is `IGenericExternalEventHandler` and static
+  registries throughout — **every path needs a class we cannot declare**, the FOURTH instance of that
+  structural limit after `IFailuresPreprocessor`, `IDuplicateTypeNamesHandler` and `IFamilyLoadOptions`
+  — and it solves a problem the bridge already solved. The MEP library is a Dynamo package, which Ajmal
+  had already ruled out; that rules out the LAYER, not the content, and the 159 wrapped Revit API names
+  were the harvest. The test runner runs unit tests inside Revit, which is exactly the gap
+  `brain-status.mjs` reports every session — but its mechanism is an add-in plus a file-watcher protocol
+  plus a WPF app, so it does not transfer, and our answer stays "run one element first".
+
+  **In OUR code:** `recipes/draw-main-duct-with-cap.cs` reads routing preferences with `GetRule(group, 0)`
+  — the FIRST rule regardless of the size being drawn. Fine for a cap, wrong as a habit, because which
+  rule matches depends on the size; that is what `GetMEPPartId` is for. The recipe is unproven and
+  fixture-blocked so it was not changed, but the new fragment documents the correct lookup. And
+  `Document.GetDocumentVersion` was unused: `VersionGUID` + `NumberOfSaves` is the authoritative "same
+  model, same save?" check, better than any file date, and it is now the FIRST line of the comparison
+  output so a same-GUID pair is caught before anyone reads a diff that cannot be real.
+
+  **Two traps that cost a compile round each.** A routing preference rule **has no size on it** — it
+  holds a list of criteria and the window lives on a `PrimarySizeCriterion` inside; `rule.MinimumSize`
+  reads as obvious and does not compile. And `AnalysisDisplayStyle.FindByName` does **not** return
+  `InvalidElementId` when absent — it returns an id that will not resolve, so the version-proof test is
+  `Document.GetElement(id) == null` rather than reading the number. Also re-learned: **the prelude's
+  `ToMm`/`IdValue` are not available to the compile checker**, which builds each fragment alone.
+
+- **Harvested five repos — two model explorers, a tag tool, an add-in loader and an office add-in suite
+  — and read the two explorers AGAINST each other, which was Ajmal's instruction and the better half of
+  the harvest.** Ledger:
+  [`docs/explorers-and-office-suite-harvest.md`](../docs/explorers-and-office-suite-harvest.md).
+  Two of the five had already been harvested earlier the same day; that is recorded rather than redone,
+  and what was new was the comparison, not the repos.
+
+  **The disagreement, quantified: 132 hand-written per-type descriptors against 52 per-member
+  overrides.** Both tools answer "show me everything about this Revit object" and disagree about how much
+  of the API can be reflected over blindly. The generic approach needs a third as many special cases —
+  so most of the API IS safe, and **the useful artefact is the INTERSECTION of the two lists**: the
+  members both teams had to special-case independently. That is the nearest thing to an evidence-based
+  "these are the traps" list. Both singled out `GetDependentElements(null)`, `GetMaterialArea`,
+  `GetMaterialVolume`, `GetPhaseStatus`, `GetEntity`, `BoundingBox`, `Geometry` and the same four
+  `MEPSection` members — **independent confirmation of the fragments built from the first explorer this
+  morning.** Nothing had to change; the agreement is the finding.
+
+  **BUILT — [`action-report-mep-pressure-drop.cs`](../scripts/actions/reporting/action-report-mep-pressure-drop.cs):**
+  Revit's own calculated hydraulics per system section, including `GetCriticalPathSectionNumbers()` —
+  **the index run that sizes the fan or the pump.** Nothing here was reading any of it, so every pressure
+  question was answered from first principles when the model already knew. The trap that makes it
+  dangerous: **a system that is not fully connected reports ZERO SECTIONS rather than an error**, which
+  reads as "no pressure loss" and means "not calculable" — those are listed separately as UNCALCULATED.
+
+  **BUILT — [`action-report-ceiling-heights.cs`](../scripts/actions/reporting/action-report-ceiling-heights.cs):**
+  clear height per room. **The reason the obvious version returns nothing: a room's solid stops at its
+  Upper Limit**, which on most real models is left at the room's own level, so it never reaches the
+  ceiling. Two passes — the room as it stands, then the upper limit temporarily raised, measured and
+  rolled back. **The MAIN ceiling is the greatest intersection VOLUME with the room**, not the first
+  found; taking the first quotes a 400 mm bulkhead as the room's height. Ceilings are filtered to the
+  room's own level or the storey above is caught and the answer becomes the floor-to-floor height.
+  **Measure-then-roll-back is the third instance in two days** and is now a named technique.
+
+  **UPGRADED — `action-report-room-boundaries.cs` offered two boundary locations out of four.** Revit has
+  Finish, Center, CoreBoundary and CoreCenter, and on a plastered blockwork wall each gives a different
+  room. This matters here specifically because **Ajmal's own three modes — interior 8800, wall-mid 9000,
+  exterior 9200 — ARE this distinction**, and he has said a number quoted without naming its mode is what
+  causes the confusion. Every room now states which location produced it. `StoreFreeBoundaryFaces` was
+  also never set: with it off a segment generated by nothing can be dropped and the loop silently reads
+  shorter than the room is.
+
+  **A limitation in our OWN compile harness, found the hard way and worth more than any of the above.**
+  Probing for `MEPSection`'s real members, a nine-candidate probe printed four failures — and the five it
+  did not mention were assumed to exist. Three did not. **The harness prints a TRUNCATED error list; the
+  complete one goes to `fragment-compile-failures.txt`.** Combined with the complementary weakness of the
+  DLL string grep — it proves a name exists somewhere without proving which type owns it — that is two
+  probing techniques that each lie in a different direction. Both now written up in
+  [`revit-version-compatibility.md`](revit-version-compatibility.md): **grep to find candidates,
+  compile-probe to find the owner, and read the failures FILE, never the console.**
+
+  **A collision avoided by re-checking disk immediately before building, as Ajmal asked.** The
+  analysis-visualisation overlay was on this session's list; the disk check found the parallel session
+  had just created `action-show-analysis-heatmap.cs`. Dropped rather than duplicated.
+
+  **Noted, not built, with reasons rather than deferred by default:** depth cueing on a section (belongs
+  in `actions/color-graphics/`, which the parallel session was actively writing — the one place building
+  would have caused the collision that was warned about; a real BUILD candidate for the next session),
+  and door from-room/to-room parameters. Repo 4 is an add-in loader and is out of scope for the same
+  reason the bridge's own add-in is.
+
+- 2026-08-24 — **"everyting you took no missing ??" — and the answer was no.** Ajmal asked whether the
+  five-repo harvest above had really taken everything. It had not. The API-surface diff was rigorous, but
+  **only ~1,500 of 57,601 lines had been opened.** A better survey is still a survey, and the method says
+  so in as many words: *a survey shows what code CALLS and never what it LEARNED.* Substituting one for
+  the other is exactly the mistake the earlier harvests were supposed to have retired. He has now caught
+  this twice — the pyRevit platform harvest went the same way on 2026-08-23 (*"each and everyting hard
+  chek"*), and both times the full read paid for itself immediately.
+
+  **What the full read found, worst first.**
+
+  **1. A defect in `action-compare-models.cs`, written an hour earlier.** It shipped matching elements on
+  a composite key — category + family + type + Mark, falling back to location — on the stated reasoning
+  that *"an ElementId is meaningless across two documents"*. **That reasoning is true of two unrelated
+  models and false for the only case the fragment is for: a model and an earlier save of ITSELF.** A
+  save-as preserves ElementIds, so the id IS the identity, and the composite key was strictly worse — it
+  invents an "added" and a "removed" every time somebody edits a Mark or nudges an element, which is
+  precisely the noise a change report must not produce. Found inside 150 lines of a 1,028-line file the
+  fragment had been built against **blind**. Corrected; `matchOn = "id"` is the default and the old
+  behaviour survives for genuinely unrelated models. The wrong rule is left visible in the ledger with a
+  strikethrough rather than deleted, because it is the exact shape of what to watch for: a plausible
+  rule, written confidently, from a survey.
+
+  The same read added two real capabilities, both reflected: **`Document.GetChangedElements(episodeGuid)`**
+  (2023+, Revit returns what changed) and **`Element.VersionGuid`** (2021+, a per-element stamp — equal on
+  both sides means skip the parameter walk entirely).
+
+  **2. The missing half of one of the most-used MEP fragments here.**
+  `action-report-connectors.cs` reads Radius, Height, Width, Shape, Origin, Domain, IsConnected, AllRefs,
+  Owner, CoordinateSystem — **all geometry and topology.** Every one answers "where is it and what is it
+  joined to"; **none answers "what is it carrying."** `Demand`, `AssignedFlow`, `AssignedKCoefficient`,
+  `AssignedFixtureUnits`, `AssignedLossCoefficient`, `AssignedPressureDrop`, `Coefficient` and
+  `EngagementLength` were in **no fragment at all**. New:
+  [`action-report-connector-loads.cs`](../scripts/actions/reporting/action-report-connector-loads.cs).
+  **The failure it catches is the classic MEP one**: Revit calculates system flow and pressure loss FROM
+  these values, so a fixture with no Demand or a sprinkler with no K-factor contributes zero and the
+  system report comes back clean and completely wrong — the numbers are real, they are just the wrong
+  ones. Two details that make it honest: a zero on a pipe is NORMAL (demand belongs to the fixture, not
+  the run) so only load-bearing categories are flagged; and reading a property the domain does not have
+  **throws** rather than returning zero, so every read is guarded and a blank means "not applicable".
+
+  **3. A finding for our own bridge, from a file nearly skipped.** The peer agent wraps the model's C# as
+  `class DynamicScript { public static object Execute(Document doc, UIDocument uiDoc, StringBuilder output) { ... } }`
+  — **structurally the same design as ours**, which independently confirms that "a fragment body cannot
+  declare a class" is inherent to the approach and not a quirk of our harness. But its wrapper injects
+  `using` for `Autodesk.Revit.DB.Architecture`, `.Mechanical`, `.Electrical` and `.Plumbing`, and **ours
+  does not**. That is why fragments here must write `Autodesk.Revit.DB.Architecture.Room` in full —
+  recorded in `action-assign-location-data.cs` as a fact of life. **It is not a fact of life; it is four
+  lines in the wrapper.** An `mcp-server/` change, so recorded rather than made, but it would simplify
+  every spatial fragment in the library.
+
+  **The skips are now evidence-based, which is the other half of the answer.** 8,194 lines are still
+  unread and each was checked before being set aside: the analyser-annotations file is **243 attribute
+  declarations**; the tessellation helper and the agent's session reporter and tool loop contain **zero
+  `Autodesk.Revit` references** between them; the rest is WPF and WinForms. That is a defensible skip.
+  ~1,500 lines skipped on assumption, in the first pass, was not.
+
+- **Finished the office-suite harvest tool by tool — all 18 projects now have a verdict, and it found
+  three more things wrong in our own code.** Part 2 of
+  [`docs/explorers-and-office-suite-harvest.md`](../docs/explorers-and-office-suite-harvest.md), after
+  Ajmal was shown that roughly 96% of the five repos was still unread and said to finish it part by part.
+
+  **`create-sheet-list.cs` said placeholder sheets were "UI-created and not covered here". They are not.**
+  `ViewSheet.CreatePlaceholder(Document)` exists on Revit 2020 through 2027. A placeholder is a real sheet
+  with a number and a name, no title block and no views — exactly how a drawing register is built before
+  the drawings exist, which is work Ajmal does. Corrected, and `create-sheet.cs` now makes them.
+  **This is the THIRD "it says impossible and it is not" this week**, after the family-load handler and
+  the ceiling creator. Three is a pattern: **a note claiming something cannot be done is worth
+  re-checking, because the cost of being wrong is that the job never gets attempted at all.**
+
+  **`action-create-from-room-boundaries.cs` cannot see rooms in a LINKED model** — flagged in its header,
+  not changed. On an MEP job the rooms live in the architect's link, so "put a ceiling in every room" —
+  the job that fragment exists for — currently cannot be done on the model Ajmal actually works in. The
+  fix is known and already used in `action-center-room-tags.cs`: `GetLinkDocument()` plus
+  `GetTotalTransform()` on every boundary point. Left flagged because the fragment has careful per-item
+  failure handling, has never been run, and belongs to the parallel session's area.
+
+  **`recipes/sprinkler-nfpa-grid.cs` mistakes a ROTATED room for an IRREGULAR one.** It grids on the
+  project-aligned bounding box, so on a rotated rectangular room the grid runs diagonal to the walls —
+  and its own bbox-vs-room-area warning fires and blames the room shape, when the room is a perfectly good
+  rectangle that is simply not square to project north. On a site not aligned to true north, which is most
+  of them, that is every room. Recorded; the recipe is the other session's area.
+
+  **BUILT — [`action-report-door-room-links.cs`](../scripts/actions/reporting/action-report-door-room-links.cs):**
+  **`door.ToRoom` and `door.FromRoom` cannot be trusted on their own.** They follow the door's FACING
+  ORIENTATION, so a flipped door has them backwards relative to where the rooms physically are — the plan
+  looks right and the schedule reads backwards with no warning. Probe a point either side along the door's
+  own normal, ask `IsPointInRoom`, and where it disagrees the geometry wins and the swap is REPORTED. Also
+  **From/To are phase-dependent** and the bare property answers for the last phase only, which is wrong
+  for every phase but one on a renovation.
+
+  **BUILT — [`action-report-room-dimensions.cs`](../scripts/actions/reporting/action-report-room-dimensions.cs):**
+  **a rotated room has no useful bounding box.** Turn an 8000 x 4000 room 30° and `get_BoundingBox` says
+  roughly 8900 x 7500 — half as big again, in a shape the room does not have. The room's own axis is the
+  longest outer-boundary segment; rotate the points by minus that angle IN MEMORY and take the extents, so
+  nothing is created and the model is never touched. **The outer loop is found by SIGNED AREA, not by
+  taking loop[0]** — loop[0] is usually the outer one and "usually" is not a rule.
+
+  Two real capabilities recorded as not-built with reasons rather than deferred silently: **depth cueing**
+  on a section (needs `VIEWER_BOUND_FAR_CLIPPING` active or the depth defaults to 10 feet and the banding
+  is meaningless — belongs in the other session's live area) and **lighting power density** per room.
+  Massing, model telemetry and add-in infrastructure are skipped with reasons in the ledger.
+
+- 2026-08-24 — **a repo with no code in it, and one finding that was still worth the visit.** Ajmal
+  pointed at a Revit data-extraction experiment. **It contains no source at all** — 4 markdown files,
+  236 lines, last touched 2024-08. All of it read.
+
+  **Nothing to build, and the reason is structural, not a judgement.** Its one concrete technique is
+  background processing on the `UIApplication.OnIdling` event with a work queue — which needs an event
+  subscription, which needs a class, which a fragment body cannot declare. Same limit as the async
+  wrapper judged earlier the same day. Its other ideas are open questions its own author lists as
+  unanswered ("How reliable is it that these will be different for different objects?"), and the rest is
+  general software-performance advice rather than Revit knowledge. **One measured number, recorded with
+  its conditions**: geometry information extracted from every element in a scene took 2.8 s of real work
+  amortised over 40 s of idle events, and the session stayed usable throughout. That is their model, not
+  ours.
+
+  **The finding worth keeping was a warning, and verifying it produced something better than the
+  warning.** The repo cautions that `GetHashCode` on Revit geometry is a native POINTER address, not a
+  value hash — so it is unstable between sessions and useless for "has this changed". True, and worth
+  knowing. But checking it against the shipped `RevitAPI.dll` rather than taking it on trust turned up
+  the fuller picture, now in
+  [`live-model/element-identity.md`](live-model/element-identity.md):
+
+  | Type | GetHashCode declared by | Consequence |
+  |---|---|---|
+  | `ElementId` | `ElementId` | overridden by VALUE — safe as a key, and what we already use everywhere |
+  | `GeometryObject` / `Solid` / `Face` | `GeometryObject` | overridden, but by native POINTER — **looks like a value hash and is not**, which is what makes it dangerous |
+  | `Element` | `Object` | NOT overridden — reference identity |
+  | `XYZ` | `Object` | NOT overridden — reference identity |
+
+  **`XYZ` is the one nobody expects.** Two XYZ objects at the same coordinates are different keys, so a
+  `HashSet<XYZ>` built to find coincident points finds none and reports zero duplicates on a model full
+  of them. `Element` is the same — Revit returns a fresh wrapper per call, so a `HashSet<Element>` can
+  hold one element several times.
+
+  **Checked, and the library is clean: no fragment keys a collection on `XYZ` or `Element`** — zero hits
+  for either. `action-find-overlapping-lines.cs` is the worked example of doing it right, keying lines by
+  a rounded direction-plus-offset string precisely because the geometry objects cannot be compared that
+  way. So this is a trap to keep avoiding rather than one to go and fix, and it is filed as such.
+
+  **Verdict on the repo: SKIP, one knowledge note.** Recording that plainly rather than inflating it —
+  a harvest that produces one note is a real outcome, and pretending otherwise is how a ledger stops
+  being trustworthy.
+
+- 2026-08-24 — **the largest harvest target yet, and the first one deliberately NOT finished in a single
+  pass.** A 72-plugin Revit suite: **2,724 C# files, 183,262 lines** — bigger than the pyRevit platform
+  and this repo's own library combined. Survey and API diff done in full; the read is partial and is
+  recorded as partial, because claiming otherwise is the exact failure Ajmal caught earlier the same day.
+
+  **The API diff scaled and stayed useful.** Same technique as the five-repo batch — every token
+  intersected against the 34,901 names reflected out of `RevitAPI.dll`, then diffed against all 360
+  fragments. **510 Revit API names used there and absent here.** Most of the top of that list is their
+  own helper vocabulary (`GetParamValue`, `PipeSettings`, `OpeningType`), which is the expected shape for
+  a suite with its own internal library — the signal is further down.
+
+  **BUILT — 1, compiling on 2020/2024/2027, not run on a real model.**
+  [`action-report-model-file-info.cs`](../scripts/actions/reporting/action-report-model-file-info.cs) —
+  **`BasicFileInfo.Extract(path)` reads a `.rvt` HEADER without opening the model.** A folder of fifty
+  files takes seconds instead of an afternoon and locks nothing. It answers things the library had no way
+  to ask: **is this a CENTRAL or somebody's LOCAL** (opening a local by mistake is the classic way to
+  damage a workshared job), **whose local**, **did their work actually reach the central**
+  (`AllLocalChangesSavedToCentral` false means the model they sent is missing work that exists only on
+  their machine), and **is it saved in a NEWER Revit** — answered before the failed open rather than
+  after it. Pairs directly with `action-batch-upgrade-revit-files.cs`: run this first to see which files
+  even need upgrading. One nuance in the header: `IsSavedInCurrentVersion` compares against the Revit
+  RUNNING NOW, so the same file reports differently depending which Revit asks — correct behaviour, not a
+  bug, and the running version is printed alongside so the answer can be read.
+
+  **Verified, then decided against building.** `Category.GetBuiltInCategory` is **2024+ only** — absent
+  on 2020 — which means the Category-Id comparison loop written into
+  `action-report-connector-loads.cs` an hour earlier was not clumsiness but a necessity. Left as it is.
+  `Solid.IntersectWithCurve` exists on every version and would give the entry and exit points of a pipe
+  through a wall, but `recipes/create-mep-openings.cs` already does a real
+  `BooleanOperationsType.Intersect` with proper link transforms, and `action-report-clashes.cs` already
+  uses `ElementIntersectsElementFilter` with the `IsElementSupported`/`IsCategorySupported` guards. Both
+  ours are sound; the gain would be marginal.
+
+  **Still open, and named rather than glossed:** `BasicFileInfo` was the clear win, but
+  `Level.ProjectElevation` vs `Level.Elevation` (two different numbers, and the drawing shows one of
+  them), `FamilyInstance.SuperComponent` / `GetSubComponentIds` (nested families — his equipment work),
+  `NamingUtils.IsValidName` (validate before renaming instead of catching the throw) and
+  `ParameterFilterUtilities` are all confirmed present on 2020 and confirmed absent from every fragment.
+  The five biggest plugins — openings at **23.4k lines**, pylon documentation 11.3k, sleeves 6.9k, clash
+  detection 6.9k, lintel placement 5.5k — are unread.
+
+  **This one needs its own session.** 183k lines cannot get the read the method demands alongside
+  everything else in a working day, and a survey dressed as a read is what produced the wrong
+  ElementId rule earlier today. Recording it as unfinished is the honest state.
+
+- **Targeted trap-list pass over the two model explorers — and it caught a defect in a fragment written
+  two hours earlier, plus a wrong "impossible" that had been sitting in the purge fragment for weeks.**
+  Rather than take a new repo, the 119 per-type descriptors and 52 per-member overrides were filtered to
+  the types this Brain's work touches and read for what they special-case. New note:
+  [`live-model/api-members-that-need-an-argument.md`](live-model/api-members-that-need-an-argument.md).
+
+  **THE DEFECT, in `action-report-mep-pressure-drop.cs`, mine, from two hours before.** `MEPSystem`
+  exposes BOTH `GetSectionByIndex(i)` and `GetSectionByNumber(n)`, and **`SectionsCount` bounds the
+  INDEX** — the number is a property of the section. The fragment looped `for (n = 1; n <= SectionsCount;
+  n++)` calling `GetSectionByNumber(n)`, which assumes the numbers run exactly 1..N with no gaps. On a
+  system with sparse numbering it reads some sections twice and misses others, and **being a report it
+  looks plausible either way.** Now iterates by index and reads `.Number` off each section;
+  `GetSectionByNumber` is kept only for looking one up by a number something else handed you, which is
+  exactly what `GetCriticalPathSectionNumbers()` returns. Compile-checked on 2020 and 2027.
+
+  **THE WRONG IMPOSSIBLE: `action-purge-unused.cs` said families, line patterns and fill patterns "rely
+  on internal Revit heuristics with no public API equivalent".** That is true on Revit 2020 and false
+  from 2024: `Document.GetAllUnusedElements(ISet<ElementId>)` and `GetUnusedElements(...)` ARE the public
+  API behind the native Purge Unused dialog. Added as a fifth mode, `"revit_native"`, reached by
+  reflection so one source still runs on 2020 (where it says plainly that this version has no such API
+  and points back at the four computed modes). It reports BOTH calls' counts rather than assuming which
+  one cascades, and groups the result by category — a flat list of 4000 ids says nothing about what you
+  are about to lose. **Fourth "it says impossible and it is not" this week**, after the family-load
+  handler, the ceiling creator and placeholder sheets. The shape is always the same: an "impossible"
+  recorded against ONE version, stated without naming the version.
+
+  **UPGRADED — `create-schedule.cs` and `create-key-schedule.cs` now ask before they act.**
+  `ViewSchedule.IsValidCategoryForSchedule` / `IsValidCategoryForKeySchedule` exist on every version here
+  and neither creator was calling them, so an invalid category reached the user as a raw exception
+  instead of "that category cannot be scheduled". A key schedule is allowed on a much narrower set than
+  an ordinary one, which is exactly the case someone hits by accident.
+
+  **The note itself is the durable output.** It is the INTERSECTION of two independently-written
+  special-case lists — a member both teams had to handle by hand is one that genuinely bites — filtered
+  to the types that matter here. Three sections carry their weight beyond the table: **index is not
+  number**; **the validators nobody knows exist** (thirteen `Is…Valid` / `Can…` calls that turn an
+  exception into a sentence); and **what "not supported" in a descriptor actually means** — it marks
+  what MUTATES, because an inspector must not change the model. A fragment's whole job is to mutate, so
+  those lists are a map, not a warning. The genuine dangers are few: `Document.Close()`, and
+  `Document.get_PlanTopologies(phase)`, which **modifies the document and needs a transaction even though
+  it only reads** — the one member that breaks the read/write intuition completely.
+
+- **Finished the five-repo session: the trap-list pass completed, and the last repo verdicted from a
+  real read rather than a survey.** Part 3 of
+  [`docs/explorers-and-office-suite-harvest.md`](../docs/explorers-and-office-suite-harvest.md).
+
+  **Two more version facts, from third and fourth independent sources.** The `IndependentTag` boundary
+  was recorded yesterday as "probably 2022, cannot be proved here". Two more sources now agree on 2022 —
+  **and they split the members apart**: `GetLeaderElbow`, `GetLeaderEnd` and `HasLeaderElbow` at
+  2022-minimum, `IsLeaderVisible` at 2023-minimum. So "the IndependentTag API changed at X" is too coarse
+  to be true; **the members moved in at least two waves**, and anything reaching for `IsLeaderVisible`
+  needs its own null check rather than sharing one with `GetLeaderEnd`. Separately, a fourth source puts
+  `Definition.ParameterType` -> `GetDataType()` at 2023, matching what this Brain already records — worth
+  logging, because a source that AGREES is evidence too and usually goes unrecorded.
+
+  **`create-schedule.cs` now names the alternatives when it refuses.** `ViewSchedule` has a static
+  `GetValidCategoriesForSchedule()` returning the whole valid list, so the refusal says which categories
+  Revit will accept instead of leaving the user to guess.
+
+  **Checked and left alone, which is the part worth recording.**
+  `action-report-compound-structure.cs` already marks core layers — via
+  `GetFirstCoreLayerIndex`/`GetLastCoreLayerIndex`, not the `GetCoreBoundaryLayerIndex` the descriptors
+  use, **which is exactly why a grep for the latter found nothing and briefly looked like a gap.**
+  Reading the file corrected the grep. One real addition went in: the CORE THICKNESS total against the
+  overall width — the number behind the gap between a Finish dimension and a CoreBoundary one, and so
+  directly behind Ajmal's interior/wall-mid/exterior distinction. `context-linked-models.cs` was also
+  checked and kept: `GetLinkedFileStatus()` beats `RevitLinkType.IsLoaded` because it separates NotFound
+  from deliberately Unloaded.
+
+  **Repo 4 SKIPPED on a read, not a survey.** An add-in loader (out of scope for the same reason the
+  bridge's own add-in is) plus a built-in-parameter checker already covered by
+  `action-report-parameter-inventory.cs`. Recorded because a survey-grade skip and a read-grade skip are
+  not the same claim, and the method exists to stop the first masquerading as the second.

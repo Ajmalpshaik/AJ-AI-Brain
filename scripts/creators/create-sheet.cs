@@ -26,6 +26,9 @@ int    numberPadding   = 3;             // digits, zero-padded: padding 6 turns 
 string numberSuffix    = "";            // text after the running number, if any
 string namePrefix      = "SHEET ";      // sheet NAME text before the count — ASK
 int    namePadding     = 2;             // 1 -> "01"
+bool   createPlaceholders = false;      // true = PLACEHOLDER sheets: number + name, no title block, no
+                                        // views. How a drawing register is set up before the drawings
+                                        // exist. titleBlockTypeName is ignored when this is on.
 // Names always count 1, 2, 3... from the first sheet, independent of the number series.
 // ---- END INPUTS ----
 
@@ -81,14 +84,20 @@ else
                     .FirstOrDefault(s => s.SheetNumber.Equals(pair.number, StringComparison.OrdinalIgnoreCase));
                 if (existing != null) { skipped++; continue; }
 
-                var sheet = ViewSheet.Create(Document, titleBlockType.Id);
+                // A PLACEHOLDER sheet is a real sheet with a number and a name and NO title block and
+                // no views — it is how a drawing register is built before the drawings exist, and it
+                // appears on a sheet list like any other sheet. Note the different call: CreatePlaceholder
+                // takes no title block, because it has none.
+                var sheet = createPlaceholders
+                    ? ViewSheet.CreatePlaceholder(Document)
+                    : ViewSheet.Create(Document, titleBlockType.Id);
                 sheet.SheetNumber = pair.number;
                 sheet.Name = pair.name;
                 elements.Add(sheet);
                 created++;
             }
             t.Commit();
-            sb.AppendLine($"Created {created} sheet(s), skipped {skipped} (sheet number already exists).");
+            sb.AppendLine($"Created {created} {(createPlaceholders ? "PLACEHOLDER " : "")}sheet(s), skipped {skipped} (sheet number already exists)." + (createPlaceholders ? " A placeholder has no title block and can hold no views — convert it by placing a view on it in Revit." : ""));
         }
         catch (Exception ex)
         {

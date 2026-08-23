@@ -9,8 +9,15 @@
 // GOTCHA: field names on a sheet list are sheet parameters ("Sheet Number", "Sheet Name", "Current
 //         Revision", "Sheet Issue Date") — not model parameters. A name that isn't schedulable is
 //         skipped and REPORTED, with the available names listed so the next run can be exact.
-// GOTCHA: to include sheets that don't exist yet, Revit uses placeholder sheets — those are UI-created
-//         and not covered here.
+// GOTCHA: to include sheets that don't exist yet, Revit uses PLACEHOLDER sheets — a sheet number and
+//         name with no title block and no views, which appears on a sheet list like any other. They are
+//         how a drawing register is set up before the drawings exist.
+// ✱ CORRECTED 2026-08-24 — this line used to say placeholders were "UI-created and not covered here",
+//   which read as "the API cannot make them". It can: `ViewSheet.CreatePlaceholder(Document)`, present
+//   on Revit 2020 through 2027. See creators/create-sheet.cs, which now makes them.
+//   Same shape as the load-family "needs an interface" claim corrected the same week: **a note saying
+//   something is impossible is worth re-checking, because the cost of being wrong is that the job never
+//   gets attempted.**
 // ✓ LIVE-VERIFIED 2026-07-26 on Project1 — created a real sheet list with both columns and the sort field,
 //   then reverted it with commands/native-undo.cs. `ViewSchedule.CreateSheetList` does exist on Revit 2020.
 // ============================================================

@@ -1,7 +1,70 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-23.** Read top-down. The newest session is first.
+Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
+## 2026-08-24 — SIX REPOS HARVESTED, NOT COMMITTED, HARVESTING PAUSED BY AJMAL
+
+**State: 360 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency checks pass.
+Plugin at 1.1.19. NOTHING IS COMMITTED OR PUSHED — that is the first job tomorrow.**
+
+Ajmal's words at the end: *"no issue harvesting we will continew tomarow"*. Harvesting is paused, not
+abandoned. He also asked, twice, whether it was complete — and the honest answer both times was no, so
+**do not tell him it is finished without checking this list.**
+
+### What was done today
+
+Ledgers, all in `docs/` (outside the search index — nothing will surface them for you):
+
+- [`revit-libraries-harvest.md`](revit-libraries-harvest.md) — 12 developer libraries, plus a tag-tool addendum
+- [`explorers-and-office-suite-harvest.md`](explorers-and-office-suite-harvest.md) — five repos in three parts
+- [`fragment-catalogue.md`](fragment-catalogue.md) — every fragment with a one-line description, generated
+
+**Eight real defects were found in OUR code, which is the point of the method.** The two worth knowing:
+the purge fragment was offering PAINT materials for deletion, and the clash report gave a clean bill of
+health for elements it never tested. Both fixed. Also: a defect in a fragment written two hours earlier
+(`GetSectionByNumber` vs `GetSectionByIndex`), caught by the second read.
+
+**Four separate wrong "impossible" claims** — family loading, ceilings, placeholder sheets, purge. All
+the same shape: an impossibility recorded against ONE Revit version, written down without naming the
+version. **Assume there are more.**
+
+### What is genuinely left
+
+| Left | Size |
+|---|---|
+| Descriptors outside the relevant set (rebar, assets, print manager, point clouds) | 75 — deliberately out of scope, revisit only if a job needs one |
+| Two real BUILD candidates, written up with their preconditions | depth cueing on a section; lighting power density per room |
+| `action-create-from-room-boundaries.cs` cannot see rooms in a LINKED model | flagged in its header with the exact fix — **on an MEP job the rooms ARE in the link, so this fragment currently cannot do its job on Ajmal's real models** |
+| `recipes/sprinkler-nfpa-grid.cs` mistakes a ROTATED room for an irregular one | grids on the project-aligned box; `action-report-room-dimensions.cs` distinguishes the two cases |
+
+The five repos themselves are done: align-tag read in full, HOK all 18 projects verdicted, both
+explorers mined for their trap lists, the add-in manager skipped on a read rather than a survey.
+
+### The thing that matters more than any repo
+
+**247 of 360 fragments are proven (69%). That went DOWN from 74% this morning** — harvesting adds
+unproven code faster than anything proves it. 63 are flagged untested and 38 have no status either way;
+the second group is the dangerous one, because nothing warns you.
+
+Three from today are READ-ONLY and cost nothing to try the moment a model is open:
+
+- `action-report-mep-pressure-drop.cs` — on one system, checked against Revit's own System Inspector
+- `action-report-ceiling-heights.cs` — on one room whose height is known. If it says "no ceiling" for a
+  room that has one, that is the Upper Limit case it exists to catch, and pass 2 should find it
+- `action-purge-unused.cs` in dry run — confirm painted materials no longer appear as unused
+
+**Suggest proving before harvesting again.** A library where a third has never run will surprise him
+mid-job, which is the exact problem this Brain exists to prevent.
+
+### Housekeeping
+
+- A second Claude session was working in parallel today in `knowledge/`, `recipes/`,
+  `actions/structural-changes/` and `actions/qa-checks/`. Some fragments on disk are theirs. The rule
+  learned from it is now in `CLAUDE.md`: private per-file work first, shared files (README rows, counts,
+  brain-log, plugin-release) in one pass at the end.
+- The harvest scratchpad clones are in the session temp folder and will be cleaned up automatically.
+
+---
 ## 2026-08-23 — FOUR REPOSITORIES HARVESTED, EVERYTHING PUSHED
 
 **State: 351 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency checks pass.

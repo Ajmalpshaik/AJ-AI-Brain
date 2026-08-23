@@ -12,6 +12,7 @@ feet↔mm conversion every script needs.
 |---|---|
 | Running anything through the bridge at all; units (mm↔feet); Revit version differences; reading a raw category ID | [`core.md`](core.md) **← read this for any live-model task** |
 | "Which level / workset / design option is this element on?" — and why each one returns nothing instead of erroring | [`element-identity.md`](element-identity.md) (split out of `core.md` 2026-08-06) |
+| **"Can I use this as a Dictionary key?"** — `ElementId` yes, `XYZ` and `Element` NO (reference equality, so a HashSet of them silently finds nothing), and `GeometryObject.GetHashCode()` is a native POINTER, not a geometry value — never use it for "has this changed" | [`element-identity.md`](element-identity.md) |
 | Isolating/hiding elements in a view; creating a section view | [`views.md`](views.md) |
 | "What actually connects to what" — tracing pipe/duct/equipment when names, tags or `IsConnected` can't be trusted | [`mep-trace.md`](mep-trace.md) |
 | "Mistake", "undo", "go back" — reversing something | [`undo.md`](undo.md) |
@@ -32,6 +33,7 @@ feet↔mm conversion every script needs.
 | **A junction looks lumpy or squeezed after a resize** — a fitting stuck at the old size with reducers bolted on, versus a single-size fitting family that cannot reduce at all. Ajmal's rule: a fitting is the size of the biggest pipe on it | [`fitting-size-follows-biggest-pipe.md`](fitting-size-follows-biggest-pipe.md) |
 | A bulk change raises Revit warnings, or a script "succeeds" and the model is unchanged — and why the usual `IFailuresPreprocessor` answer cannot be written in a fragment at all | [`failure-handling-without-a-class.md`](failure-handling-without-a-class.md) |
 | **A query is slow, or I am about to write a new one** — what a `FilteredElementCollector` actually costs, and the four choices that change it (view-scoped is ~6x faster, an existence check ~80x cheaper than a count, ids cheaper than elements, `UnionWith` the expensive way to say "or") | [`query-cost.md`](query-cost.md) |
+| **Which argument does this member need, and does it even exist** — the members that answer for the wrong thing when called blind (paint vs geometry, per-view, per-phase), the validators that turn a bare exception into a sentence, and the names that are simply not on the type | [`api-members-that-need-an-argument.md`](api-members-that-need-an-argument.md) |
 | **Dimensioning by script** — why it fails, the three ways to get a geometry `Reference`, and the one option that makes a duct's centreline reachable | [`dimensioning.md`](dimensioning.md) |
 | Placing tags by script; finding the right tag family; leader elbows/side; tag overlap; view scale and clearances | [`tagging.md`](tagging.md) |
 | Revisions and revision sequences | [`revisions.md`](revisions.md) |
