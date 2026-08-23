@@ -239,9 +239,12 @@ const derived = [
     { rebuild: "semantic-index\\index-brain.cmd", commit: stamp.commit }, stamp.ms),
   layerState("knowledge graph", path.join(graphOut, "graph.json"),
     { rebuild: "/graphify . --update" }),
+  // The vault has rebuilt itself since 2026-08-22 (tools/obsidian-export.mjs, phase 3 of the Stop hook),
+  // so the hint is the manual override, not a chore. It was the last layer needing a human to remember,
+  // and it drifted 2 days / 89 files behind the other two before that was noticed.
   vaultDir
-    ? { ...layerState("Obsidian vault", vaultDir, { rebuild: "/graphify . --update" }), notes: vaultNotes }
-    : { name: "Obsidian vault", present: false, rebuild: "/graphify . --update" },
+    ? { ...layerState("Obsidian vault", vaultDir, { rebuild: "node tools/obsidian-export.mjs --force" }), notes: vaultNotes }
+    : { name: "Obsidian vault", present: false, rebuild: "node tools/obsidian-export.mjs --force" },
 ];
 const derivedPresent = derived.filter((d) => d.present);
 

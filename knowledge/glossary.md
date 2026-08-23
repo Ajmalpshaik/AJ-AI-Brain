@@ -186,6 +186,59 @@ is exactly the one a fresh session cannot route.
   sentence. Nothing in the bridge lets Revit send anything unasked, so "Revit will talk to Claude" is
   half-built, not built.
 
+**"maximize"** (2026-08-22) — *"CAN YOU MAKE ALL THE GRID MAXIMIZE TO THE MODEL NOW ITS HARLF SOME IS
+  NOT ALL SO FIX THAT TO AS PER THE ENTEAR MODEL MAXIMIZE"*
+  → Revit's **Maximize 3D Extents** on grids/levels, i.e. `DatumPlane.Maximize3DExtents()`. His
+  complaint has two halves and both matter: **"its half"** = the datum lines stop short of the building,
+  and **"some is not all"** = they stop in *different places* as each other, so the drawing looks
+  ragged. A correct fix satisfies both — after it, every datum of one direction ends on the same line.
+  Do **not** read "maximize" as maximizing a window, a view, or a crop region.
+
+**"X axis grid" / "Y axis grid"** (2026-08-22) — → the grids that **run along** that axis, not the ones
+  *numbered* along it and not the ones perpendicular to it. On his plan, "the X axis grids" were 5 and
+  6, the two horizontal lines. Test it in code with
+  `Math.Abs(p1.X-p0.X) > Math.Abs(p1.Y-p0.Y)` rather than by grid name — names are letters and numbers
+  in no reliable relation to direction.
+
+**"flip"** (2026-08-22, *"CAN YOU FLIP THE GIRD THAT X AXIS"*) — → move the **bubble** (the head with
+  the name in it) to the datum's other end. Not mirror the grid, not reverse its direction, not flip a
+  family. Followed immediately by *"NOW TO MOVE GIRD BUBLE LEFT AND BOTTOM IT MEAS X AXISS ALL LEFT SIDE
+  AND Y AXIS ALL BOTTOM"*, which is the same operation stated as an absolute side rather than a flip —
+  **and the absolute form is the one to build for.** "Flip" is a coin toss on a mixed set; "all on the
+  left" is deterministic. See the End0/End1 warning in
+  [`live-model/datums.md`](live-model/datums.md).
+
+**"keep that to above"** (2026-08-22) — → "above" = the **top** of the plan, i.e. maximum Y. Said
+  straight after seeing the bubbles land at the bottom, so it was a correction of the previous
+  instruction, not a new one. **He iterates on what he can see**: three separate bubble instructions
+  came in under five minutes, each one a reaction to the last picture. Export the view and show it
+  after any visual change — it is faster than describing coordinates back to him.
+
+**"center of the room"** (2026-08-22, *"CAN YOU MOOVE ALL THE ROOM TAG TO CENTER OF THE ROOM"*) — → the
+  room's **centroid**, and for an L-shaped room that point can fall outside the room itself, so it needs
+  the fallbacks in `action-center-room-tags.cs`. Not the room's `Location` point, which is wherever the
+  room was placed.
+
+**"interior dimension" / "exterior dimension"** (2026-08-23, *"in the room 5 insde also out side also it
+  means interior dimention and exterior dimention"*) — → **his name for the pair of room dimensions**, and
+  each word carries BOTH what is measured and where the string is drawn. *Interior* = the clear internal
+  size (nearest wall faces) with the dimension line **inside** the room. *Exterior* = the overall external
+  size (farthest wall faces) with the line **outside**. He asks for them as a pair on the same room.
+  → `action-dimension-rooms.cs`, `measureTo` + `lineInsideRoom`.
+
+**"from the wall side" vs "from wall mid"** (2026-08-23, same message: *"also from the wall side also from
+  wall mid also i need"*) — → **wall FACE** versus **wall CENTRELINE**. Not inside-vs-outside; this is the
+  second axis. "Wall side" is a face dimension (either face — which one is the inside/outside choice
+  above); "wall mid" is the centreline, the setting-out size that agrees with the grid. On a 200 mm wall
+  round an 8800 mm room the three numbers are 8800 / 9000 / 9200, so mixing them up is a 200 mm error on
+  a drawing. Technique: [`live-model/dimensioning.md`](live-model/dimensioning.md).
+
+**"the dimension"** on its own (2026-08-23, *"CAN YOU NOW MAKE THE DIMEIOTN IN THE ROOM 4"*) — → **ask
+  which of the three**, or state which you used. It reliably means real Revit `Dimension` elements on a
+  plan, not a text note and not a report of sizes in chat. "In the room N" names one room by its **Number**
+  parameter, not its Element Id and not its Name — filter with `filter-by-id-list.cs` after looking the
+  number up, never dimension every room in the model.
+
 ### Log
 - Seed entry — "fitting" is NOT always Duct Fitting; pipe fittings exist too, context decides.
 - "schedule" is ambiguous between a real Revit `ViewSchedule` and a chat-only table — ask which one
@@ -349,3 +402,8 @@ is exactly the one a fresh session cannot route.
   asks how anything works, draw it: a box-and-arrow flow for a process, a bar chart for a comparison.
   His **"artifact"** stays the separate, opposite thing — a published page with a link, only when he
   asks for one by name.
+- 2026-08-22 — six datum/room-tag terms added above ("maximize", "X axis grid", "flip", "keep that to
+  above", "center of the room"). All recorded on first use, none had caused a misunderstanding yet. The
+  entry worth re-reading is **"keep that to above"**: it records not a word but a *working pattern* —
+  he corrects visually, several times in a row, so the reply to any visual change should carry a picture
+  rather than coordinates.

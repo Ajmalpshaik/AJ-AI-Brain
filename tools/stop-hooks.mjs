@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// One Stop hook that runs the other five, so the turn ends faster.
+// One Stop hook that runs the other six, so the turn ends faster.
 //
 // WHY: five separate entries in .claude/settings.json meant five Node processes started one after
 // another at the end of EVERY turn. Measured 2026-08-21:
@@ -101,5 +101,12 @@ const rest = await Promise.all(
     .map((s) => run(s, stdinText)),
 );
 
-report([first, ...rest]);
+// Phase 3, alone: the Obsidian vault is rendered FROM graph.json, which graph-rebuild.mjs above is what
+// writes - so this cannot join phase 2 or it would export a half-written graph. Added 2026-08-22, when
+// the vault was found 2 days and 89 files stale while the other two derived layers were current: it was
+// the only one whose documented rebuild was a slash command, so it needed a human to remember.
+// It is stamp-guarded and costs a stat call when the graph has not moved, so this phase is usually free.
+const vault = await run("obsidian-export.mjs", stdinText);
+
+report([first, ...rest, vault]);
 process.exit(0);

@@ -223,6 +223,48 @@ hook) flags any file edit made inside a session, and `tools/reindex-run.mjs` (a 
 hook) does **one** rebuild at the end of that turn — not one per edited file. Editing
 the Brain through an AI session now refreshes the index by itself.
 
+**Since 2026-08-22 that covers all three derived layers — with one exception, stated below.**
+`tools/stop-hooks.mjs` runs them in three phases at the end of any turn that changed a file:
+
+| Phase | Step | Rebuilds | Cost when nothing changed |
+|---|---|---|---|
+| 1 (alone) | `reindex-run.mjs` | **vector index** — this search | ~90 ms |
+| 2 (parallel) | `graph-rebuild.mjs` + 3 checks | **knowledge graph — CODE side only** | ~400 ms |
+| 3 (alone) | `obsidian-export.mjs` | **Obsidian vault** | ~90 ms |
+
+> ### THE EXCEPTION: the graph's DOCUMENT side is not automatic, and cannot be
+>
+> `graph-rebuild.py` extracts the **code** side itself (67/67 files, plain AST parsing, no model).
+> The **markdown** side — `CLAUDE.md`, `START-HERE.md`, `AGENT-SPEC.md`, the `knowledge/` notes —
+> needs graphify's *semantic* pass, which **dispatches LLM subagents**. A hook is a plain script;
+> it cannot call a model. So a script fundamentally cannot do this part.
+>
+> What the rebuild does instead is **tell you**, by name, which documents are behind their cached
+> extraction — which is the whole reason `tools/graph-rebuild.py` exists rather than graphify's own
+> one-step command. Verified 2026-08-23: 12 documents stale, reported by name, exactly as designed.
+>
+> **This does not affect the plain-English search.** The vector index reads every markdown file in
+> full and is fully automatic — it is what answers questions. The graph's document side only affects
+> `search_graph` and the Obsidian note *links*, not the search.
+>
+> To bring it current: run `/graphify . --update` in a session (it has the subagents), or set a
+> `GEMINI_API_KEY` so the semantic pass can run headless — **that sends Brain content to an outside
+> service, so it is a decision to be made deliberately, not a default.**
+
+Phase 3 is separate on purpose: the vault is rendered *from* `graph.json`, which phase 2 is
+what writes, so joining phase 2 would export a half-written graph. Measured end-to-end on a
+turn with nothing to do: **0.8 s for all six steps.** On a turn that did change things:
+~23 s, of which the graph rebuild is ~15 s.
+
+**The vault was the last layer needing a human**, because its documented rebuild was
+`/graphify . --update` — a slash command, so it needed someone to remember *and* an AI session
+to run it. It drifted **2 days and 89 source files** behind the other two before that was
+noticed. What made it automatable is that `graphify export obsidian` is a plain CLI command
+that re-renders from `graph.json` with no model call at all; the slash command was only the
+wrapper. Guarded by a stamp of `graph.json`'s mtime+size so it re-exports only when the graph
+actually moved. Force one by hand with `node tools/obsidian-export.mjs --force`, or ask what
+it would do with `--check`.
+
 **What still goes unnoticed** is any edit the session never saw:
 
 > **A git checkout or branch switch, a file changed in an editor, a folder copied in —
@@ -366,6 +408,32 @@ folder by `brain_common.py`. Verified clean on 2026-08-06.
 ## If something breaks
 
 **"collection does not exist"** — run `index-brain.cmd` once.
+
+**"Failed to apply logs to the hnsw segment writer"** — the index is CORRUPTED, and an
+incremental rebuild will not fix it. Run `index-brain.cmd --full`. Happened 2026-08-22:
+
+```
+ERROR: Error executing plan: Error sending backfill request to compactor:
+Failed to apply logs to the hnsw segment writer
+```
+
+**How it presents is the reason this entry exists.** It does not look like an error from
+outside — through the MCP `search_brain` tool it returns `spawnSync ... ETIMEDOUT`, and
+from the command line it simply sits there. Measured that day: **265 seconds, then exit
+code 255 with no output at all.** A whole session was worked with the search silently dead,
+because a timeout reads as "slow" and got worked around twice instead of diagnosed once.
+
+> **A search that times out is a broken search, not a slow one.** A healthy query on this
+> corpus is **under 4 seconds** (measured 3.7 s over 384 files / 4542 chunks, warm). If one
+> ever takes more than ~15 s, stop and run the query directly to see the real error:
+>
+> ```
+> semantic-index\venv\Scripts\python.exe semantic-index\brain_search_hybrid.py "your question"
+> ```
+>
+> The `.cmd` wrapper and the MCP tool both swallow the message; only the direct call prints it.
+
+A `--full` rebuild took **155 s** for 384 files. That is the whole cost of the fix.
 
 **"The embedding model has not been downloaded yet."** — run it once, then rebuild:
 

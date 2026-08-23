@@ -147,7 +147,9 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
 
 ## Log
 
-**Jump to a date** — 290 entries across 20 working days, oldest first, newest at the bottom.
+**Jump to a date** — 352 entries across 20 working days, oldest first, newest at the bottom.
+(Counts re-derived from the headings on 2026-08-22; the table had drifted badly — it claimed 290 total
+and **2** entries for 2026-08-22 when that day already held 49. Re-derive, don't increment.)
 
 | Date | Entries | | Date | Entries |
 |---|---|---|---|---|
@@ -159,8 +161,8 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
 | [2026-08-01](#2026-08-01) | 8 | | [2026-08-17](#2026-08-17) | 1 |
 | [2026-08-04](#2026-08-04) | 24 | | [2026-08-19](#2026-08-19) | 4 |
 | [2026-08-06](#2026-08-06) | 53 | | [2026-08-20](#2026-08-20) | 45 |
-| [2026-08-07](#2026-08-07) | 11 | | [2026-08-21](#2026-08-21) | 10 |
-| [2026-08-09](#2026-08-09) | 1 | | [2026-08-22](#2026-08-22) | 2 |
+| [2026-08-07](#2026-08-07) | 11 | | [2026-08-21](#2026-08-21) | 11 |
+| [2026-08-09](#2026-08-09) | 1 | | [2026-08-22](#2026-08-22) | 63 |
 
 ### 2026-07-21
 
@@ -3685,3 +3687,240 @@ See [`universal-actions-reference.md`](universal-actions-reference.md) and `live
   real regression that happened there. **Prefer "connector-bearing family instance" as the test and use
   the category list only to classify, never to gate**, or sprinklers and plumbing fixtures vanish with
   no message.
+- 2026-08-22 — **a walkthrough / "drone shot" is now a one-call fragment, and it is the FIRST thing from
+  today's whole add-in harvest that is live-verified.**
+  [`recipes/drone-shot-flythrough.cs`](../scripts/recipes/drone-shot-flythrough.cs): give it two room
+  names (or an explicit path in mm) and it routes **through the doors**, flies a perspective camera and
+  exports numbered PNG frames. Proved on the `school` model, Room 1 to Room 2 via both doors: **240
+  frames at 1920 px in 58 s — 0.24 s per frame**, 0 failed, 3.4 MB, files confirmed present from OUTSIDE
+  Revit and four frames checked by eye. The mechanism is `View3D.SetOrientation` per frame plus
+  `Document.ExportImage`, which also finally live-verifies image export.
+  **Three things learned in the doing, all in the fragment header:**
+  (1) **The heading collapses at the end of a path.** The camera aims a little further along; at the
+  last frame there is nothing further along, so the forward vector goes to zero and a naive fallback
+  points it at a blank wall. Look BEHIND when you cannot look ahead — that keeps the direction of
+  travel. Caught by looking at the last frame rather than trusting "240 exported, 0 failed".
+  (2) **The bridge refuses to delete files** — "Deletes or moves files/folders on disk: this cannot be
+  undone with Ctrl+Z." A good guard. It means a re-run with FEWER frames leaves stale ones behind that
+  would corrupt a video, so the fragment reports that rather than silently allowing it.
+  (3) **An existing ORTHO 3D view cannot be converted to perspective**, so the fragment creates its own
+  perspective view and leaves it in the project for checking.
+  **ffmpeg is not installed on this PC**, so frames are the deliverable until it is; the command is in
+  the header.
+
+- 2026-08-22 — **`run_fragment` and `session_start` are now live-verified; the handover's "do this
+  first" is done.**
+  Both had passed only off-model tests (14 Node tests for `run_fragment`, none of them near Revit). Run
+  against `school.rvt` in Revit 2020.2.9:
+  **(1) `session_start`** returned all eleven sections with no guard hit, and its API-generation probe
+  correctly reported 32-bit `ElementId` / `DisplayUnitType` / single `Dimension` class for 2020 — the
+  line that exists so a session confirms its API surface instead of inferring it. Its element total
+  (3384) was cross-checked against a direct collector count. Marked verified in its header and in
+  `scripts/README.md`; that fragment had been "unproven, never run" since it was written on 2026-08-20.
+  **(2) `run_fragment` preview** composed `filter-by-category` as the file plus exactly one appended
+  `return sb.ToString();`, and correctly warned that `levelIdFilter` was **left at the file's value,
+  which is not a default** — the distinction the whole tool exists to make visible.
+  **(3) Same call for real returned 12 walls; an independent `run_csharp` collector count returned 12.**
+  Two mechanisms agreeing is the proof, per the handover.
+  **(4) The composed multi-fragment path was exercised in preview** —
+  `["filter-by-category", "action-set-color-uniform"]` — because that is where the one real bug was
+  found while building it. The multi-field declaration `byte colorR = 0, colorG = 120, colorB = 255;`
+  came back with all three values filled on the one line and its trailing comment intact, and both
+  fragments' untouched inputs were reported. Run in preview deliberately: proving it did not require
+  painting Ajmal's model.
+- 2026-08-22 — **the `school.rvt` test model has no MEP in it at all** — worth knowing before planning any job against
+  it. Real content is 12 walls, 4 doors, 3 rooms, 1 floor, 2 levels, 10 sheets, 56 views. **Zero ducts,
+  zero pipes, zero air terminals, zero mechanical equipment.** The 3384-element total is mostly
+  non-geometric (91 legend components, 70 materials, 67 sun-path, 42 material assets, 17 pipe segments).
+  This is why six open items are recorded as "fixture-blocked": the model to prove them on does not exist
+  yet, and no amount of session time fixes that.
+- 2026-08-22 — **`SetCurveInView` cannot lengthen a grid, and the error it throws sends you the wrong
+  way.** Ajmal: *"CAN YOU MAKE ALL THE GRID MAXIMIZE TO THE MODEL NOW ITS HARLF SOME IS NOT ALL"*. The
+  first approach — measure the model, build a longer collinear line, push it in with `SetCurveInView` —
+  failed on all six grids with *"The curve is unbound or not coincident with the original one of the
+  datum plane"*. That message reads like a geometry bug. **It is not.** A probe in one transaction tried
+  three cases and all three failed, including the control: `Model` extent with a longer line,
+  `ViewSpecific` extent with the same line, and **the grid's own untouched `grid.Curve` handed straight
+  back**. When a datum rejects its own curve, the geometry is not the problem — stop checking it.
+  `Maximize3DExtents()` is the method that works, worked first time on all six, and is what Revit's own
+  command runs. New fragment
+  [`action-maximize-datum-extents.cs`](../scripts/actions/structural-changes/action-maximize-datum-extents.cs),
+  live-verified the same hour; full detail in [`live-model/datums.md`](live-model/datums.md).
+- 2026-08-22 — **do not measure "the model extent" with a whole-model bounding box: SHEETS poison it.**
+  Bound-boxing every model element on `school.rvt` returns **±30480 mm — exactly ±100 ft** — on a
+  building 41 m across, because each of the 10 sheets carries a nominal ±100 ft box in model space
+  (Cameras also sit outside the building). Extending grids to that would have drawn 61 m lines. Caught
+  before it ran only because ±100 ft is a suspiciously round number in feet. Measure physical categories
+  only — Walls, Floors, Doors, Windows, Rooms, Ceilings, Roofs, Columns, Framing, Stairs. **The same
+  trap applies to anything sized from "the model"**: scope boxes, section extents, crop regions, zoom.
+- 2026-08-22 — **`DatumEnds.End0` is not `Curve.GetEndPoint(0)`, and only a picture proves which is
+  which.** Requested "all X grids left, all Y grids above". Reading `IsBubbleVisibleInView` back tells
+  you which *label* is on, not which *side* it appears on — and on this model they were reversed
+  (`End0 ↔ GetEndPoint(1)`). Two exported PNGs settled it. **Do not port the mapping as a constant** —
+  it follows the direction each datum was drawn, so a model with grids drawn both ways carries both
+  mappings at once. The portable pattern is to ask which end *displays* at the coordinate you want:
+  `shownAt(g,e) = e==End0 ? Curve.GetEndPoint(1) : Curve.GetEndPoint(0)`, then keep the smaller X for
+  "left". That also explains the warning already in `action-set-datum-bubbles.cs` that its `flip` mode
+  moves half a mixed batch the wrong way: **an absolute side is deterministic, a flip is not** — build
+  for "all on the left", not for "flip".
+- 2026-08-22 — **"compile-checked on 2020/2024/2027" is not "it runs", and this is the case that proves
+  it.** Ajmal asked *"CETER ROOM TAG FRAGMENT YOU HAVE BEFOR AM I RIGHT ??"* — and he was right;
+  `action-center-room-tags.cs` already existed and the session had written fresh C# instead of searching
+  for it, on a job where searching is the standing rule. Running the real fragment then failed
+  immediately with **CS0246: `RoomTag` could not be found**. `Room`/`RoomTag` live in
+  `Autodesk.Revit.DB.Architecture` and `Space` in `Autodesk.Revit.DB.Mechanical`; the compile harness
+  supplies those namespaces and **the bridge's C# context does not**. A composed fragment cannot fix it
+  with a `using` either — C# wants those at the top of the file and a fragment is pasted into the
+  middle — so **every such type must be written fully qualified.** Fixed in that fragment and in
+  `action-assign-location-data.cs`, which carried the identical latent defect and had also never run.
+  A grep of all 313 fragments found no third case. **Two lessons, and the second is the bigger one:**
+  the search step is not optional even when the C# looks easy, and any fragment whose only credential is
+  a compile check should be treated as unproven in exactly this way — the failure is invisible until the
+  first real run.
+- 2026-08-22 — **`action-center-room-tags.cs` is now live-verified, and it is verified honestly.** Dry
+  run predicted 1761 / 3035 / 1877 mm on three tags; the real run moved exactly those; a second dry run
+  reported *"would move 0 | already centred: 3"*, so it is idempotent. The predictions were
+  cross-checked against an independently written centroid calculation and agreed within 1 mm. **What is
+  still NOT proven: the L-shaped-room path.** All three test rooms are rectangles, so steps 2 and 3 of
+  the four-step centre — the bbox and interior-grid fallbacks that exist precisely because an L-shaped
+  room's centroid can land outside the room — never executed. Recorded as unproven in both the header
+  and the README row rather than let one green run imply the whole file is covered.
+- 2026-08-22 — **new fragment: `action-dimension-rooms.cs`, and the enum trap it exists for.** Ajmal:
+  *"CAN YOU DIMENTION ALL THE ROOMS"*. Nothing in the library covered it — the three dimension fragments
+  do grids/levels, MEP runs, and family instances, none of them a room's own size. The short route to a
+  wall face `Reference` is `HostObjectUtils.GetSideFaces(wall, ShellLayerType.Interior|.Exterior)`, and
+  **the enum does not mean what it says**: Interior/Exterior name sides of the wall's own layer
+  structure, so which one bounds a given room follows the direction that wall was drawn. Measured in one
+  pass on the same wall type: **Rooms 1 and 2 bounded by `Interior`, Room 3 by `Exterior`.** Hard-coding
+  either name would have dimensioned two rooms right and the third **200 mm out without throwing** — the
+  failure is silent, which is what makes it dangerous. The fix is to pick the face by **projecting the
+  boundary segment's midpoint and keeping the nearest**, and then to **cross-check every created
+  dimension against the room's own boundary extents** and print MATCH or OFF BY. All six came back MATCH
+  (14900/15900, 7732/11171, 22000/8500 mm). Full note: [`live-model/dimensioning.md`](live-model/dimensioning.md).
+  **This is the second enum of exactly this shape found in one session** — `DatumEnds.End0` was the
+  first. Both name a physical side; both actually follow how the element was drawn. Worth treating as a
+  standing suspicion: **when a Revit enum names a side, measure which side it really is.**
+- 2026-08-22 — **the fragment was proven by deleting the inline work and re-running the file.** The job
+  was first done with a one-off inline script; the fragment was then written from it, the 6 inline
+  dimensions deleted, and the fragment run on the same job — dry run first, then live, both matching.
+  That is the only way "PROVEN" means the file rather than a retyped copy of it, and it is cheap now
+  that `run_fragment` exists. Doing it also caught that a fresh fragment reports `status: "?"` rather
+  than `unproven` until its README row exists, which is a small honesty gap in the composition report
+  worth knowing about but not worth changing.
+- 2026-08-22 — **the vector index was CORRUPTED and the whole session ran with the search silently
+  dead.** Ajmal asked why the work was taking so long and guessed it was searching. Measuring settled
+  it: **keyword search 0.41 s, consistency check 4.5 s, semantic search 265 s then exit 255 with no
+  output at all.** The real error only appears when the python is called directly —
+  *"Error sending backfill request to compactor: Failed to apply logs to the hnsw segment writer"*.
+  Both the `.cmd` wrapper and the MCP `search_brain` tool swallow it; through MCP it surfaces as
+  `spawnSync ... ETIMEDOUT`, which reads as *slow*. **That is why it survived three failures** — a
+  timeout got worked around twice instead of diagnosed once. `index-brain.cmd --full` fixed it in 155 s;
+  the incremental rebuild does not repair this. After the fix a query runs in **3.7 s** and the two
+  questions that had failed both return sensible top hits — the grid question now returns the day's new
+  `action-maximize-datum-extents.cs` at **#1, PROVEN**. Recorded in
+  [`../semantic-index/README.md`](../semantic-index/README.md) with the exact error string and a
+  threshold to judge by: **healthy is under 4 s, past ~15 s means broken.** The general lesson is not
+  about Chroma: **a tool that times out is a broken tool, and a wrapper that hides the error is what
+  turns one bad afternoon into three.**
+- 2026-08-22 — **which derived layers rebuild themselves, checked against the hook config rather than
+  memory**, because Ajmal asked what he has to run after adding a skill or a script.
+  `tools/stop-hooks.mjs` runs `reindex-run.mjs` first and alone (it rebuilds the **vector index**), then
+  four more in parallel including `graph-rebuild.mjs` (the **knowledge graph**). So both of those are
+  automatic for any edit made *inside* a session. **The Obsidian vault is not in that list** and never
+  rebuilds itself — `brain-status.mjs` reports it with `/graphify . --update` as its rebuild command,
+  and it was 2 days and 89 files stale at the time of asking. Edits made *outside* a session fire no
+  hook at all, for any layer.
+- 2026-08-22 — **the Obsidian vault now rebuilds itself too — the last derived layer that needed a
+  human is automated.** Ajmal, having just been told the vault was the one thing he had to remember at
+  the end of a day: *"IS THAT WE CAN AUTOMATE THIS ALSO ??"*. It could, and the reason it had not been
+  is worth recording: its documented rebuild was **`/graphify . --update`, a slash command** — so it
+  needed a person to remember *and* an AI session to run, which is why it sat 2 days and 89 source files
+  behind while the vector index and knowledge graph were both current that same minute.
+  **What unlocked it: `graphify export obsidian` is a plain CLI command.** It re-renders the vault from
+  `graphify-out/graph.json` with no model call at all — the slash command was only ever the wrapper.
+  New `tools/obsidian-export.mjs`, added as **phase 3** of `tools/stop-hooks.mjs`. Phase 3 rather than
+  joining phase 2 because the vault is rendered *from* `graph.json` and `graph-rebuild.mjs` is what
+  writes it — running them together would export a half-written graph, the same dependency that already
+  forced `reindex-run` into its own phase 1.
+  **Stamp-guarded on `graph.json`'s mtime+size**, because 4 s on every turn would be paid by every reply
+  including the many that change nothing. Measured across the whole six-step chain: **23.3 s on a turn
+  that changed things** (of which the graph rebuild is 14.9 s and the vault 4.1 s), **0.8 s on a turn
+  that did not** (vault: 92 ms). Tested in all three states — no stamp, changed graph, unchanged graph.
+  Fails open: a missing `graphify` binary is treated as "this machine has no graph layer", not an error,
+  and it stamps only on success so a failure retries next turn instead of being marked done.
+  `brain-status.mjs` now prints `node tools/obsidian-export.mjs --force` as the vault's rebuild hint —
+  a manual override, no longer a chore.
+  **CORRECTION, same night, and it matters: "everything is automatic now" was overstated.** Ajmal asked
+  the exact right follow-up — *"IS THAT GRAPHIFY CHUNKS ALSO AUTO MATIC CREATE ??"* — and the answer is
+  **no**. `graph-rebuild.py` extracts the **code** side itself (67/67 files, plain AST, no model), but
+  the **document** side needs graphify's semantic pass, which **dispatches LLM subagents**. A Stop hook
+  is a plain script and cannot call a model, so this part is not merely un-automated, it is
+  **un-automatable by a script** — the ceiling is architectural, not effort. Run direct on 2026-08-23:
+  *"cached extraction. The code side below is current; the document side is not."* plus 12 stale
+  documents named. That reporting is exactly why `tools/graph-rebuild.py` exists instead of graphify's
+  own one-step command, and it worked. **The practical impact is small and worth stating plainly so
+  nobody over-corrects:** the vector index reads every markdown file in full and IS automatic, and it is
+  what answers questions — the graph's document side only feeds `search_graph` and the Obsidian note
+  links. The two ways to close it are `/graphify . --update` in a session, or a `GEMINI_API_KEY` for a
+  headless pass; the second sends Brain content to an outside service and is Ajmal's call, not a
+  default. **The lesson for this repo is the familiar one:** the claim went into `semantic-index/README.md`
+  before it was tested end to end, and a user question caught it within the hour. Check the boundary of
+  an automation before writing "all" into a file.
+- 2026-08-22 — **new skill `brain-update-layers` (11 -> 12 skills), because Ajmal asked for "the
+  detailed prompt to do this all updating correctly".** A prompt he has to paste correctly every time is
+  the same failure mode this repo already has a name for: *a step that depends on remembering is a step
+  that gets skipped* (`fragment-nudge.mjs`'s own words). So it was written as a skill instead — he says
+  "update the brain" or "end of day" and it fires, with the full ordered checklist and the verification
+  built in. **The skill's real content is the boundary**, not the commands: which layer is automatic,
+  which needs an LLM and therefore *cannot* be hooked, and which needs him. It also carries the two
+  judgement calls — skip the minutes-long semantic pass when `graph-rebuild.mjs` reports nothing stale
+  (running it for show costs him real time), and **never set up a `GEMINI_API_KEY` unprompted**, because
+  that sends Brain content to an outside service and is his decision, not a convenience default.
+  Deliberately separate from `brain-self-maintain`: that one decides *what to save* and is judgement,
+  this one refreshes the layers and is mechanics. Run the save skill first, this one after, so new
+  material is findable.
+- 2026-08-22 — **two `count_elements` categories do not resolve on this model, and the failure is
+  silent-ish.**
+  `air_terminals` and `mechanical_equipment` both returned `Category '<name>' not found — check the exact
+  Revit category display name` with `Count: 0`, while `ducts` and `pipes` returned a clean
+  `Matched 0 element(s)`. Two different failures, both ending in zero: one means *the category is not in
+  this document*, the other means *the name did not resolve*. A caller reading only the count cannot tell
+  them apart. Not chased further here — nothing in this model would populate them either way — but the
+  next job that gets an unexpected 0 from a native tool should read the message, not the number.
+- 2026-08-23 — **a room has THREE sizes, and `action-dimension-rooms.cs` only knew one.** Ajmal, after
+  the first run placed dimensions on Room 4: *"see some time i need from outside sometime i need inside
+  and also from the wall side also from wall mid also i need so our code is like that am i right??"* He
+  was right. The fragment hard-coded the nearest wall face and the string always went outside the room.
+  Now `measureTo` = inside / outside / centre plus `lineInsideRoom`, all measured live on `school.rvt`
+  Room 4 (8800 clear, 200 walls) before anything was written: **8800 / 9200 / 9000**, each predicted from
+  the room extent plus real wall thickness first, each MATCH. Technique and the trap in
+  [`live-model/dimensioning.md`](live-model/dimensioning.md); his two words for the pair — *interior
+  dimension* and *exterior dimension* — in [`glossary.md`](glossary.md).
+
+  **The finding worth keeping: `new Reference(wall)` does NOT throw, and is the ONLY route to a
+  centreline.** `dimensioning.md`'s reference table read as "datums only, throws for a pipe or duct" —
+  true for MEP, wrong to generalise. On a wall it resolves to the location line and `NewDimension`
+  accepts it. It has to, because a wall carries **no centreline curve at all**: `get_Geometry` with
+  `ComputeReferences` *and* `IncludeNonVisibleObjects` returned **0 curves**, and
+  `LocationCurve.Curve.Reference` was **null**. The duct technique in that same note does not transfer.
+  Probed inside a rolled-back transaction, which is the cheap way to test three creation routes without
+  leaving anything in the model.
+
+  Left unbuilt on purpose: **core faces.** `GetSideFaces` only offers Interior/Exterior shell layers, and
+  `school.rvt` has single-layer walls only, so there is nothing here to prove a compound-structure walk
+  against. Also flagged in the header: "centre" follows the wall's **Location Line** parameter, so a wall
+  set to a finish face would measure to that instead — untested, but it prints `OFF BY` rather than lying,
+  because the expected value is computed independently.
+
+- 2026-08-23 — **`tools/sync-counts.mjs` — because a second session can outrun a hand-fixed count.**
+  Mid-turn, another Claude session was adding fragments to this repo. The live count went
+  **314 → 315 → 316 → 317 → 319 → 320 → 321** while one turn tried to patch the ~18 lines that state it,
+  so check 9 could not be cleared by hand at all. The new tool parses the checker's own drift report and
+  applies exactly what it says — one command, re-runnable until it converges. **Run it, don't hand-edit.**
+
+  Two bugs in its first version, both silent no-ops worth not repeating, and both now written into the
+  file's own header: **`\b` inside a JS template literal is the BACKSPACE character, not a word
+  boundary** — `` new RegExp(`\b${n}\b`) `` compiles happily and matches nothing; and **a /g regex carries
+  `lastIndex` between calls**, so `re.test(s)` then `s.replace(re, …)` skips every other match. Together
+  they made it report success while changing 4 claims instead of 17. It preserves a UTF-8 BOM
+  byte-for-byte, which matters because `tools/verify-fragments-compile.ps1` is one of the files it edits.

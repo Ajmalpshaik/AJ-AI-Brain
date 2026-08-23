@@ -116,9 +116,14 @@ using (var t = new Transaction(Document, "AJ Tools - Assign Location Data"))
                     double probeZ = bb != null ? (bb.Min.Z + bb.Max.Z) / 2.0 : pt.Z;
                     var probe = new XYZ(pt.X, pt.Y, probeZ);
 
-                    var room = c as Room;
+                    // Fully qualified on purpose: the bridge's C# context has no `using` for
+                    // Architecture or Mechanical, and a composed script cannot add one mid-file
+                    // (C# wants usings at the top). Bare `Room`/`Space` compile-check fine and then
+                    // fail CS0246 the moment they run — proved on action-center-room-tags.cs,
+                    // 2026-08-22. Same rule for Level? no: Level IS in Autodesk.Revit.DB.
+                    var room = c as Autodesk.Revit.DB.Architecture.Room;
                     if (room != null) { if (room.IsPointInRoom(probe)) { hit = c; break; } continue; }
-                    var space = c as Space;
+                    var space = c as Autodesk.Revit.DB.Mechanical.Space;
                     if (space != null && space.IsPointInSpace(probe)) { hit = c; break; }
                 }
                 catch { }

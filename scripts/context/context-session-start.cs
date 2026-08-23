@@ -5,6 +5,13 @@
 //          the project is really in, how big it is, what is linked, what is broken. Read-only, zero
 //          input, safe to call anytime.
 //
+// ✓ LIVE-VERIFIED 2026-08-22 on `school.rvt` in Revit 2020.2.9 via the `session_start` native tool.
+//   All eleven sections returned, none hit its guard: version + build, the API-generation line (correctly
+//   read 32-bit ElementId / DisplayUnitType / single Dimension class for 2020), document title and path,
+//   worksharing = no, project fields, the display-unit probe (Level 1 -> 0 mm), 3384 elements / 2 levels /
+//   6 grids / 56 views / 10 sheets, links none, phases Existing -> New Construction, 0 warnings, and the
+//   active view. Element total cross-checked against a direct collector count in the same session.
+//
 //          Ajmal's rule, 2026-08-20: "everytime while pinging or connection to revit check the all
 //          things like what is the version of revit what is the model like that all kind of thing that
 //          need to check in the beginning". This replaces guessing, and it replaces firing ten separate

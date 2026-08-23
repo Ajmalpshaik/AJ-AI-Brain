@@ -1,6 +1,6 @@
 # Which Revit API this Brain actually uses
 
-Generated from the 311 fragments on 2026-08-22 — **not** copied from documentation. Regenerate with the
+Generated from the 314 fragments on 2026-08-22 — **not** copied from documentation. Regenerate with the
 command at the bottom; do not hand-edit.
 
 ## Why this file exists instead of a copy of the API docs
@@ -12,7 +12,7 @@ The instinct is right and the scale is the problem. Measured:
 |---|---|
 | Revit API | ~1,700 classes, 50 interfaces, 500 enumerations, **30,000+ documented members** |
 | This Brain's whole index | **3,786 chunks** from 341 files, measured 2026-08-20 |
-| Types the 311 fragments actually use | **245** |
+| Types the 323 fragments actually use | **245** |
 
 Indexing the API into the main search would make the Brain roughly **11% of its own index** — every
 question would land on reference pages instead of on the skill or fragment that answers it. That is the

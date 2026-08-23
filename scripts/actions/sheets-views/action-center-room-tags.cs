@@ -31,9 +31,21 @@
 // GOTCHA: "already centred" is a SUCCESS and is counted separately, so "0 moved" on a tidy drawing
 //         reads as "nothing to do" rather than "it failed".
 // NOTE: this only moves the HEAD. Revit draws the leader automatically; it does not need setting.
-// ⚠ NOT YET RUN AGAINST A REAL MODEL — harvested 2026-08-22 from the add-in's Center Room Tags.
-//   Compile-checked on 2020/2024/2027. Try it on ONE L-shaped room first — that is the case the
-//   four-step centre exists for.
+// ✓ LIVE-VERIFIED 2026-08-22 on `school.rvt`, Revit 2020.2.9, via run_fragment composed with
+//   filter-by-category (OST_RoomTags). Dry run predicted moves of 1761 / 3035 / 1877 mm on three tags;
+//   the real run moved exactly those three; a second dry run then reported "would move 0 | already
+//   centred: 3", so it is idempotent. The predicted distances were cross-checked against an
+//   independently written centroid calculation in the same session and agreed to within 1 mm.
+//   Still untested on an L-shaped room — all three test rooms were rectangles, so steps 2 and 3 of the
+//   four-step centre (the bbox and interior-grid fallbacks) did NOT execute. That path stays unproven.
+//
+// ⚠⚠ CS0246 ON `Room` / `RoomTag`, FIXED HERE 2026-08-22 — the defect that made "compile-checked" a
+//    false comfort. This file was harvested and compile-checked on 2020/2024/2027 and still threw
+//    "The type or namespace name 'RoomTag' could not be found" on its FIRST real run. The compile
+//    harness supplies namespaces that the bridge's C# context does not. `Room`/`RoomTag` live in
+//    `Autodesk.Revit.DB.Architecture` and `Space` in `Autodesk.Revit.DB.Mechanical`, and a COMPOSED
+//    script cannot fix it with a `using` — C# wants those at the top of the file, and this fragment is
+//    pasted into the middle. So every such type is written fully qualified below. Do not "tidy" them.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -49,7 +61,7 @@ var links = new FilteredElementCollector(Document).OfClass(typeof(RevitLinkInsta
     .Cast<RevitLinkInstance>().ToList();
 
 // ---------- the four-step centre ----------
-Func<Room, XYZ> centreOf = room =>
+Func<Autodesk.Revit.DB.Architecture.Room, XYZ> centreOf = room =>
 {
     if (room == null || !room.IsValidObject) return null;
     try { if (room.Area <= 1e-6) return null; } catch { return null; }   // unplaced room
@@ -125,11 +137,11 @@ using (var t = new Transaction(Document, "AJ Tools - Center Room Tags"))
     {
         foreach (var e in elements)
         {
-            var tag = e as RoomTag;
+            var tag = e as Autodesk.Revit.DB.Architecture.RoomTag;
             if (tag == null || !tag.IsValidObject) { notATag++; continue; }
             if (tag.Pinned) { pinned++; continue; }
 
-            Room room = null;
+            Autodesk.Revit.DB.Architecture.Room room = null;
             Transform toHost = Transform.Identity;
 
             try { room = tag.Room; } catch { }
@@ -146,7 +158,7 @@ using (var t = new Transaction(Document, "AJ Tools - Center Room Tags"))
                         if (li != null)
                         {
                             var ldoc = li.GetLinkDocument();
-                            if (ldoc != null) room = ldoc.GetElement(linkId.LinkedElementId) as Room;
+                            if (ldoc != null) room = ldoc.GetElement(linkId.LinkedElementId) as Autodesk.Revit.DB.Architecture.Room;
                             toHost = li.GetTotalTransform();
                         }
                     }

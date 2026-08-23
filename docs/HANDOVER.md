@@ -1,13 +1,28 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-22.** Read top-down. Two separate 2026-08-22 sessions are recorded below and
-neither has been near a real model: first the **`run_fragment` + five native tools** work, then the
-**number audit** that added four consistency checks. Under those, **2026-08-21** is the search work and
-**2026-08-20** is the bridge record, whose Revit-side work is the only thing still genuinely open.
+Last updated: **2026-08-22.** Read top-down. Two separate 2026-08-22 sessions are recorded below: first
+the **`run_fragment` + five native tools** work, then the **number audit** that added four consistency
+checks. Under those, **2026-08-21** is the search work and **2026-08-20** is the bridge record, whose
+Revit-side work is the only thing still genuinely open.
+
+> **DONE 2026-08-22 (third session) — the "do this first" below is finished.** `run_fragment` and
+> `session_start` have now both been run against a real document (`school.rvt`, Revit 2020.2.9): preview
+> composed correctly and flagged the input left at the file's value; the real run returned 12 walls
+> against an independent collector count of 12; the composed two-fragment path was exercised in preview
+> and the multi-field `byte colorR/colorG/colorB` line came through intact. `context-session-start.cs` is
+> marked verified in its header and in `scripts/README.md`. Full numbers in
+> [`knowledge/brain-log.md`](../knowledge/brain-log.md) under 2026-08-22.
+>
+> **Still open from that session: `grayout` has not been run.** It is the one that proves the whole chain
+> at once, and it needs a coordination view worth greying — see the `school.rvt` note below.
+>
+> **`school.rvt` has no MEP in it.** 12 walls, 4 doors, 3 rooms, 1 floor. Zero ducts, pipes, air
+> terminals or mechanical equipment. Anything MEP-shaped in the open items below cannot be proven on this
+> model — it needs a real project open, not more session time.
 
 ---
 
-## 2026-08-22 — RUN_FRAGMENT AND FIVE NATIVE TOOLS, none of it run on a real model yet
+## 2026-08-22 — RUN_FRAGMENT AND FIVE NATIVE TOOLS (run_fragment + session_start now proven; grayout not)
 
 **What it is.** A new MCP tool, `run_fragment`. Name one or more fragments, pass their input values, and
 the `.cs` files go to Revit **byte-identical apart from their `INPUTS` declarations**. It replaces the

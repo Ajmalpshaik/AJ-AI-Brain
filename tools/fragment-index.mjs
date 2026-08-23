@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Turn the 311 C# fragments into something you can LOOK UP instead of READ.
+// Turn the 323 C# fragments into something you can LOOK UP instead of READ.
 //
 // WHY THIS EXISTS: the library's own rule is "reuse an existing module when it fits; only write new code
 // when nothing does" (AGENT-SPEC §2.4, and the live-model skill's decision order). That rule is right,

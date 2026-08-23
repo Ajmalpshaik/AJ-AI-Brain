@@ -51,9 +51,42 @@ datum.SetCurveInView(DatumExtentType.Model, view, newCurve);
 the write does not land where you meant it to. Order is: set extent type, then set the curve.
 
 **`GetCurvesInView` returning nothing is normal, not an error** — it is how you ask "does this view show
-this datum as a line at all". The add-in uses exactly that as the test, rather than guessing from view
-type. Try `Model` first and fall back to `ViewSpecific`; a datum that only has a 2D extent in a view
-returns nothing for `Model`.
+this datum as a line at all". Use exactly that as the test, rather than guessing from view type. Try
+`Model` first and fall back to `ViewSpecific`; a datum that only has a 2D extent in a view returns
+nothing for `Model`.
+
+### But `SetCurveInView` may refuse outright, and the error blames your geometry (proved 2026-08-22)
+
+On `school.rvt` in Revit 2020.2.9, **every** `SetCurveInView` call on a grid threw:
+
+> The curve is unbound or not coincident with the original one of the datum plane. Parameter name: curve
+
+That is not a maths problem, and the wording sends you the wrong way. Three cases were tried on the same
+grid inside one transaction and **all three failed**, including the control:
+
+| what was passed | result |
+|---|---|
+| `Model` extent, a longer collinear line | refused |
+| `ViewSpecific` extent, the same longer line | refused |
+| `Model` extent, **the grid's own `grid.Curve`, untouched** | **refused** |
+
+The third row is the one that matters. When a datum hands back a curve it will not accept, no amount of
+re-checking your own collinearity, Z values or normalisation will help — stop debugging the geometry.
+
+**To make a datum longer, use `Maximize3DExtents()`.** It is the API behind Revit's own "maximize 3D
+extents", it takes no curve, and it worked on all six grids on the first attempt. Fragment:
+[`action-maximize-datum-extents.cs`](../../scripts/actions/structural-changes/action-maximize-datum-extents.cs).
+The cost is that it gives no control over margin — it lands flush on the model extent.
+
+### Never measure "the model extent" with a whole-model bounding box
+
+The obvious way to work out how long a grid *should* be is to bound-box every element. On `school.rvt`
+that returns **±30480 mm — exactly ±100 ft — on a building only 41 m across.** The cause is **`Sheets`**:
+each sheet carries a nominal ±100 ft box in model space. `Cameras` also sit outside the building.
+
+Measure only physical categories — Walls, Floors, Doors, Windows, Rooms, Ceilings, Roofs, Columns,
+Structural Framing, Stairs. The same trap applies to anything else sized from "the model": scope boxes,
+section extents, crop regions, a view's zoom.
 
 ## Which views can write a LEVEL extent — not plans
 
@@ -108,6 +141,37 @@ awkward cases are worth handling explicitly rather than letting them no-op:
 
 Bubbles make sense in **plan, ceiling plan, engineering plan, area plan, section and elevation** views.
 
+### `DatumEnds.End0` is NOT `Curve.GetEndPoint(0)` — measured 2026-08-22
+
+This is the trap that turns "put the bubbles on the left" into a coin flip. `DatumEnds.End0` and
+`End1` are labels for the datum's own two ends, and on `school.rvt` they came out **reversed** against
+the curve's endpoint order. Proved by moving bubbles and exporting the plan as a PNG twice:
+
+| | `Curve.GetEndPoint(0)` | `Curve.GetEndPoint(1)` |
+|---|---|---|
+| grid 5, along X | X = −23034 (drawn first) | X = +24246 |
+| bubble on `End0` showed at… | | **X = +24246** ✔ picture |
+| bubble on `End1` showed at… | **X = −23034** ✔ picture | |
+
+So `End0 ↔ GetEndPoint(1)` and `End1 ↔ GetEndPoint(0)` there. **Do not port that mapping as a constant** —
+it follows the direction each datum was drawn in, so a model with grids drawn both ways will have both
+mappings at once.
+
+**The safe pattern is to never name an end directly.** Ask which end *displays* at the coordinate you
+want, then act on that one:
+
+```
+Func<Grid, DatumEnds, XYZ> shownAt =
+    (g, e) => e == DatumEnds.End0 ? g.Curve.GetEndPoint(1) : g.Curve.GetEndPoint(0);
+// then: for "left", keep whichever end's shownAt(...).X is smaller
+```
+
+That is what "all the X grids on the left, all the Y grids above" needs, and it survives grids drawn in
+opposite directions — which is exactly the case `action-set-datum-bubbles.cs` warns flips half a batch
+the wrong way when you use its `flip` mode on a mixed set. **Verify the first run with a picture**, not
+by reading `IsBubbleVisibleInView` back: reading it back only confirms which *label* is on, which is the
+very thing that misleads.
+
 ## Guards that belong on any datum operation
 
 - **Not in the Family Editor** — `doc.IsFamilyDocument` — there are no project datums there.
@@ -119,6 +183,8 @@ Bubbles make sense in **plan, ceiling plan, engineering plan, area plan, section
 
 ## The fragments
 
+- [`../../scripts/actions/structural-changes/action-maximize-datum-extents.cs`](../../scripts/actions/structural-changes/action-maximize-datum-extents.cs)
+  — make grids/levels span the whole model ("the grids only go half way"). ✓ verified 2026-08-22
 - [`../../scripts/actions/structural-changes/action-reset-datum-extents.cs`](../../scripts/actions/structural-changes/action-reset-datum-extents.cs)
   — put grids/levels back on their shared 3D extent
 - [`../../scripts/actions/structural-changes/action-set-datum-bubbles.cs`](../../scripts/actions/structural-changes/action-set-datum-bubbles.cs)
