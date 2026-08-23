@@ -33,6 +33,15 @@
             "command": "node \"tools/voice/narrate-hook.mjs\""
           }
         ]
+      },
+      {
+        "matcher": "mcp__aj-tools-aj-ai__run_csharp",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"tools/fragment-guard.mjs\""
+          }
+        ]
       }
     ],
     "Notification": [

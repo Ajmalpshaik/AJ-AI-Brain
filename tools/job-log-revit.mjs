@@ -70,12 +70,34 @@ try {
     fragments.push(base.endsWith(".cs") ? base : base + ".cs");
   }
 
+  // DID IT ACTUALLY WORK? Until 2026-08-23 this log recorded what was sent and never whether it
+  // landed, so the one question that matters - is the library more reliable than fresh code? - could
+  // not be answered from five days of data. Worse, the tool call SUCCEEDING is not the same as the
+  // C# succeeding: the bridge returns `Success: false` inside a perfectly normal MCP response when
+  // the code throws or fails to compile, which is exactly how `action-center-room-tags.cs` reported
+  // CS0246 on 2026-08-22. So read the bridge's own flag out of the response body rather than trusting
+  // that a reply arrived at all.
+  let ok;
+  try {
+    const blocks = Array.isArray(payload.tool_response) ? payload.tool_response : [];
+    const text = blocks.map((b) => (typeof b?.text === "string" ? b.text : "")).join("\n");
+    if (text.trim()) {
+      const parsed = JSON.parse(text);
+      const flag = parsed?.Success ?? parsed?.success;
+      if (typeof flag === "boolean") ok = flag;
+    }
+  } catch {
+    // Not JSON, or no response recorded. Leave `ok` undefined rather than guessing - an invented
+    // success is worse than a gap, because it would poison the very comparison this field exists for.
+  }
+
   const entry = {
     date: new Date().toISOString().slice(0, 10),
     tool: toolName.replace(/^mcp__[^_]*__/, "").replace(/^mcp__.*?__/, ""),
     fragments: [...new Set(fragments)],
     codeLines: code ? code.split("\n").length : 0,
     category: input.category ?? undefined,
+    ok,
   };
 
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
