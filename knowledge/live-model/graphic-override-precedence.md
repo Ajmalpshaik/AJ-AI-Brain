@@ -2,6 +2,18 @@
 
 > Part of the live-model knowledge set. Index: [`README.md`](README.md) — go back there to route to another topic.
 
+> **Reviewed 2026-08-23 against the ~300-line split rule and DELIBERATELY LEFT WHOLE.** At 324 lines it
+> is over the guideline, and `brain-status.mjs` had been flagging it as an un-reviewed split candidate.
+> The rule in [`../../skills/brain-self-maintain/SKILL.md`](../../skills/brain-self-maintain/SKILL.md)
+> is explicit that this is *"a split candidate, not a mandate — if it's one coherent job read as a unit,
+> splitting adds hops and makes things worse; say so and leave it."* That applies here: the whole value
+> of this file is that **the hierarchy and the exceptions to it sit in one place**. Every section below
+> the hierarchy is a measured case of something quietly not obeying it — a non-cuttable category
+> discarding half the override, a line style that cannot be assigned, a view template refusing a filter
+> change in silence. Split those away and the hierarchy reads as a clean rule that it is not, which is
+> the exact mistake this file exists to prevent. Leave it whole; re-review only if a genuinely separate
+> topic gets added.
+
 When a color/graphic change made through a script (or by hand) doesn't seem to take effect, or a
 different color shows up than expected, the usual cause is a STRONGER override sitting on top of the one
 just changed. This is the reference for which mechanism wins.

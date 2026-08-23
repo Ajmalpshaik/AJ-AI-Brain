@@ -1,24 +1,44 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-22.** Read top-down. Two separate 2026-08-22 sessions are recorded below: first
-the **`run_fragment` + five native tools** work, then the **number audit** that added four consistency
-checks. Under those, **2026-08-21** is the search work and **2026-08-20** is the bridge record, whose
-Revit-side work is the only thing still genuinely open.
+Last updated: **2026-08-23.** Read top-down. The newest session is first.
 
-> **DONE 2026-08-22 (third session) — the "do this first" below is finished.** `run_fragment` and
-> `session_start` have now both been run against a real document (`school.rvt`, Revit 2020.2.9): preview
-> composed correctly and flagged the input left at the file's value; the real run returned 12 walls
-> against an independent collector count of 12; the composed two-fragment path was exercised in preview
-> and the multi-field `byte colorR/colorG/colorB` line came through intact. `context-session-start.cs` is
-> marked verified in its header and in `scripts/README.md`. Full numbers in
-> [`knowledge/brain-log.md`](../knowledge/brain-log.md) under 2026-08-22.
->
-> **Still open from that session: `grayout` has not been run.** It is the one that proves the whole chain
-> at once, and it needs a coordination view worth greying — see the `school.rvt` note below.
->
-> **`school.rvt` has no MEP in it.** 12 walls, 4 doors, 3 rooms, 1 floor. Zero ducts, pipes, air
-> terminals or mechanical equipment. Anything MEP-shaped in the open items below cannot be proven on this
-> model — it needs a real project open, not more session time.
+## 2026-08-23 — FOUR REPOSITORIES HARVESTED, EVERYTHING PUSHED
+
+**State: 351 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency checks pass.
+Committed and pushed to origin/main; working tree clean; plugin version bumped so installed copies
+receive it.**
+
+Four source repositories were gone through, each with its own ledger in `docs/` (outside the search
+index, so nothing surfaces them for you — they are listed here on purpose):
+`pyrevit-harvest.md`, `pyrevit-platform-harvest.md`, `rag-addin-harvest.md`, `book-samples-harvest.md`,
+and `revit-libraries-harvest.md` written in parallel by a second session working in the same repo.
+
+**Nothing about the harvests is outstanding.** All four are fully read and every tool has a verdict.
+
+**What IS outstanding, and it is the same shape as everything below: none of the new fragments has been
+run against a real model.** Roughly 30 fragments were added today. Every one compiles, every one is
+read-only or dry-run by default, and every one says so in its own header. Compiling is a floor, not a
+ceiling. The ones most worth proving first, because they are the ones a real job will reach for:
+
+| Run this first | Why it is the one that matters |
+|---|---|
+| `action-set-link-overrides.cs` | Closes a real hole: `recipes/mep-grayout.cs` never handled LINKED models, so on the normal coordination setup it greyed nothing and reported success. Needs a model with a link — `school.rvt` has none |
+| `action-audit-view-filters.cs` | Read-only, so it is the safest first run of the batch. Needs a view with filters on it |
+| `action-report-curtain-elements.cs` | Read-only. Needs a curtain wall — check its panel count against Revit's own schedule |
+| `action-export-families.cs` | Writes .rfa files to disk, never touches the model. Try `maxFamilies = 3` first and open one of the results |
+
+**The one improvement deliberately left unbuilt, with the reason:** the RAG add-in harvested today
+rewrites a plain-English question into several technical Revit-API queries before searching. That is a
+direct answer to the one weakness `CLAUDE.md` records about our own search — site vocabulary the files
+do not use — and `knowledge/glossary.md` is already the map to expand from. It belongs to
+`semantic-index/`, whose whole discipline is that changes are measured against the 28-row set in
+`semantic-index/score-history.md`. **Building it without a before-and-after on that set is exactly the
+unmeasured change that file exists to prevent.** Next session on that layer, with the eval open.
+
+**A note on working in this repo:** two Claude sessions were writing to it simultaneously today. It was
+survivable — the consistency checker and the compile gate both caught everything — but it changed a
+verdict once (a fragment planned as a BUILD became an UPGRADE when the other session's version
+appeared). **Check what is on disk now, not what was there when you started.**
 
 ---
 
