@@ -76,7 +76,13 @@ Func<Element, string> systemNameOf = el =>
 {
     var p = el.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM);
     if (p != null && p.HasValue) { var v = p.AsString(); if (!string.IsNullOrWhiteSpace(v)) return v.Trim(); }
-    var t = el.get_Parameter(BuiltInParameter.RBS_SYSTEM_TYPE_PARAM);
+    // ✱✱ FIXED 2026-08-24 — `RBS_SYSTEM_TYPE_PARAM` IS NOT A REAL BuiltInParameter ON ANY REVIT VERSION.
+    //    Compile-checked against the shipped RevitAPI.dll for 2020, 2024 and 2027: absent from all three,
+    //    so this fragment could not compile and therefore could not run anywhere. The system TYPE is
+    //    domain-specific, so ask duct first and pipe second — both exist on 2020 through 2027, and
+    //    `get_Parameter` returns null when the element has neither, which the guard below already handles.
+    var t = el.get_Parameter(BuiltInParameter.RBS_DUCT_SYSTEM_TYPE_PARAM)
+         ?? el.get_Parameter(BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM);
     if (t != null && t.HasValue) { var v = t.AsValueString(); if (!string.IsNullOrWhiteSpace(v)) return v.Trim(); }
     return "";
 };

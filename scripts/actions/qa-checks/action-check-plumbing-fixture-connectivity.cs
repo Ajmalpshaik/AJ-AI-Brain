@@ -60,8 +60,20 @@ var expected = new List<(string NameContains, List<string> Services)>
 var sourceCategories = new List<BuiltInCategory>
 {
     BuiltInCategory.OST_MechanicalEquipment,
-    BuiltInCategory.OST_PlumbingEquipment,
 };
+// ✱✱ FIXED 2026-08-24 — `OST_PlumbingEquipment` ARRIVED AT REVIT 2024 and is absent on 2020, so naming
+//    it directly is a COMPILE error there and this fragment could not run on 2020 at all. A try/catch
+//    cannot help with a missing enum member — it is not a runtime failure. Reached by NAME instead, so
+//    2024+ picks it up and 2020 simply audits without that category. Same pattern the rest of this
+//    library uses for version-dependent members.
+{
+    BuiltInCategory plumbingEquipment;
+    if (Enum.TryParse("OST_PlumbingEquipment", out plumbingEquipment)
+        && Enum.IsDefined(typeof(BuiltInCategory), plumbingEquipment))
+    {
+        sourceCategories.Add(plumbingEquipment);
+    }
+}
 int walkLimit = 60;             // pieces to follow before calling a run "real system" rather than a stub
 double minRealRunMm = 3000;     // total run length that also counts as reaching the real system
 int maxReportedRows = 80;

@@ -5210,3 +5210,24 @@ tags; four more came from skipping it everywhere else.
 
   Also checked and clean: **none of their 28 fragments carries the `Level.Elevation` defect.** The only
   remaining uses across all 394 are the three deliberately kept.
+
+- 2026-08-24 — **three fragments from the parallel session did not compile, and two of them could not
+  run on ANY Revit.** Found by putting the merged 394 through the compile gate. Fixed on Ajmal's
+  instruction after the patches were verified.
+
+  `BuiltInParameter.RBS_SYSTEM_TYPE_PARAM` **is not a real API name on any version** — checked against
+  the shipped `RevitAPI.dll` for 2020, 2024 and 2027, absent from all three. It was used in
+  `action-check-flow-direction.cs` and `action-connect-open-connectors.cs`, so neither could compile,
+  so neither could run. The system TYPE is domain-specific: `RBS_DUCT_SYSTEM_TYPE_PARAM` then
+  `RBS_PIPING_SYSTEM_TYPE_PARAM`, both present 2020–2027, with `get_Parameter` returning null when the
+  element has neither — which the existing guard already handled. `BuiltInCategory.OST_PlumbingEquipment`
+  arrived at **2024**, so `action-check-plumbing-fixture-connectivity.cs` failed on 2020 only; reached by
+  `Enum.TryParse` now, so 2024+ picks it up and 2020 audits without that category. **A missing enum
+  member is a COMPILE error — a try/catch cannot reach it**, which is why reflection is the only fix.
+
+  **THE FINDING THAT OUTLIVES THE THREE FIXES: the other session's ledger states that all 388 fragments
+  compile on 2020/2024/2027. Two of them failed on every version, so that sentence was written without
+  running the gate.** This is the same failure mode this Brain keeps catching in its own documentation —
+  a claim that got ahead of what was measured — arriving this time in a compile claim rather than a
+  count. The gate takes minutes and the sentence is worthless without it. Worth remembering that the
+  parallel session was working to the same standards and still wrote it; it is an easy sentence to type.
