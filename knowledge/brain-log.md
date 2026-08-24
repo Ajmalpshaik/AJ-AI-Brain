@@ -5153,3 +5153,23 @@ a compiler, two from re-checking another session's all-clear.
   the test and the stale comment above it now match reality. And both Brain search tools used
   `spawnSync`, freezing the whole server for the length of a search (measured 9.6 s), now async via
   `brain-tools/spawn-capture.js`. Tests: 51 pass, 0 fail.
+
+- 2026-08-24 — **"you are an AI so you can do it" — and he was right.** The graph's document side was
+  reported to Ajmal as blocked on a `GEMINI_API_KEY`. It was not. Running `graphify . --update` as a bare
+  terminal command prints *"error: no LLM API key found (78 doc file(s) need semantic extraction)"*, and
+  that error was taken at face value instead of invoking the `/graphify` skill — whose own text says, in
+  bold, *"graphify needs no API key. Never ask the user for one, and never block on one... If you catch
+  yourself about to prompt for, wait on, or stop because of a missing API key, that is a misread of this
+  skill."* The CLI has no LLM of its own, so it asks for a key. The skill runs the same pass with the
+  **session itself** as the LLM. The key buys UNATTENDED, not POSSIBLE.
+
+  The pass then ran to completion by hand: 26 stale documents read and extracted into 9 chunks (52 more
+  were already cached), 347 semantic nodes and 362 edges written, merged with a 926-node AST pass over
+  the 379 changed code files. Graph **1770 → 2096 nodes, 2586 edges**, health check clean — 0 dangling,
+  0 missing, 0 collapsed edges, which is the real test of hand-written node IDs matching the AST's format.
+  `graph-rebuild.py --check` now says *all 103 documents cached*, and the vault rebuilt at 2665 notes.
+
+  **The failure shape is worth more than the fix.** An error message from a tool is evidence about the
+  tool, not a verdict on the task — and the skill that wraps the tool existed precisely to say so.
+  `skills/brain-update-layers/SKILL.md` now carries both halves: run the SKILL not the bare command, and
+  a key buys unattended rather than possible.

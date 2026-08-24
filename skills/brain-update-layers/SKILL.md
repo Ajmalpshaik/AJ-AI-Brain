@@ -101,9 +101,17 @@ stale — run the semantic pass:
 /graphify . --update
 ```
 
-It dispatches LLM subagents, so it takes minutes and real tokens. If the check does **not** report stale
-documents, **skip this and say you skipped it and why.** A minutes-long pass that changes nothing is not
-thoroughness, it is waste.
+**Run the SKILL, not the bare `graphify` command.** This matters, and it cost a session on 2026-08-24:
+typing `graphify . --update` in a terminal prints *"error: no LLM API key found (78 doc file(s) need
+semantic extraction)"*, which reads exactly like a hard blocker — and it was reported to Ajmal as one.
+It is not. The CLI has no LLM of its own, so it asks for a key; **the skill runs the same pass with the
+session itself as the LLM.** Ajmal's answer when told it was blocked: *"WHY WE NEED GEMENY API YOU ARE
+AN AI SO YOU CAND DO IT ??"* — he was right. The skill's own text says so outright: *"graphify needs no
+API key. Never ask the user for one, and never block on one... If you catch yourself about to prompt
+for, wait on, or stop because of a missing API key, that is a misread of this skill."*
+
+It takes minutes and real tokens. If the check does **not** report stale documents, **skip this and say
+you skipped it and why.** A minutes-long pass that changes nothing is not thoroughness, it is waste.
 
 ### 7. Rebuild the Obsidian vault from the refreshed graph
 
@@ -134,3 +142,7 @@ Step 6 can be made fully automatic with a **`GEMINI_API_KEY`**, which lets graph
 headless from a hook. **Do not set that up on your own initiative.** It sends Brain content to an outside
 service, and that is his decision, not a convenience default. Say the option exists, say what it costs,
 and let him choose.
+
+**The key buys UNATTENDED, not POSSIBLE.** Without it the pass still runs — the session does the reading
+itself, as it did on 2026-08-24 for 26 documents. What a key would add is the ability to run from a hook
+with nobody watching. Never present it as the thing standing between him and an up-to-date graph.
