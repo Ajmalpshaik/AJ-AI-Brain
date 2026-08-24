@@ -15,12 +15,31 @@ fragments in the table below against a real model**, starting with `action-repor
 
 ### ⚠ THE FOUR OLD BRANCHES ARE STILL THERE, AND THE SETTING THAT SHOULD HAVE HELPED IS NOT ON
 
-**Deleting them is still refused.** `git push origin --delete` returns **HTTP 403**, measured again on
-2026-08-24 — and measured the right way, not recalled: `curl "$HTTPS_PROXY/__agentproxy/status"` reports
-`recentRelayFailures: []` immediately after the failure, so the proxy never saw it. The request reached
-GitHub and GitHub refused. A session's git credentials can push refs but not delete them; that is a
-deliberate guardrail, and the GitHub API tools available here have `create_branch` and **no delete
-counterpart**. All four are **0 commits ahead of `main`**, so nothing is lost by deleting them:
+**Deleting them is still refused — and on the fourth attempt the real reason finally came out.**
+`git push origin --delete` returns a bare **HTTP 403** with no message, which is why three sessions in a
+row concluded *"the request reached GitHub and GitHub refused it."* **That conclusion was wrong, or at
+best unproven.** Asking the REST API instead returns the same 403 **with a body**, and the body is not
+from GitHub at all:
+
+> `{"message":"Write access to this GitHub API path is not permitted through this proxy."}`
+
+So the block is **Anthropic-side**, not GitHub-side. Three separate routes, all closed, for three
+different reasons:
+
+| Route | Result |
+|---|---|
+| `git push origin --delete` | bare 403, no message — a session's git credential can push refs, not delete them |
+| GitHub REST API with `$GITHUB_TOKEN` | 403 — *"Write access to this GitHub API path is not permitted through this proxy"*. And a plain **read** through it also 403s: *"GitHub access is not enabled for this session"* |
+| The `mcp__github__*` tools | the working route while connected, but it has `create_branch` and **no delete counterpart** |
+
+**The correction that matters for any future session: `recentRelayFailures: []` does NOT mean "GitHub
+refused it."** That endpoint reports the *generic egress* proxy. There is a **separate GitHub-specific
+proxy layer** that returns its own 403 and never appears in that log. The earlier diagnosis rested on
+that endpoint meaning more than it does — a clean instrument read as an all-clear for something it does
+not measure. Same shape as the grep that reported clean and the compile claim made without the gate:
+**an instrument returning nothing is evidence only about what that instrument watches.**
+
+All four are **0 commits ahead of `main`**, so nothing is lost by deleting them:
 
 | Branch | Its PRs, all closed |
 |---|---|

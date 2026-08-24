@@ -5518,3 +5518,51 @@ GitHub's and not the proxy's. That one is genuinely his, and it is now the only 
   tool, not a verdict on the task — and the skill that wraps the tool existed precisely to say so.
   `skills/brain-update-layers/SKILL.md` now carries both halves: run the SKILL not the bare command, and
   a key buys unattended rather than possible.
+
+## 2026-08-24 — the branch-delete 403 was diagnosed wrong three times; the fourth attempt got a message
+
+Asked a fourth time to delete the four merged `claude/*` branches, and this time the answer came with a
+reason instead of a shrug.
+
+**What the log said before today, and what was wrong with it.** Three sessions recorded that
+`git push origin --delete` fails because *"the request reached GitHub and GitHub refused it — a session's
+git credentials can push refs but not delete them."* The evidence was always the same: run
+`curl "$HTTPS_PROXY/__agentproxy/status"` right after the failure, see `recentRelayFailures: []`,
+conclude the proxy never saw it, therefore GitHub did. Written up on 2026-08-22 as a *correction* to an
+even earlier wrong diagnosis, which made it feel settled.
+
+**What actually happens.** `git push --delete` returns a bare 403 with **no body** — git prints
+`RPC failed; HTTP 403` and nothing else, so there is nothing to read. Ask the REST API for the same
+deletion and the identical 403 arrives **with a message**:
+
+```
+DELETE /repos/{owner}/{repo}/git/refs/heads/{branch}
+403 {"message":"Write access to this GitHub API path is not permitted through this proxy."}
+```
+
+Not GitHub. An **Anthropic-side GitHub API proxy**. A plain GET through the same token 403s too, with
+`"GitHub access is not enabled for this session"` — so that token is not the route at all; the working
+route this session was the `mcp__github__*` tools, and those have `create_branch` and **no delete
+counterpart**. Three doors, three different locks, none of them GitHub's own refusal.
+
+**The transferable finding, and it is not about branches.** `recentRelayFailures: []` is a real
+measurement of a real thing — the **generic egress proxy**. It says nothing about the **GitHub-specific
+proxy layer**, which returns its own 403 and never appears in that log. Treating the empty log as an
+all-clear meant reading a clean instrument as proof about something it does not watch, and the mistake
+survived three sessions *because* it was expressed as a measurement rather than a guess.
+
+That is the third instance of the same shape in one day, which is why it is worth the space:
+
+| The instrument | What it actually covered | What it was read as |
+|---|---|---|
+| `grep "Level\.Elevation"` | that one spelling | "no fragment has the defect" (five did) |
+| `check-scripts` green | `scripts/*.cs` only | "all our C# compiles" (the MCP server's did not) |
+| `recentRelayFailures: []` | the generic egress proxy | "GitHub refused it" (an Anthropic proxy did) |
+
+**So: before reporting a negative result, say out loud what the instrument watches, and check the thing
+you are claiming is inside that.** A clean read is evidence about the instrument's field of view and
+nothing outside it.
+
+**Practical upshot, unchanged:** deleting these branches cannot be done from a session by any available
+route, and per `/root/.ccr/README.md` a 403 of this kind is to be reported rather than worked around. It
+is Ajmal's browser, Branches tab, bin icon — and it stays the only open item.
