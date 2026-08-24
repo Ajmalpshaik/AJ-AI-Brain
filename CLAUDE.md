@@ -157,6 +157,15 @@ He named two problems. Both have an answer that already exists:
   `brain-log.md`, `plugin-release`. Running the checks earlier just reports someone else's half-finished
   work. And **a `check-scripts` FAIL naming a file you did not write belongs to another session — report
   it, do not fix it**; editing a file another session is mid-way through corrupts both.
+- **They push to `origin/main` too, so `git fetch` FIRST — at the start, not at push time.** On
+  2026-08-24 a session finished its work and only then discovered local `main` was **10 commits behind**
+  (28 fragments from peer sessions, 360 → 388). Everything it had written was against a stale count, so
+  every documentation edit became a merge conflict — `plugin.json`, the fragment counts inside this file
+  and `START-HERE.md`, and `brain-log.md` where both sides had appended a same-day entry. Cheap to avoid,
+  tedious to undo. When it does happen: **keep BOTH brain-log entries** (it is a record, not a merge
+  target), take THEIR counts and keep YOUR prose, and **re-run `plugin-release.mjs` after the merge** —
+  their bump and yours collide, and the merged number must end up higher than theirs or installed copies
+  receive nothing.
 - **Before pushing anything a plugin user should receive, run
   [`node tools/plugin-release.mjs`](tools/plugin-release.mjs)** and commit the bumped version with the
   change. Claude Code pins an installed plugin to the `version` string in `plugin.json` — its own
