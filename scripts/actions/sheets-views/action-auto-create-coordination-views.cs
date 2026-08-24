@@ -70,7 +70,7 @@ if (vft3d == null)
 
 // ---- levels ----
 var levels = new FilteredElementCollector(Document).OfClass(typeof(Level)).Cast<Level>()
-    .OrderBy(l => l.Elevation).ToList();
+    .OrderBy(l => l.ProjectElevation).ToList();
 if (levels.Count == 0)
 {
     sb.AppendLine("STOP: this project has no Levels — there is nothing to make a per-level view from.");
@@ -134,12 +134,18 @@ for (int i = 0; i < chosen.Count; i++)
     var lvl = chosen[i];
     string name = namePattern.Replace("{LEVEL}", lvl.Name);
 
-    double bottom = lvl.Elevation - ToFeet(belowLevelMm);
+    // `ProjectElevation`, NOT `Elevation`. A level has TWO heights: `Elevation` is measured from whatever
+    // the level type's Elevation Base says (Project OR Shared); `ProjectElevation` is always from the
+    // project origin. The section box built below is a world-coordinate BoundingBoxXYZ whose X and Y come
+    // from real element bounding boxes, so its Z has to come from the same space. Using `Elevation` on a
+    // project set out to a survey datum puts every coordination view's box at the wrong height — the
+    // views get made, they look right in the browser, and each one clips the wrong slice of the building.
+    double bottom = lvl.ProjectElevation - ToFeet(belowLevelMm);
 
     // The next level UP in the full list, not in the filtered one — a filtered list would give the wrong
     // ceiling whenever levels are skipped.
-    var above = levels.FirstOrDefault(l => l.Elevation > lvl.Elevation + 1e-6);
-    double top = above != null ? above.Elevation : lvl.Elevation + ToFeet(topLevelHeightMm);
+    var above = levels.FirstOrDefault(l => l.ProjectElevation > lvl.ProjectElevation + 1e-6);
+    double top = above != null ? above.ProjectElevation : lvl.ProjectElevation + ToFeet(topLevelHeightMm);
 
     plan.Add((lvl, name, bottom, top, existingNames.Contains(name)));
 }
