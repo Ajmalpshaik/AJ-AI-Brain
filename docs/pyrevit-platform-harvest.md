@@ -191,7 +191,7 @@ own fragment; all are cheap to record.
 
 ## State at the end
 
-All 13 consistency checks pass. **All 360 fragments compile on Revit 2020, 2024 and 2027** — first pass,
+All 13 consistency checks pass. **All 388 fragments compile on Revit 2020, 2024 and 2027** — first pass,
 no failures, which is the yesterday's-lessons (`ElementId.IntegerValue`, `Definition.ParameterType`)
 staying learned. **None of the 3 new fragments has been run against a real model**; each is
 report-or-dry-run by default and says so in its own header.
