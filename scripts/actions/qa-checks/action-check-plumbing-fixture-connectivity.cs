@@ -57,11 +57,29 @@ var expected = new List<(string NameContains, List<string> Services)>
 };
 
 // What counts as reaching a real system at the far end of a walk.
+// Names that exist on EVERY supported Revit go here directly.
 var sourceCategories = new List<BuiltInCategory>
 {
     BuiltInCategory.OST_MechanicalEquipment,
-    BuiltInCategory.OST_PlumbingEquipment,
 };
+
+// `OST_PlumbingEquipment` DOES NOT EXIST ON REVIT 2020 — it arrived at 2024. Naming a missing enum
+// member is a COMPILE error, so a try/catch around it cannot help: the file simply will not build on
+// 2020, and one fragment that fails to compile is one the whole library cannot ship to that version.
+// Resolving it BY NAME at run time is the version-proof route the rest of this library uses for the
+// same problem (the ElementId.Value/IntegerValue and IndependentTag lookups) — on 2020 the parse fails,
+// the category is skipped, and everything else still works.
+var optionalSourceCategories = new List<string> { "OST_PlumbingEquipment" };
+foreach (var name in optionalSourceCategories)
+{
+    try
+    {
+        BuiltInCategory parsed;
+        if (Enum.TryParse(name, out parsed) && Enum.IsDefined(typeof(BuiltInCategory), parsed))
+            sourceCategories.Add(parsed);
+    }
+    catch { }
+}
 int walkLimit = 60;             // pieces to follow before calling a run "real system" rather than a stub
 double minRealRunMm = 3000;     // total run length that also counts as reaching the real system
 int maxReportedRows = 80;

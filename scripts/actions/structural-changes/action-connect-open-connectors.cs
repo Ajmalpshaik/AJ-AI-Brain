@@ -132,9 +132,15 @@ if (open.Count < 2)
 }
 
 // ---- score every candidate pair ----
+// THERE IS NO `RBS_SYSTEM_TYPE_PARAM` — the system-type parameter is DOMAIN-SPECIFIC. Revit has
+// RBS_DUCT_SYSTEM_TYPE_PARAM and RBS_PIPING_SYSTEM_TYPE_PARAM (both present 2020-2027) and no generic
+// one. Naming a BuiltInParameter that does not exist is a COMPILE error, which no try/catch can rescue
+// and which the whole library is otherwise free of — see knowledge/revit-api-surface.md, which lists
+// the 245 types this library really uses. Try duct, then pipe, then the system NAME.
 Func<Element, string> systemOf = el =>
 {
-    var p = el.get_Parameter(BuiltInParameter.RBS_SYSTEM_TYPE_PARAM)
+    var p = el.get_Parameter(BuiltInParameter.RBS_DUCT_SYSTEM_TYPE_PARAM)
+         ?? el.get_Parameter(BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM)
          ?? el.get_Parameter(BuiltInParameter.RBS_SYSTEM_NAME_PARAM);
     if (p == null) return "";
     var v = p.AsValueString();
