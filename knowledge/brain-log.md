@@ -4877,6 +4877,167 @@ to separate "the fitting is stale" from "the family cannot do this".
   `action-report-parameter-inventory.cs`. Recorded because a survey-grade skip and a read-grade skip are
   not the same claim, and the method exists to stop the first masquerading as the second.
 
+## 2026-08-24 — 28 MEP coordination fragments added; 12 of a 40-item wish-list were already built
+
+Ajmal brought a 40-item list of MEP coordination tools he wanted in the library. Working it produced 28
+new fragments (360 -> 388) and, more usefully, a measurement of how much of that list the Brain already
+covered.
+
+**8 were already here, several live-verified.** `trace-mep-system` -> `recipes/trace-mep-circuits.cs`;
+`auto-dimension-mep` -> `action-dimension-mep-runs.cs`; `check-sleeve-requirements` AND
+`create-sleeves-from-penetrations` -> the two halves of `recipes/place-sleeves-at-wall-penetrations.cs`
+(its dry-run mode IS the detection half); `check-firefighting-coverage` -> the eight sprinkler recipes;
+`check-diffuser-coverage` -> `action-report-coverage.cs`; `compare-revit-model-versions` ->
+`action-compare-models.cs`; `check-model-performance` -> `model-health-audit.cs` +
+`action-report-geometry-complexity.cs`. **That is 20% of an outside wish-list already built**, and it was
+only visible because the whole index was dumped and matched by PURPOSE rather than by filename — the
+filenames alone would have matched almost none of those pairs.
+
+**4 more pairs were the same job named twice**, and were merged rather than built twice: check-mep-clearance
++ check-minimum-clearance; check-slope + check-duct-slope (slope is rise/run whatever the service is);
+check-equipment-access-zone + check-equipment-clearance; check-drainage-connectivity +
+check-plumbing-fixture-connectivity. **A wish-list is not a specification** — it carries the same idea
+under several names, and building each name produces exactly the near-duplicate pairs
+`scripts/README.md`'s naming rules exist to prevent.
+
+**What the 28 are.** Six write fragments (`auto-route-mep-run`, `connect-open-connectors`, `set-pipe-slope`,
+`auto-size-duct`, `auto-size-pipe`, plus `auto-tag-mep`/`auto-arrange-tags`/`auto-create-coordination-views`
+on the annotation side), 18 read-only QA checks in `actions/qa-checks/`, and two roll-up reports.
+
+**Three findings worth keeping, all of them about honesty in a check:**
+
+- **A check that cannot see its input must say so, not return zero.** Almost every one of these sweeps has
+  a way to be silently vacuous: clearance against structure that lives in a LINK, ceiling coordination
+  where the architecture is linked, room completeness where the devices are linked, family standards on
+  types with no placed instance. Every one now prints its input counts BEFORE its result and says NOT
+  CHECKED with a reason instead of a reassuring 0. This is the same failure the Brain keeps writing down
+  in other forms — documentation getting ahead of reality — appearing in the model-checking layer.
+- **`FamilySymbol` does not expose connectors**, so `action-check-family-standards.cs` samples one placed
+  instance per type and reports UNPLACED / NOT CHECKED for types with none. There is no `symbol.Connectors`
+  and no way round it; the alternative was a guess dressed as an audit.
+- **Unit constants are printed next to Revit's own display string.** Both sizing fragments assume Revit's
+  internal flow unit is ft3/s and convert with plain arithmetic (the library is version-proof, so no
+  `UnitUtils`). Rather than assert the constant, each prints the raw internal value beside
+  `AsValueString()` for the first few elements — a wrong constant is then obvious on the first run instead
+  of never. Worth copying wherever a fragment hard-codes a unit conversion.
+
+**All 28 are marked NOT YET LIVE-VERIFIED and every write fragment dry-runs by default.** They were written
+in a Linux container with no Revit and no C# compiler — the same position `tools/verify-fragments-compile.ps1`
+was in on 2026-08-04, when it sat unproven for three days. `tools\check-scripts.cmd` on Windows is the
+next step and has not been run against them.
+
+Consistency: all 13 checks pass after `sync-counts` (22 count claims across 17 files).
+
+## 2026-08-24 — the two new tag fragments contradicted six findings already measured here; Ajmal caught it
+
+An hour after the 28-fragment batch went in, Ajmal asked: *"I have doubts we have before that taging cs
+am i right that lshapes one and tags related ones isthat it will be mix or new it will be collapps ? If i
+say tag it will get confused what need to do and it will not create as per we need ?"*
+
+He was right, and about something worse than the routing confusion he was asking about.
+
+**The two new tag fragments contradicted `knowledge/live-model/tagging.md` in six places.** That file is
+443 lines of live measurements against real models, several of them Ajmal's own corrections. What the new
+files did against what it already said:
+
+| Already measured and settled | What was written on 2026-08-23 |
+|---|---|
+| A tag's bounding box **includes its leader** — a live defect found in `action-stack-tags.cs` the day before | `auto-arrange-tags` sized every tag with `get_BoundingBox` -> leadered tags flung metres apart |
+| *"moving straight leader tag, L shaped one keep same place"* — Ajmal's instruction, with a screenshot | Split every push 50/50, moving the L-shaped tag too |
+| Overlap resolution needs view-space projection (`RightDirection`/`UpDirection`) | Raw model X/Y — wrong on any rotated plan or section |
+| Moving a tag drags a **Free** leader's end off its element; capture and restore it | Did not |
+| Tag family = `Document.GetDefaultFamilyTypeId(...)`, not a guessed name | Took "the first tag family loaded" |
+| `IndependentTag.Create` **silently ignores the type you pass** — 38 tags measured coming out as the document default | Never checked `GetTypeId()` after creation |
+
+**Root cause, and it is the interesting part.** The batch DID search for existing fragments —
+`fragment-index.mjs --find`, plus a full index dump matched on purpose, which is what correctly found the
+8 already-built items out of the 40 asked for. What it never did was read the KNOWLEDGE NOTE.
+**`fragment-index.mjs` reads only `scripts/*.cs`; it structurally cannot surface a knowledge note**, which
+is precisely why `CLAUDE.md` says to ask `ask-brain-hybrid` in plain English before writing new C#. One
+skipped read, six defects — and every one of them would have looked like a different bug on a live job
+(tags metres apart reads as a broken script, not as a leader-inclusive bounding box).
+
+**Fixed, not patched over.** `action-auto-tag-mep.cs` now uses the project's own default tag family with
+the hint/default/first-loaded order printed so a guess is never invisible, and verifies every created
+tag's type. `action-auto-arrange-tags.cs` was rewritten: leaderless-only measurement with a stated paper
+default when the whole set is leadered, the straight-leader-first preference, a two-phase fallback that
+REPORTS which pairs needed the exception, free-leader-end capture and restore, and all arithmetic in view
+space. Both now carry `SOURCE:` lines pointing at `tagging.md`.
+
+**And the question he actually asked is now answered in the file.** `tagging.md` opens with a routing
+table — eleven tag-related files, `--find tag` returns 28 fragments, and without a rule "tag it" is a coin
+toss. The rule: placement is decided by HOW MANY CATEGORIES and HOW BUSY THE VIEW IS.
+`recipes/tag-elements-in-active-view.cs` is the default answer and the only one that does placement
+properly; `auto-tag-mep` is for the mixed-category case it cannot reach; `auto-arrange-tags` is for tags
+that already exist. **They do not collide — they are sequential**: place, tidy, check.
+
+**The lesson worth keeping is not about tags.** A fragment search answers "does code for this exist"; it
+does not answer "has this already been figured out". Those are different questions and only the second one
+is where the traps live.
+
+## 2026-08-24 — Ajmal asked "do we have another check like that" — the audit found four more
+
+Straight after the tag fixes he asked the follow-up that mattered: *"now we find some issues that we have
+sameting on difremt fragment thats is chanse to clash that like that do we have anothar check that and if
+we have fixit"* — i.e. the tag problem was found because he happened to ask; are there others?
+
+There were. **The whole 28-fragment batch was written the same way — searching `scripts/` and never
+reading `knowledge/`** — so every fragment whose subject already had a knowledge note was a candidate.
+Cross-checking all 28 against `knowledge/live-model/` found four more, in three fragments:
+
+**1. `action-set-pipe-slope.cs` — reported success while doing nothing.** `geometry-and-transforms.md`
+records (proved live 2026-08-07): *a move on a GROUP MEMBER is silently ignored — no exception, no return
+value, no change.* The fragment set a `LocationCurve` and counted the call as done, so on a model with
+grouped services it would have printed "RE-SLOPED: 12" over twelve pipes that never moved. **Fixed two
+ways**: group members are refused up front and named, and every write is now READ BACK and compared
+against where the end was asked to go, so a constraint or a pinned neighbour is caught as well. Note the
+trap inside the trap, also from that file — the MEMBER reports `Pinned = true` while the GROUP reports
+`false`, so "the group isn't pinned, therefore it's movable" is the wrong test, and unpinning a member
+throws.
+
+**2. `action-check-sleeve-size.cs` — matched the service by bounding box.** `mep-openings.md` opens with
+*"Finding the crossing — real solid intersection, not bounding boxes"*, and the reason: two boxes overlap
+constantly without the elements touching, so a pipe in the next bay shares a box corner with the sleeve.
+The fragment would have checked a sleeve against the wrong service and reported a confident size verdict
+about it. **Fixed**: box as a cheap pre-filter, `BooleanOperationsUtils.ExecuteBooleanOperation(...,
+Intersect)` with a real volume as the decision, every solid pairing tried (a duct carries its insulation
+as a separate solid), catch PER PAIR because some Revit solids refuse booleans and throw, and a sleeve
+with no readable solid falls back to the centreline test **and is named in the report** rather than
+passing a weaker test off as a geometry check.
+
+**3. `action-connect-open-connectors.cs` — paired on nearest gap.**
+`mep-connect-existing-runs.md` names that exact rule as wrong: *"Not 'nearest pair of connectors', which
+picks a pair that then needs a long awkward crank."* The recorded principle is SMALLEST TOTAL
+INTERVENTION. Nothing moves in this fragment so there is no shift to count, but the principle still
+applies to what is left — squareness. Two ends 5 mm apart but 30 degrees off-axis are a worse joint than
+two 8 mm apart and dead-on, and a pure gap sort prefers the bad one. **Fixed**: score = gap +
+misalignment penalty. That note also confirmed the fragment is NOT a duplicate — it lists the related
+fragments and says *"a fragment that does the full plan-and-build has not been written"* — so a header
+note now says plainly that this is the join-what-already-touches tool and that note is what to build the
+stretch-and-build one from.
+
+**4. `action-auto-arrange-tags.cs` — a fifth tag defect, missed in the first correction round.**
+`tagging.md` records a THIRD clash type beyond own-leader and tag-vs-tag: **tag-vs-duct**, and the
+measured lesson that resolving it as a SECOND pass reintroduced a tag-vs-tag overlap already at zero,
+because moving a tag to clear a duct pushes it into a neighbour. **Fixed**: model geometry is now an
+obstacle inside the SAME iteration loop, taking 100% of the push since it cannot move. A happy
+consequence of the earlier leaderless-measurement fix — the sizes are already TEXT-ONLY, which is exactly
+what this test requires, since a leader is *supposed* to cross duct geometry on its way to its element.
+Also fixed a related edge case: the early return said "fewer than two tags, nothing can overlap", which
+was wrong once model geometry counts — one tag alone can still be sitting on a duct.
+
+**And his first question has an answer worth recording.** He asked whether a fragment for understanding
+tag clash was needed. **No — `recipes/tag-elements-in-active-view.cs` PASS 2 already resolves all three
+clash types in one loop and is live-verified.** The standalone arrange fragment exists only for tags that
+already exist, which the recipe cannot reach.
+
+**The general lesson, restated because it now has four more data points.** A fragment search answers
+"does code for this exist". It does not answer "has this already been figured out". `fragment-index.mjs`
+reads only `scripts/*.cs`; `ask-brain-hybrid` reads everything. **Before writing new C# on any subject,
+check whether `knowledge/live-model/` already has a note on that subject** — sizing, openings, tagging,
+connecting, geometry, ceilings, insulation and views all do. Six defects came from skipping that read on
+tags; four more came from skipping it everywhere else.
+
 - 2026-08-24 — **the 183k-line suite, finished properly — and the biggest finding is a defect in fifteen
   of our own fragments, not anything that came across.** The 72-plugin target the morning session
   surveyed and deliberately recorded as unread. Full ledger:
@@ -5027,3 +5188,25 @@ to separate "the fitting is stale" from "the family cannot do this".
   person who knows the model asking whether the new thing fits the old thing. **The defect was not in
   the new code or the old code — it was in the seam between them**, which is the one place neither a
   source read nor a compile gate looks.
+
+- 2026-08-24 — **two parallel sessions merged: 388 + 6 = 394 fragments, and the seam needed work the way
+  a conflict does.** The other session landed 28 MEP coordination fragments in `main` while this branch
+  was still based on 360, so the branch came back un-mergeable. Twenty files conflicted and **nineteen
+  were nothing but the fragment count** — `sync-counts.mjs` recomputes those, so they resolve by taking
+  either side. The two that mattered, `scripts/README.md` and this log, were both "each session appended
+  its own rows", and both were resolved by **keeping both sides**.
+
+  **The part that is not mechanical, and is the same lesson Ajmal taught earlier the same day.** Two
+  sessions adding to one library produce fragments that answer NEIGHBOURING questions, and a session
+  later will pick whichever it finds first. Two real overlaps here, neither a duplicate:
+  their `action-check-minimum-clearance.cs` measures ANY element pair by **sampling points** on solids
+  (general, approximate, and its own header says to check a gap against a Revit dimension) while this
+  branch's `action-report-mep-clearance.cs` is **linear runs only and exact**
+  (`Curve.ComputeClosestPoints`); their `action-check-sleeve-size.cs` is a **specification** check on a
+  sleeve while `action-audit-mep-openings.cs` is a **coordination** check against the structural link.
+  All five now carry a cross-reference block naming the others and the distinction.
+  **The seam between two sessions' fragments is nobody's file** — worth a deliberate pass at every
+  merge, not only when somebody asks.
+
+  Also checked and clean: **none of their 28 fragments carries the `Level.Elevation` defect.** The only
+  remaining uses across all 394 are the three deliberately kept.

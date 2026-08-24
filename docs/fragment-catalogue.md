@@ -1,6 +1,6 @@
 # AJ AI Brain — every fragment, and what it does
 
-**366 fragments**, generated from the files on 2026-08-24. Status comes from each fragment's row in `scripts/README.md`, which is this repo's single source of truth for it.
+**394 fragments**, generated from the files on 2026-08-24. Status comes from each fragment's row in `scripts/README.md`, which is this repo's single source of truth for it.
 
 **Generated — do not edit by hand.** Run `node tools/catalogue-build.mjs` after adding or retiring a fragment. The hand-written version of this file was stale within a day of being written.
 
@@ -9,7 +9,7 @@
 | Status | Count |
 |---|---|
 | ✅ PROVEN | 247 |
-| ⚠️ not run | 69 |
+| ⚠️ not run | 97 |
 | ❓ unproven | 38 |
 | ⛔ blocked | 7 |
 | 🚫 impossible | 5 |
@@ -88,16 +88,34 @@
 | ✅ | `action-set-parameter-value.cs` | Bulk-set one named parameter to one value across every element in `elements` — a generic version of the Flow-parameter-refresh / any other bulk parameter edit. Falls back to the element's TY... |
 | ⛔ | `action-set-workset.cs` | Assign every element in `elements` to a named user workset — the write counterpart to filter-by-workset.cs, which can find elements ON a workset but has no way to put them there. Sets the EL... |
 
-## actions/qa-checks  *(12)*
+## actions/qa-checks  *(30)*
 
 | | Fragment | What it does |
 |---|---|---|
 | ⚠️ | `action-audit-mep-openings.cs` | Audit the openings/sleeves ALREADY IN THE MODEL against the MEP that is in it now and the structure in the linked model. Answers the question a revision actually asks — "the ducts moved; whi... |
 | ⚠️ | `action-audit-view-filters.cs` | Answer "the filter is on the view, so why is nothing coloured?" — reads every filter on a view and reports the four separate states that each have to be right before a filter draws anything... |
+| ⚠️ | `action-check-annotation-overlap.cs` | Find the annotation in a view that PRINTS ON TOP OF OTHER ANNOTATION — tags over tags, text over dimensions, a symbol buried under a keynote. The drawing-issue check that catches what nobody... |
+| ⚠️ | `action-check-bim-standards.cs` | Check the model against the project's own naming and data conventions — view names, sheet numbers, level names, workset names, system names, and whether the parameters the project requires a... |
+| ⚠️ | `action-check-ceiling-coordination.cs` | Check ceiling-mounted MEP devices against the ceiling they are supposed to be in — is there a ceiling above each one at all, is the device sitting AT the ceiling or floating above or hanging... |
+| ⚠️ | `action-check-equipment-clearance.cs` | Check the MAINTENANCE AND ACCESS ZONE around each piece of equipment — the space in front for pulling a coil or a filter, at the sides for the panels, above for the valves — and report every... |
+| ⚠️ | `action-check-equipment-connectors.cs` | Check every connector on the equipment in `elements` against what is actually plugged into it — size, shape and domain — and report the mismatches. The "the AHU has a 600x400 supply spigot a... |
+| ⚠️ | `action-check-family-standards.cs` | Audit the MEP FAMILIES a project is using — do they carry connectors, are they in the right category, do they have the parameters the project needs, are they named to the convention, and are... |
+| ⚠️ | `action-check-flow-direction.cs` | Check that the flow through the system in `elements` actually agrees with itself — every joined pair of connectors should be one OUT meeting one IN. Two connectors both pushing OUT at the sa... |
+| ⚠️ | `action-check-insulation-clearance.cs` | Clearance measured to the OUTSIDE OF THE INSULATION, not to the bare duct or pipe. The same sweep as action-check-minimum-clearance.cs with the one correction that changes the answer on a re... |
+| ⚠️ | `action-check-minimum-clearance.cs` | "Is anything too close to anything?" — measure the real gap between every element in `elements` and a target set, and report every pair closer than the clearance required. Covers BOTH shapes... |
 | ⚠️ | `action-check-open-pipe-ends.cs` | Find the pipes in `elements` that still have an OPEN END — a connector joined to nothing — and optionally cap them. The QA sweep before a pipework model is issued, and the fix for the run th... |
+| ⚠️ | `action-check-plumbing-fixture-connectivity.cs` | Check that every plumbing fixture is actually plumbed — each of its connectors (cold, hot, sanitary, vent) either joined to the right kind of system or reported as missing, and each connecte... |
+| ⚠️ | `action-check-room-mep-completeness.cs` | Check that every room has the MEP it is supposed to have — a diffuser and an extract in each toilet, a sprinkler in every enclosed space, a detector per room, lighting everywhere. Reports pe... |
+| ⚠️ | `action-check-sleeve-size.cs` | Check every sleeve/opening against the service that actually passes through it — is the hole big enough for the pipe plus its insulation plus the annular clearance the specification asks for... |
+| ⚠️ | `action-check-slope.cs` | Measure the real fall on every linear run in `elements` and flag anything outside the allowed range — drainage that is too flat to self-clean, drainage that is too steep (the solids get left... |
 | ✅ | `action-check-surface-fit.cs` | QA check before (or after) snapping elements to a surface — for each element, fire rays from its FOOTPRINT (centre + corners, or a 3x3 grid) toward a target and report whether the element ac... |
+| ⚠️ | `action-check-system-connectivity.cs` | Walk the whole set through its connectors and report how many SEPARATE PIECES it is really in. A system that looks like one network on screen is very often three: the main run, a branch that... |
+| ⚠️ | `action-check-unannotated-elements.cs` | Sweep a whole view and report, PER CATEGORY, how much of what is visible carries a tag and what does not — the "is this drawing actually finished" check before a sheet goes out. Gives the el... |
+| ⚠️ | `action-check-valve-accessibility.cs` | Check that valves, dampers and other in-line accessories can actually be reached and operated — enough room round the handle, not buried above a hard ceiling with no access panel, not three... |
+| ⚠️ | `action-check-vertical-clearance.cs` | Service-to-service SEPARATION IN Z — for every pair of services whose plan footprints overlap, how much clear vertical space is between the bottom of the upper one and the top of the lower o... |
 | ⚠️ | `action-compare-models.cs` | Compare the OPEN model against another .rvt on disk — what was added, what was removed, and which parameters changed on the elements present in both. The "what did they change in this revisi... |
 | ✅ | `action-find-blank-parameter.cs` | QA check — flag elements in `elements` where a named parameter is BLANK (no value, or an empty string) — the standards-compliance sweep "which of these are missing Mark/Comments/whatever". F... |
+| ⚠️ | `action-find-dead-end-system.cs` | Find the runs in `elements` that STOP AND SERVE NOTHING — a duct that ends in mid-air, a branch left behind when the layout changed, a spur drawn to a terminal that was later deleted. The di... |
 | ✅ | `action-find-duplicate-values.cs` | Flag elements that share the SAME value in a named parameter — e.g. two doors both marked "D-101", two pieces of equipment with the same Equipment Tag. Different QA check from action-find-du... |
 | ✅ | `action-find-duplicates.cs` | Flag likely duplicate elements within `elements` — instances whose insertion points sit within a small tolerance of each other (e.g. two air terminals stacked on the same spot). Read-only QA... |
 | ⚠️ | `action-find-overlapping-lines.cs` | Find LINES DRAWN ON TOP OF EACH OTHER in `elements` — exact duplicates, and partly-overlapping collinear segments — and on request delete the redundant ones. AutoCAD's OVERKILL, for Revit de... |
@@ -105,7 +123,7 @@
 | ⚠️ | `action-report-constraints.cs` | Answer "why won't this element move?" — list every dimension/alignment CONSTRAINT attached to each element in `elements`, say what it is locked to, and on request remove them. The other half... |
 | ⚠️ | `action-report-mep-clearance.cs` | The EXACT gap between MEP runs, in mm — every pair in `elements` whose clearance is below a limit, worst first. Answers "is there 50 mm between those two pipes", "which services are too clos... |
 
-## actions/reporting  *(41)*
+## actions/reporting  *(43)*
 
 | | Fragment | What it does |
 |---|---|---|
@@ -113,6 +131,8 @@
 | ✅ | `action-count-and-report.cs` | Report on `elements` — bare count (default, per reply-style.md) or a size-breakdown table when asked for sizes. Read-only, no transaction needed. If the user asked about one specific dimensi... |
 | ✅ | `action-count-by-group.cs` | Count `elements`, broken down by the actual value of ANY named parameter — "count by Level", "count by System Type", "count by Family", "count by Comments". action-count-and-report.cs's brea... |
 | ✅ | `action-count-by-spatial-container.cs` | Count `elements`, broken down by which Room, MEP Space, or HVAC Zone physically contains each one. action-count-by-group.cs's plain parameter lookup CANNOT do this — most MEP elements have n... |
+| ⚠️ | `action-create-coordination-report.cs` | ONE read-only coordination QA summary for the whole model — the state-of-the-model page that goes into a coordination meeting. Every section is a headline number plus the fragment that turns... |
+| ⚠️ | `action-create-mep-handover-report.cs` | The MEP ASSET REGISTER for handover — every piece of equipment with the data the facilities team is actually going to be given, and a blunt count of what is still blank. The report that deci... |
 | ✅ | `action-plan-shortest-route.cs` | Work out the CHEAPEST WAY TO CONNECT a set of elements — "wire these 40 light fixtures using the least cable", "chain these terminals off that FCU", "which order do I run this loop in". Two... |
 | ⚠️ | `action-report-addin-data.cs` | What OTHER add-ins have written into this model, and onto which elements. Lists every Extensible Storage schema in the file — name, vendor, its fields, whether we are allowed to read it — an... |
 | ⚠️ | `action-report-areas.cs` | Report AREAS — the Area-plan kind, not Rooms — broken down by Area Scheme, level and name, with totals. Gross, rentable, BOMA, common-area schedules: the numbers a landlord, a cost plan or a... |
@@ -168,7 +188,7 @@
 | ✅ | `action-remove-revision-from-sheet.cs` | Detach one or more named Revisions from every sheet in `elements` (from filter-by-sheets.cs) — the reverse of action-assign-revisions-by-sheet-date.cs, which only ever adds. Matched by Revis... |
 | ✅ | `action-report-revisions.cs` | List every project Revision in order — sequence number, date, description, issued by/to, issued flag, visibility. Read-only. The missing discovery step for action-edit-revision.cs and action... |
 
-## actions/sheets-views  *(51)*
+## actions/sheets-views  *(54)*
 
 | | Fragment | What it does |
 |---|---|---|
@@ -179,6 +199,9 @@
 | ⚠️ | `action-align-viewports-across-sheets.cs` | Make the plan sit in exactly the SAME position on every sheet — pick one sheet as the master and every other sheet's viewport moves to match it. The "why does the plan jump when I flick thro... |
 | ✅ | `action-apply-view-template.cs` | Apply an existing View Template (by name) to one or more views — bundles ALL of a view's graphic/visibility settings (V/G overrides, View Filters, Category overrides, Phase, Detail Level, Sc... |
 | ⚠️ | `action-arrange-tags-to-view-edges.cs` | Clear the middle of a congested view by parking every tag in a neat column down the LEFT and RIGHT edges of the crop, each still leadered back to its own element, with the leaders fanned out... |
+| ⚠️ | `action-auto-arrange-tags.cs` | Push overlapping tags apart until nothing sits on top of anything else, leaving every tag as near its original position as it can be. The tidy-up for tags THAT ALREADY EXIST — placed by hand... |
+| ⚠️ | `action-auto-create-coordination-views.cs` | Create the standard set of MEP coordination views in one go — a 3D view per level, boxed to that level's slab-to-slab zone, named to a convention and optionally on a view template. The half-... |
+| ⚠️ | `action-auto-tag-mep.cs` | Tag a whole MIXED set of MEP elements in one pass, picking the right tag family for each category automatically — ducts get a duct tag, pipes get a pipe tag, terminals get a terminal tag, eq... |
 | ✅ | `action-center-room-tags.cs` | Move each ROOM TAG in `elements` so its head sits on the CENTRE of the room it tags — the tidy-up after tags have been dragged about, or after rooms were re-shaped and the tags stayed put. W... |
 | ⚠️ | `action-create-assembly-views.cs` | Turn each ASSEMBLY in `elements` into a set of shop-drawing views in one go — a 3D orthographic, detail sections from the sides/top/front you ask for, a part list, a material takeoff, and a... |
 | ✅ | `action-create-view-template-from-view.cs` | Save a fully-configured view's current settings (V/G overrides, Filters, Category overrides, Phase, Detail Level, Scale, Discipline, ...) as a brand new named View Template — Revit's own "Cr... |
@@ -224,15 +247,19 @@
 | ✅ | `action-tag-elements.cs` | Tag every element in `elements` in one given view — simple placement (each tag head offset from the element's own point/curve-midpoint by a fixed vector, straight leader optional), NOT the s... |
 | ❓ | `action-transfer-views-between-documents.cs` | Copy SCHEDULES, LEGENDS, DRAFTING VIEWS or VIEW TEMPLATES from another open Revit document into this one — "bring the standard schedules over from the template project", "copy the legends fr... |
 
-## actions/structural-changes  *(28)*
+## actions/structural-changes  *(33)*
 
 | | Fragment | What it does |
 |---|---|---|
 | ✅ | `action-add-remove-insulation.cs` | Add or remove insulation (or duct lining) on the ducts/pipes in `elements` — the WRITE counterpart to filter-by-insulation-status.cs / filter-by-insulation-type.cs, which can only find it. R... |
+| ⚠️ | `action-auto-route-mep-run.cs` | Route a duct or pipe from POINT A to POINT B as a real connected run — orthogonal legs with a proper elbow fitting at every turn, sized, on a system, all in one transaction group. The "just... |
+| ⚠️ | `action-auto-size-duct.cs` | Size the ducts in `elements` from the airflow they actually carry — velocity method: required area = flow / target velocity, snapped UP to the next real manufactured size, round or rectangul... |
+| ⚠️ | `action-auto-size-pipe.cs` | Size the pipes in `elements` from the flow they actually carry — velocity method: required bore = the diameter that gives flow / target velocity, snapped UP to the next real pipe size. Repor... |
 | ⚠️ | `action-batch-upgrade-revit-files.cs` | Upgrade a WHOLE FOLDER of families and templates to the Revit version that is currently running — open each file, save a copy into a destination folder, close it, and keep going when one fai... |
 | ✅ | `action-change-element-type.cs` | Bulk-swap every element in `elements` from its current type to a different named type within the SAME family — e.g. change every "600x300" duct fitting instance to "600x600", or every door i... |
 | ⚠️ | `action-change-wall-constraints.cs` | Move the walls in `elements` onto a DIFFERENT base and/or top Level — WITHOUT the walls themselves moving or changing height. The "we renamed/reorganised the levels and now every wall is att... |
 | ⚠️ | `action-connect-air-terminals.cs` | Connect the air terminals in `elements` to the duct running past them — Revit cuts the tap into the duct and makes the connection itself. The step AFTER the terminals are laid out: place-ter... |
+| ⚠️ | `action-connect-open-connectors.cs` | Find pairs of OPEN connectors in `elements` that are close enough and compatible enough to belong together, and join them. The "these two pieces are touching but Revit doesn't think they're... |
 | ⚠️ | `action-convert-cad-to-directshape.cs` | Turn an imported CAD solid into REAL Revit elements — one DirectShape per solid, in a category you choose. The fix for "the contractor sent a 3D DWG and Revit treats it as one lump": afterwa... |
 | ⚠️ | `action-copy-from-link.cs` | Copy elements FROM a linked RVT model INTO this host model, placed at their true linked position (the link's full transform applied) — "bring those walls/fixtures from the arch link into our... |
 | ❓ | `action-create-from-room-boundaries.cs` | Build a Floor, a Ceiling, a Filled Region or detail lines ON each Room/Space in `elements`, taking the shape from the room's OWN boundary — "put a ceiling in every room", "give me a slab und... |
@@ -252,6 +279,7 @@
 | ⚠️ | `action-replace-material.cs` | Swap one material for another EVERYWHERE it is used by the elements in `elements` — inside the layers of walls/floors/roofs/ceilings, and on the plain material parameters of family instances... |
 | ❓ | `action-reset-datum-extents.cs` | Put the GRIDS and LEVELS in `elements` back on their shared 3D (Model) extent, discarding the per-view 2D override — the fix for "someone dragged a grid end and now it's short in this view b... |
 | ❓ | `action-set-datum-bubbles.cs` | Show, hide or FLIP the bubble (the head with the grid/level name in it) on the GRIDS and LEVELS in `elements`, in one view — "put the grid bubbles on the other side", "turn the bubbles on at... |
+| ⚠️ | `action-set-pipe-slope.cs` | Put a required fall onto the pipes (or ducts) in `elements` — hold one end still and lift or drop the other until the run sits at the target slope. The fix for what action-check-slope.cs rep... |
 | ✅ | `action-split-elements.cs` | Split each Duct or Pipe in `elements` into two elements at one point along its own length — the "AutoCAD Break" operation, generalized from recipes/split-duct-near-equipment.cs's equipment-r... |
 | ✅ | `action-ungroup-elements.cs` | Dissolve every Group instance in `elements` back into its individual members — the paired undo for action-group-elements.cs. Find the group instances first via filter-by-category.cs (targetC... |
 | ⛔ | `action-unload-remove-links.cs` | Unload (keep the link, drop it from memory/view) or REMOVE (delete from the project entirely) the distinct RVT link TYPE(s) behind the link instances in `elements` — the two Manage Links ope... |

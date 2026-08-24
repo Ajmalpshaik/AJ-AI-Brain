@@ -347,6 +347,33 @@ OUR existing one.
 own date, and says so at the top. The consistency checker did not catch it — check 9 looks at the
 indexed set and this file lives in `docs/`, deliberately outside it.
 
+## The merge with the parallel session — 388 + 6 = 394
+
+While this harvest was running, the other session merged two PRs into `main`: **28 MEP coordination
+fragments** and an audit of them. `main` moved from 360 to 388 while this branch was still at 360 + 6,
+so the PR came back `dirty` and the base had to be merged in. Twenty files conflicted; nineteen of them
+were nothing but the fragment-count number, which `sync-counts.mjs` recomputes anyway. The two real ones
+were `scripts/README.md` (both sessions inserted rows in the same table) and `knowledge/brain-log.md`
+(both appended entries the same day) — **both resolved by keeping both sides**, with this branch's row
+winning for `action-report-clashes.cs` because this branch changed that fragment.
+
+**Checked, and it came back clean:** none of their 28 new fragments carries the `Level.Elevation`
+defect. The only remaining uses in the whole 394 are the three this harvest deliberately left — two
+level-to-level differences where the base cancels, and one display line.
+
+**Two real overlaps, and neither is a duplicate — but a session would have picked whichever it found
+first, so all five now cross-reference each other:**
+
+| Question | Fragments | The distinction |
+|---|---|---|
+| How close are these two? | `action-check-minimum-clearance.cs` and `action-check-insulation-clearance.cs` (theirs) vs `action-report-mep-clearance.cs` (this branch) | Theirs works on **any element pair** and measures by **sampling points** on the solids — general and approximate, and its own header says to check a reported gap against a Revit dimension. This branch's is **linear runs only** and **exact** (`Curve.ComputeClosestPoints`). General-and-approximate versus narrow-and-exact |
+| Is this sleeve/opening right? | `action-check-sleeve-size.cs` (theirs) vs `action-audit-mep-openings.cs` (this branch) | Theirs is a **specification** check — hole big enough for service + insulation + annular clearance, not so big that fire-stopping suffers. This branch's is a **coordination** check against the structural link — nothing runs through it, the service leaves it and re-enters concrete, it spans two structure types, it landed in a column. Run the size check when the sleeves are placed; run the audit after the MEP moves. They overlap on *undersized* alone and disagree on nothing |
+
+That is the same "will it get confused" question Ajmal asked about the openings, arriving a second time
+at merge scale — and the answer was the same shape. **Two sessions adding to one library will produce
+fragments that answer neighbouring questions, and the seam between them is nobody's file.** Worth doing
+deliberately at every merge, not just when someone asks.
+
 ## State at the end
 
 - **366 fragments.** 6 new, 7 upgraded, 15 corrected for the elevation defect, 2 annotated to prevent a

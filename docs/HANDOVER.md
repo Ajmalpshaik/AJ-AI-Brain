@@ -4,9 +4,7 @@ Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
 ## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE. STILL NOT COMMITTED.
 
-**State: 366 fragments. 6 new, 8 upgraded, 15 corrected for a real defect. The whole library compiles
-clean on Revit 2020, 2024 AND 2027 — 366 pass / 0 fail on each. Nothing is committed or pushed — that is
-still the first job.** Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+**State: 394 fragments after merging the parallel session's 28 (main moved from 360 to 388 mid-flight). This branch adds 6 new, 8 upgraded, 15 corrected. Pushed as draft PR #39.** Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
 
 **The thing to know before you touch anything height-related.** `Level.Elevation` and
 `Level.ProjectElevation` are two different numbers, and only the second is in the same coordinate space

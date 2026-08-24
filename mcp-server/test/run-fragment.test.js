@@ -8,7 +8,7 @@
 // proven C# in place. If it ever changes the SHAPE of an INPUTS block — drops a field, merges two,
 // loses a trailing comment — it has corrupted a file that was proven correct, and the damage would
 // show up as a Revit compile error at best and as a job silently running on the wrong values at worst.
-// So the sweep asserts, over all 366 fragments, that rewriting the VALUES leaves the declared types,
+// So the sweep asserts, over all 394 fragments, that rewriting the VALUES leaves the declared types,
 // names and comments untouched. That is exactly the bug this test caught while the tool was being
 // written: `byte colorR = 255, colorG = 0, colorB = 0;` declares three fields on one line — 50 such
 // lines across 28 fragments, every colour job among them — and the first version replaced the whole

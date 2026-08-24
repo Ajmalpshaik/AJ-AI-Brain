@@ -84,6 +84,18 @@
 //
 // ✱✱ NOT YET RUN ON A REAL MODEL (written 2026-08-24, compile-checked on 2020/2024/2027). Read-only.
 //    Run it on ONE known-good opening and one you have deliberately broken before trusting a batch.
+//
+// ✱✱ TWO SLEEVE/OPENING CHECKS NOW, AND THEY ASK DIFFERENT QUESTIONS. Merged 2026-08-24 from two
+//    sessions working in parallel:
+//      action-check-sleeve-size.cs        IS THE HOLE THE RIGHT SIZE — service + insulation + the
+//                                         annular clearance the spec asks for, and not so oversized
+//                                         that fire-stopping becomes the problem. A specification check.
+//      action-audit-mep-openings.cs       IS THE HOLE STILL VALID AT ALL — against the structure in the
+//                                         LINK: nothing runs through it any more, the service leaves it
+//                                         and re-enters concrete, it spans two structure types, it
+//                                         landed in a column, two openings overlap. A coordination check.
+//    Run the size check when the sleeves were just placed; run the audit after the MEP has moved.
+//    They overlap on one answer only (undersized) and disagree on nothing.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
