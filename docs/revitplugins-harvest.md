@@ -389,8 +389,16 @@ deliberately at every merge, not just when someone asks.
   | 2024 | **366 pass, 0 fail** |
   | 2027 | **366 pass, 0 fail** |
 
-  **After merging the parallel session's 28, three of THEIR fragments do not compile** — measured, not
-  assumed, and NOT caused by anything on this branch:
+  **After merging the parallel session's 28, the full 394 sweep on all three versions is:**
+
+  | Revit | Result |
+  |---|---|
+  | 2020 | **391 pass, 3 fail** |
+  | 2024 | **392 pass, 2 fail** |
+  | 2027 | **392 pass, 2 fail** |
+
+  **Three of THEIR fragments do not compile** — measured, not assumed, and NOT caused by anything on
+  this branch. Nothing else in the 394 fails on any version:
 
   | Fragment | 2020 | 2024 | 2027 | Cause |
   |---|---|---|---|---|
