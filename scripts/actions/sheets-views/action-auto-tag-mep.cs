@@ -19,9 +19,20 @@
 //    second run reports "already tagged" rather than stacking a second tag on top — which is the failure
 //    that makes a drawing look right and print wrong.
 //
-// ✱✱ TAG TYPE CHOICE IS REPORTED, NOT ASSUMED. For each category it prints WHICH tag family and type it
-//    picked and how many were available. With `tagTypeHints` empty it takes the first loaded tag for that
-//    category, which is a guess — the printed line is how you see it guessed wrong before the tags go on.
+// ✱✱ TAG FAMILY COMES FROM REVIT'S OWN DEFAULT, NOT FROM "THE FIRST ONE LOADED".
+//    `Document.GetDefaultFamilyTypeId(Category.GetCategory(doc, OST_..Tags).Id)` returns exactly what
+//    "Tag by Category" would use — i.e. whatever tag family THIS project standardised on, which is
+//    usually not the generic Autodesk one. Taking the first loaded symbol is the guess Ajmal corrected on
+//    a live job, and it produces the wrong tag family silently on every element. `ElementTypeGroup` has
+//    NO per-MEP-category tag entries (no `DuctTagType` — the whole enum was checked), so the
+//    Category-based lookup is the only route. Order: your hint, then the project default, then first
+//    loaded — and the report SAYS which of the three it used, so a guess is never invisible.
+//
+// ✱✱ `IndependentTag.Create` DOES NOT RELIABLY HONOUR THE TYPE YOU PASS IT — and it throws nothing.
+//    Measured in this Brain: 38 tags created with an explicit symId all came out as the document's own
+//    default type. It was harmless only because the two ids happened to match after a fix. So every tag
+//    is checked with `GetTypeId()` immediately after creation and corrected with `ChangeTypeId`; the
+//    count of corrections is reported rather than hidden.
 //
 // GOTCHA: DRY RUN BY DEFAULT — the plan prints per category first. Read it, then set dryRun = false.
 // GOTCHA: TAGS ARE VIEW-SPECIFIC. This tags in ONE view. An element tagged in the ceiling plan is
@@ -33,12 +44,21 @@
 // GOTCHA: PLACEMENT IS SIMPLE HERE — the tag head goes at the element's own point (or its curve midpoint)
 //         plus a fixed offset. On a congested view that WILL overlap. Follow with
 //         action-auto-arrange-tags.cs, or use the scoring recipe instead.
-// RELATED: recipes/tag-elements-in-active-view.cs (best placement, one category),
-//          action-tag-elements.cs (one category, simple), action-auto-arrange-tags.cs (fix overlaps
+// SOURCE: ../../../knowledge/live-model/tagging.md — READ IT BEFORE CHANGING THIS FILE. It carries the
+//         two findings above as live measurements, plus several more this fragment deliberately does not
+//         try to reproduce (leader elbow clearance, flow-direction leader sides, view-scale dependence).
+// RELATED: recipes/tag-elements-in-active-view.cs (best placement, one category) — **the better tool for
+//          a congested view, and it is live-verified**: it scores each tag's side, follows real flow
+//          direction, and resolves overlaps as it places. This fragment exists for the MIXED-CATEGORY
+//          case it cannot cover, not because it improves on it.
+//          action-tag-elements.cs (one category, simple), action-auto-arrange-tags.cs (tidy overlaps
 //          afterwards), action-check-unannotated-elements.cs (what is still missing a tag),
 //          action-remove-tags.cs (the undo).
-// ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Tag ONE category on ONE view, look at the
-//   result, then let it loose on a mixed set.
+// ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23, corrected 2026-08-24 against
+//   knowledge/live-model/tagging.md after Ajmal asked whether the new tag fragments would clash with the
+//   existing ones. They did: this file originally guessed the tag family and never verified the created
+//   type, both of which that note had already measured and settled. Tag ONE category on ONE view, check
+//   the tag family that came out, then let it loose on a mixed set.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -182,14 +202,45 @@ foreach (var grp in byCategory)
             s.Name.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0 ||
             (s.Family != null && s.Family.Name.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0));
     }
+
+    if (pick == null)
+    {
+        // REVIT'S OWN DEFAULT, NOT THE FIRST ONE IN THE LIST. `GetDefaultFamilyTypeId` returns exactly
+        // what "Tag by Category" would use for this category — i.e. whatever tag family THIS project has
+        // standardised on, which is usually not the generic Autodesk one. Taking the first loaded symbol
+        // instead is the guess Ajmal corrected on a live job (knowledge/live-model/tagging.md), and it
+        // silently produces the wrong tag family on every element rather than erroring.
+        // ElementTypeGroup has NO per-MEP-category tag entries (no DuctTagType etc. — the full enum was
+        // checked), so this Category-based lookup is the only route.
+        try
+        {
+            var catObj = Category.GetCategory(Document, tagCat);
+            if (catObj != null)
+            {
+                var defId = Document.GetDefaultFamilyTypeId(catObj.Id);
+                if (defId != null && defId != ElementId.InvalidElementId)
+                {
+                    var defSym = Document.GetElement(defId) as FamilySymbol;
+                    if (defSym != null)
+                    {
+                        pick = defSym;
+                        tagChoiceNote[grp.Key] = $"'{defSym.Family?.Name} : {defSym.Name}' — Revit's own default for this category (what Tag by Category uses)";
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+
     if (pick == null)
     {
         pick = available.First();
         tagChoiceNote[grp.Key] = string.IsNullOrWhiteSpace(hint)
-            ? $"picked '{pick.Family?.Name} : {pick.Name}' (first of {available.Count} — a guess, check it)"
-            : $"hint '{hint}' matched nothing; fell back to '{pick.Family?.Name} : {pick.Name}' (first of {available.Count})";
+            ? $"picked '{pick.Family?.Name} : {pick.Name}' (no project default set; first of {available.Count} — A GUESS, check it)"
+            : $"hint '{hint}' matched nothing and no project default is set; fell back to '{pick.Family?.Name} : {pick.Name}' (first of {available.Count} — A GUESS)";
     }
-    else tagChoiceNote[grp.Key] = $"'{pick.Family?.Name} : {pick.Name}' (matched hint '{hint}', {available.Count} available)";
+    else if (!tagChoiceNote.ContainsKey(grp.Key))
+        tagChoiceNote[grp.Key] = $"'{pick.Family?.Name} : {pick.Name}' (matched hint '{hint}', {available.Count} available)";
 
     tagTypeForCat[grp.Key] = pick;
 }
@@ -247,8 +298,9 @@ Func<Element, XYZ> anchorOf = el =>
     return bb != null ? (bb.Min + bb.Max) * 0.5 : null;
 };
 
-int placed = 0;
+int placed = 0, retyped = 0;
 var failures = new List<string>();
+var wrongType = new List<string>();
 
 using (var tx = new Transaction(Document, "AJ Tools - auto-tag MEP"))
 {
@@ -273,8 +325,25 @@ using (var tx = new Transaction(Document, "AJ Tools - auto-tag MEP"))
 
                 var tag = IndependentTag.Create(Document, t.Sym.Id, view.Id,
                     new Reference(t.El), addLeader, TagOrientation.Horizontal, head);
-                if (tag != null) placed++;
-                else failures.Add($"{t.El.Id}: Revit returned no tag");
+                if (tag == null) { failures.Add($"{t.El.Id}: Revit returned no tag"); continue; }
+
+                // `Create` DOES NOT RELIABLY HONOUR THE TYPE YOU PASS IT. Measured live on this Brain:
+                // 38 tags created with an explicit symId all came out as the document's own default type,
+                // with no exception thrown (knowledge/live-model/tagging.md). It was harmless that time
+                // only because the two happened to be the same id after a fix. So verify and correct.
+                try
+                {
+                    if (tag.GetTypeId() != t.Sym.Id)
+                    {
+                        tag.ChangeTypeId(t.Sym.Id);
+                        retyped++;
+                    }
+                }
+                catch (Exception typeEx)
+                {
+                    wrongType.Add($"{t.El.Id}: tag created but is the WRONG TYPE and would not change — {typeEx.Message}");
+                }
+                placed++;
             }
             catch (Exception ex) { failures.Add($"{t.El.Id}: {ex.Message}"); }
         }
@@ -290,6 +359,13 @@ using (var tx = new Transaction(Document, "AJ Tools - auto-tag MEP"))
 
 sb.AppendLine();
 sb.AppendLine($"PLACED: {placed} of {toTag.Count} tag(s) in '{view.Name}'.");
+if (retyped > 0)
+    sb.AppendLine($"TYPE CORRECTED ON {retyped} tag(s) — Revit created them with a different type than the one asked for. Expected behaviour, caught and fixed; see knowledge/live-model/tagging.md.");
+if (wrongType.Count > 0)
+{
+    sb.AppendLine($"WRONG TYPE AND COULD NOT BE CORRECTED ({wrongType.Count}) — these tags exist but are the wrong family:");
+    foreach (var w in wrongType.Take(15)) sb.AppendLine($"  {w}");
+}
 if (failures.Count > 0)
 {
     sb.AppendLine($"NOT PLACED ({failures.Count}):");
@@ -297,5 +373,6 @@ if (failures.Count > 0)
     if (failures.Count > 25) sb.AppendLine($"  ... and {failures.Count - 25} more");
 }
 sb.AppendLine("Placement here is a fixed offset, so tags WILL overlap on a busy view — run action-auto-arrange-tags.cs next.");
+sb.AppendLine("For a congested view, recipes/tag-elements-in-active-view.cs is the better tool: it SCORES each tag's side and resolves overlaps as it places, and it is live-verified.");
 
 return sb.ToString();

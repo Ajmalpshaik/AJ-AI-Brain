@@ -4927,3 +4927,50 @@ was in on 2026-08-04, when it sat unproven for three days. `tools\check-scripts.
 next step and has not been run against them.
 
 Consistency: all 13 checks pass after `sync-counts` (22 count claims across 17 files).
+
+## 2026-08-24 — the two new tag fragments contradicted six findings already measured here; Ajmal caught it
+
+An hour after the 28-fragment batch went in, Ajmal asked: *"I have doubts we have before that taging cs
+am i right that lshapes one and tags related ones isthat it will be mix or new it will be collapps ? If i
+say tag it will get confused what need to do and it will not create as per we need ?"*
+
+He was right, and about something worse than the routing confusion he was asking about.
+
+**The two new tag fragments contradicted `knowledge/live-model/tagging.md` in six places.** That file is
+443 lines of live measurements against real models, several of them Ajmal's own corrections. What the new
+files did against what it already said:
+
+| Already measured and settled | What was written on 2026-08-23 |
+|---|---|
+| A tag's bounding box **includes its leader** — a live defect found in `action-stack-tags.cs` the day before | `auto-arrange-tags` sized every tag with `get_BoundingBox` -> leadered tags flung metres apart |
+| *"moving straight leader tag, L shaped one keep same place"* — Ajmal's instruction, with a screenshot | Split every push 50/50, moving the L-shaped tag too |
+| Overlap resolution needs view-space projection (`RightDirection`/`UpDirection`) | Raw model X/Y — wrong on any rotated plan or section |
+| Moving a tag drags a **Free** leader's end off its element; capture and restore it | Did not |
+| Tag family = `Document.GetDefaultFamilyTypeId(...)`, not a guessed name | Took "the first tag family loaded" |
+| `IndependentTag.Create` **silently ignores the type you pass** — 38 tags measured coming out as the document default | Never checked `GetTypeId()` after creation |
+
+**Root cause, and it is the interesting part.** The batch DID search for existing fragments —
+`fragment-index.mjs --find`, plus a full index dump matched on purpose, which is what correctly found the
+8 already-built items out of the 40 asked for. What it never did was read the KNOWLEDGE NOTE.
+**`fragment-index.mjs` reads only `scripts/*.cs`; it structurally cannot surface a knowledge note**, which
+is precisely why `CLAUDE.md` says to ask `ask-brain-hybrid` in plain English before writing new C#. One
+skipped read, six defects — and every one of them would have looked like a different bug on a live job
+(tags metres apart reads as a broken script, not as a leader-inclusive bounding box).
+
+**Fixed, not patched over.** `action-auto-tag-mep.cs` now uses the project's own default tag family with
+the hint/default/first-loaded order printed so a guess is never invisible, and verifies every created
+tag's type. `action-auto-arrange-tags.cs` was rewritten: leaderless-only measurement with a stated paper
+default when the whole set is leadered, the straight-leader-first preference, a two-phase fallback that
+REPORTS which pairs needed the exception, free-leader-end capture and restore, and all arithmetic in view
+space. Both now carry `SOURCE:` lines pointing at `tagging.md`.
+
+**And the question he actually asked is now answered in the file.** `tagging.md` opens with a routing
+table — eleven tag-related files, `--find tag` returns 28 fragments, and without a rule "tag it" is a coin
+toss. The rule: placement is decided by HOW MANY CATEGORIES and HOW BUSY THE VIEW IS.
+`recipes/tag-elements-in-active-view.cs` is the default answer and the only one that does placement
+properly; `auto-tag-mep` is for the mixed-category case it cannot reach; `auto-arrange-tags` is for tags
+that already exist. **They do not collide — they are sequential**: place, tidy, check.
+
+**The lesson worth keeping is not about tags.** A fragment search answers "does code for this exist"; it
+does not answer "has this already been figured out". Those are different questions and only the second one
+is where the traps live.
