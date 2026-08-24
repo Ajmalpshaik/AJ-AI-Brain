@@ -5084,3 +5084,34 @@ session then has to actually pick them up, which is what this entry is.
 audit (Ajmal asked again), three from a compiler (a parallel session). Every one was findable by
 something that already existed in this repo and was skipped: the knowledge notes, the API surface note,
 and the compile check.
+
+## 2026-08-24 — the parallel session's level sweep missed two of mine; verified rather than trusted
+
+PR #39 reported its `Level.Elevation` vs `ProjectElevation` finding — 15 fragments mixing a level height
+with real world coordinates — and stated: *"Checked and clean: none of the merged 28 carries the
+`Level.Elevation` defect."*
+
+**That claim is wrong, and checking it found two.** Sweeping the 28 for `.Elevation` gave three hits, and
+they are not the same kind of thing:
+
+| Fragment | Use | Verdict |
+|---|---|---|
+| `action-auto-route-mep-run.cs` | `.OrderBy(l => l.Elevation)` only | **Not a defect** — sorting. The two bases differ by a constant, so the order is identical either way |
+| `action-check-valve-accessibility.cs` | `pt.Z - levelBelowZ(pt.Z)`, where the helper compares and returns `l.Elevation` | **DEFECT** — subtracts a level height from a world Z |
+| `action-auto-create-coordination-views.cs` | section box `Z` from `lvl.Elevation`, while its X and Y come from real element bounding boxes | **DEFECT** — a world-coordinate box with one axis in a different space |
+
+Both fixed to `ProjectElevation`. The sort is left on `Elevation` **with a comment saying why**, the same
+treatment PR #39 gave its own two deliberate cases — a future sweep will find that line and it looks
+exactly like the others.
+
+The second one is the more interesting failure: every view still gets created, they look right in the
+browser, and each one silently clips the wrong slice of the building. Nothing errors.
+
+**The lesson is about trusting a peer session's audit.** The report was substantially right and extremely
+useful — it caught three compile failures that only a compiler could find, and it followed the
+report-don't-repair rule exactly. But its clean-bill-of-health on somebody else's 28 files was one line
+in a large PR, and it was wrong. **A finding from another session is evidence; its "and I checked X is
+clean" is not proof, especially about files that session did not write.** Verifying it cost one grep.
+
+Running total for this batch: **15 defects.** Six on tags, four from the knowledge-note audit, three from
+a compiler, two from re-checking another session's all-clear.
