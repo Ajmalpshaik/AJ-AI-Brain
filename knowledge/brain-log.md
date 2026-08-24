@@ -4974,3 +4974,66 @@ that already exist. **They do not collide — they are sequential**: place, tidy
 **The lesson worth keeping is not about tags.** A fragment search answers "does code for this exist"; it
 does not answer "has this already been figured out". Those are different questions and only the second one
 is where the traps live.
+
+## 2026-08-24 — Ajmal asked "do we have another check like that" — the audit found four more
+
+Straight after the tag fixes he asked the follow-up that mattered: *"now we find some issues that we have
+sameting on difremt fragment thats is chanse to clash that like that do we have anothar check that and if
+we have fixit"* — i.e. the tag problem was found because he happened to ask; are there others?
+
+There were. **The whole 28-fragment batch was written the same way — searching `scripts/` and never
+reading `knowledge/`** — so every fragment whose subject already had a knowledge note was a candidate.
+Cross-checking all 28 against `knowledge/live-model/` found four more, in three fragments:
+
+**1. `action-set-pipe-slope.cs` — reported success while doing nothing.** `geometry-and-transforms.md`
+records (proved live 2026-08-07): *a move on a GROUP MEMBER is silently ignored — no exception, no return
+value, no change.* The fragment set a `LocationCurve` and counted the call as done, so on a model with
+grouped services it would have printed "RE-SLOPED: 12" over twelve pipes that never moved. **Fixed two
+ways**: group members are refused up front and named, and every write is now READ BACK and compared
+against where the end was asked to go, so a constraint or a pinned neighbour is caught as well. Note the
+trap inside the trap, also from that file — the MEMBER reports `Pinned = true` while the GROUP reports
+`false`, so "the group isn't pinned, therefore it's movable" is the wrong test, and unpinning a member
+throws.
+
+**2. `action-check-sleeve-size.cs` — matched the service by bounding box.** `mep-openings.md` opens with
+*"Finding the crossing — real solid intersection, not bounding boxes"*, and the reason: two boxes overlap
+constantly without the elements touching, so a pipe in the next bay shares a box corner with the sleeve.
+The fragment would have checked a sleeve against the wrong service and reported a confident size verdict
+about it. **Fixed**: box as a cheap pre-filter, `BooleanOperationsUtils.ExecuteBooleanOperation(...,
+Intersect)` with a real volume as the decision, every solid pairing tried (a duct carries its insulation
+as a separate solid), catch PER PAIR because some Revit solids refuse booleans and throw, and a sleeve
+with no readable solid falls back to the centreline test **and is named in the report** rather than
+passing a weaker test off as a geometry check.
+
+**3. `action-connect-open-connectors.cs` — paired on nearest gap.**
+`mep-connect-existing-runs.md` names that exact rule as wrong: *"Not 'nearest pair of connectors', which
+picks a pair that then needs a long awkward crank."* The recorded principle is SMALLEST TOTAL
+INTERVENTION. Nothing moves in this fragment so there is no shift to count, but the principle still
+applies to what is left — squareness. Two ends 5 mm apart but 30 degrees off-axis are a worse joint than
+two 8 mm apart and dead-on, and a pure gap sort prefers the bad one. **Fixed**: score = gap +
+misalignment penalty. That note also confirmed the fragment is NOT a duplicate — it lists the related
+fragments and says *"a fragment that does the full plan-and-build has not been written"* — so a header
+note now says plainly that this is the join-what-already-touches tool and that note is what to build the
+stretch-and-build one from.
+
+**4. `action-auto-arrange-tags.cs` — a fifth tag defect, missed in the first correction round.**
+`tagging.md` records a THIRD clash type beyond own-leader and tag-vs-tag: **tag-vs-duct**, and the
+measured lesson that resolving it as a SECOND pass reintroduced a tag-vs-tag overlap already at zero,
+because moving a tag to clear a duct pushes it into a neighbour. **Fixed**: model geometry is now an
+obstacle inside the SAME iteration loop, taking 100% of the push since it cannot move. A happy
+consequence of the earlier leaderless-measurement fix — the sizes are already TEXT-ONLY, which is exactly
+what this test requires, since a leader is *supposed* to cross duct geometry on its way to its element.
+Also fixed a related edge case: the early return said "fewer than two tags, nothing can overlap", which
+was wrong once model geometry counts — one tag alone can still be sitting on a duct.
+
+**And his first question has an answer worth recording.** He asked whether a fragment for understanding
+tag clash was needed. **No — `recipes/tag-elements-in-active-view.cs` PASS 2 already resolves all three
+clash types in one loop and is live-verified.** The standalone arrange fragment exists only for tags that
+already exist, which the recipe cannot reach.
+
+**The general lesson, restated because it now has four more data points.** A fragment search answers
+"does code for this exist". It does not answer "has this already been figured out". `fragment-index.mjs`
+reads only `scripts/*.cs`; `ask-brain-hybrid` reads everything. **Before writing new C# on any subject,
+check whether `knowledge/live-model/` already has a note on that subject** — sizing, openings, tagging,
+connecting, geometry, ceilings, insulation and views all do. Six defects came from skipping that read on
+tags; four more came from skipping it everywhere else.

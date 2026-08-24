@@ -36,9 +36,17 @@
 // GOTCHA: THE SLOPE IS APPLIED PER PIPE, NOT ALONG A CHAIN. Each run gets the right fall on its own; it
 //         does NOT work out a continuous invert down a branch of many segments. For a whole branch,
 //         re-slope from the downstream end outward and check with action-check-slope.cs after each step.
+// GOTCHA: A MOVE ON A GROUP MEMBER IS SILENTLY IGNORED — Revit returns normally and changes nothing
+//         (proved live 2026-08-07). Group members are refused up front and named, because counting that
+//         call as success is how this report would say "re-sloped 12" over a model where nothing moved.
+//         The member reports `Pinned = true` while the GROUP reports false, so checking the group gives
+//         the wrong answer. Every write is ALSO read back and compared, so any other silent refusal
+//         (a constraint, a pinned neighbour) is reported rather than counted as done.
+// SOURCE: ../../../knowledge/live-model/geometry-and-transforms.md § "A move on a GROUP MEMBER is
+//         silently ignored" — read it before changing how this fragment writes.
 // RELATED: action-check-slope.cs (measure first, and verify after), action-align-mep-elevation.cs (set a
 //          run to a flat elevation instead of a fall), action-connect-open-connectors.cs (rejoin what
-//          moving an end pulled apart).
+//          moving an end pulled apart), action-report-constraints.cs ("why won't this element move?").
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Re-slope ONE free-ended pipe, look at it in a
 //   section, and re-run action-check-slope.cs on it before doing a branch.
 // ============================================================
@@ -101,6 +109,20 @@ var skipped = new List<string>();
 
 foreach (var el in elements)
 {
+    // A MOVE ON A GROUP MEMBER IS SILENTLY IGNORED — no exception, no return value, no change (proved
+    // live 2026-08-07, knowledge/live-model/geometry-and-transforms.md). Setting a LocationCurve on one
+    // would return normally and change nothing, and this fragment would then report it as re-sloped.
+    // That is the confidently-wrong failure, so group members are refused up front and named.
+    // NOTE the trap inside the trap: the member reports Pinned = true while the GROUP itself reports
+    // false, so "the group isn't pinned, therefore it's movable" gives the wrong answer — and
+    // `element.Pinned = false` on a member throws rather than helping.
+    if (el.GroupId != null && el.GroupId != ElementId.InvalidElementId)
+    {
+        var grp = Document.GetElement(el.GroupId);
+        skipped.Add($"{el.Id}: inside model group '{(grp != null ? grp.Name : el.GroupId.ToString())}' — a move on a group member is SILENTLY IGNORED by Revit. Ungroup it, or edit the group, before re-sloping");
+        continue;
+    }
+
     var lc = el.Location as LocationCurve;
     if (lc == null || lc.Curve == null) { skipped.Add($"{el.Id}: not a linear run (a fitting has no curve to slope)"); continue; }
 
@@ -209,6 +231,25 @@ using (var tx = new Transaction(Document, "AJ Tools - set slope"))
                 if (lc == null) { failures.Add($"{p.El.Id}: lost its location curve between the plan and the write"); continue; }
 
                 lc.Curve = Line.CreateBound(p.Fixed, p.MovingNew);
+
+                // READ IT BACK. Revit has more than one way to accept a write and do nothing with it
+                // (group membership is the proven one, but a constraint or a pinned neighbour will do it
+                // too), and every one of them returns normally. Counting the call as success is how a
+                // report says "re-sloped 12" over a model where nothing moved.
+                var after = (p.El.Location as LocationCurve)?.Curve;
+                if (after == null)
+                {
+                    failures.Add($"{p.El.Id}: lost its curve after the write");
+                    continue;
+                }
+                double movedMm = Math.Min(
+                    ToMm(after.GetEndPoint(0).DistanceTo(p.MovingNew)),
+                    ToMm(after.GetEndPoint(1).DistanceTo(p.MovingNew)));
+                if (movedMm > 1.0)
+                {
+                    failures.Add($"{p.El.Id}: the write was accepted but the pipe did NOT move (end is still {movedMm:F0} mm from where it was asked to go) — a constraint, a group, or a pinned neighbour is holding it");
+                    continue;
+                }
 
                 // Keep the Slope parameter honest where Revit lets it be written.
                 var sp = p.El.get_Parameter(BuiltInParameter.RBS_PIPE_SLOPE);
