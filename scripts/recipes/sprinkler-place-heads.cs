@@ -61,6 +61,15 @@
 //   Room.IsPointInRoom put 6 / 9 / 9 / 14 in the four rooms exactly as planned. A third check from a
 //   SEPARATE bridge call (recipes/sprinkler-compliance-audit.cs) then agreed — 0 failures.
 //   Place ONE head first and measure it. On this run the pilot found two separate faults.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -111,7 +120,7 @@ else
     string catName = symbol.Category != null ? symbol.Category.Name : "(no category)";
     sb.AppendLine($"PLACE SPRINKLER HEADS — {pointsMm.Count:N0} position(s)");
     sb.AppendLine($"  family '{symbol.Family.Name}' type '{symbol.Name}', category {catName}");
-    sb.AppendLine($"  level '{level.Name}' ({toMm(level.Elevation):N0} mm), insertion Z {placementZmm:N0} mm");
+    sb.AppendLine($"  level '{level.Name}' ({toMm(level.ProjectElevation):N0} mm), insertion Z {placementZmm:N0} mm");
     if (!string.IsNullOrWhiteSpace(hazardLabel) || !string.IsNullOrWhiteSpace(constructionLabel))
         sb.AppendLine($"  computed for: {hazardLabel} | {constructionLabel}");
     else
@@ -180,7 +189,7 @@ else
             sb.AppendLine($"  REPORTED: {placedIds.Count:N0} placed, {failed:N0} failed.");
 
             // ---- THE READ-BACK. Do not trust the line above. ----
-            double zProbe = room != null ? room.Level.Elevation + mm(1000) : 0;
+            double zProbe = room != null ? room.Level.ProjectElevation + mm(1000) : 0;
             Func<XYZ, bool> insideRoom = p =>
             {
                 if (room == null) return true;

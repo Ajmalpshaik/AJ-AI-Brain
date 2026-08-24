@@ -42,6 +42,15 @@
 //   are bigger — Room 3 measured 13.81 m2 against A_s 13.15, and Room 1 11.25 against 10.00. Both are
 //   correct; the partition is the honest worst case and A_s is the code's definition. Never swap them.
 //   Sampling at 250 mm over 988-2,240 points per room was comfortably fast on a 3,262-element model.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -74,7 +83,7 @@ else
     if (wallDerived) maxWallDistanceMm = maxSpacingMm / 2.0;
 
     var rbb = room.get_BoundingBox(null);
-    double zProbe = room.Level.Elevation + mm(1000);
+    double zProbe = room.Level.ProjectElevation + mm(1000);
     Func<XYZ, bool> insideRoom = p =>
     { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
 

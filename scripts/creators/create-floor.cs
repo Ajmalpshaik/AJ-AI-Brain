@@ -15,6 +15,13 @@
 //          2026-08-22; until then it still read "NOT YET LIVE-VERIFIED — created 2026-07-26 from the tool-gap
 //          backlog; run once on a small test slab.", which the README had already superseded. The verification was
 //          recorded there and never here.
+// FIXED 2026-08-24 — the base Z came from `level.Elevation`, which is measured from whatever the level
+//          TYPE's "Elevation Base" parameter says (Project or Shared). Every XYZ the API takes is
+//          project-internal, so on a model set out to a survey datum this created the element at the
+//          wrong height, silently, with no error. Now `level.ProjectElevation`. Same class of defect as
+//          the 15 fixed earlier the same day — this one was missed because the first sweep grepped
+//          `Level.Elevation` and here the variable is already a Level. See
+//          knowledge/live-model/level-elevation-vs-project-elevation.md
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -61,7 +68,11 @@ else
             try
             {
                 int n = boundaryMm.GetLength(0);
-                double z = level.Elevation;
+                double z = level.ProjectElevation;   // NOT .Elevation — this Z goes into an XYZ, and every XYZ the API
+                                                     // takes or returns is project-internal. .Elevation is measured from
+                                                     // whatever the level TYPE's Elevation Base says (Project or Shared),
+                                                     // so on any model set out to a survey datum it is off by that offset.
+                                                     // See knowledge/live-model/level-elevation-vs-project-elevation.md
                 var lines = new List<Curve>();
                 for (int i = 0; i < n; i++)
                 {

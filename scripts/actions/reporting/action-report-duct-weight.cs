@@ -31,6 +31,17 @@
 //       nobody can trace to a band is a number nobody will sign.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — harvested 2026-08-22 from the add-in's Duct Standard tool.
 //   Compile-checked on 2020/2024/2027. The arithmetic is checkable by hand — do one duct first.
+//
+// ✱✱ ADDED 2026-08-24 — THE ANSWER IS NOW CROSS-CHECKED AGAINST REVIT'S OWN AREA, FOR FREE.
+//    `BuiltInParameter.RBS_CURVE_SURFACE_AREA` is Revit's own computed surface area for a duct —
+//    perimeter x length, already in the model, and until now unread by anything in this library. The
+//    developed area below is derived independently from the width/height/diameter, so the two are
+//    genuinely separate calculations of the same quantity and a disagreement means one of them is
+//    wrong. The usual cause is SHAPE DETECTION: an oval read as round, or a duct whose parameters do
+//    not match its geometry. A running comparison is printed at the end. **A weight built on the wrong
+//    area is wrong by the same proportion**, so check the comparison line before quoting a tonnage.
+//    Note it is a CHECK, not a replacement: Revit's figure covers the duct and nothing else, while the
+//    fittings, seams and wastage allowances below are the reason this fragment exists.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -89,6 +100,8 @@ Func<Element, string, string> ps = (el, name) =>
 };
 
 double totalBase = 0, totalWithAllow = 0, totalAreaM2 = 0, totalLenM = 0;
+int shapeFromParams = 0;   // ducts whose type could not be read, so the shape was inferred
+double revitAreaM2 = 0; int revitAreaRows = 0;   // Revit's own RBS_CURVE_SURFACE_AREA, for the cross-check
 int counted = 0, noShape = 0, noRule = 0;
 var bySize = new Dictionary<string, double[]>();   // label -> {qty, lengthM, areaM2, baseKg, totalKg}
 var bandUsed = new Dictionary<string, string>();
@@ -102,11 +115,36 @@ foreach (var e in elements)
     if (lenM <= 0) { noShape++; continue; }
 
     // OVAL FIRST — an oval carries width, height AND diameter, so "has a diameter" is not enough.
-    string shape;
-    if (wMm > 0 && hMm > 0 && dMm > 0) shape = "oval";
-    else if (dMm > 0) shape = "round";
-    else if (wMm > 0 && hMm > 0) shape = "rectangular";
-    else { noShape++; continue; }
+    // ✱✱ SHAPE COMES FROM THE DUCT TYPE FIRST, ADDED 2026-08-24. `MEPCurveType.Shape` (which DuctType
+    //    inherits, and which is present on 2020 through 2027) is Revit's OWN answer: Round, Rectangular
+    //    or Oval, stated rather than inferred. The parameter heuristic underneath it is kept as the
+    //    fallback for a duct whose type cannot be read, but it is a guess and the oval case is exactly
+    //    where it goes wrong — which is what the GOTCHA above this describes. Reading the type removes
+    //    that guess entirely for every duct that has one.
+    string shape = null;
+    try
+    {
+        var mct = Document.GetElement(e.GetTypeId()) as MEPCurveType;
+        if (mct != null)
+        {
+            if (mct.Shape == ConnectorProfileType.Round) shape = "round";
+            else if (mct.Shape == ConnectorProfileType.Rectangular) shape = "rectangular";
+            else if (mct.Shape == ConnectorProfileType.Oval) shape = "oval";
+        }
+    }
+    catch { }
+    if (shape == null)
+    {
+        shapeFromParams++;
+        if (wMm > 0 && hMm > 0 && dMm > 0) shape = "oval";
+        else if (dMm > 0) shape = "round";
+        else if (wMm > 0 && hMm > 0) shape = "rectangular";
+        else { noShape++; continue; }
+    }
+    // An oval reports width, height AND diameter; a round one that somehow lost its diameter cannot be
+    // sized at all. Guard the dimensions the chosen shape actually needs.
+    if (shape == "round" && dMm <= 0) { noShape++; continue; }
+    if (shape != "round" && (wMm <= 0 || hMm <= 0)) { noShape++; continue; }
 
     double governing = (shape == "round") ? dMm : Math.Max(wMm, hMm);
 
@@ -161,6 +199,15 @@ foreach (var e in elements)
                       thickMm + " mm (" + rule.Item6 + " g)" + (reinforced ? " +reinf" : "");
 
     totalBase += baseKg; totalWithAllow += totKg; totalAreaM2 += areaM2; totalLenM += lenM;
+
+    // Revit's own figure for the same duct. Missing on some categories, so it is counted separately
+    // and the comparison says how many ducts it actually covers rather than assuming all of them.
+    try
+    {
+        var rap = e.get_Parameter(BuiltInParameter.RBS_CURVE_SURFACE_AREA);
+        if (rap != null && rap.HasValue) { revitAreaM2 += rap.AsDouble() * 0.09290304; revitAreaRows++; }
+    }
+    catch { }
     counted++;
 }
 
@@ -194,6 +241,45 @@ foreach (var kv in bySize.OrderBy(k => sortKey(k.Key).Item1).ThenBy(k => sortKey
 sb.AppendLine("--- | --- | --- | --- | --- | --- | ---");
 sb.AppendLine("TOTAL | " + counted + " | " + Math.Round(totalLenM, 2) + " | " + Math.Round(totalAreaM2, 2) +
               " | " + Math.Round(totalBase, 1) + " | " + Math.Round(totalWithAllow, 1) + " | ");
+
+// ---- the cross-check against Revit's own surface area ----
+if (shapeFromParams > 0)
+{
+    sb.AppendLine("");
+    sb.AppendLine("NOTE: " + shapeFromParams + " duct(s) had no readable type, so their SHAPE was inferred from which");
+    sb.AppendLine("  dimension parameters carry a value. That is the guess the oval case defeats — check those.");
+}
+
+sb.AppendLine("");
+if (revitAreaRows == 0)
+{
+    sb.AppendLine("CROSS-CHECK: none of these elements carries Revit's own surface area parameter, so the");
+    sb.AppendLine("  area above could not be checked against anything. It rests on the shape detection alone.");
+}
+else
+{
+    double diffPct = revitAreaM2 > 0 ? (totalAreaM2 / revitAreaM2 - 1.0) * 100.0 : 0;
+    sb.AppendLine("CROSS-CHECK against Revit's own area (RBS_CURVE_SURFACE_AREA), " + revitAreaRows + " of " +
+                  counted + " duct(s):");
+    sb.AppendLine("  computed here " + Math.Round(totalAreaM2, 2) + " m2   |   Revit says " +
+                  Math.Round(revitAreaM2, 2) + " m2   |   difference " + Math.Round(diffPct, 1) + "%");
+    if (Math.Abs(diffPct) > 5.0)
+    {
+        sb.AppendLine("  *** THEY DISAGREE BY MORE THAN 5%. One of the two is wrong, and the usual cause is SHAPE");
+        sb.AppendLine("      DETECTION — an oval duct read as round uses the wrong perimeter formula. Check the");
+        sb.AppendLine("      shape column above against the model before quoting the weight: the kilos are");
+        sb.AppendLine("      proportional to this area, so they are out by the same percentage.");
+    }
+    else if (revitAreaRows < counted)
+    {
+        sb.AppendLine("  (the two agree on the ducts Revit reports an area for; " + (counted - revitAreaRows) +
+                      " duct(s) had no such parameter and are not covered by this check)");
+    }
+    else
+    {
+        sb.AppendLine("  The two independent calculations agree, so the shape detection and the area are sound.");
+    }
+}
 
 if (includeAllowances && totalBase > 0)
 {

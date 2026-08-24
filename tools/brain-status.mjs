@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { readmeRows, makeStatusOf, loadFragments } from "./fragment-lib.mjs";
 
 const brainRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const args = new Set(process.argv.slice(2));
@@ -75,22 +76,23 @@ for (const b of BUCKETS) {
 // Read off scripts/README.md's own per-fragment markers - the same convention the library already
 // maintains by hand. A row with no marker either way is the important category: never run, and never
 // flagged as never-run, so it silently reads as fine.
-const scriptsReadme = read("scripts/README.md");
-const rows = scriptsReadme.split(/\r?\n/).filter((l) => l.startsWith("| [`"));
-// `verified 2026-08-07` is the house wording, but rows written in a hurry say "verified live 2026-08-14"
-// or "re-verified 2026-08-06" and a strict /verified 2026/ silently dropped those into "no status" — the
-// exact undercount this tool exists to prevent, in the tool itself (found 2026-08-14: 9 rows, all really
-// verified, all counted as unproven). Allow one adverb between the word and the date.
-const verified = rows.filter(
-  (l) => /verified(?:\s+\w+)? 2026-\d\d-\d\d/.test(l) && !/NOT yet live-verified/.test(l),
-);
-const flagged = rows.filter((l) => /NOT yet live-verified/.test(l));
-const blocked = rows.filter(
-  (l) => /BLOCKED|CONFIRMED IMPOSSIBLE/.test(l) && !verified.includes(l) && !flagged.includes(l),
-);
-const noStatus = rows.filter(
-  (l) => !verified.includes(l) && !flagged.includes(l) && !blocked.includes(l),
-);
+//
+// THE CLASSIFICATION ITSELF LIVES IN ./fragment-lib.mjs AND IS DELIBERATELY NOT REPEATED HERE.
+// It used to be: this file carried its own copy of the same four regexes, and on 2026-08-24 the two
+// drifted - fragment-index.mjs was taught to recognise the plain-English "not yet run against a real
+// model" that eleven rows use, this file was not, and the same library reported 108/28 there and 97/39
+// here. Two answers to one question is precisely the failure this tool exists to catch, so the second
+// implementation is gone rather than resynced. `statusOf` also matches a row by its markdown LINK
+// TARGET rather than by substring, which fixes a second, quieter bug: 8 fragments are NAMED inside
+// another fragment's row as prose, and the old row-filter counted those rows once per mention.
+const rows = readmeRows();
+const statusOf = makeStatusOf(rows);
+const fragmentStatuses = loadFragments().map((f) => statusOf(f.path));
+const countStatus = (...want) => fragmentStatuses.filter((s) => want.includes(s)).length;
+const verified = { length: countStatus("verified") };
+const flagged = { length: countStatus("untested") };
+const blocked = { length: countStatus("blocked", "impossible") };
+const noStatus = { length: countStatus("no-status", "not-in-readme") };
 
 // --- native MCP tools -------------------------------------------------------
 const nativeTools = walk(path.join(brainRoot, "mcp-server", "tools"), (n) => n.endsWith(".js")).length;

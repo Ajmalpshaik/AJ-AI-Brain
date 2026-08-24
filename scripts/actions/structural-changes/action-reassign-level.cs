@@ -32,6 +32,14 @@
 //         id named, not counted as a success.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — harvested 2026-08-22 from the add-in's Reassign Reference Level.
 //   Compile-checked on 2020/2024/2027. Dry-run it, then do ONE element and check it in a section.
+//
+// ✱✱ `Elevation` HERE IS DELIBERATE — DO NOT "FIX" IT TO `ProjectElevation`. Fifteen fragments were
+//    switched on 2026-08-24 because they mixed a level height with a real XYZ, where only
+//    `ProjectElevation` is in the right space. This one is different: it takes a DIFFERENCE between
+//    two levels to re-derive an offset parameter, and the offset an element stores is measured against
+//    the same base the level reports — so the base cancels and `Elevation` is correct. Changing it
+//    would introduce the error rather than remove it. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

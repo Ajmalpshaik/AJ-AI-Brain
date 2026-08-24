@@ -23,16 +23,25 @@ List<double> elevationsMm = useExplicitElevations
     ? explicitElevationsMm
     : Enumerable.Range(0, count).Select(i => startElevationMm + i * spacingMm).ToList();
 
-// CASE-INSENSITIVE on purpose. `.ToHashSet()` uses the default ordinal comparer, so with a lowercase
-// namePrefix the guard does not see the existing "Level 1" and happily names a new level "level 1" —
-// and Revit ACCEPTS it (measured live 2026-08-07), leaving two levels whose names differ only in case.
-// create-material.cs already solves the same duplicate-name problem with OrdinalIgnoreCase; this now
-// matches it.
-var existingNames = new FilteredElementCollector(Document)
-    .OfClass(typeof(Level))
-    .Cast<Level>()
-    .Select(l => l.Name)
-    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+// CASE-INSENSITIVE on purpose. A default-comparer set is ordinal, so with a lowercase namePrefix the
+// guard does not see the existing "Level 1" and happily names a new level "level 1" — and Revit ACCEPTS
+// it (measured live 2026-08-07), leaving two levels whose names differ only in case. create-material.cs
+// already solves the same duplicate-name problem with OrdinalIgnoreCase; this matches it.
+//
+// ✱✱ BUILT WITH THE CONSTRUCTOR, NOT `.ToHashSet()`, AND THAT IS DELIBERATE (2026-08-24).
+//    `Enumerable.ToHashSet` did not arrive until .NET Framework **4.7.2**. Revit 2020 add-ins target
+//    **4.7**, so on a machine that has only 4.7.x installed this line is a `MissingMethodException` at
+//    run time — not a compile error, because the bridge compiles against whatever runtime is loaded.
+//    It never showed up because .NET Framework upgrades in place and every current Windows box has 4.8,
+//    which is also what the compile gate's default references resolve to. The `new HashSet<string>(seq,
+//    comparer)` constructor has existed since .NET 2.0 and is identical in behaviour. One line, no cost,
+//    one less thing that depends on which machine it runs on.
+var existingNames = new HashSet<string>(
+    new FilteredElementCollector(Document)
+        .OfClass(typeof(Level))
+        .Cast<Level>()
+        .Select(l => l.Name),
+    StringComparer.OrdinalIgnoreCase);
 
 List<Element> elements = new List<Element>();
 

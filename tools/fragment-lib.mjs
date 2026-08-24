@@ -130,7 +130,7 @@ export function inputsBlockRange(src) {
 // --- verification status ---------------------------------------------------------------------------
 // Read off scripts/README.md's own per-fragment markers - the convention the library already maintains
 // by hand. A row with no marker either way is the honest "never run, never flagged" case.
-function readmeRows() {
+export function readmeRows() {
   const p = path.join(scriptsDir, "README.md");
   const readme = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
   return readme.split(/\r?\n/).filter((l) => l.startsWith("| [`"));
@@ -156,8 +156,27 @@ export function makeStatusOf(rows = readmeRows()) {
     // rows into an unnatural shape that would break again the next time someone wrote plainly.
     // The `NOT yet live-verified` test above still runs FIRST, so an explicit not-yet row is unaffected.
     if (/\bverified\b[^|]{0,24}?20\d\d/.test(row)) return "verified";
+    // These two are plain substring tests, so a row that NARRATES an old status flips to it. Hit for
+    // real 2026-08-24: create-ceiling.cs was corrected months earlier, its row was rewritten to say so,
+    // and the sentence `This row said "CONFIRMED IMPOSSIBLE" until today` put the fragment straight back
+    // into the impossible bucket. If a row needs to discuss a superseded verdict, paraphrase it -
+    // "the old impossible verdict" - rather than quoting the literal phrase.
     if (/CONFIRMED IMPOSSIBLE/.test(row)) return "impossible";
     if (/BLOCKED/.test(row)) return "blocked";
+    // LAST, and deliberately so. Everything above has already had its say, which makes this check purely
+    // ADDITIVE: it can only ever move a fragment from "no status recorded" to "written, not yet run", and
+    // can never reclassify one that is verified, blocked or impossible. That ordering matters, because a
+    // proven fragment's row often notes that ONE path is still unexercised ("the <3-points guard is not
+    // exercised"), and putting this test any earlier would flip those to untested.
+    //
+    // WHY IT EXISTS: measured 2026-08-24, ELEVEN of the 39 rows reporting "no status either way" in fact
+    // said plainly that the fragment had not been run - "not yet run against a real model", "unproven",
+    // "untested", "run it on ONE room first" - just not in the one literal phrase the check above looks
+    // for. The session-start banner was calling them unflagged when their author had flagged them, which
+    // is the same failure as the eight verified-but-reported-unproven fragments described above, and the
+    // same conclusion applies: fix the regex, do not reword rows into an unnatural shape.
+    if (/\b(?:not yet (?:run|been run|proven|tested|verified)|never (?:been )?run|not run against|unproven|untested|run (?:it|this) on (?:ONE|one|a )|run once on)\b/i.test(row))
+      return "untested";
     return "no-status";
   };
 }

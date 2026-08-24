@@ -58,6 +58,15 @@
 //   -100/7738/8500/9000, the chained `NewDimension` returned NumberOfSegments 3 with segments
 //   7838 + 762 + 500, the overall returned 9100, and the two agreed exactly. Run it on ONE wall, read
 //   the segment list, then use it for a batch.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -92,7 +101,7 @@ else if (!sideKnown)
 else
 {
     var planView = dimView as ViewPlan;
-    double planZ = (planView != null && planView.GenLevel != null) ? planView.GenLevel.Elevation : 0;
+    double planZ = (planView != null && planView.GenLevel != null) ? planView.GenLevel.ProjectElevation : 0;
     if (planView == null)
         sb.AppendLine($"WARNING — '{dimView.Name}' is a {dimView.ViewType}, not a plan. Dimensions may refuse to place.");
 

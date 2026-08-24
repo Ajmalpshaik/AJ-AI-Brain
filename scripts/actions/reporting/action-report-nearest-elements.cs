@@ -19,7 +19,15 @@
 //
 // GOTCHA: bounding boxes are axis-aligned, so for a ROTATED element the box is bigger than the element
 //         and "gap" reads slightly optimistic (closer than reality). Fine for ranking, not for a
-//         certified clearance figure — use action-report-clashes.cs when the number must be exact.
+//         certified clearance figure.
+// ✱✱ CORRECTED 2026-08-24 — THIS LINE USED TO SAY "use action-report-clashes.cs when the number must be
+//    exact", AND THAT FRAGMENT HAS NO NUMBER IN IT. It returns a yes/no. The advice pointed at
+//    something that cannot answer, so an exact gap was simply not obtainable here. For two LINEAR MEP
+//    runs the right tool is now `actions/qa-checks/action-report-mep-clearance.cs`, which uses
+//    `Curve.ComputeClosestPoints` — the true minimum between two centrelines, no box and no rotation
+//    error — and takes each run's own size and insulation off to give a jacket-to-jacket figure. Use
+//    THIS fragment for ranking and for "which is nearest" across any category; use that one when the
+//    millimetres have to be defensible.
 // GOTCHA: this ignores obstructions completely. The nearest FCU by distance may be through a wall, on the
 //         other side of a corridor. Pair with the ray fragments when line-of-sight matters.
 // PERFORMANCE: brute force, sources x targets distance comparisons. Distance maths is trivial next to
