@@ -35,6 +35,16 @@ correction is not finished until the `scripts/README.md` row moves with it. `act
 was corrected in the morning and its row still stated the wrong rule this evening — in the document a
 session routes from. The consistency checker asks whether a row EXISTS, never whether it is TRUE.
 
+**THREE FRAGMENTS FROM THE OTHER SESSION DO NOT COMPILE — measured 2026-08-24, left unfixed on purpose.**
+`action-check-flow-direction.cs` and `action-connect-open-connectors.cs` both use
+`BuiltInParameter.RBS_SYSTEM_TYPE_PARAM`, which **is not a real API name on any Revit version** — they
+cannot run at all. `action-check-plumbing-fixture-connectivity.cs` uses
+`BuiltInCategory.OST_PlumbingEquipment`, which arrived at 2024, so it fails on 2020 only. The standing
+rule is that a FAIL naming another session's file gets reported, not fixed. The patches are in
+[`revitplugins-harvest.md`](revitplugins-harvest.md) — `RBS_DUCT_SYSTEM_TYPE_PARAM` /
+`RBS_PIPING_SYSTEM_TYPE_PARAM` for the first two, reflection for the third. **Whoever picks this up:
+those three are the first job, and the other session's "all 388 compile" claim was not measured.**
+
 **Ajmal caught one defect himself and it is the model for how to check the rest.** He asked whether the
 new opening audit would fit the opening tools we already had. It would not have: a Revit `Opening` is a
 VOID with no solid, and the audit pulled solids, so `filter-by-openings.cs` → `action-audit-mep-openings.cs`

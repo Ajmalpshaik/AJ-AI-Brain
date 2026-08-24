@@ -383,11 +383,34 @@ deliberately at every merge, not just when someone asks.
   (including its `prelude-smoke-test.cs` special case). It was validated by running the **whole
   pre-existing library** through it first. Final result, the whole library on every version:
 
-  | Revit | Result |
+  | Revit | Result, this branch's 366 before the merge |
   |---|---|
   | 2020 | **366 pass, 0 fail** |
   | 2024 | **366 pass, 0 fail** |
   | 2027 | **366 pass, 0 fail** |
+
+  **After merging the parallel session's 28, three of THEIR fragments do not compile** — measured, not
+  assumed, and NOT caused by anything on this branch:
+
+  | Fragment | 2020 | 2024 | 2027 | Cause |
+  |---|---|---|---|---|
+  | `action-check-flow-direction.cs` | FAIL | FAIL | FAIL | `BuiltInParameter.RBS_SYSTEM_TYPE_PARAM` — **not a real API name on any version** |
+  | `action-connect-open-connectors.cs` | FAIL | FAIL | FAIL | same |
+  | `action-check-plumbing-fixture-connectivity.cs` | FAIL | pass | pass | `BuiltInCategory.OST_PlumbingEquipment` — **2024+ only** |
+
+  Two of them cannot run on ANY Revit. **They are left as they are**: the standing rule in `CLAUDE.md`
+  is that a compile FAIL naming a file another session wrote is reported, not fixed, and widening this
+  PR to repair another PR's work is the wrong shape. Reported with the patches instead:
+
+  - `RBS_SYSTEM_TYPE_PARAM` does not exist. The real names are domain-specific —
+    `RBS_DUCT_SYSTEM_TYPE_PARAM` and `RBS_PIPING_SYSTEM_TYPE_PARAM` (both present 2020–2027) — or the
+    general `RBS_SYSTEM_CLASSIFICATION_PARAM`. Both sites use it as a *fallback* for the system NAME, so
+    trying duct then pipe is the faithful fix.
+  - `OST_PlumbingEquipment` arrived at 2024. Reach it by reflection (`Enum.TryParse`) so 2020 simply
+    skips that category, which is the version-proof pattern this library already uses elsewhere.
+
+  **Worth noting how they got in**: the other session's own ledger claims all 388 compile on
+  2020/2024/2027. Two of these fail on every version, so that claim was never measured on those two.
 
   **This does not replace `tools\check-scripts.cmd` on the Windows PC** — that checks against the Revit
   versions actually installed there — but it is no longer true that nothing can compile-check from a
