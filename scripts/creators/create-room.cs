@@ -1,6 +1,20 @@
 // ============================================================
 // FRAGMENT (creator) — create-room.cs
-// PURPOSE: Place a Room at one or more points on a level.
+// PURPOSE: Place a Room at one or more points on a level — YOU say where each one goes. "put a room
+//          here", "add a room at this point", "create a room in that area".
+//
+// ✱✱ TWO FRAGMENTS CREATE ROOMS AND "CREATE THE ROOMS" MEANS EITHER ONE. Pick by who chooses the spot:
+//      THIS FILE — create-room.cs                     YOU give the points. One room per point, exactly
+//                                                     where you said, on the level you named.
+//      create-rooms-in-enclosed-regions.cs            REVIT finds them. Fills EVERY enclosed region on
+//                                                     a level in one pass, and reuses the project's
+//                                                     existing UNPLACED rooms first so the browser does
+//                                                     not fill with orphans. "place all the rooms",
+//                                                     "the model has no rooms", "fill the level".
+//    That second one is the usual answer for a whole floor, and it is what most requests mean. Use this
+//    one when the points matter. Measured 2026-08-24: searching this fragment's own description returned
+//    create-rooms-in-enclosed-regions.cs at #1 and this file nowhere in the top five, which is why the
+//    spoken phrasings are written in above.
 // PRODUCES: elements (List<Element>, the newly created Room(s)), sb (StringBuilder, summary)
 // NOT STANDALONE — see scripts/README.md for how to compose. A "creator" fills the same role
 //          as a filter — it produces `elements` — so any action fragment can be appended after it.

@@ -171,7 +171,22 @@ helper return `false` with a reason instead of throwing — one bad reference mu
 
 ## The fragments
 
+**These five WRITE Dimension elements into a view. Pick by what is being dimensioned:**
+
 - [`../../scripts/creators/create-dimension.cs`](../../scripts/creators/create-dimension.cs) — across grids and levels
 - [`../../scripts/actions/sheets-views/action-add-aligned-dimensions.cs`](../../scripts/actions/sheets-views/action-add-aligned-dimensions.cs) — between family instances
-- [`../../scripts/actions/sheets-views/action-dimension-mep-runs.cs`](../../scripts/actions/sheets-views/action-dimension-mep-runs.cs) — **ducts, pipes, conduit and trays via the geometry route**, which is the gap the other two could not fill
-- [`../../scripts/actions/sheets-views/action-dimension-rooms.cs`](../../scripts/actions/sheets-views/action-dimension-rooms.cs) — **each room's width and depth wall-face to wall-face**, via `HostObjectUtils` with the nearest-face rule above. ✓ verified 2026-08-22
+- [`../../scripts/actions/sheets-views/action-dimension-mep-runs.cs`](../../scripts/actions/sheets-views/action-dimension-mep-runs.cs) — **ducts, pipes, conduit and trays via the geometry route**, which is the gap the other two could not fill. This is the one for *"dimension between the ducts"*, *"put a dimension between the services"*
+- [`../../scripts/actions/sheets-views/action-dimension-rooms.cs`](../../scripts/actions/sheets-views/action-dimension-rooms.cs) — **each room's width and depth wall-face to wall-face**, via `HostObjectUtils` with the nearest-face rule above. ✓ verified 2026-08-22. **Project X/Y only — see the rotation gotcha in its header before using it on a site that is not square to north**
+- [`../../scripts/actions/sheets-views/action-dimension-wall-openings.cs`](../../scripts/actions/sheets-views/action-dimension-wall-openings.cs) — **along a wall, picking up every door and window opening in it** — a running string plus an overall
+
+**Measuring is not dimensioning, and the same sentence asks for both.** A question wants a number and
+must change nothing; an instruction to annotate writes elements into the view. These do not draw:
+
+- [`../../scripts/actions/reporting/action-report-room-dimensions.cs`](../../scripts/actions/reporting/action-report-room-dimensions.cs) — read-only room width × length **on the room's own axes**, so it is the one that is right on a rotated room. *"how big is room 4"*, *"what are the room sizes"*
+- [`../../scripts/actions/qa-checks/action-report-mep-clearance.cs`](../../scripts/actions/qa-checks/action-report-mep-clearance.cs) — the exact gap in mm between MEP runs. *"how much clearance is between those two ducts"*. Its own header carries the five-way clearance routing table
+
+Measured 2026-08-24 against this Brain's own search: *"dimension between the ducts"* returned two
+clearance reports at the top and `action-dimension-mep-runs.cs` nowhere at all, and *"what are the room
+sizes"* returned the fragment that **draws** at #1 with the read-only one absent from the top three.
+Both were vocabulary gaps, not missing fragments — the spoken phrasings are now written into the
+headers themselves, which is where the search actually reads them.

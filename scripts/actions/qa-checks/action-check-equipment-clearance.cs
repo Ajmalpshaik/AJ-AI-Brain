@@ -41,6 +41,29 @@
 //          action-check-valve-accessibility.cs (the same question for valves and dampers).
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Check the reported facing vector on one unit
 //   first; if the front zone points the wrong way, the family is the problem, not the check.
+//
+// ✱✱ FIVE FRAGMENTS ANSWER "IS THERE ENOUGH ROOM" AND THEY MEASURE DIFFERENT THINGS DIFFERENT WAYS.
+//    Pick deliberately. The wrong one is not slower, it is a different number:
+//      action-report-mep-clearance.cs        EXACT mm between LINEAR MEP runs. Centreline maths
+//                                            (ComputeClosestPoints) minus each run own half-size and
+//                                            its insulation. "clearance between the services", "gap
+//                                            between those two pipes", "how close are they". No
+//                                            sampling error.
+//      action-check-minimum-clearance.cs     ANY element against a target set, including equipment and
+//                                            structure. Samples solid faces, so the number is a
+//                                            SAMPLE, not exact. Takes a per-category rules table.
+//      action-check-vertical-clearance.cs    Z SEPARATION ONLY, for pairs whose plan footprints
+//                                            overlap. "how much room between the duct and the tray
+//                                            above it".
+//      action-check-insulation-clearance.cs  As action-check-minimum-clearance.cs but measured to the
+//                                            OUTSIDE OF THE JACKET. 50 mm each side eats 100 mm.
+//      action-check-equipment-clearance.cs   The MAINTENANCE ACCESS ZONE in front of, beside and above
+//                                            a piece of kit. Can it be serviced, not can it be built.
+//    A CLASH IS NOT A CLEARANCE FAILURE: action-report-clashes.cs answers "do these overlap", yes/no,
+//    with no distance in it. To DRAW the dimension rather than report the gap, see
+//    actions/sheets-views/action-dimension-mep-runs.cs. Measured 2026-08-24: "check the clearance
+//    between services" did not return action-report-mep-clearance.cs at all, though it is the only one
+//    of the five that is exact, which is why the spoken phrasings are written in above.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

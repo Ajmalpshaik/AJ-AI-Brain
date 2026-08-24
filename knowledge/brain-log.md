@@ -5596,3 +5596,132 @@ is Ajmal's browser, Branches tab, bin icon — and it stays the only open item.
   Safety, since deletion is not reversible from here: every branch was measured at **0 commits ahead of
   `main`** with `git log --oneline origin/main..<branch>` before anything was deleted — not inferred from
   a PR being merged.
+
+## 2026-08-24 — "it will not come right thing, I have to sent message again": measured it, and it was not duplication
+
+Ajmal: *"in this lotof fragment is there so i thing some dupicate fragment is there... there will be issue
+if i say anyting frist there is chance that will make a issue first it will not come right thing i haveto
+sent message again angan"* — then, mid-audit: *"i thing there is issues on the taging and dimentioning and
+for the mep openings also"*, and *"like that you have to chhek all fragment is there ayting liek that"*.
+
+**The premise was wrong and the symptom was real.** Nothing in this library turned out to be a duplicate.
+Every pair read word by word was genuinely different work — `action-check-minimum-clearance.cs` samples
+solid faces where `action-report-mep-clearance.cs` does exact centreline maths; `create-mep-openings.cs`
+cuts `Opening` voids where `place-sleeves-at-wall-penetrations.cs` places sleeve families. Deleting any of
+them would have lost capability. What was actually broken was **retrieval**: the fragment exists, and the
+search does not hand it back.
+
+**Statistical similarity was the wrong instrument and cost an hour.** Clustering 394 fragments by purpose
+and input overlap surfaced 60 "similar" pairs, and the top of that list was almost entirely false —
+`action-set-category-halftone.cs` vs `action-set-category-line-style.cs` score 0.62 alike because they
+share the boilerplate *"one or more ENTIRE categories in a view"*, not because anyone asking for halftone
+could get line-style. Lexical similarity measures shared **prose**, and the failure is in shared **job**.
+
+**What worked was asking the Brain real questions and reading what came back.** Five misroutes, all
+reproducible:
+
+| asked | came back #1 | should have been |
+|---|---|---|
+| "what are the room sizes" | `action-dimension-rooms.cs` — **draws dimensions into the model** | `action-report-room-dimensions.cs`, absent from the top 3 |
+| "check the clearance between services" | `action-check-vertical-clearance.cs` (Z only) | `action-report-mep-clearance.cs`, **absent entirely** — the only exact one of five |
+| "dimension between the ducts" | two read-only clearance reports | `action-dimension-mep-runs.cs`, **absent entirely** |
+| "connect the air terminals to the duct" | `connect-equipment-to-air-terminals.cs` — builds a whole trunk system | `action-connect-air-terminals.cs`, at #3 |
+| "put the sleeves in the walls" | `action-check-sleeve-size.cs` — a read-only check | either fragment that actually places them, at #3 and #4 |
+
+The first row is the one that matters most: **a question returned a fragment that writes to the model.**
+Ask "how big is that room" and the top hit puts dimensions on the drawing.
+
+**Root cause, and it is one thing.** Every one of these clusters had cross-references — but written
+**one way only**, by whoever added the newer fragment. That helps the reader who lands on the newer file
+and nobody else, and you do not get to choose which file the search returns. The one cluster that tested
+**healthy** was MEP openings, and it is the one cluster carrying the *same* four-way routing table in
+every member — `place-sleeves-at-wall-penetrations.cs` lists all four and says what each does. That is
+the pattern; it was already here, in one place, undocumented as a pattern.
+
+**So: shared routing tables, in every member of a cluster** — dimensioning (6), clearance (5), tagging
+(3), connect (4), plus the room-size pair and the sleeve check. Each table names the siblings, gives the
+one-line rule for choosing, and — the part that actually fixes retrieval — **writes in the spoken phrases
+people use**, because the search reads the header and the header did not contain the words. `"dimension
+between the ducts"` matched nothing until `action-dimension-mep-runs.cs` said that sentence; it had only
+ever said *"the spacing string across a corridor of services"*.
+
+**A real defect fell out of it, in a fragment marked PROVEN.** `action-dimension-rooms.cs` dimensions on
+**project X and Y** — `doWidth` is "the X dimension" — and carries no rotation handling at all. Its header
+warned about L-shaped rooms and said nothing about rotated ones. Its own sibling
+`action-report-room-dimensions.cs` exists *because* of that trap and states it plainly: *"on a site that
+is not square to true north — which is most of them — that is every room in the model."* All three live
+verifications were on rooms square to project X/Y, so this is untested, not disproven — now written into
+the header, with the instruction to run the reporting fragment first on a rotated site and compare.
+
+**New tool: [`tools/audit-fragment-routing.py`](../tools/audit-fragment-routing.py).** Asks every
+fragment's own PURPOSE back to the search and reports the ones that do not come back, plus any read-only
+job whose top hit writes to the model. Before/after over all 394: **unreachable 4 → 2, top-5 98% → 99%**,
+`#1` flat at 81%. The two that remain are explained — `context-session-start.cs` has a three-word purpose
+and is reached by a native tool rather than by search, and `filter-by-space.cs` already routes correctly
+to `filter-by-room.cs`. **The tool's own header states that it is a lower bound**: a fragment's PURPOSE
+shares vocabulary with the chunk that was indexed, so the exact-words half of the search is being handed
+the answer. Failing it proves unreachable; passing it proves nothing.
+
+**Two things caught me, and both are the machinery working.** The tagging table I first wrote named
+`action-tag-elements.cs` as the default and claimed only one of the three was proven — both wrong, and
+flatly contradicted by `knowledge/live-model/tagging.md` and README line 391, which had already settled
+that the *recipe* is the default and is live-verified. Rewritten to agree. Then the consistency hook
+refused an edit: my table quoted a sibling's `NOT YET LIVE-VERIFIED` status on its own line inside
+`action-tag-elements.cs`, and check 10 read it as that file declaring itself unverified. The check was
+right — anchored at line start, it cannot tell whose status a line describes. Reworded.
+
+**The transferable rule: a cross-reference written one way is half a cross-reference.** It routes the
+reader who lands on the newer file, which is the reader least likely to need it. When two or more
+fragments can answer the same sentence, the same table goes in **all** of them, because retrieval order
+is not yours to choose — and the table has to contain the words a person actually says, not the words the
+technique is named after.
+
+## 2026-08-24 — "about a minute" was really 13, and a run cut short shows the last Revit as blank
+
+Chasing the fragment-routing audit, `tools\check-scripts.cmd` printed `--- Revit 2027 ---` and **nothing
+under it** — no "all N compile", no FAIL list, not even the "could not read a result" branch the script
+always falls through to. Read as a silent failure on the newest Revit.
+
+It was not. Run against 2027 directly, `verify-fragments-compile.ps1` returns **394 passed, 0 failed**.
+The blank was a `timeout 500` wrapper killing the run mid-2027, after the header had printed and before
+the result. **The alarm was self-inflicted** — worth writing down, because the shape of the evidence
+(header, no result, exit 0, `pause` still reached) looked exactly like a swallowed error and cost a
+detour to disprove.
+
+The real finding is underneath it. Timed with no timeout: **767 s — close to thirteen minutes**, against
+the *"in about a minute"* both `CLAUDE.md` and `START-HERE.md` claimed. Six compile passes, not three:
+every Revit gets the fragment library **and** the 33 generated scripts, so the figure scales with how many
+versions are installed, and the one-minute number probably dates from a single-Revit PC. Both files
+corrected with the measured number and the reason it matters.
+
+**Why a wrong duration is a correctness problem, not a comfort one.** Believe "a minute", cut the run
+short, and the last version in the list shows a bare header — which reads as a pass. The tool is honest;
+it always prints a result or says it could not read one. But *stopping it* produces output that is
+indistinguishable from success to anyone skimming, and the version most likely to be truncated is the
+last one, which on this PC is the newest Revit — precisely the one being asked about when someone runs
+this tool at all.
+
+**The transferable rule: a documented duration is load-bearing when anything might cut the job short.**
+It is not decoration. If it is wrong low, someone will interrupt a check and read the truncation as
+green. Same family as the finding logged earlier today — a green check is only as wide as what the
+checker reads — with the twist that here the checker was complete and the *reader* was not.
+
+Green on all three, verified end to end: **427 scripts (394 fragments + 33 generated) compile on Revit
+2020, 2024 and 2027.**
+
+**Addendum, same day — the fix reached two files out of three, and the search caught it.** Correcting
+`CLAUDE.md` and `START-HERE.md` felt like the whole job. It was not:
+`knowledge/revit-version-compatibility.md` carried the same *"in about a minute"* in its own **"THE ONE
+COMMAND, if you read nothing else here"** box, plus a second *"one minute and no attention"* further down
+— the file most likely to be read on this exact question, still saying the wrong thing after the entry
+docs were right. Found only because FAST-mode step 3 (*prove the search works*) asked *"how long does
+check-scripts take to run"* and that file ranked **#1**. The search was correct; the earlier fix was
+incomplete.
+
+**Two rules, one old and one new.** The old one, logged twice already this month: a sweep over
+documentation does not reach everywhere — the verification campaign updated README rows and not the
+fragment headers, the 2026-08-20 outside-source strip reached the docs and not `scripts/`, and now a
+duration fix reached the entry docs and not the knowledge note. **The new one: grep for the wrong claim
+before declaring it fixed, not just for the file you remember writing it in.** `grep -rn "about a minute"`
+takes a second and would have caught both. Nothing in the thirteen consistency checks covers a stated
+duration — check 9 verifies live *counts* only — so this class has no automatic guard and needs the grep.

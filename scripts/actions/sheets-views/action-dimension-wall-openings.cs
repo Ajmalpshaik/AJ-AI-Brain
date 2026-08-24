@@ -67,6 +67,29 @@
 //    silently, with a plausible number and no error. See
 //    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
 //    action-report-level-elevations.cs to see whether a given model is affected.
+//
+// ✱✱ SIX FRAGMENTS PUT A DIMENSION ON A DRAWING AND THEY ARE NOT INTERCHANGEABLE. Pick deliberately:
+//      creators/create-dimension.cs                            GRIDS and LEVELS only.
+//      actions/sheets-views/action-add-aligned-dimensions.cs   between FAMILY INSTANCES, via
+//                                                              GetReferences. MEP runs expose none.
+//      actions/sheets-views/action-dimension-mep-runs.cs       between DUCTS, PIPES, CONDUIT, TRAY.
+//                                                              "dimension between the ducts", "put a
+//                                                              dimension between the services", "how
+//                                                              far apart are these on the drawing".
+//                                                              Walks the geometry, the only route
+//                                                              that works for MEP.
+//      actions/sheets-views/action-dimension-rooms.cs          each ROOM width and depth, wall face to
+//                                                              wall face. Project X/Y only.
+//      actions/sheets-views/action-dimension-wall-openings.cs  along a WALL, picking up every door and
+//                                                              window opening in it.
+//      actions/reporting/action-report-room-dimensions.cs      READ-ONLY. Asks, never draws.
+//
+// ✱✱ MEASURING IS NOT DIMENSIONING, AND THE SAME SENTENCE ASKS FOR BOTH. "How much gap is between
+//    those two ducts" is a CLEARANCE question, wants a number, must change nothing:
+//    actions/qa-checks/action-report-mep-clearance.cs. "Put a dimension between those two ducts" is
+//    this group, and it WRITES Dimension elements into the view. Measured 2026-08-24: the plain phrase
+//    "dimension between the ducts" returned two clearance reports at the top and
+//    action-dimension-mep-runs.cs nowhere at all, which is why the spoken phrasings are written above.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

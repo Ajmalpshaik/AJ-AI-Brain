@@ -48,6 +48,29 @@
 //         outermost wall on each side of the outer loop, so an L-shaped room is dimensioned as if it
 //         were the rectangle around it — which is wrong, and wrong silently. **Untested on such a room**
 //         (all three verification rooms were rectangles). For those, dimension each leg separately.
+// GOTCHA: A ROOM THAT IS NOT SQUARE TO PROJECT X/Y IS DIMENSIONED WRONG, AND WRONG SILENTLY. `doWidth`
+//         is "the X dimension" and `doDepth` is "the Y dimension" — PROJECT X and Y, not the room's own
+//         axes. Turn a 8000 x 4000 room 30 degrees and the pair of numbers this draws describes the
+//         project-aligned box around it (roughly 8900 x 7500), not the room. On a site that is not set
+//         out square to true north — which is most of them — that is EVERY room in the model.
+//         **All three live verifications were on rooms square to project X/Y, so this is untested, not
+//         disproven.** Before dimensioning a rotated site, run
+//         actions/reporting/action-report-room-dimensions.cs first: it measures on the room's own axes
+//         and prints the rotation angle, so one read tells you whether this fragment is safe here. The
+//         numbers agreeing means the room is square and this is fine; the numbers differing means this
+//         fragment will draw the box, not the room.
+//
+// ✱✱ TWO FRAGMENTS SAY "ROOM DIMENSIONS" AND ONLY THIS ONE WRITES TO THE MODEL. Pick deliberately:
+//      THIS FILE — action-dimension-rooms.cs                DRAWS. Creates real Dimension elements on a
+//                                                           plan. An INSTRUCTION to annotate a drawing:
+//                                                           "dimension the rooms", "put the sizes on the
+//                                                           plan". Project X/Y only (see gotcha above).
+//      actions/reporting/action-report-room-dimensions.cs   ASKS.  Read-only, room's own axes, correct
+//                                                           on a rotated room. Any QUESTION — "how big
+//                                                           is room 4", "what are the room sizes".
+//    A question must never place dimensions in the model. `dryRun` (below) defaults to TRUE and reports
+//    the sizes it WOULD draw — but it reports them on project X/Y, so it is not a substitute for the
+//    reporting fragment on a rotated room.
 // GOTCHA: only the OUTER loop (`loops[0]`) is read. A room with a column or a core inside it has inner
 //         loops that are ignored — correct for an overall size, wrong if you wanted the clear span past
 //         the obstruction.

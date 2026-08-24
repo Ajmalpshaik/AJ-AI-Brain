@@ -3,8 +3,22 @@
 // PURPOSE: Each room's WIDTH x LENGTH measured on the ROOM'S OWN AXES — not on project north — plus how
 //          far the room is rotated, its area, and how much bigger its project-aligned bounding box is
 //          than the room really is. The dimensions a layout grid, a ceiling grid or a schedule needs.
+//          THIS IS THE ONE THAT ANSWERS THE QUESTION: "how big is room 4", "what are the room sizes",
+//          "what size is that room", "give me the room dimensions", "how wide is it". Nothing is drawn.
 // ASSUMES: elements (List<Element>, Rooms and/or Spaces) and sb exist from a filter above.
 // NOT STANDALONE — see scripts/README.md for how to compose. READ-ONLY: no transaction, nothing created.
+//
+// ✱✱ TWO FRAGMENTS SAY "ROOM DIMENSIONS" AND ONLY ONE OF THEM WRITES TO THE MODEL. Pick deliberately:
+//      THIS FILE — action-report-room-dimensions.cs        ASKS.  Read-only. Room's OWN axes, so it is
+//                                                          the only one of the two that is correct on a
+//                                                          ROTATED room. Use for any question.
+//      actions/sheets-views/action-dimension-rooms.cs      DRAWS. Creates real Dimension elements on a
+//                                                          plan — "dimension the rooms", "put the sizes
+//                                                          on the plan". Project X/Y only.
+//    Asking a question must never place dimensions in the model. If the request is a QUESTION ("what",
+//    "how big", "how many"), it is this file. If it is an INSTRUCTION to annotate a drawing, it is the
+//    other. Measured 2026-08-24: "what are the room sizes" returned the DRAWING fragment at #1 and this
+//    one nowhere in the top 3 — which is why the asking words above are now written into this header.
 //
 // ✱✱ A ROTATED ROOM HAS NO USEFUL BOUNDING BOX, AND THAT IS THE POINT OF THIS FRAGMENT. `get_BoundingBox`
 //    is aligned to PROJECT X/Y. Turn a 8000 x 4000 room 30 degrees and its box becomes roughly

@@ -59,6 +59,30 @@
 //   existing ones. They did: this file originally guessed the tag family and never verified the created
 //   type, both of which that note had already measured and settled. Tag ONE category on ONE view, check
 //   the tag family that came out, then let it loose on a mixed set.
+//
+// ✱✱ THREE FRAGMENTS PLACE TAGS AND THE CHOICE IS ALREADY SETTLED IN
+//    knowledge/live-model/tagging.md - read that section before overriding this:
+//      recipes/tag-elements-in-active-view.cs        THE DEFAULT for ONE category on a normal or busy
+//                                                    view. LIVE-VERIFIED. Scores each tag side, follows
+//                                                    real flow direction, computes elbows and resolves
+//                                                    its own overlaps. Nothing else here does placement
+//                                                    properly. "tag it", "tag the ducts".
+//      actions/sheets-views/action-auto-tag-mep.cs   The MIXED-CATEGORY case the default cannot reach -
+//                                                    ducts and pipes and terminals and equipment in one
+//                                                    pass, each getting its own tag family. Carries the
+//                                                    CATEGORY -> TAG CATEGORY map. Placement is a plain
+//                                                    offset, so follow it with the tidy-up below.
+//                                                    Its own row in scripts/README.md is the status.
+//      actions/sheets-views/action-tag-elements.cs   QUICK, one category, when placement does not
+//                                                    matter. Fixed offset, no scoring, no overlap
+//                                                    handling. Verified 2026-07-22.
+//    They do not collide, they are SEQUENTIAL: place (the recipe, or auto-tag-mep for a mixed set),
+//    then tidy. Tags ALREADY PLACED and sitting on top of each other is that separate tidy-up job -
+//    action-auto-arrange-tags.cs (push apart in place), action-arrange-tags-to-view-edges.cs (park them
+//    down the crop edges), action-stack-tags.cs (one tidy column). Measured 2026-08-24: "tag the
+//    elements" returned the NOT-YET-VERIFIED auto-tag-mep above both verified fragments, and "tag all
+//    the ducts in this view" returned neither verified one in the top four. This table is in all three
+//    files so that landing on any one of them routes correctly whatever the ranking does.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

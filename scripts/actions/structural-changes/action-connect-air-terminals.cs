@@ -40,6 +40,33 @@
 //          run it afterwards rather than trusting the count here.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Run it on ONE terminal, look at the tap in a
 //   section, and check the airflow reads through before doing a whole room.
+//
+// ✱✱ FOUR FRAGMENTS JOIN MEP TOGETHER AND THEY BUILD DIFFERENT AMOUNTS OF DUCTWORK. Pick by how
+//    much already exists, because the wrong one either builds a system you did not ask for or fails
+//    for want of one:
+//      actions/structural-changes/action-connect-air-terminals.cs   The duct ALREADY RUNS PAST the
+//                                                    terminals. Revit cuts the tap itself. Nothing new
+//                                                    is drawn. "connect the terminals to the duct",
+//                                                    "tap these diffusers into that main".
+//      recipes/connect-terminal-branch.cs            ONE terminal, and the branch to the main DOES NOT
+//                                                    EXIST yet. Draws the vertical riser, a real elbow
+//                                                    at the turn, then the horizontal into a takeoff
+//                                                    tee. Use when the tap alone will not reach.
+//      recipes/connect-equipment-to-air-terminals.cs THE WHOLE ROOM AT ONCE, from equipment. Builds the
+//                                                    main trunk out of the FCU, a tap per terminal, the
+//                                                    branches, the drops, and caps the trunk past the
+//                                                    last branch. Ajmal own connection method. This one
+//                                                    CREATES A SYSTEM - do not reach for it when a duct
+//                                                    is already there and only the taps are missing.
+//      actions/structural-changes/action-connect-open-connectors.cs  CLEANUP, builds nothing. Joins
+//                                                    pairs that already touch but that Revit does not
+//                                                    think are connected - after a copy/paste, after a
+//                                                    link is bound, after a run drawn leg by leg.
+//    To CHECK rather than change, the connectivity fragments are separate again: verify-duct-connectivity.cs
+//    (terminal to FCU chain), action-check-system-connectivity.cs (how many pieces is this really in),
+//    action-check-open-pipe-ends.cs and action-find-dead-end-system.cs. Measured 2026-08-24: the plain
+//    phrase "connect the air terminals to the duct" returned the WHOLE-SYSTEM recipe at #1 and the
+//    tap-into-existing-duct fragment at #3, which is why this table is in all four files.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

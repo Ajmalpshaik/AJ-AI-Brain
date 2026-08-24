@@ -38,9 +38,14 @@ helper, a comment explaining it, or a different class with the same property nam
 > installed, which is the only thing that answers this question.
 
 > **THE ONE COMMAND, if you read nothing else here:** `tools\check-scripts.cmd`. It compile-checks the whole
-> library against every Revit installed on the PC, **without opening Revit**, in about a minute, and says in
+> library against every Revit installed on the PC, **without opening Revit**, and says in
 > plain words which versions are safe. Run it after installing a new Revit — that is the whole worry,
 > answered before you start rather than in the middle of a job.
+> **Budget ~13 minutes and let it finish** — measured 767 s on 2026-08-24 across Revit 2020 + 2024 + 2027,
+> because each version gets the fragment library *and* the generated C#, so it scales with how many Revits
+> are installed. This note said "about a minute" until then, and that was not a harmless error: **a run cut
+> short prints the last version's header with NO result under it, and a bare header reads as a pass.** The
+> last version in the list is the newest Revit — exactly the one you ran this to ask about.
 >
 > **DONE, 2026-08-20 — and compiled, not just written.** The migration below was applied to the whole
 > library in one pass, then compile-checked: **287/287 fragments passed on Revit 2020, 2024 and 2027.**
@@ -500,7 +505,8 @@ running the same grep against that version's DLL. Two greps, no Revit.
 
 Note `-a` (treat the binary as text) and `-o` (print only the match). It proves a name EXISTS in the
 assembly; it does not prove which type owns it or what its signature is — for that, write the call and let
-`tools\check-scripts.cmd` answer, which is one minute and no attention.
+`tools\check-scripts.cmd` answer — no attention, though it wants ~13 minutes, not the one minute this line
+used to claim (measured 767 s, 2026-08-24; see the box at the top).
 
 ## Why reflection, and not a version check — the mechanism (2026-08-23)
 

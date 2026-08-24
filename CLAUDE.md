@@ -78,7 +78,14 @@ He named two problems. Both have an answer that already exists:
 
 - **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 394 fragments — **and,
   since 2026-08-24, the C# the MCP server builds at run time** — against every Revit installed on the
-  PC **without opening Revit**, in about a minute. Offer it the moment a version change is mentioned.
+  PC **without opening Revit**. Offer it the moment a version change is mentioned. **Budget ~13 minutes,
+  not "about a minute"** — measured 767 s on 2026-08-24 across Revit 2020 + 2024 + 2027, which is six
+  compile passes (each version gets the fragment library *and* the generated C#), so it scales with how
+  many Revits are installed. The old "about a minute" figure was wrong and it was not harmless: **a run
+  cut short prints the last version's header with NO result line under it, and a bare header reads as a
+  pass.** If you wrap it in a timeout, give it 900 s+; if you see a version header with nothing beneath
+  it, the run was killed, not passed — the tool always prints either a result or "could not read a
+  result". Verified green on all three: all 427 scripts (394 fragments + 33 generated) compile in each.
   It catches the whole "worked in 2020, errors in 2024" class before he hits it mid-job. That second
   half was added because it was missing: the server had carried a unit call Revit 2024 rejects outright
   for months while this tool reported green, because it only ever read `scripts/*.cs`. **A green check
@@ -128,6 +135,18 @@ He named two problems. Both have an answer that already exists:
   on 2026-08-20; putting any of it back undoes a deliberate decision.
 - Log structural changes (new skill, split file, new/retired script) in
   [`knowledge/brain-log.md`](knowledge/brain-log.md), 1–3 lines each.
+- **When two or more fragments can answer the same sentence, put the SAME routing table in ALL of them.**
+  A cross-reference written one way only routes whoever lands on the newer file, and retrieval order is
+  not yours to choose. Measured 2026-08-24: *"what are the room sizes"* returned the fragment that
+  **draws dimensions into the model** at #1; *"dimension between the ducts"* and *"check the clearance
+  between services"* each returned two read-only reports and not the fragment built for the job. None of
+  it was duplication — every pair was genuinely different work, cross-referenced one way. The tables must
+  carry **the words Ajmal actually says**, not the words the technique is named after.
+  [`tools/audit-fragment-routing.py`](tools/audit-fragment-routing.py) asks every fragment's own PURPOSE
+  back to the search and lists what does not come back, plus any read-only job whose top hit writes to
+  the model — run it after adding fragments to a crowded area. It is a **lower bound**: a fragment's own
+  words share vocabulary with the indexed chunk, so failing it proves unreachable and passing it proves
+  nothing.
 - **Never bulk-edit files here with PowerShell `Get-Content`/`Set-Content`.** Windows PowerShell 5.1 reads
   UTF-8-without-BOM as ANSI, so a read-modify-write round trip double-encodes every em dash, ✓ and quote in
   the file. This corrupted 41 files on 2026-07-26 before being caught. For any scripted multi-file edit use

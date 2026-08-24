@@ -4,6 +4,14 @@
 //          big enough for the pipe plus its insulation plus the annular clearance the specification asks
 //          for, and is it not so oversized that it becomes a fire-stopping problem. The check between
 //          "the sleeves are placed" and "the sleeves are right".
+//          THIS CHECKS SLEEVES THAT ALREADY EXIST. IT PLACES NOTHING AND CUTS NOTHING. If the request is
+//          "put the sleeves in", "cut the holes for the ducts", "make the openings" — nothing has been
+//          placed yet and this fragment has nothing to read. Go to one of these two instead, and read
+//          knowledge/live-model/mep-openings.md first, which settles which of the two a job wants:
+//            recipes/create-mep-openings.cs                 CUTS holes  -> real Revit `Opening` voids
+//            recipes/place-sleeves-at-wall-penetrations.cs  PLACES kit  -> sleeve FamilyInstances
+//          Measured 2026-08-24: "put the sleeves in the walls" returned THIS read-only check above both
+//          fragments that do the job, which is why the routing is written in here.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter above — the
 //          SLEEVES, e.g. filter-by-category.cs on the category your sleeve family lives in, or
 //          filter-by-family.cs on its family name. Read-only. The model never changes.
