@@ -2,6 +2,56 @@
 
 Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
+## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE. STILL NOT COMMITTED.
+
+**State: 366 fragments. 6 new, 8 upgraded, 15 corrected for a real defect. The whole library compiles
+clean on Revit 2020, 2024 AND 2027 — 366 pass / 0 fail on each. Nothing is committed or pushed — that is
+still the first job.** Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+
+**The thing to know before you touch anything height-related.** `Level.Elevation` and
+`Level.ProjectElevation` are two different numbers, and only the second is in the same coordinate space
+as an `XYZ`. **Fifteen fragments here mixed them** — the entire fire-sprinkler chain plus coverage,
+routing, ceiling heights and both dimensioning fragments. All fixed. On a test model the two agree and
+nothing shows; on a site model with a survey offset every affected answer was wrong by that offset.
+Read [`../knowledge/live-model/level-elevation-vs-project-elevation.md`](../knowledge/live-model/level-elevation-vs-project-elevation.md)
+before "fixing" any remaining `Elevation` use — two of them are deliberate and say so in their headers.
+
+**Run these first when a model is next open.** All read-only, all cost nothing:
+
+| Run this | What it proves |
+|---|---|
+| `action-report-level-elevations.cs` | **Do this one first.** One line says whether this model is affected by the defect above. Everything below is easier to read once you know |
+| `action-report-clashes.cs` with `linkInstanceIdInt` set | The linked-model path is brand new and is the reason this fragment matters. Needs a model with a structural link |
+| `action-report-nested-families.cs` over Mechanical Equipment | Ajmal will recognise the answer instantly — if it says an AHU is one unit with three parts, it works |
+| `action-report-fitting-area.cs` over duct fittings | Check ONE elbow by hand: net area ≈ duct perimeter × centreline arc. If it is roughly double, the connector subtraction did not happen |
+| `action-audit-mep-openings.cs` | The biggest new capability, and the one most worth proving. **Run it on BOTH kinds of opening**: one cut by `create-mep-openings.cs` (a Revit `Opening` — a VOID, whose solid this fragment has to BUILD) and one sleeve family instance. The built-solid path is the part that needs a real model most — if a row says SUSPECT GEOMETRY, the boundary-to-solid construction is landing in the wrong place and the header says what to check |
+
+**The compile gate now runs on Linux too.** `tools/check-scripts.cmd` on the Windows PC is still the
+authority — it tests the Revit versions actually installed. But a container session can now compile
+against the real shipped `RevitAPI.dll` for 2020/2024/2027 by pulling the API packages from the public
+feed and running Roslyn under Mono. The scratchpad copy is gone with the session; the method is written
+up in the ledger and takes about ten minutes to rebuild.
+
+**A method lesson worth more than the code**, now in [`harvest-prompt.md`](harvest-prompt.md): a
+correction is not finished until the `scripts/README.md` row moves with it. `action-compare-models.cs`
+was corrected in the morning and its row still stated the wrong rule this evening — in the document a
+session routes from. The consistency checker asks whether a row EXISTS, never whether it is TRUE.
+
+**Ajmal caught one defect himself and it is the model for how to check the rest.** He asked whether the
+new opening audit would fit the opening tools we already had. It would not have: a Revit `Opening` is a
+VOID with no solid, and the audit pulled solids, so `filter-by-openings.cs` → `action-audit-mep-openings.cs`
+would have reported nothing for every opening our own recipe ever cut — silently. Fixed, and
+`knowledge/live-model/mep-openings.md` now opens with a four-way routing table. **The lesson: the defect
+was in the SEAM between the new fragment and the old one**, which neither reading the source nor the
+compile gate can see. Ask the same question of the other five new fragments before trusting them.
+
+**Still genuinely open on this repo:** the architectural and structural documentation plugins (lintel
+placement, package documentation, rooms, coordination volumes, area boundaries, declarations) were
+inventoried token by token but not read. Nothing absent-and-useful surfaced and Ajmal is MEP, so it is a
+defensible skip — not a proven-empty one. The ledger names them with line counts.
+
+---
+
 ## 2026-08-24 — SIX REPOS HARVESTED, NOT COMMITTED, HARVESTING PAUSED BY AJMAL
 
 **State: 360 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency checks pass.

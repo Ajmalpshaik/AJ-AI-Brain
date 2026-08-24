@@ -48,6 +48,15 @@
 //   System.Tuple, which stops at 8, so `Tuple<...9...>` and `Tuple.Create(...9...)` were both errors.
 //   Rewritten to a named ValueTuple (nx, ny, count, sxMm, syMm, asM2, marginPct, squareness, bayAligned)
 //   — which also retires 38 mystery `o.Item7` reads. Compiles clean on 2020 and 2024. Still NOT live-run.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -109,7 +118,7 @@ else
 
     var bb = room.get_BoundingBox(null);
     double W = bb.Max.X - bb.Min.X, H = bb.Max.Y - bb.Min.Y;
-    double zProbe = room.Level.Elevation + mm(1000);
+    double zProbe = room.Level.ProjectElevation + mm(1000);
     Func<XYZ, bool> insideRoom = p =>
     { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
 

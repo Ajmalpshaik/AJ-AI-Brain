@@ -95,7 +95,54 @@ try
     }
     catch { }
 
-    other = Document.Application.OpenDocumentFile(otherModelPath);
+    // ✱✱ OPEN OPTIONS, ADDED 2026-08-24 — THE BARE `OpenDocumentFile(path)` WAS UNSAFE ON A WORKSHARED
+    //    FILE, which is what every real project is. Three things it got wrong:
+    //      DetachFromCentralOption — without it, opening a CENTRAL file touches the central. Detached
+    //        and preserving worksets is the only correct way to read another model.
+    //      SetOpenWorksetsConfiguration(CloseAllWorksets) — a comparison reads parameters, it does not
+    //        need the geometry of every workset loaded. Closing them all is dramatically faster and
+    //        lighter, and Revit still resolves the elements this fragment walks.
+    //      AllowOpeningLocalByWrongUser — the path handed over is often somebody's LOCAL, and without
+    //        this Revit refuses outright.
+    //    On a non-workshared file every one of these is harmless, so they are set unconditionally.
+    var openOpts = new OpenOptions
+    {
+        DetachFromCentralOption = DetachFromCentralOption.DetachAndPreserveWorksets,
+        AllowOpeningLocalByWrongUser = true,
+        Audit = false
+    };
+    try { openOpts.SetOpenWorksetsConfiguration(new WorksetConfiguration(WorksetConfigurationOption.CloseAllWorksets)); }
+    catch { }
+
+    var modelPath = ModelPathUtils.ConvertUserVisiblePathToModelPath(otherModelPath);
+    try
+    {
+        other = Document.Application.OpenDocumentFile(modelPath, openOpts);
+    }
+    catch (Autodesk.Revit.Exceptions.CorruptModelException)
+    {
+        // ✱✱ REVIT REPORTS A FILE SAVED IN A DIFFERENT VERSION AS "CORRUPT", which sends people looking
+        //    for damage that is not there. The file HEADER can be read without opening it, so the real
+        //    reason is available — say which it is instead of repeating Revit's misleading word.
+        string savedIn = "unknown";
+        try { savedIn = BasicFileInfo.Extract(otherModelPath).Format; } catch { }
+        string running = "unknown";
+        try { running = Document.Application.VersionNumber; } catch { }
+        sb.AppendLine(savedIn != running && savedIn != "unknown"
+            ? $"That file was saved in Revit {savedIn} and this is Revit {running} — it is a VERSION mismatch, not damage. Upgrade it first (action-batch-upgrade-revit-files.cs) or open it in {savedIn}."
+            : $"Revit reports {otherModelPath} as corrupt, and its header says {savedIn} against this Revit {running} — so this one really does look damaged.");
+        return sb.ToString();
+    }
+    catch (Autodesk.Revit.Exceptions.CannotOpenBothCentralAndLocalException)
+    {
+        sb.AppendLine($"{otherModelPath} is already open in this Revit session (or its central/local twin is). Close it first.");
+        return sb.ToString();
+    }
+    catch (Exception ex)
+    {
+        sb.AppendLine($"Revit would not open {otherModelPath}: {ex.Message}");
+        return sb.ToString();
+    }
     if (other == null)
     {
         sb.AppendLine($"Revit would not open {otherModelPath}.");

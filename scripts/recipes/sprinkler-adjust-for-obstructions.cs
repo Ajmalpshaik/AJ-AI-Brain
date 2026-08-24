@@ -34,6 +34,15 @@
 //   is used in the same shape as actions/move-copy-rotate/action-move-to-ray-hit.cs, which IS live-proven
 //   (17 air terminals, 0 misses, 2026-07-26). The search arithmetic is plain C#. Test with dryRun = true
 //   on one room, read the proposed moves, then let it move ONE head and look at it on screen.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -85,8 +94,8 @@ else if (!dryRun && headSource != "existing")
 else
 {
     var rbb = room.get_BoundingBox(null);
-    double zProbe = room.Level.Elevation + mm(1000);
-    double zRoomBase = room.Level.Elevation;
+    double zProbe = room.Level.ProjectElevation + mm(1000);
+    double zRoomBase = room.Level.ProjectElevation;
     Func<XYZ, bool> insideRoom = p =>
     { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
 

@@ -241,7 +241,7 @@ old flow was to read 33 declarations, change none, and paste. Full table and the
 picked: [`mcp-server/tools/README.md`](mcp-server/tools/README.md).
 
 ### 3.4a `run_fragment` — running the library instead of retyping it (added 2026-08-22)
-The 360 fragments in `scripts/` were proven one at a time against a real model. Until this tool, none of
+The 366 fragments in `scripts/` were proven one at a time against a real model. Until this tool, none of
 that proof reached the moment of running: every job read the `.cs` file, hand-edited its `INPUTS` block
 and pasted the result into `run_csharp`, so what Revit received was a fresh copy that had never been
 verified. `run_fragment` sends the file **byte-identical apart from its declarations**.
@@ -270,7 +270,7 @@ passing quietly as if it were verified.
 
 ### 3.5 The rest of the action library — composed code, not separate tools
 The remaining actions catalogued in `knowledge/universal-actions-reference.md` (182 total, 14 of which
-now also have a native tool above), and the 360 real C# fragments in `scripts/` (51 filters, 209
+now also have a native tool above), and the 366 real C# fragments in `scripts/` (51 filters, 215
 actions, 36 creators, 8 commands, 40 recipes, 3 examples, 12 read-only `context/` fragments, 1 shared
 `lib/` prelude — count re-verified 2026-08-20, and now enforced by `tools/verify-consistency.*` check 5 so it cannot drift
 silently again), are **not** individually registered MCP tools. Each is a code template with an `INPUTS` block; the agent picks the

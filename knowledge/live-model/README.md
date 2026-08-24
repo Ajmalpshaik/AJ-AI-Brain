@@ -24,6 +24,7 @@ feet↔mm conversion every script needs.
 | Slicing a trunk into progressively smaller segments for duct sizing; why the trunk gets split; recovering an orphaned branch | [`hvac-duct-sizing.md`](hvac-duct-sizing.md) |
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
 | **Grids and levels** — extents short in one view but not another, the 2D/3D toggle, resetting to the shared 3D extent, stretching levels to a section box, moving the bubble to the other end | [`datums.md`](datums.md) |
+| **A level has TWO heights** — `Elevation` vs `ProjectElevation`, and which one is in the same space as an `XYZ`. Silent, conditional, and it was wrong in fifteen fragments here until 2026-08-24 | [`level-elevation-vs-project-elevation.md`](level-elevation-vs-project-elevation.md) |
 | **Cutting openings / sleeves** where MEP passes through a wall, floor or beam — finding the real crossing, and the three different `NewOpening` calls | [`mep-openings.md`](mep-openings.md) |
 | Moving/copying/rotating elements — and why a transform can silently do NOTHING while reporting success (pinned elements, group members) | [`geometry-and-transforms.md`](geometry-and-transforms.md) |
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |

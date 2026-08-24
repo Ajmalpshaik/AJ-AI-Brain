@@ -18,7 +18,7 @@ Nothing recorded what real work happened. Every session had real elements, real 
 failures — and all of it evaporated when the session ended. Three questions about this Brain were
 simply unanswerable:
 
-- **Which of the 360 fragments actually do the work?** The standing guess is that about 40 do 90%
+- **Which of the 366 fragments actually do the work?** The standing guess is that about 40 do 90%
   of it. Nobody knows.
 - **Which have never once run on a real job?**
 - **Which fail repeatedly against a real model?** This is the most valuable signal the whole system

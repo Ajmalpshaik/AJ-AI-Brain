@@ -425,9 +425,26 @@ try the property first, then fall back to `GetTaggedReferences()` + the per-refe
 **deprecated in Revit 2023** — string comparison became case-insensitive only — and **removed outright
 in Revit 2026**.
 
-**This Brain already handles it.** `action-create-view-filter.cs` reflects over the factory and picks
-whichever overload the running Revit actually offers, with the `caseSensitive` input accepted and then
-ignored on 2023+. Nothing to change; recorded so the next person meeting it does not re-derive it.
+**Measured on the real assemblies, 2026-08-24** — by compiling both forms against the shipped
+`RevitAPI.dll` for each version, not by reading a release note:
+
+| | `CreateEqualsRule(id, "x")` | `CreateEqualsRule(id, "x", false)` |
+|---|---|---|
+| Revit 2020 | **does not compile** | compiles |
+| Revit 2024 | compiles | compiles |
+| Revit 2027 | compiles | **does not compile** |
+
+**So there is NO single string-rule call that compiles across 2020 to 2027** — not for equals, and not
+for any of the seven siblings. Both ends are hard compile errors, so a `try`/`catch` is no help. This
+was worth measuring: from the reflected *arity* data alone it looked as though `CreateEqualsRule` kept a
+two-argument form on every version and was the safe exception. It does not — the `/2` overload present
+on 2020 is a numeric one. **Arity cannot separate overloads that differ by parameter type.**
+
+**This Brain already handles it.** `action-create-view-filter.cs` and
+`action-create-view-filters-by-value.cs` both reflect over the factory and pick whichever overload the
+running Revit actually offers, with the `caseSensitive` input accepted and then ignored on 2023+.
+Nothing to change; recorded so the next person meeting it does not re-derive it — or, worse, "simplify"
+it back to a direct call that compiles on the one Revit they happen to have.
 
 ### The other two shims — nothing owed
 

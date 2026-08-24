@@ -15,6 +15,16 @@
 // GOTCHA: walls in LINKED models are not scanned — host-model walls only (linked-wall crossing needs the
 //         link's transform applied; not built until actually needed).
 // NOT YET LIVE-VERIFIED — created 2026-07-26 from the round-2 suggestions; needs a sleeve family fixture.
+//
+// ✱✱ FOUR FRAGMENTS HERE SAY "OPENING" OR "SLEEVE" AND THEY DO FOUR DIFFERENT JOBS. Pick deliberately:
+//      recipes/create-mep-openings.cs                 CUTS holes -> makes Revit `Opening` elements
+//      recipes/place-sleeves-at-wall-penetrations.cs  PLACES a sleeve family -> makes FamilyInstances
+//      filters/by-relationship/filter-by-openings.cs  FINDS what already exists (both kinds)
+//      actions/qa-checks/action-audit-mep-openings.cs CHECKS whether they are still right (both kinds)
+//    **A Revit `Opening` is a VOID and has NO SOLID** — only BoundaryRect / BoundaryCurves / Host. A
+//    sleeve FamilyInstance does have solids. Anything that pulls solids out of an opening therefore
+//    gets NOTHING from the first kind, silently. Full routing table and the rest of the trap:
+//    knowledge/live-model/mep-openings.md.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

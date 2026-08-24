@@ -31,6 +31,16 @@
 //          sleeves in; this one FINDS what already exists, which nothing else here did.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Every call in it is proven elsewhere in
 //   this library. Run it once and compare the count against what you can see in a 3D view.
+//
+// ✱✱ FOUR FRAGMENTS HERE SAY "OPENING" OR "SLEEVE" AND THEY DO FOUR DIFFERENT JOBS. Pick deliberately:
+//      recipes/create-mep-openings.cs                 CUTS holes -> makes Revit `Opening` elements
+//      recipes/place-sleeves-at-wall-penetrations.cs  PLACES a sleeve family -> makes FamilyInstances
+//      filters/by-relationship/filter-by-openings.cs  FINDS what already exists (both kinds)
+//      actions/qa-checks/action-audit-mep-openings.cs CHECKS whether they are still right (both kinds)
+//    **A Revit `Opening` is a VOID and has NO SOLID** — only BoundaryRect / BoundaryCurves / Host. A
+//    sleeve FamilyInstance does have solids. Anything that pulls solids out of an opening therefore
+//    gets NOTHING from the first kind, silently. Full routing table and the rest of the trap:
+//    knowledge/live-model/mep-openings.md.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

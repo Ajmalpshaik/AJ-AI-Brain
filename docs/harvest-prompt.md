@@ -13,10 +13,12 @@ memory, which is how the reasoning gets lost.
 ```
 Harvest this repo into the AJ AI Brain:  <PASTE THE REPO URL OR LOCAL PATH>
 
-Read docs/pyrevit-harvest.md, docs/pyrevit-platform-harvest.md and docs/revit-libraries-harvest.md
-first — they are the worked examples of this job, and the method below was learned from doing them.
-The third one is the case where the target was LIBRARIES rather than tools; read it if what I am
-pointing at has no buttons.
+Read docs/pyrevit-harvest.md, docs/pyrevit-platform-harvest.md, docs/revit-libraries-harvest.md
+and docs/revitplugins-harvest.md first — they are the worked examples of this job, and the method
+below was learned from doing them. The third is the case where the target was LIBRARIES rather than
+tools; read it if what I am pointing at has no buttons. The fourth is the BIGGEST target so far
+(183k lines, 72 plugins) — read it if this one is large, for how to say honestly what was read and
+what was not.
 
 METHOD
 
@@ -61,6 +63,9 @@ FINISH PROPERLY
 
 - A ledger in docs/ with every verdict and its reasoning.
 - An entry in knowledge/brain-log.md — write the length the finding deserves.
+- When you CORRECT an existing fragment, correct its scripts/README.md row in the same pass. The
+  consistency checker asks whether a row exists, never whether it is still true, and that row is what
+  the next session routes from.
 - node tools/sync-counts.mjs, then node tools/verify-consistency.mjs until it is clean.
 - node tools/plugin-release.mjs (a push without the version bump reaches nobody).
 - Tell me what you found in OUR code, not just what you copied. Every harvest so far has been
@@ -79,6 +84,7 @@ FINISH PROPERLY
 | No source names | Ajmal's standing instruction, 2026-08-20 |
 | Compile-check first | Two version traps in one day; each would have surfaced mid-job otherwise |
 | Report what it found in OURS | Four harvests, and every one was worth more for that than for what it copied |
+| Fix the README row with the fragment | A fragment corrected in the morning still had the old, wrong rule in its README row that evening — in the document a session routes from |
 
 ## When the target is a LIBRARY, not a set of tools (added after the fourth harvest)
 
@@ -99,3 +105,62 @@ Two more things that only showed up on a library:
 - **Their tests and benchmarks are measured fact, and the highest signal per line in the whole repo** —
   a benchmark table states costs nobody would otherwise write down. Quote it with its conditions, never
   as if it were measured on our models.
+
+
+## When the session has no Windows, no Revit and no .NET (added after the seventh harvest)
+
+A container session can still run a real compile gate, and a *better* API diff than the Windows one.
+Both were built from scratch on 2026-08-24 and took about ten minutes; the recipe is worth keeping
+because the instinct is to assume neither is possible and fall back to eyeballing the code.
+
+**The API surface, three versions at once.** Pull the shipped `RevitAPI.dll` / `RevitAPIUI.dll` for each
+Revit version from the public package feed, then **parse the CLI metadata tables directly** — no .NET
+runtime needed. Walk TypeDef for public/nested-public types under `Autodesk.Revit`, then their MethodDef,
+Field and Property rows; decode each method signature's parameter count so overloads separate. Emit each
+name three ways: bare, `Type.Member`, and `Type.Member/arity`.
+
+Three reasons this beats the PowerShell reflection it replaces:
+
+- **No shared-process caching to be fooled by.** The documented trap — *"reflecting on two Revit
+  versions in ONE PowerShell process silently gives you the first one twice"* — cannot happen, because
+  nothing is loaded into a runtime at all.
+- **2027 works.** Its `RevitAPI.dll` is .NET 10 and will not load in PowerShell 5.1 under any
+  circumstances. A metadata parser does not care.
+- **The arity data answers version questions outright.** It settled one the same day:
+  `ParameterFilterRuleFactory.CreateBeginsWithRule` has only the 3-argument form on 2020, both on 2024,
+  and only the 2-argument form on 2027 — so no single call spans the range, and the reflection dispatch
+  our filter fragments already use is not caution, it is required.
+
+**And the packages ship `RevitAPI.xml`** — Autodesk's own documentation — for the newer versions. That
+turns judgement calls into quotations. Two findings that day rested on it, including the level-elevation
+defect: quoting *"no matter what values of the Elevation Base parameter is set"* is a different quality
+of evidence from reasoning about what the property probably means.
+
+**The compile gate.** Roslyn's compiler package (`csc.exe`, the .NET Framework build) runs under Mono —
+it needs `netstandard.dll` copied next to it from Mono's facades, and nothing else. Reference the real
+`RevitAPI.dll` plus Mono's `4.7.1-api` / `4.8-api` reference assemblies for Revit 2020 / 2024, and the
+.NET 10 reference pack from the same feed for 2027. Mirror the harness in `tools/check-scripts.ps1`
+exactly, **including its `examples/prelude-smoke-test.cs` special case**.
+
+**Validate the gate against the whole existing library before trusting it on new code.** That step
+earned its keep twice over:
+
+- It reported a **false** failure, because the "does this fragment declare its own `sb`?" test matched a
+  line inside a HEADER COMMENT that shows `var sb = ...` as an instruction. Strip comment lines first. A
+  gate that fails known-good files is worse than no gate — the next person learns to ignore it.
+- It reported a **true** failure the Windows gate cannot see. Pinning the 4.7.x reference assemblies for
+  Revit 2020 (which targets net47) caught `.ToHashSet(...)`, a .NET Framework **4.7.2** extension.
+  `verify-fragments-compile.ps1` leaves the framework references empty for a .NET Framework Revit and
+  lets `csc` use its defaults, which resolve to whatever is installed — 4.8 on any current box. **So the
+  Windows gate has always been checking a newer framework than Revit 2020 targets.** Worth pinning
+  deliberately rather than inheriting: the strictness is the point.
+
+**Watch out for one operational trap.** Bash re-reads a script file as it executes, so **editing
+`check.sh` while a background run of it is in flight corrupts that run** — it will resync at a random
+point and interleave its output with the next run's. Kill the job before patching the gate, and treat
+any log written across an edit as void.
+
+**This does not replace `tools\check-scripts.cmd`.** That one compiles against the Revit versions
+actually installed on the PC, which is the question that matters before Ajmal runs anything. The
+container gate is a pre-flight — but it turns "compile-checked" from a promise into a fact while the
+work is being written, rather than a step that waits for a different machine.

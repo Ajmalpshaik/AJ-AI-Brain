@@ -11,6 +11,45 @@ This note is the method. The fragment is
 does the core job; the add-in's version additionally handles merging, reruns and family-based sleeves,
 and those parts are described here so they can be built the day a job needs them.
 
+## FIRST — which of the four opening fragments do you want?
+
+Added 2026-08-24, after Ajmal asked whether a newly built opening AUDIT would clash with the opening
+tools already here. It would not crash, but it nearly did something worse — see the trap below the
+table. Four fragments now carry "opening" or "sleeve" in the name and they do four different jobs:
+
+| You want to… | Fragment | It works on / produces |
+|---|---|---|
+| **Cut** holes where MEP crosses structure | [`../../scripts/recipes/create-mep-openings.cs`](../../scripts/recipes/create-mep-openings.cs) | Produces Revit **`Opening` elements** (`Document.Create.NewOpening`) |
+| **Place a sleeve family** at each wall penetration | [`../../scripts/recipes/place-sleeves-at-wall-penetrations.cs`](../../scripts/recipes/place-sleeves-at-wall-penetrations.cs) | Produces **FamilyInstances** |
+| **Find** every opening that already exists | [`../../scripts/filters/by-relationship/filter-by-openings.cs`](../../scripts/filters/by-relationship/filter-by-openings.cs) | Returns both kinds, across four categories plus the `Opening` class |
+| **Check** whether the existing openings are still right after the MEP moved | [`../../scripts/actions/qa-checks/action-audit-mep-openings.cs`](../../scripts/actions/qa-checks/action-audit-mep-openings.cs) | Consumes both kinds |
+
+Cutting and checking are separate on purpose: **cutting happens once, checking happens at every
+revision.** The audit is the fragment that answers "the ducts moved 200 mm — which of my holes are
+wrong now", which a clash report cannot, because the service passes *through* the hole and past its
+edge, so nothing registers as a clash.
+
+### The trap that connects them: the two kinds of "opening" are not the same kind of element
+
+**A Revit `Opening` is a VOID. It has no solid.** `get_Geometry()` returns nothing usable on one — only
+`BoundaryRect` (two corner points, if `IsRectBoundary`), `BoundaryCurves` (a profile, if not) and
+`Host`. A sleeve FamilyInstance, by contrast, has real solids like any other instance.
+
+So anything that audits, measures or clashes an opening by pulling solids out of it **silently gets
+nothing** from every opening `create-mep-openings.cs` ever made — no crash, no error, just an empty
+result that reads like a pass. The audit fragment therefore **builds** a solid for an `Opening` from its
+boundary and its host's thickness, and reports which route each row used.
+
+Two rules if you ever build on that:
+
+- **Extrude generously along the host's normal, never in-plane.** Depth is free — it cannot hide a
+  fault, because the hole's SIZE lives in the perpendicular plane. Widening it in-plane would hide an
+  undersized opening, which is the one answer that must never be optimistic.
+- **Verify the built solid against the element's own bounding box before trusting it.** The API does not
+  document what coordinate space `BoundaryRect` is in. The audit rejects a solid whose centroid lands
+  outside the element's own box and reports it as suspect, rather than auditing on geometry that may be
+  in the wrong place.
+
 ## Three host types, three completely different API calls
 
 This is the thing to get right first. `Document.Create.NewOpening` has **three overloads** and picking

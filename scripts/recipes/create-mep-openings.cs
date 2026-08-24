@@ -35,6 +35,16 @@
 //       hosts are cut. A linked HOST cannot be cut at all — that needs a face-based opening family.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — harvested 2026-08-22 from the add-in's MEP Openings tool
 //   (~136 KB, its largest service). Compile-checked on 2020/2024/2027. Run it dry, then on ONE crossing.
+//
+// ✱✱ FOUR FRAGMENTS HERE SAY "OPENING" OR "SLEEVE" AND THEY DO FOUR DIFFERENT JOBS. Pick deliberately:
+//      recipes/create-mep-openings.cs                 CUTS holes -> makes Revit `Opening` elements
+//      recipes/place-sleeves-at-wall-penetrations.cs  PLACES a sleeve family -> makes FamilyInstances
+//      filters/by-relationship/filter-by-openings.cs  FINDS what already exists (both kinds)
+//      actions/qa-checks/action-audit-mep-openings.cs CHECKS whether they are still right (both kinds)
+//    **A Revit `Opening` is a VOID and has NO SOLID** — only BoundaryRect / BoundaryCurves / Host. A
+//    sleeve FamilyInstance does have solids. Anything that pulls solids out of an opening therefore
+//    gets NOTHING from the first kind, silently. Full routing table and the rest of the trap:
+//    knowledge/live-model/mep-openings.md.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
