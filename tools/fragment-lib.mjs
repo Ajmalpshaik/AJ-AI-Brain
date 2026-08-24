@@ -130,7 +130,7 @@ export function inputsBlockRange(src) {
 // --- verification status ---------------------------------------------------------------------------
 // Read off scripts/README.md's own per-fragment markers - the convention the library already maintains
 // by hand. A row with no marker either way is the honest "never run, never flagged" case.
-function readmeRows() {
+export function readmeRows() {
   const p = path.join(scriptsDir, "README.md");
   const readme = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
   return readme.split(/\r?\n/).filter((l) => l.startsWith("| [`"));

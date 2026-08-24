@@ -428,17 +428,8 @@ deliberately at every merge, not just when someone asks.
   | 2024 | **366 pass, 0 fail** |
   | 2027 | **366 pass, 0 fail** |
 
-  **After merging the parallel session's 28, the full 394 sweep on all three versions is:**
-
-  | Revit | Result |
-  |---|---|
-  | 2020 | **391 pass, 3 fail** |
-  | 2024 | **392 pass, 2 fail** |
-  | 2027 | **392 pass, 2 fail** |
-
-  **Three of THEIR fragments did not compile** — measured, not assumed, and not caused by anything on
-  this branch. **All three are now FIXED** (Ajmal asked for the balance of the work to be finished);
-  nothing else in the 394 ever failed on any version:
+  **After merging the parallel session's 28, the first full 394 sweep found three failures — all in
+  THEIR fragments, none caused by anything on this branch:**
 
   | Fragment | 2020 | 2024 | 2027 | Cause |
   |---|---|---|---|---|
@@ -447,8 +438,9 @@ deliberately at every merge, not just when someone asks.
   | `action-check-plumbing-fixture-connectivity.cs` | FAIL | pass | pass | `BuiltInCategory.OST_PlumbingEquipment` — **2024+ only** |
 
   Two of them could not run on ANY Revit. They were left alone at first — the standing rule in
-  `CLAUDE.md` is that a compile FAIL naming another session's file is reported, not fixed — and then
-  **fixed on Ajmal's instruction** once the patches had been verified against the real API:
+  `CLAUDE.md` is that a compile FAIL naming another session's file is reported, not fixed — and the
+  parallel session then **found and fixed the same three independently**, with the same diagnosis. The
+  second merge takes their versions:
 
   - `RBS_SYSTEM_TYPE_PARAM` does not exist. The real names are domain-specific —
     `RBS_DUCT_SYSTEM_TYPE_PARAM` and `RBS_PIPING_SYSTEM_TYPE_PARAM` (both present 2020–2027) — or the
@@ -457,10 +449,19 @@ deliberately at every merge, not just when someone asks.
   - `OST_PlumbingEquipment` arrived at 2024. Reach it by reflection (`Enum.TryParse`) so 2020 simply
     skips that category, which is the version-proof pattern this library already uses elsewhere.
 
-  Both patches were verified on scratch copies before being offered, and again after being applied:
-  all three now compile on 2020, 2024 and 2027.
+  **FINAL RESULT — the whole 394 at this branch's head, measured after every fix on both sides:**
 
-  **Worth noting how they got in**: the other session's own ledger claims all 388 compile on
+  | Revit | Result |
+  |---|---|
+  | 2020 | **394 pass, 0 fail** |
+  | 2024 | **394 pass, 0 fail** |
+  | 2027 | **394 pass, 0 fail** |
+
+  Every one of the nine files either merge touched was also compiled on its own first, as a faster
+  signal than a 20-minute full sweep: the three creator fixes and the six merged files, 3 × 9 = 27
+  compiles, all pass.
+
+  **Worth noting how the three got in**: the other session's own ledger had claimed all 388 compile on
   2020/2024/2027. Two of these failed on every version, so that claim was never measured on those two.
   **That is the finding to carry forward, not the three fixes** — a compile claim that was asserted
   rather than run. The gate is cheap; the claim is worthless without it.

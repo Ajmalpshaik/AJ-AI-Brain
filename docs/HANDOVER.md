@@ -49,6 +49,11 @@ correction is not finished until the `scripts/README.md` row moves with it. `act
 was corrected in the morning and its row still stated the wrong rule this evening — in the document a
 session routes from. The consistency checker asks whether a row EXISTS, never whether it is TRUE.
 
+**THE WHOLE LIBRARY COMPILES: 394 pass, 0 fail on Revit 2020, 2024 AND 2027** — measured
+2026-08-24 at this branch's head, after every fix on both sides. That is the container gate (Roslyn under
+Mono against the real shipped `RevitAPI.dll`); `tools\check-scripts.cmd` on the PC is still the authority
+because it tests the Revit versions actually installed there, and is worth one run before the next job.
+
 **THREE FRAGMENTS FROM THE OTHER SESSION DID NOT COMPILE — measured 2026-08-24, now FIXED.**
 `action-check-flow-direction.cs` and `action-connect-open-connectors.cs` both use
 `BuiltInParameter.RBS_SYSTEM_TYPE_PARAM`, which **is not a real API name on any Revit version** — they

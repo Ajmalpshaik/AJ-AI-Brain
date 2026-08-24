@@ -5360,3 +5360,45 @@ no-status 39 → **28**.
 Nothing about the library changed. What changed is that its own report of itself got 11 fragments less
 wrong — and the direction of the error is the one that matters, because no-status is the bucket a session
 is told nothing warns it about.
+
+## 2026-08-24 — two tools, one question, two answers: the status counter was duplicated
+
+`brain-status.mjs` carried its own copy of the four regexes that read a fragment's verification status
+out of its `scripts/README.md` row — the same job `fragment-lib.mjs` does for `fragment-index.mjs` and
+the catalogue. Teaching the shared one to recognise plain-English "not yet run" (entry above) moved 11
+fragments there and not here, so the same library reported **108 not-run / 28 no-status** from one tool
+and **97 / 39** from the other, in the same minute.
+
+**The second copy is deleted rather than resynced.** `brain-status.mjs` now imports `readmeRows`,
+`makeStatusOf` and `loadFragments` and counts the results. Both tools now say 247 / 108 / 11 / 28, which
+sums to exactly 394.
+
+That also fixed a quieter bug nobody had noticed. The old code filtered README *rows* by substring;
+`makeStatusOf` matches a row by its **markdown link target**. Eight fragments are named inside a
+*different* fragment's row as prose ("feeds `creators/create-dimension.cs`"), and the row-filter counted
+those rows once per mention — the exact miscount that the link-target rule had already been introduced to
+fix on the other side, in a comment explaining why.
+
+**The rule this is the third instance of:** when two files in this repo answer the same question, they
+will disagree, and the disagreement will be found by accident. The fix is never to resync them — it is
+to delete one. A count computed from disk in one place is the whole reason `brain-status.mjs` exists.
+
+## 2026-08-24 — the whole library compiles on all three Revits: 394 pass, 0 fail
+
+Final gate at the end of the harvest, run in the Linux container against the real shipped `RevitAPI.dll`
+for each version (Roslyn under Mono, same harness shape as `tools/check-scripts.ps1`):
+
+| Revit | Result |
+|---|---|
+| 2020 | **394 pass, 0 fail** |
+| 2024 | **394 pass, 0 fail** |
+| 2027 | **394 pass, 0 fail** |
+
+That is the first clean sweep of the merged library on all three versions — the previous run had three
+failures, all in the parallel session's fragments, all now fixed on their side and taken in by merge.
+
+**A practical note on running it.** A full sweep is ~20 minutes per version because every fragment is a
+separate `csc` invocation under Mono, and three at once contend. The useful habit is to **compile the
+changed files alone first** — 3 × 9 = 27 compiles finished in under a minute here and gave the real
+answer about the delta, while the full sweep ran in the background purely to prove nothing else
+regressed. Targeted first, full second, and the full one never blocks the work.
