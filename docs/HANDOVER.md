@@ -14,6 +14,29 @@ mergeable. Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
 The one thing left before merging is not a code question: **run the fragments in the table below against
 a real model**, starting with `action-report-level-elevations.cs`.
 
+### ⚠ TWO JOBS ONLY AJMAL CAN DO — 30 seconds each, in the browser
+
+**1. Delete the four merged branches.** Asked for directly on 2026-08-24, attempted, and **refused by
+GitHub with HTTP 403 for the third time.** The diagnosis was re-confirmed the same way as on 2026-08-22:
+`curl "$HTTPS_PROXY/__agentproxy/status"` reports `recentRelayFailures: []` immediately after the failed
+delete, so the proxy never saw a failure — the request reached GitHub and **GitHub refused it.** A
+session's git credentials can push refs but not delete them. That is a deliberate guardrail, and
+`/root/.ccr/README.md` says a 403 is to be reported, not routed around. The GitHub API tools available
+here have `create_branch` and **no delete counterpart**, so there is no second route either.
+
+All four are **0 commits ahead of `main`** — re-verified 2026-08-24, nothing would be lost:
+
+| Branch | Its PRs, all closed |
+|---|---|
+| `claude/add-fragments-hvhxpt` | #37, #38, #40 |
+| `claude/kv-cache-necessity-a5sjnx` | #30, #33, #34, #35 |
+| `claude/rag-setup-optimization-ayuui2` | #32 |
+| `claude/wonderful-bell-6j0som` | #31 |
+
+**2. And so this never comes back — turn on Settings → General → "Automatically delete head branches".**
+That is the actual fix. It removes the whole class of job instead of this instance of it, and it is why
+this has now been asked for three times: deleting today's four does nothing about next month's.
+
 **Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
 not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all
 day — the percentage fell because the library grew by 34. Nothing here has been run on a real model since

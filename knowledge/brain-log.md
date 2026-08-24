@@ -5402,3 +5402,30 @@ separate `csc` invocation under Mono, and three at once contend. The useful habi
 changed files alone first** — 3 × 9 = 27 compiles finished in under a minute here and gave the real
 answer about the delta, while the full sweep ran in the background purely to prove nothing else
 regressed. Targeted first, full second, and the full one never blocks the work.
+
+## 2026-08-24 — branch deletion refused a third time; re-measured rather than recalled
+
+Ajmal asked directly for the four merged `claude/*` branches to be deleted. `git push origin --delete`
+returned **HTTP 403**, as it did on 2026-08-22 and the day before that.
+
+**The point of this entry is that the diagnosis was re-run, not recalled.** The log already said "GitHub
+refuses it, not the proxy" — but a recorded cause is a claim about a past run, and credentials, scopes
+and proxy config all change. So the same one-second test was repeated:
+`curl "$HTTPS_PROXY/__agentproxy/status"` immediately after the failure reports
+`recentRelayFailures: []`. The proxy never saw a failure, so the request reached GitHub and GitHub
+refused it. Same answer, freshly measured. That habit is the same one this day's other entries are
+about: a stored conclusion is not evidence about today.
+
+Safety re-verified too, and by the right test — `git rev-list --count origin/main..origin/<branch>`
+returns **0 for all four**, so `main` contains every commit and nothing is lost by deleting them. (`git
+diff --stat` is NOT that test: two of them show files differing from `main`, which is only them being
+*behind* it.) Their PRs — #30 through #35, #37, #38, #40 — are all closed.
+
+There is no second route: the GitHub API tools available in this session have `create_branch` and **no
+delete counterpart**, and `/root/.ccr/README.md` is explicit that a 403 is to be reported rather than
+worked around.
+
+**Escalated in `docs/HANDOVER.md` from a buried historical note to a numbered to-do in the current
+section**, because it has now been asked for three times and the answer keeps being rediscovered instead
+of read. With it, the fix that ends the class of job rather than this instance: **Settings → General →
+"Automatically delete head branches"**. Deleting today's four does nothing about next month's.
