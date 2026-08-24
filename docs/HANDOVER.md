@@ -2,9 +2,9 @@
 
 Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
-## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE, MERGED TO `main`. NOTHING IS WAITING.
+## 2026-08-24 (evening) — SUITE MERGED, MCP SERVER VERSION-PROOFED, BRANCHES DELETED. NOTHING IS WAITING.
 
-**State: `main` is at 394 fragments, plugin 1.1.30.**
+**State: `main` is at 394 fragments, plugin 1.1.33. GitHub holds `main` and nothing else — every branch deleted 2026-08-24.**
 [PR #39](https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/39) is **MERGED** — 6 new fragments, 8 upgraded,
 18 corrected on this branch, plus 2 more corrected by a peer session. It took THREE merges of `main` to
 get there: the library went 360 → 388 → 391 → 394 while the work was in flight.
@@ -13,52 +13,43 @@ Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
 **A `git pull` on the PC now gets everything.** The one thing left is not a code question: **run the
 fragments in the table below against a real model**, starting with `action-report-level-elevations.cs`.
 
-### ⚠ THE FOUR OLD BRANCHES ARE STILL THERE, AND THE SETTING THAT SHOULD HAVE HELPED IS NOT ON
+### THE BRANCHES ARE GONE — and the four-session diagnosis was environment-specific, not a rule
 
-**Deleting them is still refused — and on the fourth attempt the real reason finally came out.**
-`git push origin --delete` returns a bare **HTTP 403** with no message, which is why three sessions in a
-row concluded *"the request reached GitHub and GitHub refused it."* **That conclusion was wrong, or at
-best unproven.** Asking the REST API instead returns the same 403 **with a body**, and the body is not
-from GitHub at all:
+**Deleted 2026-08-24 from the Windows PC, in one command each, first try.** `git ls-remote --heads
+origin` now returns **`main` and nothing else.** All five `claude/*` branches went, plus six older ones
+that turned out to have been deleted on GitHub already — the local `origin/*` refs were simply stale
+until a `git fetch --prune`.
 
-> `{"message":"Write access to this GitHub API path is not permitted through this proxy."}`
+```bash
+git push origin --delete claude/add-fragments-hvhxpt
+```
 
-So the block is **Anthropic-side**, not GitHub-side. Three separate routes, all closed, for three
-different reasons:
+**Four sessions had recorded this as impossible, and each correction was itself corrected.** The
+sequence is worth keeping because the *shape* of the error repeated while the *explanation* kept
+changing: first "GitHub refuses it", then "a session's git credential can push refs but not delete
+them", then "an Anthropic-side GitHub API proxy blocks it, and `recentRelayFailures: []` never sees that
+layer." That last one is **accurate about the container** — the REST 403 body really does say
+*"Write access to this GitHub API path is not permitted through this proxy."*
 
-| Route | Result |
-|---|---|
-| `git push origin --delete` | bare 403, no message — a session's git credential can push refs, not delete them |
-| GitHub REST API with `$GITHUB_TOKEN` | 403 — *"Write access to this GitHub API path is not permitted through this proxy"*. And a plain **read** through it also 403s: *"GitHub access is not enabled for this session"* |
-| The `mcp__github__*` tools | the working route while connected, but it has `create_branch` and **no delete counterpart** |
+What every version got wrong was the scope. The finding was written as a fact about *deleting branches*,
+when it was only ever a fact about *deleting branches from a sandboxed session*. On this PC, with
+Ajmal's own git credentials and no proxy in the path, the same command has never been tried — and it
+just works.
 
-**The correction that matters for any future session: `recentRelayFailures: []` does NOT mean "GitHub
-refused it."** That endpoint reports the *generic egress* proxy. There is a **separate GitHub-specific
-proxy layer** that returns its own 403 and never appears in that log. The earlier diagnosis rested on
-that endpoint meaning more than it does — a clean instrument read as an all-clear for something it does
-not measure. Same shape as the grep that reported clean and the compile claim made without the gate:
-**an instrument returning nothing is evidence only about what that instrument watches.**
+**The transferable rule: an environment-specific block belongs in a sentence that names the
+environment.** "Deleting branches is refused" invited four sessions to re-derive it. "Deleting branches
+is refused *from a container session*" would have ended it at the first attempt, and would have said
+plainly where to go instead — the PC.
 
-All four are **0 commits ahead of `main`**, so nothing is lost by deleting them:
+Nothing was lost: every branch was measured at **0 commits ahead of `main`** before deletion, checked
+with `git log --oneline origin/main..<branch>` rather than assumed from the PR being merged.
 
-| Branch | Its PRs, all closed |
-|---|---|
-| `claude/add-fragments-hvhxpt` | #37, #38, #40 |
-| `claude/kv-cache-necessity-a5sjnx` | #30, #33, #34, #35 |
-| `claude/rag-setup-optimization-ayuui2` | #32 |
-| `claude/wonderful-bell-6j0som` | #31 |
-
-**And "Automatically delete head branches" is NOT actually on, whatever the Settings page appeared to
-say.** That is not a guess — it is the one clean experiment available: PR #39 was merged at 15:43 and its
-head branch `claude/revitplugins-harvest-1nwqkx` was **still on the remote a minute later**. If the
-setting were on, GitHub deletes the head branch the instant a PR merges. So the toggle did not save.
-
-**This matters beyond branches.** Across this evening Ajmal reported three things done that measurement
-showed had not happened — the PR merged (it was still open), the four branches deleted (all still
-present), and this setting turned on (proven off by the merge above). Twice the belief came from a
-GitHub UI action that needs a **second confirming click** and silently does nothing without it. The
-lesson for any session here: **when he says a GitHub action is done, verify it before building on it** —
-not out of distrust, but because the UI fails quietly and he has no way to see that it did.
+**Still true and still worth knowing:** across 2026-08-24 Ajmal reported three GitHub actions done that
+measurement showed had not happened — a PR merged (still open), the branches deleted (still present),
+and "Automatically delete head branches" turned on (proven off, because PR #39's head branch survived
+the merge). Twice the belief came from a GitHub UI control that needs a **second confirming click** and
+silently does nothing without it. **When he says a GitHub action is done, verify it before building on
+it** — not out of distrust, but because the UI fails quietly and he has no way to see that it did.
 
 **Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
 not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all

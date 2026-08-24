@@ -5566,3 +5566,33 @@ nothing outside it.
 **Practical upshot, unchanged:** deleting these branches cannot be done from a session by any available
 route, and per `/root/.ccr/README.md` a 403 of this kind is to be reported rather than worked around. It
 is Ajmal's browser, Branches tab, bin icon — and it stays the only open item.
+
+- 2026-08-24 — **the branches deleted in one command each, on the fifth attempt — and the previous four
+  diagnoses were right about the wrong thing.** Ajmal asked again. `git push origin --delete
+  claude/add-fragments-hvhxpt` from the Windows PC returned `- [deleted]` and exit 0, first try. All five
+  `claude/*` branches went the same way. `git ls-remote --heads origin` now returns **`main` and nothing
+  else** — six older branches turned out to have been deleted on GitHub already, with only stale local
+  `origin/*` refs making them look alive until a `git fetch --prune`.
+
+  **Four sessions had recorded this as impossible, and each correction was itself corrected**: "GitHub
+  refuses it" → "a session's git credential can push refs but not delete them" → "an Anthropic-side
+  GitHub API proxy blocks it, and `recentRelayFailures: []` never sees that layer." The last of those is
+  **accurate** — the REST 403 body really does read *"Write access to this GitHub API path is not
+  permitted through this proxy."*
+
+  What every version got wrong was **scope**. Each was written as a fact about *deleting branches* when
+  it was only ever a fact about *deleting branches from a sandboxed session*. On the PC, with Ajmal's own
+  git credentials and no proxy in the path, the command had never once been tried.
+
+  **The transferable rule, and it generalises past git: an environment-specific block belongs in a
+  sentence that names the environment.** "Deleting branches is refused" invited four sessions to
+  re-derive it and reach four different explanations. "Deleting branches is refused *from a container
+  session* — do it from the PC" would have ended it at the first attempt and pointed at the fix. This is
+  the same family as the two other findings logged today (a green check only as wide as what the checker
+  reads; a grep that finds nothing being evidence about the pattern, not the code): **a negative result
+  is scoped to the instrument that produced it, and writing it down without that scope turns one
+  session's limit into everybody's rule.**
+
+  Safety, since deletion is not reversible from here: every branch was measured at **0 commits ahead of
+  `main`** with `git log --oneline origin/main..<branch>` before anything was deleted — not inferred from
+  a PR being merged.
