@@ -2,10 +2,67 @@
 
 Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
-## 2026-08-24 — SIX REPOS HARVESTED, NOT COMMITTED, HARVESTING PAUSED BY AJMAL
+## 2026-08-24 (evening) — MCP SERVER FIXED FOR ALL REVIT VERSIONS, EVERYTHING MERGED AND PUSHED
 
-**State: 360 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency checks pass.
-Plugin at 1.1.19. NOTHING IS COMMITTED OR PUSHED — that is the first job tomorrow.**
+**State: 388 fragments. `check-scripts` green on Revit 2020, 2024 and 2027 — 421 scripts, which is the
+388 fragments PLUS the 33 the MCP server generates, now checked together for the first time. All 13
+consistency checks pass. MCP server 1.7.0, 51/51 tests green. Committed, merged with the ten commits
+waiting on origin, and pushed.**
+
+Ajmal asked whether the existing MCP server was any good. It is well built — but it had been broken on
+Revit 2024 and 2027 for months and nothing had noticed.
+
+**The bug.** The server generated `DisplayUnitType.DUT_MILLIMETERS` in eight places. That name is gone
+from the API after 2020 (measured in the DLLs: 4 hits in 2020, 0 in 2024, 0 in 2027), and the bridge
+compiles what it is sent, so it is a hard compile error on the first call. `model_summary` and
+`move_elements` were dead on any Revit above 2020; twelve more tools died on any mm filter. Proved with
+the repo's own harness rather than argued: the old line passes on 2020, fails on 2024 with `CS0122`.
+
+**Why nothing caught it, which matters more.** The identical call was swept out of 93 fragment files on
+2026-08-20 and `check-scripts` has reported green ever since — but it only ever read `scripts/*.cs`,
+while roughly half the C# that reaches Revit is built at run time in `mcp-server/tools/*.js`. **A green
+check is only as wide as what the checker reads.** `mcp-server/emit-generated-csharp.mjs` now writes out
+every distinct script the server can generate and `check-scripts` compiles both halves. It walks
+BRANCHES, not tools — three of the eight bad copies only appeared on a mm filter — and fails if a tool
+has no case at all. **When you add a tool or a branch, add a case there.**
+
+Also done: the SILENT half of the same version split (`shared/element-id.js`, reflection on
+`ElementId.Value`/`.IntegerValue`); safety annotations for all 28 tools from one table in
+`shared/register.js`, with `defineTool` refusing an unlisted tool; migration off the deprecated
+`server.tool()`; the reported version now read from `package.json` (it had said 1.4.0 against 1.6.0);
+`session_start`'s test un-stuck (it had asserted the fragment was unproven two days after it was
+live-verified, so the suite was red); and both Brain search tools moved off `spawnSync`, which had been
+freezing the entire server for the length of a search.
+
+### Left undone, and why
+
+- **The knowledge graph's document side is one merge behind.** `graphify . --update` refuses without an
+  LLM API key (78 doc files need semantic extraction) — the one step `skills/brain-update-layers` already
+  documents as manual. Set `GEMINI_API_KEY` (or another listed key) and re-run. The vector index and the
+  Obsidian vault ARE current: rebuilt after the merge, 464 files / 6406 chunks and 2230 notes.
+- **Typed output schemas for the MCP tools.** Deliberately skipped. It changes the reply shape of all 28
+  tools for no benefit Ajmal would see, and it did not belong in the same pass as a version fix.
+- **The open items below still need a live bridge and a model open.** Nothing was run against Revit this
+  session.
+
+### Housekeeping worth knowing
+
+- **Ten commits were waiting on origin** when this session went to push — 28 MEP coordination fragments
+  from parallel sessions, 360 -> 388. Merged here, four conflicts resolved (`plugin.json`, `CLAUDE.md`,
+  `START-HERE.md`, `brain-log.md` — both sides kept in the log, nothing dropped). **Check `git status -sb`
+  before starting: this repo genuinely has other sessions pushing to it.**
+- `knowledge/live-model/graphic-override-precedence.md` had been flagged as an un-reviewed split
+  candidate for two days *after* its review was written, because the review did not use the literal
+  marker `brain-status.mjs` matches. Fixed. **If you keep a file whole on purpose, write the exact phrase
+  `split-review: kept whole`** — a review nobody can read is indistinguishable from one nobody did.
+
+---
+## 2026-08-24 — SIX REPOS HARVESTED, HARVESTING PAUSED BY AJMAL
+
+**State at the time: 360 fragments, all compiling on Revit 2020, 2024 and 2027. All 13 consistency
+checks pass. Plugin at 1.1.19.** *(This entry said "NOTHING IS COMMITTED OR PUSHED — that is the first
+job tomorrow." It was committed and pushed as `0c3af81` shortly afterwards. Corrected 2026-08-24
+evening so the line does not read as current.)*
 
 Ajmal's words at the end: *"no issue harvesting we will continew tomarow"*. Harvesting is paused, not
 abandoned. He also asked, twice, whether it was complete — and the honest answer both times was no, so
