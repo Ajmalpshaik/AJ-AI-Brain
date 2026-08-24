@@ -10,6 +10,43 @@
      have to open both halves anyway. brain-status.mjs reads this marker and stops flagging the file. -->
 
 
+## "Tag it" — which fragment actually runs (read this first)
+
+Added 2026-08-24, because Ajmal asked the right question: *"if I say tag it, will it get confused what
+need to do and it will not create as per we need?"* There are now **eleven** tag-related files and a bare
+`--find tag` returns 28 fragments, most of them irrelevant. Without a routing rule the answer to "tag it"
+is a coin toss, and two of the three placement fragments will give him something he did not ask for.
+
+**The rule: placement is decided by HOW MANY CATEGORIES and HOW BUSY THE VIEW IS.**
+
+| What was asked | Use | Why not the others |
+|---|---|---|
+| "tag it" / "tag the ducts" on a **normal or busy** view, ONE category | [`recipes/tag-elements-in-active-view.cs`](../../scripts/recipes/tag-elements-in-active-view.cs) | **The default answer.** Live-verified. Scores each tag's side, follows real flow direction, computes elbows, and resolves overlaps as PASS 2. Nothing else here does placement properly |
+| "tag everything on this view" — **several categories at once** | [`action-auto-tag-mep.cs`](../../scripts/actions/sheets-views/action-auto-tag-mep.cs) | The recipe handles one category per run and must be told the tag family; this is the only one carrying the category → tag-category map. Its placement is a plain offset, so follow it with the tidy-up below |
+| Quick, one category, placement does not matter | [`action-tag-elements.cs`](../../scripts/actions/sheets-views/action-tag-elements.cs) | Simplest. No scoring, no overlap handling |
+| "the tags are on top of each other" — tags **already exist** | [`action-auto-arrange-tags.cs`](../../scripts/actions/sheets-views/action-auto-arrange-tags.cs) | The recipe only arranges tags it places itself, so it cannot help with tags placed by hand or by an earlier run |
+| "move the tags out of the way" / a genuinely over-full view | [`action-arrange-tags-to-view-edges.cs`](../../scripts/actions/sheets-views/action-arrange-tags-to-view-edges.cs) | Nudging cannot fix a view with more tags than space; parking at the crop edges can |
+| "put them in a column" | [`action-stack-tags.cs`](../../scripts/actions/sheets-views/action-stack-tags.cs) | |
+| Room tags sitting off their rooms | [`action-center-room-tags.cs`](../../scripts/actions/sheets-views/action-center-room-tags.cs) | |
+| "make the leaders bent / L-shaped" | [`action-force-tag-leader-lshape.cs`](../../scripts/actions/sheets-views/action-force-tag-leader-lshape.cs) | Changes leader SHAPE only — it moves nothing and resolves no overlap |
+| "what still isn't tagged?" | [`filter-by-tag-status.cs`](../../scripts/filters/by-view-and-sheet/filter-by-tag-status.cs) (one category, actionable set) or [`action-check-unannotated-elements.cs`](../../scripts/actions/qa-checks/action-check-unannotated-elements.cs) (every category, percentages) | |
+| "what is printing on top of what?" | [`action-check-annotation-overlap.cs`](../../scripts/actions/qa-checks/action-check-annotation-overlap.cs) | Finds it across tags, text AND dimensions; fixes nothing |
+| "take the tags off" | [`action-remove-tags.cs`](../../scripts/actions/sheets-views/action-remove-tags.cs) | |
+
+**They do not collide — they are sequential.** Place (recipe, or auto-tag-mep for a mixed set) → tidy
+(auto-arrange-tags) → check (check-annotation-overlap). Running the tidy-up after the recipe is harmless
+but usually pointless: the recipe has already resolved its own overlaps, better, using the elbow function
+that placed them.
+
+**Why this section exists, recorded as a caution.** On 2026-08-24 two new tag fragments were written by
+searching `scripts/` for existing fragments and never reading THIS FILE. Both then contradicted findings
+already measured here — a guessed tag family instead of `GetDefaultFamilyTypeId`, no post-`Create` type
+check, leader-inclusive bounding boxes used for spacing, 50/50 pushes that moved L-shaped tags, model X/Y
+instead of view space, and no leader-end restore. `fragment-index.mjs` reads only `scripts/*.cs` and
+**structurally cannot surface a knowledge note**, which is exactly why CLAUDE.md says to ask
+`ask-brain-hybrid` in plain English before writing new C#. Six defects, one skipped read.
+
+
 ## Posting AJ Tools' own ribbon commands — doesn't reliably work
 - `RevitCommandId.LookupCommandId(...)` with a guessed `"CustomCtrl_%CustomCtrl_%{Tab}%{Panel}%{Pulldown}%{Button}"`
   string did not resolve for a real button (`CmdSmartMepTag`) nested inside a `PulldownButton`, across

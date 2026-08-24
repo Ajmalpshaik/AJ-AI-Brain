@@ -548,3 +548,47 @@ grep "does not contain a definition for" fragment-compile-failures.txt
 **The rule: grep the DLL to find candidate names, compile-probe to find which type owns them, and read
 the FAILURES FILE rather than the console summary.** Either half alone produces a confident wrong
 answer, which is the expensive kind.
+
+## An API name that does not exist is a COMPILE error, and no try/catch reaches it (2026-08-24)
+
+Three fragments from the 28-fragment MEP coordination batch failed to compile. A parallel session found
+them while compiling all 394 against the real shipped `RevitAPI.dll` for 2020, 2024 and 2027, and
+reported them rather than repairing another session's files — which is the rule in `CLAUDE.md` working
+exactly as intended.
+
+| Fragment | 2020 | 2024 | 2027 | The name |
+|---|---|---|---|---|
+| `action-check-flow-direction.cs` | ✗ | ✗ | ✗ | `BuiltInParameter.RBS_SYSTEM_TYPE_PARAM` |
+| `action-connect-open-connectors.cs` | ✗ | ✗ | ✗ | same |
+| `action-check-plumbing-fixture-connectivity.cs` | ✗ | ✓ | ✓ | `BuiltInCategory.OST_PlumbingEquipment` |
+
+**`RBS_SYSTEM_TYPE_PARAM` does not exist on any Revit version.** It was written from memory. The system
+type parameter is DOMAIN-SPECIFIC — `RBS_DUCT_SYSTEM_TYPE_PARAM` and `RBS_PIPING_SYSTEM_TYPE_PARAM`,
+both present 2020–2027 — and there is no generic one. Two of these fragments could therefore not run on
+**any** Revit at all. Fixed by trying duct, then pipe, then falling back to the system NAME.
+
+**`OST_PlumbingEquipment` arrived at Revit 2024.** Fixed by resolving it with `Enum.TryParse` at run
+time, the same version-proof route this library already uses for `ElementId.Value`/`IntegerValue` and
+the `IndependentTag` rename — on 2020 the parse fails, that one category is skipped, the rest works.
+
+**The distinction that matters, and it is the whole point of this note.** A wrong VALUE gives a wrong
+answer you can argue with. A wrong NAME is not a runtime failure at all — the file never becomes code,
+so there is nothing to catch, nothing to log, and no defensive coding that helps. It is invisible to
+review, invisible to a careful read of the logic, and invisible to every consistency check in this repo.
+**Only a compiler finds it.**
+
+Three things would each have caught it before it shipped:
+
+1. **Read [`revit-api-surface.md`](revit-api-surface.md) first.** It is generated from the fragments and
+   lists the 245 types this library really uses. `RBS_DUCT_SYSTEM_TYPE_PARAM` and
+   `RBS_PIPING_SYSTEM_TYPE_PARAM` are both in it; `RBS_SYSTEM_TYPE_PARAM` is not, and never was.
+2. **Copy the call from a proven fragment.** Every existing fragment that reads a system type
+   (`filter-by-system-type.cs`, `trace-mep-circuits.cs`, `connect-terminal-branch.cs`,
+   `action-color-by-group.cs`) uses the domain-specific names. The library already had the answer in
+   four places.
+3. **`tools\check-scripts.cmd`** — a minute on the PC, and the only one of the three that is proof
+   rather than diligence.
+
+A fragment written where no compiler exists is not "probably fine" — it is unproven in a way that
+reading it cannot fix, and this is the second time that has been recorded here (see
+`tools/verify-fragments-compile.ps1`, which had never run once when it was written).
