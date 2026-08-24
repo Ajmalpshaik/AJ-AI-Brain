@@ -123,6 +123,11 @@ else
 }
 
 var levels = new FilteredElementCollector(Document)
+    // `Elevation` here is DELIBERATE and must not be "fixed" to ProjectElevation. This only SORTS the
+    // levels to pick one; the two bases differ by a constant offset, so the resulting ORDER is identical
+    // either way. Nothing in this fragment subtracts a level height from a world coordinate — the route
+    // points come straight from the mm inputs — so the defect that affects other fragments cannot arise
+    // here. Recorded because a sweep for `.Elevation` will find this line and it looks like the others.
     .OfClass(typeof(Level)).Cast<Level>().OrderBy(l => l.Elevation).ToList();
 var lvl = string.IsNullOrWhiteSpace(levelName)
     ? levels.FirstOrDefault()

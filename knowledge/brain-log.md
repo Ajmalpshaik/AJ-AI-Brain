@@ -5037,3 +5037,81 @@ reads only `scripts/*.cs`; `ask-brain-hybrid` reads everything. **Before writing
 check whether `knowledge/live-model/` already has a note on that subject** — sizing, openings, tagging,
 connecting, geometry, ceilings, insulation and views all do. Six defects came from skipping that read on
 tags; four more came from skipping it everywhere else.
+
+## 2026-08-24 — three of the 28 new fragments could not compile; two could not run on ANY Revit
+
+Ajmal asked whether everything was pushed and whether any work was outstanding. Checking GitHub for that
+turned up **PR #39 from a parallel session** — a 72-plugin harvest that had compiled all 394 fragments
+against the real shipped `RevitAPI.dll` for Revit 2020, 2024 and 2027. Three failed. All three were from
+this session's batch.
+
+| Fragment | 2020 | 2024 | 2027 | Cause |
+|---|---|---|---|---|
+| `action-check-flow-direction.cs` | ✗ | ✗ | ✗ | `BuiltInParameter.RBS_SYSTEM_TYPE_PARAM` |
+| `action-connect-open-connectors.cs` | ✗ | ✗ | ✗ | same |
+| `action-check-plumbing-fixture-connectivity.cs` | ✗ | ✓ | ✓ | `BuiltInCategory.OST_PlumbingEquipment` (2024+) |
+
+**`RBS_SYSTEM_TYPE_PARAM` is not a real API name on any version.** It was written from memory. Two of
+these fragments therefore could not run on any Revit at all — they were never code. Verified three ways
+before touching them rather than taking another session's report on trust: the name appears in exactly
+those two files and nowhere else in 388; `knowledge/revit-api-surface.md`, which is GENERATED from the
+fragments and lists the 245 types the library really uses, contains `RBS_DUCT_SYSTEM_TYPE_PARAM` and
+`RBS_PIPING_SYSTEM_TYPE_PARAM` and not the bare one; and all four existing fragments that read a system
+type use the domain-specific names. The library had the right answer in four places.
+
+Fixed: duct, then pipe, then the system NAME. `OST_PlumbingEquipment` resolved with `Enum.TryParse` at
+run time — the same version-proof route already used for `ElementId.Value`/`IntegerValue` and the
+`IndependentTag` rename. Full write-up in
+[`revit-version-compatibility.md`](revit-version-compatibility.md).
+
+**Two things worth keeping, beyond the fix.**
+
+**A wrong API NAME is a different animal from a wrong value.** A wrong value gives an answer you can
+argue with. A wrong name is not a runtime failure at all — the file never becomes code, so there is
+nothing to catch, nothing to log, and no defensive coding that helps. It survived every one of the 13
+consistency checks, two rounds of careful reading, and a knowledge-note audit that found ten other
+defects. **Only a compiler finds it.** A fragment written where no compiler exists is not "probably
+fine"; it is unproven in a way that reading cannot fix. Second time recorded — see
+`tools/verify-fragments-compile.ps1`, which had never run once when it was written.
+
+**The multi-session rule earned its keep.** `CLAUDE.md` says a `check-scripts` FAIL naming a file you did
+not write belongs to another session — report it, do not fix it. The other session followed it exactly:
+documented all three with verified patches and left them alone. That is why this was a clean handover
+instead of two sessions editing the same files. The other side of the same rule is that the owning
+session then has to actually pick them up, which is what this entry is.
+
+**Running total for today's batch: 13 defects.** Six on tags (Ajmal asked), four from the knowledge-note
+audit (Ajmal asked again), three from a compiler (a parallel session). Every one was findable by
+something that already existed in this repo and was skipped: the knowledge notes, the API surface note,
+and the compile check.
+
+## 2026-08-24 — the parallel session's level sweep missed two of mine; verified rather than trusted
+
+PR #39 reported its `Level.Elevation` vs `ProjectElevation` finding — 15 fragments mixing a level height
+with real world coordinates — and stated: *"Checked and clean: none of the merged 28 carries the
+`Level.Elevation` defect."*
+
+**That claim is wrong, and checking it found two.** Sweeping the 28 for `.Elevation` gave three hits, and
+they are not the same kind of thing:
+
+| Fragment | Use | Verdict |
+|---|---|---|
+| `action-auto-route-mep-run.cs` | `.OrderBy(l => l.Elevation)` only | **Not a defect** — sorting. The two bases differ by a constant, so the order is identical either way |
+| `action-check-valve-accessibility.cs` | `pt.Z - levelBelowZ(pt.Z)`, where the helper compares and returns `l.Elevation` | **DEFECT** — subtracts a level height from a world Z |
+| `action-auto-create-coordination-views.cs` | section box `Z` from `lvl.Elevation`, while its X and Y come from real element bounding boxes | **DEFECT** — a world-coordinate box with one axis in a different space |
+
+Both fixed to `ProjectElevation`. The sort is left on `Elevation` **with a comment saying why**, the same
+treatment PR #39 gave its own two deliberate cases — a future sweep will find that line and it looks
+exactly like the others.
+
+The second one is the more interesting failure: every view still gets created, they look right in the
+browser, and each one silently clips the wrong slice of the building. Nothing errors.
+
+**The lesson is about trusting a peer session's audit.** The report was substantially right and extremely
+useful — it caught three compile failures that only a compiler could find, and it followed the
+report-don't-repair rule exactly. But its clean-bill-of-health on somebody else's 28 files was one line
+in a large PR, and it was wrong. **A finding from another session is evidence; its "and I checked X is
+clean" is not proof, especially about files that session did not write.** Verifying it cost one grep.
+
+Running total for this batch: **15 defects.** Six on tags, four from the knowledge-note audit, three from
+a compiler, two from re-checking another session's all-clear.

@@ -110,12 +110,19 @@ if (checkCeiling && rayView != null)
 
 // ---- levels, for the height check ----
 var levels = new FilteredElementCollector(Document).OfClass(typeof(Level)).Cast<Level>()
-    .OrderBy(l => l.Elevation).ToList();
+    .OrderBy(l => l.ProjectElevation).ToList();
+
+// `ProjectElevation`, NOT `Elevation`. A level has TWO heights: `Elevation` is measured from whatever
+// the level type's Elevation Base says (Project OR Shared), while `ProjectElevation` is always from the
+// project origin — which is the space every XYZ in the model, including the valve's own point, lives in.
+// Mixing them subtracts a survey-datum figure from a project-origin figure and every reported height is
+// wrong by exactly that offset, silently, with a plausible number and no exception. On a test model the
+// two agree and nothing shows; on a site model set out to a datum, nothing here would be right.
 Func<double, double> levelBelowZ = z =>
 {
     double best = double.MinValue;
-    foreach (var l in levels) if (l.Elevation <= z + 1e-6 && l.Elevation > best) best = l.Elevation;
-    return best == double.MinValue ? (levels.Count > 0 ? levels[0].Elevation : 0) : best;
+    foreach (var l in levels) if (l.ProjectElevation <= z + 1e-6 && l.ProjectElevation > best) best = l.ProjectElevation;
+    return best == double.MinValue ? (levels.Count > 0 ? levels[0].ProjectElevation : 0) : best;
 };
 
 // ---- check each ----
