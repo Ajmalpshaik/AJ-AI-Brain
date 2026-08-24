@@ -53,8 +53,16 @@
 //         tidy-up. So a moved L-shaped tag can be left with an awkward elbow — another reason the
 //         straight-first preference is the default and not an option.
 // GOTCHA: PINNED TAGS ARE NOT MOVED — counted and named. A pinned tag is usually pinned on purpose.
-// GOTCHA: IT ONLY SEES THE TAGS YOU GIVE IT. A tag overlapping a TEXT NOTE or a dimension is not moved —
-//         action-check-annotation-overlap.cs is the sweep that finds those.
+// ✱✱ 5. TAG-VS-TAG AND TAG-VS-MODEL ARE RESOLVED IN ONE LOOP, never in two passes. Measured lesson:
+//    fixing tag-vs-duct as a SECOND pass reintroduced a tag-vs-tag overlap that was already at zero,
+//    because moving a tag to clear a duct pushes it into a neighbour. Both constraints are checked and
+//    applied every round. The model geometry never moves, so a tag takes 100% of that push. The sizes
+//    used are already TEXT-ONLY, which this test requires — a leader is SUPPOSED to cross duct geometry
+//    on its way to its element, so a leader-inclusive box would flag every correctly-placed tag.
+//
+// GOTCHA: IT ONLY SEES THE TAGS YOU GIVE IT, plus the model categories in `avoidCategories`. A tag
+//         overlapping a TEXT NOTE or a dimension is not moved — action-check-annotation-overlap.cs is
+//         the sweep that finds those.
 // SOURCE: ../../../knowledge/live-model/tagging.md — sections "A tag's bounding box includes its LEADER",
 //         "Prefer moving the straight-leader tag", "Tag-vs-tag overlap resolution", "Moving a tag moves
 //         its leader end with it", and "Aligning annotation: do the arithmetic in the VIEW's coordinates".
@@ -78,6 +86,15 @@ bool preferMovingStraightLeader = true;   // Ajmal's rule — leave L-shaped tag
 // Used ONLY when the set has no leaderless tag to measure from. Paper mm.
 double defaultTagWidthMm = 20;
 double defaultTagHeightMm = 3;
+
+// Model geometry the tags should also be pushed off — resolved in the SAME loop as tag-vs-tag, never
+// as a second pass. Empty list = tag-vs-tag only.
+var avoidCategories = new List<BuiltInCategory>
+{
+    BuiltInCategory.OST_DuctCurves,
+    BuiltInCategory.OST_PipeCurves,
+    BuiltInCategory.OST_CableTray,
+};
 // ---- END INPUTS ----
 
 const double MM_PER_FOOT = 304.8;
@@ -273,9 +290,11 @@ foreach (var el in elements)
     lShaped.Add(isLShaped(el));
 }
 
-if (els.Count < 2)
+// NOT "fewer than two". One tag alone cannot clash with another tag, but it can still be sitting on a
+// duct — and returning early here would report that as clean.
+if (els.Count == 0)
 {
-    sb.AppendLine($"Fewer than two movable tags ({noHead} had no TagHeadPosition, {pinned} pinned) — nothing can overlap.");
+    sb.AppendLine($"No movable tags in the set ({noHead} had no TagHeadPosition, {pinned} pinned).");
     return sb.ToString();
 }
 
@@ -312,10 +331,68 @@ if (leaderedNotMeasured > 0)
 sb.AppendLine($"L-shaped (bent leader, kept in place where possible): {lShaped.Count(x => x)}   straight/leaderless: {lShaped.Count(x => !x)}");
 sb.AppendLine();
 
+// ---- model geometry to keep clear of ----
+// TAG-VS-TAG AND TAG-VS-MODEL MUST BE RESOLVED IN ONE LOOP. Measured lesson: fixing tag-vs-duct as a
+// SECOND pass reintroduced a tag-vs-tag overlap that was already at zero, because moving a tag to clear
+// a duct pushes it straight into a neighbour. Two constraints that can each perturb the same objects
+// have to be satisfied in the same iteration or each pass locally succeeds while breaking the other's
+// solved state (knowledge/live-model/tagging.md).
+// The sizes used here are already TEXT-ONLY (measured from leaderless tags, or the stated default), which
+// is what this test needs — a leader is SUPPOSED to cross duct geometry on its way to its element, so
+// testing the leader-inclusive box against a duct would flag every correctly-placed tag.
+var obstacles = new List<(double MinX, double MaxX, double MinY, double MaxY)>();
+foreach (var cat in avoidCategories)
+{
+    try
+    {
+        foreach (var e in new FilteredElementCollector(Document, view.Id).OfCategory(cat).WhereElementIsNotElementType())
+        {
+            BoundingBoxXYZ bb = null;
+            try { bb = e.get_BoundingBox(view); } catch { }
+            if (bb == null) continue;
+
+            // Project all eight corners into view space — a box stored in model XYZ does not give a
+            // correct 2D rectangle on a rotated view without it.
+            double mnx = double.MaxValue, mxx = double.MinValue, mny = double.MaxValue, mxy = double.MinValue;
+            for (int c = 0; c < 8; c++)
+            {
+                var p = new XYZ((c & 1) == 0 ? bb.Min.X : bb.Max.X,
+                                (c & 2) == 0 ? bb.Min.Y : bb.Max.Y,
+                                (c & 4) == 0 ? bb.Min.Z : bb.Max.Z);
+                double px = vx(p), py = vy(p);
+                if (px < mnx) mnx = px; if (px > mxx) mxx = px;
+                if (py < mny) mny = py; if (py > mxy) mxy = py;
+            }
+            obstacles.Add((mnx, mxx, mny, mxy));
+        }
+    }
+    catch { }
+}
+if (avoidCategories.Count > 0)
+    sb.AppendLine($"Model geometry to keep clear of: {obstacles.Count} element(s) across {avoidCategories.Count} categor(y/ies) — resolved in the SAME loop as tag-vs-tag, not as a second pass");
+sb.AppendLine();
+
 // ---- the push ----
 Func<int, int, bool> overlaps = (i, j) =>
     Math.Abs(posX[i] - posX[j]) < halfW[i] + halfW[j] + gapFt &&
     Math.Abs(posY[i] - posY[j]) < halfH[i] + halfH[j] + gapFt;
+
+// A tag sitting on model geometry. The obstacle never moves, so the tag takes the whole push.
+Func<int, int, bool> hitsObstacle = (i, k) =>
+{
+    var ob = obstacles[k];
+    return posX[i] + halfW[i] + gapFt > ob.MinX && posX[i] - halfW[i] - gapFt < ob.MaxX &&
+           posY[i] + halfH[i] + gapFt > ob.MinY && posY[i] - halfH[i] - gapFt < ob.MaxY;
+};
+
+Func<int> countObstacleHits = () =>
+{
+    int n = 0;
+    for (int i = 0; i < els.Count; i++)
+        for (int k = 0; k < obstacles.Count; k++)
+            if (hitsObstacle(i, k)) n++;
+    return n;
+};
 
 Func<int> countOverlaps = () =>
 {
@@ -323,7 +400,7 @@ Func<int> countOverlaps = () =>
     for (int i = 0; i < els.Count; i++)
         for (int j = i + 1; j < els.Count; j++)
             if (overlaps(i, j)) n++;
-    return n;
+    return n + countObstacleHits();
 };
 
 int initial = countOverlaps();
@@ -375,6 +452,32 @@ Func<bool, bool> onePass = straightOnly =>
             moved = true;
         }
     }
+
+    // SAME iteration, not a second pass. The obstacle cannot move, so the tag takes 100% of the push,
+    // and the next round's tag-vs-tag test sees the result immediately rather than after the fact.
+    for (int i = 0; i < els.Count; i++)
+    {
+        for (int k = 0; k < obstacles.Count; k++)
+        {
+            if (!hitsObstacle(i, k)) continue;
+            var ob = obstacles[k];
+
+            double outLeft   = (posX[i] + halfW[i] + gapFt) - ob.MinX;
+            double outRight  = ob.MaxX - (posX[i] - halfW[i] - gapFt);
+            double outDown   = (posY[i] + halfH[i] + gapFt) - ob.MinY;
+            double outUp     = ob.MaxY - (posY[i] - halfH[i] - gapFt);
+
+            double best = Math.Min(Math.Min(outLeft, outRight), Math.Min(outDown, outUp));
+            if (best <= 0) continue;
+
+            if (best == outLeft) posX[i] -= best + 1e-6;
+            else if (best == outRight) posX[i] += best + 1e-6;
+            else if (best == outDown) posY[i] -= best + 1e-6;
+            else posY[i] += best + 1e-6;
+
+            moved = true;
+        }
+    }
     return moved;
 };
 
@@ -416,7 +519,7 @@ for (int i = 0; i < els.Count; i++)
     if (d > 0.5) { willMove++; totalMove += d; worstMove = Math.Max(worstMove, d); }
 }
 
-sb.AppendLine($"Overlapping pairs at the start: {initial}");
+sb.AppendLine($"Clashes at the start: {initial}  (tag-vs-tag plus tag-vs-model, counted together)");
 sb.AppendLine($"Phase 1 (straight-leader tags only): {phase1Used} pass(es) -> {afterPhase1} pair(s) left");
 if (phase2Used > 0) sb.AppendLine($"Phase 2 (both tags may move):        {phase2Used} pass(es) -> {remaining} pair(s) left");
 sb.AppendLine($"Tags that need to move: {willMove}   average {(willMove > 0 ? totalMove / willMove : 0):F0} mm, furthest {worstMove:F0} mm");

@@ -38,8 +38,19 @@
 //         A connector already joined to something is skipped here, so a pair that LOOKS missing and is
 //         not offered may be a case where Revit thinks it is connected and the geometry disagrees —
 //         that is skills/ajtools-mep-trace territory, not this fragment's.
+// ✱✱ WHAT THIS DELIBERATELY IS NOT. knowledge/live-model/mep-connect-existing-runs.md describes the full
+//    job — STRETCH THE TWO RUNS TOGETHER and build the bridging piece and its fittings, with a
+//    sub-transaction per attempted bend angle and a proper crank when the ends are offset. That note ends
+//    by saying the fragment for it "has not been written... it should be built the day a real job needs
+//    it". This is NOT that fragment and must not be mistaken for it: it joins ends that are ALREADY
+//    touching and moves nothing. When the ends are genuinely apart, that note is what to build from.
+// SOURCE: ../../../knowledge/live-model/mep-connect-existing-runs.md — the pair SCORING rule above, and
+//         the refusal cases (both ends facing the same way, non-parallel ends, mismatched domains) which
+//         this fragment applies in its four tests.
 // RELATED: filter-by-connection-status.cs (find the open ends first), action-check-system-connectivity.cs
-//          (what is still in separate islands afterwards), action-connect-air-terminals.cs (tap, not butt).
+//          (what is still in separate islands afterwards), action-connect-air-terminals.cs (tap, not butt),
+//          action-trim-extend-elements.cs and action-fillet-elements.cs (stretch two runs to a corner,
+//          and put a real elbow between them — the geometry half of the job this one does not do).
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Read the dry-run table, connect ONE pair, and
 //   check it in a section before letting it join a whole floor.
 // ============================================================
@@ -50,6 +61,7 @@ double maxGapMm = 25;            // biggest gap that still counts as "these two 
 double sizeToleranceMm = 5;      // how far two connector sizes may differ and still pair
 bool requireSameSystem = true;   // true = refuse to join two different system types (supply to return)
 double facingTolerance = -0.5;   // dot product of the two directions must be BELOW this (-1 = dead-on)
+double misalignmentPenaltyMm = 40;  // how much a fully off-axis pair is penalised when scoring; 0 = sort on gap alone
 // ---- END INPUTS ----
 
 const double MM_PER_FOOT = 304.8;
@@ -180,10 +192,17 @@ for (int i = 0; i < open.Count; i++)
     }
 }
 
-// Best-first, each connector used once.
+// SCORED BEST-FIRST, NOT NEAREST-FIRST — each connector used once.
+// "Nearest pair of connectors" is named in knowledge/live-model/mep-connect-existing-runs.md as the
+// WRONG rule: it picks a pair that then needs a long awkward crank. The recorded principle is SMALLEST
+// TOTAL INTERVENTION. Nothing moves in this fragment, so there is no shift to count — what is left is
+// how square the joint is. Two ends 5 mm apart but 30 degrees off-axis make a worse connection than two
+// 8 mm apart and dead-on, and a pure gap sort prefers the bad one. The misalignment term fixes that.
+Func<double, double, double> scoreOf = (gapMm, dot) => gapMm + (1.0 + dot) * misalignmentPenaltyMm;
+
 var taken = new HashSet<int>();
 var pairs = new List<(int A, int B, double GapMm, string Why)>();
-foreach (var c in candidates.OrderBy(c => c.GapMm))
+foreach (var c in candidates.OrderBy(c => scoreOf(c.GapMm, c.Dot)))
 {
     if (taken.Contains(c.A) || taken.Contains(c.B)) continue;
     taken.Add(c.A); taken.Add(c.B);

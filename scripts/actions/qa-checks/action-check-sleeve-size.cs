@@ -9,10 +9,19 @@
 //          filter-by-family.cs on its family name. Read-only. The model never changes.
 //
 // ✱✱ THE SERVICE IS FOUND BY GEOMETRY, NOT BY A PARAMETER. A sleeve family almost never records what
-//    goes through it — that link is not stored anywhere. Each sleeve's bounding box is grown slightly
-//    and every duct/pipe whose centreline passes through the result is a candidate; the nearest one wins
-//    and the report names it. Where a sleeve finds NOTHING, that is itself a finding: a sleeve with no
-//    service through it is either an orphan left by a moved run, or the run moved and the hole did not.
+//    goes through it — that link is not stored anywhere. Where a sleeve finds NOTHING, that is itself a
+//    finding: a sleeve with no service through it is either an orphan left by a moved run, or the run
+//    moved and the hole did not.
+//
+// ✱✱ AND THE CROSSING TEST IS A REAL BOOLEAN, NOT A BOUNDING BOX. Two boxes overlap constantly without
+//    the elements touching — a pipe running past a sleeve in the next bay shares a box corner with it,
+//    and a box-based match quietly checks the wrong service. The box is a cheap PRE-FILTER only; the
+//    decision is `BooleanOperationsUtils.ExecuteBooleanOperation(..., Intersect)` with a real volume.
+//    Two practical points that are not obvious and are both handled: an element can carry SEVERAL solids
+//    (a duct with its insulation, a sleeve with a body and a void) so every pairing is tried, and some
+//    Revit solids REFUSE boolean operations and throw — so the catch is per PAIR, because one throw must
+//    not abandon the element. A sleeve with no readable solid falls back to the centreline test and the
+//    report NAMES it, rather than passing a weaker test off as a geometry check.
 //
 // ✱✱ REQUIRED SIZE = SERVICE OUTSIDE DIAMETER + 2 x INSULATION + 2 x ANNULAR CLEARANCE. All three are
 //    read or set explicitly: the size comes off the service, the insulation off its real insulation
@@ -35,6 +44,9 @@
 //         that happens, so a shared sleeve is visible rather than silently checked against one of them.
 // GOTCHA: LINKED MODELS ARE NOT SCANNED — a sleeve in the host against a service in a link finds nothing
 //         and reports NO SERVICE. Bring the services across with filter-by-linked-model-elements.cs.
+// SOURCE: ../../../knowledge/live-model/mep-openings.md — § "Finding the crossing — real solid
+//         intersection, not bounding boxes" and § "The extent, and why a raw intersection box is not
+//         enough". Read it before changing how this fragment matches a service to a sleeve.
 // RELATED: recipes/place-sleeves-at-wall-penetrations.cs (find the crossings and place the sleeves —
 //          its dry-run mode is the "where do sleeves need to go" half), recipes/create-mep-openings.cs
 //          (cut real openings in walls, floors and beams),
@@ -120,6 +132,54 @@ Func<Element, double> insulationFeetOf = el =>
     return thickest;
 };
 
+// ---- real geometry, for the crossing test ----
+// A BOUNDING-BOX TEST IS NOT A CROSSING TEST. Two boxes overlap constantly without the elements
+// touching — a pipe running past a sleeve in the next bay shares a box corner with it. The box is used
+// ONLY as a cheap pre-filter here; the decision is a boolean solid intersection
+// (knowledge/live-model/mep-openings.md).
+var geoOpts = new Options { DetailLevel = ViewDetailLevel.Fine, ComputeReferences = false, IncludeNonVisibleObjects = false };
+
+Func<Element, List<Solid>> solidsOf = el =>
+{
+    var found = new List<Solid>();
+    GeometryElement ge = null;
+    try { ge = el.get_Geometry(geoOpts); } catch { return found; }
+    if (ge == null) return found;
+    Action<GeometryElement> walk = null;
+    walk = g =>
+    {
+        foreach (GeometryObject go in g)
+        {
+            var s = go as Solid;
+            if (s != null && s.Volume > 1e-9) { found.Add(s); continue; }
+            var gi = go as GeometryInstance;
+            if (gi != null) { var inner = gi.GetInstanceGeometry(); if (inner != null) walk(inner); }
+        }
+    };
+    walk(ge);
+    return found;
+};
+
+// True when the two elements really share space. An element can carry SEVERAL solids (a duct with its
+// insulation, a sleeve family with a body and a void), so every pairing is tried; and some Revit solids
+// refuse boolean operations and throw, so the catch is PER PAIR — one throw must not abandon the element.
+Func<List<Solid>, List<Solid>, bool> reallyIntersects = (a, b) =>
+{
+    foreach (var sa in a)
+    {
+        foreach (var sbb2 in b)
+        {
+            try
+            {
+                var inter = BooleanOperationsUtils.ExecuteBooleanOperation(sa, sbb2, BooleanOperationsType.Intersect);
+                if (inter != null && inter.Volume > 1e-7) return true;
+            }
+            catch { }
+        }
+    }
+    return false;
+};
+
 // ---- the services, indexed by bounding box ----
 var services = new List<(Element El, Curve Crv, BoundingBoxXYZ Box)>();
 foreach (var cat in serviceCategories)
@@ -168,6 +228,7 @@ Func<Element, Tuple<bool, double, double>> serviceSizeOf = el =>
 var rows = new List<(Element Sleeve, Element Svc, string SvcSize, double NeedMm, double HaveMm, string Verdict, string Note)>();
 var noService = new List<Element>();
 var unreadable = new List<Element>();
+var geometryFallback = new List<ElementId>();
 int shared = 0;
 
 double marginFt = ToFeet(searchMarginMm);
@@ -180,8 +241,10 @@ foreach (var sleeve in elements)
 
     var centre = (sbb.Min + sbb.Max) * 0.5;
 
-    // Candidate services: centreline passes through the grown box.
+    // Candidate services: bounding box as a CHEAP PRE-FILTER only, then a real solid intersection.
+    var sleeveSolids = solidsOf(sleeve);
     var candidates = new List<(Element El, double Dist)>();
+
     foreach (var s in services)
     {
         if (s.Box.Max.X < sbb.Min.X - marginFt || s.Box.Min.X > sbb.Max.X + marginFt) continue;
@@ -197,9 +260,22 @@ foreach (var sleeve in elements)
         }
         catch { continue; }
 
-        // The run has to actually pass near the sleeve's middle, not merely share a bounding box.
-        double halfDiag = Math.Sqrt(Math.Pow(sbb.Max.X - sbb.Min.X, 2) + Math.Pow(sbb.Max.Y - sbb.Min.Y, 2) + Math.Pow(sbb.Max.Z - sbb.Min.Z, 2)) / 2.0;
-        if (dist > halfDiag + marginFt) continue;
+        // THE DECIDING TEST. Sharing a bounding box means nothing — a pipe running past a sleeve in the
+        // next bay shares one. Only real shared volume counts as "passes through this sleeve".
+        bool through = false;
+        if (sleeveSolids.Count > 0)
+        {
+            through = reallyIntersects(sleeveSolids, solidsOf(s.El));
+        }
+        else
+        {
+            // The sleeve has no readable solid (some opening elements carry none). Fall back to the
+            // centreline test and SAY SO on the row rather than pretending this was a geometry check.
+            double halfDiag = Math.Sqrt(Math.Pow(sbb.Max.X - sbb.Min.X, 2) + Math.Pow(sbb.Max.Y - sbb.Min.Y, 2) + Math.Pow(sbb.Max.Z - sbb.Min.Z, 2)) / 2.0;
+            through = dist <= halfDiag + marginFt;
+            if (through) geometryFallback.Add(sleeve.Id);
+        }
+        if (!through) continue;
 
         candidates.Add((s.El, dist));
     }
@@ -287,6 +363,9 @@ if (unreadable.Count > 0)
     sb.AppendLine($"SIZE UNREADABLE: {unreadable.Count} sleeve(s) — NOT checked and NOT a pass. Add your family's size parameter name to sizeParamNames: " +
                   string.Join(", ", unreadable.Take(20).Select(e => e.Id.ToString())) + (unreadable.Count > 20 ? " ..." : ""));
 if (shared > 0) sb.AppendLine($"SHARED SLEEVES: {shared} sleeve(s) have more than one service through them.");
+if (geometryFallback.Count > 0)
+    sb.AppendLine($"CENTRELINE FALLBACK: {geometryFallback.Distinct().Count()} sleeve(s) carry no readable solid, so their service was matched on the CENTRELINE rather than on real shared volume — a weaker test that can pick a run passing nearby: " +
+                  string.Join(", ", geometryFallback.Distinct().Take(15).Select(i => i.ToString())));
 sb.AppendLine();
 
 if (rows.Count == 0)
