@@ -2,29 +2,25 @@
 
 Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
-## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE. COMMITTED, PUSHED, PR #39 OPEN AND MERGEABLE.
+## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE, MERGED TO `main`. NOTHING IS WAITING.
 
-**State: 394 fragments after merging the parallel session's work (main moved 360 → 388 → 391 while this
-branch was in flight; both merges resolved). This branch adds 6 new, 8 upgraded, 18 corrected.**
-Everything is committed and pushed to `claude/revitplugins-harvest-1nwqkx`;
-[**draft PR #39**](https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/39) is open, conflict-free and
-mergeable. Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+**State: `main` is at 394 fragments, plugin 1.1.30.**
+[PR #39](https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/39) is **MERGED** — 6 new fragments, 8 upgraded,
+18 corrected on this branch, plus 2 more corrected by a peer session. It took THREE merges of `main` to
+get there: the library went 360 → 388 → 391 → 394 while the work was in flight.
+Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
 
-**Nothing is merged to `main` yet — that is Ajmal's call**, and the PR is deliberately still a draft.
-The one thing left before merging is not a code question: **run the fragments in the table below against
-a real model**, starting with `action-report-level-elevations.cs`.
+**A `git pull` on the PC now gets everything.** The one thing left is not a code question: **run the
+fragments in the table below against a real model**, starting with `action-report-level-elevations.cs`.
 
-### ⚠ TWO JOBS ONLY AJMAL CAN DO — 30 seconds each, in the browser
+### ⚠ THE FOUR OLD BRANCHES ARE STILL THERE, AND THE SETTING THAT SHOULD HAVE HELPED IS NOT ON
 
-**1. Delete the four merged branches.** Asked for directly on 2026-08-24, attempted, and **refused by
-GitHub with HTTP 403 for the third time.** The diagnosis was re-confirmed the same way as on 2026-08-22:
-`curl "$HTTPS_PROXY/__agentproxy/status"` reports `recentRelayFailures: []` immediately after the failed
-delete, so the proxy never saw a failure — the request reached GitHub and **GitHub refused it.** A
-session's git credentials can push refs but not delete them. That is a deliberate guardrail, and
-`/root/.ccr/README.md` says a 403 is to be reported, not routed around. The GitHub API tools available
-here have `create_branch` and **no delete counterpart**, so there is no second route either.
-
-All four are **0 commits ahead of `main`** — re-verified 2026-08-24, nothing would be lost:
+**Deleting them is still refused.** `git push origin --delete` returns **HTTP 403**, measured again on
+2026-08-24 — and measured the right way, not recalled: `curl "$HTTPS_PROXY/__agentproxy/status"` reports
+`recentRelayFailures: []` immediately after the failure, so the proxy never saw it. The request reached
+GitHub and GitHub refused. A session's git credentials can push refs but not delete them; that is a
+deliberate guardrail, and the GitHub API tools available here have `create_branch` and **no delete
+counterpart**. All four are **0 commits ahead of `main`**, so nothing is lost by deleting them:
 
 | Branch | Its PRs, all closed |
 |---|---|
@@ -33,9 +29,17 @@ All four are **0 commits ahead of `main`** — re-verified 2026-08-24, nothing w
 | `claude/rag-setup-optimization-ayuui2` | #32 |
 | `claude/wonderful-bell-6j0som` | #31 |
 
-**2. And so this never comes back — turn on Settings → General → "Automatically delete head branches".**
-That is the actual fix. It removes the whole class of job instead of this instance of it, and it is why
-this has now been asked for three times: deleting today's four does nothing about next month's.
+**And "Automatically delete head branches" is NOT actually on, whatever the Settings page appeared to
+say.** That is not a guess — it is the one clean experiment available: PR #39 was merged at 15:43 and its
+head branch `claude/revitplugins-harvest-1nwqkx` was **still on the remote a minute later**. If the
+setting were on, GitHub deletes the head branch the instant a PR merges. So the toggle did not save.
+
+**This matters beyond branches.** Across this evening Ajmal reported three things done that measurement
+showed had not happened — the PR merged (it was still open), the four branches deleted (all still
+present), and this setting turned on (proven off by the merge above). Twice the belief came from a
+GitHub UI action that needs a **second confirming click** and silently does nothing without it. The
+lesson for any session here: **when he says a GitHub action is done, verify it before building on it** —
+not out of distrust, but because the UI fails quietly and he has no way to see that it did.
 
 **Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
 not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all

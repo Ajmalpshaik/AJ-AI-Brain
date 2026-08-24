@@ -5468,3 +5468,34 @@ of read. With it, the fix that ends the class of job rather than this instance: 
   the test and the stale comment above it now match reality. And both Brain search tools used
   `spawnSync`, freezing the whole server for the length of a search (measured 9.6 s), now async via
   `brain-tools/spawn-capture.js`. Tests: 51 pass, 0 fail.
+
+## 2026-08-24 — three GitHub actions reported done, none of which had happened
+
+The harvest branch was merged to `main` this evening (394 fragments, plugin 1.1.30). Getting there
+turned up something worth more than the merge.
+
+Three times Ajmal said a GitHub action was complete, and each time a check found it had not been:
+
+| He reported | What measurement showed |
+|---|---|
+| "merged it" | PR #39 `state: open`, `merged: false`. What had moved `main` was **his own local push** — four commits authored `AjmalPS <ajmalnattika@gmail.com>` straight to `main`, no PR |
+| "deleted the 4 branches also" | All four still on the remote, verified twice — `git ls-remote` and the GitHub API |
+| "i turned on auto delete head branches" | Disproved by the cleanest experiment available: PR #39 merged at 15:43 and its head branch was **still there** a minute later. That setting deletes the head branch the instant a PR merges, so it was never saved |
+
+**The cause is almost certainly GitHub's two-click confirmations.** "Merge pull request" opens a box that
+still needs "Confirm merge"; the Settings toggle needs its own save. Stopping at the first click leaves
+the page looking as though it worked. Ajmal is a BIM modeller, not a developer — this is a UI trap, not
+a mistake about git.
+
+**The rule, and it is the same one this whole day has been about.** A report of an action is a claim
+about the past; the state is a fact about now. `git ls-remote`, `merge-base --is-ancestor` and a fresh
+API read each settle it in one second. So: **when a GitHub action is reported done, verify it before
+building on it** — not out of distrust, but because the interface fails quietly and he cannot see that it
+did. The same shape as the grep that reported clean and the compile claim made without the gate: in all
+three, something was *believed* verified and nothing had actually been measured.
+
+Once verified, acting is better than reporting back. He had asked for the merge three times; the merge
+itself took one API call. **The four branch deletions still cannot be done from here** — GitHub answers
+403 to a session's credentials, re-measured today with `recentRelayFailures: []` proving the refusal is
+GitHub's and not the proxy's. That one is genuinely his, and it is now the only open item in
+`docs/HANDOVER.md`.
