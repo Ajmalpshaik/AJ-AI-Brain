@@ -3,8 +3,21 @@
 One file per tool. Read this table, open the one file you need — don't read the whole folder. Every
 tool is registered from `../index.js`; nothing here runs on its own.
 
-> **This folder is the Revit tools only.** There is one more registered tool, `search_brain`, which
-> lives in `../brain-tools/` because it never touches Revit — see the last section of this file.
+> **This folder is the Revit tools only.** Two more registered tools, `search_brain` and
+> `search_graph`, live in `../brain-tools/` because they never touch Revit — see the last section of
+> this file.
+
+> **Every tool declares what it is allowed to do**, in one table: [`../shared/register.js`](../shared/register.js).
+> That is where a tool is marked read-only, view-only or model-changing, and `defineTool` refuses to
+> register a tool that is not listed — so a new tool cannot ship unlabelled. Added 2026-08-24; before
+> that no tool carried annotations at all, and a client had no way to tell `count_elements` from
+> `delete_elements`.
+
+> **The C# built in this folder is compile-checked too.** `tools\check-scripts.cmd` used to read only
+> `scripts/*.cs`, so the scripts these files GENERATE were never compiled against any Revit — which is
+> how a unit call that Revit 2024 rejects outright survived here for months. It now runs
+> [`../emit-generated-csharp.mjs`](../emit-generated-csharp.mjs) first and checks both halves. Add a
+> case there when you add a tool or a new branch, or that branch goes unchecked in silence.
 
 ## Original tools (flexible, always available)
 | Tool | File | Job |

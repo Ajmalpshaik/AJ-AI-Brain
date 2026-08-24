@@ -1,8 +1,9 @@
 import { callBridge } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "ping",
     "Check whether Revit is open and the AJ AI bridge is connected and responding.",
     {},

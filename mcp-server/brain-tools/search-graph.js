@@ -27,10 +27,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawnCapture } from "./spawn-capture.js";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const brainRoot = path.join(here, "..", "..");
@@ -54,7 +55,7 @@ function graphifyBin() {
 }
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "search_graph",
     "Search the AJ AI Brain's knowledge GRAPH — how things connect, rather than what they mean. " +
       "Use for 'what depends on X', 'what else touches this', 'how do these two relate', or when " +
@@ -105,8 +106,7 @@ export function register(server) {
           args = ["query", question, "--budget", String(budget || 1500)];
         }
 
-        const result = spawnSync(bin, args, {
-          encoding: "utf8",
+        const result = await spawnCapture(bin, args, {
           cwd: brainRoot,
           maxBuffer: 10 * 1024 * 1024,
           timeout: 120000,

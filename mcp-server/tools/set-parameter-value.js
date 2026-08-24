@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated, cs } from "../shared/element-filter.js";
+import { mmToFtExpr } from "../shared/units.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "set_parameter_value",
     "Bulk-set one named parameter to one value across matching elements. Provide exactly one of " +
       "stringValue or numericValueMm.",
@@ -28,7 +30,7 @@ export function register(server) {
         `      var p = e.LookupParameter(${cs(parameterNameToSet)});`,
         `      if (p == null || p.IsReadOnly) { __skipped++; continue; }`,
         numericValueMm !== undefined && numericValueMm !== null
-          ? `      if (p.StorageType == StorageType.Double) { p.Set(UnitUtils.ConvertToInternalUnits(${Number(numericValueMm)}, DisplayUnitType.DUT_MILLIMETERS)); __updated++; } else { __skipped++; }`
+          ? `      if (p.StorageType == StorageType.Double) { p.Set(${mmToFtExpr(numericValueMm)}); __updated++; } else { __skipped++; }`
           : `      if (p.StorageType == StorageType.String) { p.Set(${cs(stringValue ?? "")}); __updated++; } else { __skipped++; }`,
         `    }`,
         `    t.Commit();`,

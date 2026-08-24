@@ -9,9 +9,10 @@
 
 import { z } from "zod";
 import { runComposed, previewField, defined } from "../shared/fragment-tool.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "report_length_by_size",
     "Count AND total length per size group for linear MEP elements — ducts, pipes, cable trays, " +
       "anything with a Size and a Length. This is the take-off answer: count_elements gives the " +

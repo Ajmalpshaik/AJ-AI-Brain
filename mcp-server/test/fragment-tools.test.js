@@ -27,11 +27,19 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const scripts = path.join(here, "..", "..", "scripts");
 
 function toolFrom(register) {
-  let handler, name, schema;
-  register({ tool: (n, d, s, h) => { name = n; schema = s; handler = h; } });
+  let handler, name, schema, annotations;
+  register({
+    registerTool: (n, config, h) => {
+      name = n;
+      schema = config.inputSchema;
+      annotations = config.annotations;
+      handler = h;
+    },
+  });
   return {
     name,
     schema,
+    annotations,
     run: async (args) => JSON.parse((await handler(args)).content[0].text),
     // The real MCP server validates against the declared schema before the handler ever runs; this
     // fake one does not, so a test about validation has to do it the same way the server would.
@@ -77,7 +85,7 @@ test("grayout with no view given touches nothing at all", async () => {
   assert.match(out.code, /int\? targetViewIdInt = null;/);
 });
 
-test("session_start takes no inputs and admits it is not yet proven", async () => {
+test("session_start takes no inputs, and its fragment is proven so nothing warns", async () => {
   const { name, run } = toolFrom(registerSessionStart);
   assert.equal(name, "session_start");
 
@@ -85,9 +93,18 @@ test("session_start takes no inputs and admits it is not yet proven", async () =
   assert.equal(out.success, true);
   assert.equal(out.composition.fragments[0].fragment, "context/context-session-start.cs");
   assert.deepEqual(out.composition.fragments[0].filledIn, []);
+
+  // Until 2026-08-22 this asserted the OPPOSITE — that the tool warns "not proven" — because the
+  // fragment behind it had never run. It was then live-verified on school.rvt in Revit 2020.2.9
+  // through this very tool (the fragment's own header records all eleven sections returning), the
+  // warning correctly disappeared, and this test sat red for two days. Asserting the current truth
+  // instead keeps it useful: the general mechanism that raises the warning for a fragment that IS
+  // unproven is covered by "an unproven fragment says so instead of passing as verified" in
+  // run-fragment.test.js, so this now guards the other direction — a proven fragment quietly losing
+  // its status in scripts/README.md.
   assert.ok(
-    (out.composition.warnings || []).some((w) => /Not proven against a real model/.test(w)),
-    "an unproven fragment must say so THROUGH the native tool, not only through run_fragment"
+    !(out.composition.warnings || []).some((w) => /Not proven against a real model/.test(w)),
+    "context-session-start.cs is live-verified — a 'not proven' warning here means its README row lost that status"
   );
 });
 

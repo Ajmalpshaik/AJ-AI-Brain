@@ -16,9 +16,10 @@
 import { z } from "zod";
 import { callBridge, selectDocument, getSelectedDocument } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "use_revit_document",
     "Pin this chat to ONE open project inside the Revit session already selected, by its title (the " +
       "file name without .rvt). Every later command acts on that project instead of whichever window " +

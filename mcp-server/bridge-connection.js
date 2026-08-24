@@ -377,8 +377,36 @@ async function callBridgeNow(code, allowDestructive) {
 // the underlying named-pipe connection stays open between requests.
 let bridgeCallQueue = Promise.resolve();
 
+// CAPTURE MODE. With AJ_EMIT_CSHARP set to a folder, nothing is sent anywhere: the C# is written to
+// that folder and a clearly-failed result comes back instead.
+//
+// It exists so tools/check-scripts.cmd can compile-check what THIS server generates, alongside the
+// fragments in scripts/. That gap is not hypothetical — it is how `DisplayUnitType.DUT_MILLIMETERS`
+// survived here for months after being swept out of the fragment library: check-scripts only ever
+// read scripts/*.cs, so the eight copies in mcp-server/ were never compiled against a Revit above
+// 2020 and nothing reported them.
+//
+// The hook lives HERE, at the single point every generated script passes through, rather than in the
+// emitter. A capture that rebuilt the C# by calling the builders itself would be checking a
+// reconstruction; this checks the exact bytes that would have reached Revit.
+//
+// It fails loud on purpose: the result says success:false and names the mode, so a stray environment
+// variable can never be mistaken for a tool that quietly did nothing.
 export function callBridge(code, allowDestructive) {
+  const emitDir = process.env.AJ_EMIT_CSHARP;
+  if (emitDir) {
+    const name = `mcp-${String(++emitCounter).padStart(3, "0")}.cs`;
+    fs.mkdirSync(emitDir, { recursive: true });
+    fs.writeFileSync(path.join(emitDir, name), code, "utf8");
+    return Promise.resolve({
+      success: false,
+      error: `AJ_EMIT_CSHARP is set — captured to ${name} and sent NOTHING to Revit.`,
+    });
+  }
+
   const nextCall = bridgeCallQueue.then(() => callBridgeNow(code, allowDestructive));
   bridgeCallQueue = nextCall.catch(() => undefined);
   return nextCall;
 }
+
+let emitCounter = 0;

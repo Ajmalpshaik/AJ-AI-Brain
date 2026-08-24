@@ -48,7 +48,14 @@ import { register as registerDeleteElements } from "./tools/delete-elements.js";
 import { register as registerSearchBrain } from "./brain-tools/search-brain.js";
 import { register as registerSearchGraph } from "./brain-tools/search-graph.js";
 
-const server = new McpServer({ name: "aj-tools-aj-ai", version: "1.4.0" });
+import { readFileSync } from "node:fs";
+
+// Read the version from package.json rather than repeating it. It said 1.4.0 here while package.json
+// said 1.6.0, so every client was told the wrong version for three releases — the kind of drift that
+// only shows up when someone is trying to work out which build they are running.
+const { version } = JSON.parse(readFileSync(new URL("package.json", import.meta.url), "utf8"));
+
+const server = new McpServer({ name: "aj-tools-aj-ai", version });
 
 registerRunCsharp(server);
 registerRunFragment(server);

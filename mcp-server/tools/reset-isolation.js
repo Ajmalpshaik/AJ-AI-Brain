@@ -1,13 +1,14 @@
 import { viewField, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "reset_isolation",
     "Clear Temporary Hide/Isolate in a view — the direct equivalent of Revit's 'Reset Temporary Hide/Isolate'.",
     viewField,
     async ({ targetViewId }) => {
       const script = [
-        buildViewClause(targetViewId),
+        buildViewClause(targetViewId, { standalone: true }),
         `var sb = new System.Text.StringBuilder();`,
         `if (view == null) { sb.AppendLine("Target view not found."); return sb.ToString(); }`,
         `using (var t = new Transaction(Document, "AJ AI - Reset Isolation")) {`,

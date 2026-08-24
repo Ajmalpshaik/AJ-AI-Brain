@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "set_color",
     "Apply one RGB color (line + solid surface fill) to matching elements in a view.",
     { ...filterFields, ...viewField, r: z.number().min(0).max(255).describe("Red 0-255"), g: z.number().min(0).max(255).describe("Green 0-255"), b: z.number().min(0).max(255).describe("Blue 0-255") },

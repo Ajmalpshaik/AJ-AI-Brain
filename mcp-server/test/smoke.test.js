@@ -85,8 +85,14 @@ function createFakeServer() {
   const registrations = [];
   return {
     registrations,
-    tool(name, description, schema, handler) {
-      registrations.push({ name, description, schema, handler });
+    registerTool(name, config, handler) {
+      registrations.push({
+        name,
+        description: config.description,
+        schema: config.inputSchema,
+        annotations: config.annotations,
+        handler,
+      });
     },
   };
 }
@@ -115,6 +121,57 @@ test("every tool module registers exactly one well-formed tool", () => {
     assert.equal(typeof r.schema, "object", `${r.name}: schema must be an object`);
     assert.equal(typeof r.handler, "function", `${r.name}: handler must be a function`);
   }
+});
+
+// Added 2026-08-24. Every tool shipped WITHOUT annotations until that day, which meant a client had
+// no way to tell `count_elements` from `delete_elements` and had to treat both the same. Declaring
+// them is only half the fix — the other half is this test, so they cannot quietly go missing again.
+//
+// It deliberately checks the DANGEROUS end by name rather than only "an annotation exists". A blanket
+// "everything is labelled" assertion would still pass if delete_elements were relabelled read-only,
+// and that is the single mislabelling that actually costs something.
+test("every tool declares what it is allowed to do, and the risky ones say so", () => {
+  const server = createFakeServer();
+  for (const register of [
+    registerRunCsharp, registerRunFragment, registerGrayout, registerSessionStart,
+    registerVerifyConnectivity, registerReportLengthBySize, registerColorByGroup,
+    registerPing, registerModelSummary, registerListElements, registerCountElements,
+    registerHideElements, registerUnhideElements, registerIsolateElements, registerResetIsolation,
+    registerSetColor, registerResetGraphicOverrides, registerSetTransparency, registerSelectElements,
+    registerSetParameterValue, registerReportParameters, registerMoveElements, registerDeleteElements,
+  ]) {
+    register(server);
+  }
+
+  for (const r of server.registrations) {
+    assert.equal(typeof r.annotations, "object", `${r.name}: no annotations — add it to TOOL_SAFETY`);
+    for (const hint of ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"]) {
+      assert.equal(typeof r.annotations[hint], "boolean", `${r.name}: ${hint} must be declared explicitly`);
+    }
+    assert.ok(
+      !(r.annotations.readOnlyHint && r.annotations.destructiveHint),
+      `${r.name}: cannot be both read-only and destructive`
+    );
+  }
+
+  const byName = Object.fromEntries(server.registrations.map((r) => [r.name, r.annotations]));
+
+  for (const name of ["delete_elements", "move_elements", "set_parameter_value", "run_csharp", "run_fragment"]) {
+    assert.equal(byName[name].destructiveHint, true, `${name} changes the model — it must be flagged destructive`);
+    assert.equal(byName[name].readOnlyHint, false, `${name} must never be flagged read-only`);
+  }
+
+  for (const name of ["ping", "count_elements", "list_elements", "model_summary", "report_parameters"]) {
+    assert.equal(byName[name].readOnlyHint, true, `${name} only reads — flagging it otherwise costs a needless prompt`);
+    assert.equal(byName[name].destructiveHint, false, `${name} changes nothing`);
+  }
+
+  // A second move is twice the distance, so it is the one write here that is genuinely not idempotent.
+  assert.equal(byName.move_elements.idempotentHint, false, "calling move_elements twice moves twice as far");
+
+  // Only the two arbitrary-C# tools are open-world; everything else is bounded by its own schema.
+  const openWorld = server.registrations.filter((r) => r.annotations.openWorldHint).map((r) => r.name).sort();
+  assert.deepEqual(openWorld, ["run_csharp", "run_fragment"], "only the arbitrary-C# tools are open-world");
 });
 
 // SAFETY GATE, added 2026-08-13 after a near miss.

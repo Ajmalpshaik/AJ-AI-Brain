@@ -34,13 +34,14 @@ import { z } from "zod";
 import { callBridge } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
 import { composeFragments } from "../shared/fragment-runner.js";
+import { defineTool } from "../shared/register.js";
 
 // The composing, validating and INPUTS-rewriting all live in ../shared/fragment-runner.js, shared
 // with the native tools that wrap one specific fragment (grayout, session_start, ...). Those tools
 // are typed front doors onto the same engine — none of them carries its own copy of a fragment's C#.
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "run_fragment",
     "Run one or more PROVEN C# fragments from scripts/ against the live Revit document, by name, " +
       "with their INPUTS filled in — instead of reading the file and pasting an edited copy into run_csharp. " +

@@ -14,9 +14,10 @@
 
 import { z } from "zod";
 import { runComposed, previewField, defined } from "../shared/fragment-tool.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "grayout",
     "Apply Ajmal's MEP grayout standard to a view: architectural/structural background drops to flat " +
       "grey, services come forward in black, insulation reads as a quiet dashed wrapper. His own " +

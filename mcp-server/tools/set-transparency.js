@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "set_transparency",
     "Set surface transparency (0-100%) on matching elements in a view.",
     { ...filterFields, ...viewField, percent: z.number().min(0).max(100).describe("0 = opaque, 100 = fully transparent") },

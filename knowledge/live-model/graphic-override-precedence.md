@@ -2,8 +2,17 @@
 
 > Part of the live-model knowledge set. Index: [`README.md`](README.md) — go back there to route to another topic.
 
-> **Reviewed 2026-08-23 against the ~300-line split rule and DELIBERATELY LEFT WHOLE.** At 324 lines it
-> is over the guideline, and `brain-status.mjs` had been flagging it as an un-reviewed split candidate.
+> **split-review: kept whole** (reviewed 2026-08-23, re-confirmed 2026-08-24 at 336 lines).
+>
+> It kept being flagged as un-reviewed for two days after the review was written, because the wording
+> below is not the phrase the tool matches: `brain-status.mjs` tests for the literal marker
+> `split-review: kept whole`, and this file opened with "DELIBERATELY LEFT WHOLE" instead. The decision
+> was recorded, just not in a form anything could read — which is worth a line of its own, because a
+> review nobody can see is indistinguishable from a review nobody did. If a file is kept whole on
+> purpose, it needs that exact phrase.
+>
+> **Reviewed 2026-08-23 against the ~300-line split rule and DELIBERATELY LEFT WHOLE.** It is over the
+> guideline, and `brain-status.mjs` had been flagging it as an un-reviewed split candidate.
 > The rule in [`../../skills/brain-self-maintain/SKILL.md`](../../skills/brain-self-maintain/SKILL.md)
 > is explicit that this is *"a split candidate, not a mandate — if it's one coherent job read as a unit,
 > splitting adds hops and makes things worse; say so and leave it."* That applies here: the whole value

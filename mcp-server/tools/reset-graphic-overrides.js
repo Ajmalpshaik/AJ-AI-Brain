@@ -1,7 +1,8 @@
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "reset_graphic_overrides",
     "Clear graphic overrides (color, fill pattern) on matching elements in a view.",
     { ...filterFields, ...viewField },

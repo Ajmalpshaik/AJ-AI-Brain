@@ -76,10 +76,15 @@ questions; make the code decisions yourself and tell him what you did.
 
 He named two problems. Both have an answer that already exists:
 
-- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 394 fragments against
-  every Revit installed on the PC **without opening Revit**, in about a minute. Offer it the moment a
-  version change is mentioned. It catches the whole "worked in 2020, errors in 2024" class before he
-  hits it mid-job.
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 394 fragments — **and,
+  since 2026-08-24, the C# the MCP server builds at run time** — against every Revit installed on the
+  PC **without opening Revit**, in about a minute. Offer it the moment a version change is mentioned.
+  It catches the whole "worked in 2020, errors in 2024" class before he hits it mid-job. That second
+  half was added because it was missing: the server had carried a unit call Revit 2024 rejects outright
+  for months while this tool reported green, because it only ever read `scripts/*.cs`. **A green check
+  is only as wide as what the checker reads** — when generated C# gains a new branch, add a case to
+  [`mcp-server/emit-generated-csharp.mjs`](mcp-server/emit-generated-csharp.mjs) or that branch goes
+  unchecked in silence.
 - **"It's not covered, so fresh code gets written, and that is slow and goes wrong."** Search first —
   `node tools/fragment-index.mjs --find <word>` then `semantic-index\ask-brain-hybrid.cmd`. When fresh
   C# genuinely is needed, **compile-check it before he runs it** (same tool, `-DryRun` builds the

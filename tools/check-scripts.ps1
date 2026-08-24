@@ -58,15 +58,48 @@ Write-Host "Checking the script library against every Revit on this PC" -Foregro
 Write-Host "(Revit is NOT opened. Nothing is changed. This only reads.)"
 Write-Host ""
 
+# The MCP server BUILDS C# at run time rather than reading it from scripts/, so none of it was ever
+# reaching the checker below - which is how a unit call that Revit 2024 rejects outright survived here
+# for months while this tool reported all green. Emitting it first folds that half into the same run.
+# If Node is missing the emit is skipped with a warning rather than failing the whole check: the
+# fragment library is still worth checking on a machine that cannot run the emitter.
+$generatedDir = Join-Path ([System.IO.Path]::GetTempPath()) ("aj-mcp-generated-" + $PID)
+$emitter = Join-Path (Split-Path -Parent $here) "mcp-server\emit-generated-csharp.mjs"
+$checkGenerated = $false
+if (Test-Path $emitter) {
+    $node = (Get-Command node -ErrorAction SilentlyContinue)
+    if ($node) {
+        & $node.Source $emitter $generatedDir | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $checkGenerated = $true
+            $genCount = (Get-ChildItem -Path $generatedDir -Filter *.cs -ErrorAction SilentlyContinue).Count
+            Write-Host ("Also checking {0} script(s) the MCP server generates at run time." -f $genCount)
+            Write-Host ""
+        } else {
+            Write-Host "Could not emit the MCP server's C# - checking the fragment library only." -ForegroundColor DarkYellow
+            Write-Host ""
+        }
+    } else {
+        Write-Host "Node not found - checking the fragment library only, not the MCP server's C#." -ForegroundColor DarkYellow
+        Write-Host ""
+    }
+}
+
 $results = @()
 foreach ($install in $installs) {
     Write-Host ("--- {0} " -f $install.Name).PadRight(70, '-') -ForegroundColor Cyan
     $output = & powershell -NoProfile -ExecutionPolicy Bypass -File $checker -RevitPath $install.FullName 2>&1
-    $summary = $output | Select-String -Pattern '^\s*(\d+) passed, (\d+) failed, of (\d+)' | Select-Object -Last 1
-    if ($summary) {
-        $pass = [int]$summary.Matches[0].Groups[1].Value
-        $fail = [int]$summary.Matches[0].Groups[2].Value
-        $tot  = [int]$summary.Matches[0].Groups[3].Value
+    if ($checkGenerated) {
+        $output += & powershell -NoProfile -ExecutionPolicy Bypass -File $checker -RevitPath $install.FullName -ScriptsDir $generatedDir 2>&1
+    }
+    # Two checker runs now feed this when the MCP emit succeeded - the fragment library and the
+    # generated C#. Summing every summary line rather than taking the last one keeps the reported
+    # total honest; taking the last would silently report 33 checked scripts instead of all of them.
+    $summaries = @($output | Select-String -Pattern '^\s*(\d+) passed, (\d+) failed, of (\d+)')
+    if ($summaries.Count -gt 0) {
+        $pass = ($summaries | ForEach-Object { [int]$_.Matches[0].Groups[1].Value } | Measure-Object -Sum).Sum
+        $fail = ($summaries | ForEach-Object { [int]$_.Matches[0].Groups[2].Value } | Measure-Object -Sum).Sum
+        $tot  = ($summaries | ForEach-Object { [int]$_.Matches[0].Groups[3].Value } | Measure-Object -Sum).Sum
         $results += [pscustomobject]@{ Revit = $install.Name; Pass = $pass; Fail = $fail; Total = $tot }
         if ($fail -gt 0) {
             Write-Host ("  {0} of {1} scripts would FAIL here:" -f $fail, $tot) -ForegroundColor Red
@@ -83,6 +116,8 @@ foreach ($install in $installs) {
     }
     Write-Host ""
 }
+
+if ($checkGenerated) { Remove-Item -Path $generatedDir -Recurse -Force -ErrorAction SilentlyContinue }
 
 Write-Host "=== In plain words ===" -ForegroundColor Cyan
 foreach ($r in $results) {
