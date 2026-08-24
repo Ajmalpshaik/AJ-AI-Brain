@@ -179,7 +179,7 @@ is set to Phase 3 — so "give me the existing services" was unanswerable from P
 
 ## State at the end
 
-**All 360 fragments compile on Revit 2020, 2024 and 2027.** Two of the nine new fragments failed their
+**All 388 fragments compile on Revit 2020, 2024 and 2027.** Two of the nine new fragments failed their
 first compile and were fixed (`GetLabeledDimensions`, `DataStorage`) — the check earning its keep again.
 
 **None of the 9 new fragments, and none of the 6 upgrades, has been run against a real model.** Every one

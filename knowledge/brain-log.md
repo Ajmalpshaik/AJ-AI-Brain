@@ -4876,3 +4876,54 @@ to separate "the fitting is stale" from "the family cannot do this".
   bridge's own add-in is) plus a built-in-parameter checker already covered by
   `action-report-parameter-inventory.cs`. Recorded because a survey-grade skip and a read-grade skip are
   not the same claim, and the method exists to stop the first masquerading as the second.
+
+## 2026-08-24 — 28 MEP coordination fragments added; 12 of a 40-item wish-list were already built
+
+Ajmal brought a 40-item list of MEP coordination tools he wanted in the library. Working it produced 28
+new fragments (360 -> 388) and, more usefully, a measurement of how much of that list the Brain already
+covered.
+
+**8 were already here, several live-verified.** `trace-mep-system` -> `recipes/trace-mep-circuits.cs`;
+`auto-dimension-mep` -> `action-dimension-mep-runs.cs`; `check-sleeve-requirements` AND
+`create-sleeves-from-penetrations` -> the two halves of `recipes/place-sleeves-at-wall-penetrations.cs`
+(its dry-run mode IS the detection half); `check-firefighting-coverage` -> the eight sprinkler recipes;
+`check-diffuser-coverage` -> `action-report-coverage.cs`; `compare-revit-model-versions` ->
+`action-compare-models.cs`; `check-model-performance` -> `model-health-audit.cs` +
+`action-report-geometry-complexity.cs`. **That is 20% of an outside wish-list already built**, and it was
+only visible because the whole index was dumped and matched by PURPOSE rather than by filename — the
+filenames alone would have matched almost none of those pairs.
+
+**4 more pairs were the same job named twice**, and were merged rather than built twice: check-mep-clearance
++ check-minimum-clearance; check-slope + check-duct-slope (slope is rise/run whatever the service is);
+check-equipment-access-zone + check-equipment-clearance; check-drainage-connectivity +
+check-plumbing-fixture-connectivity. **A wish-list is not a specification** — it carries the same idea
+under several names, and building each name produces exactly the near-duplicate pairs
+`scripts/README.md`'s naming rules exist to prevent.
+
+**What the 28 are.** Six write fragments (`auto-route-mep-run`, `connect-open-connectors`, `set-pipe-slope`,
+`auto-size-duct`, `auto-size-pipe`, plus `auto-tag-mep`/`auto-arrange-tags`/`auto-create-coordination-views`
+on the annotation side), 18 read-only QA checks in `actions/qa-checks/`, and two roll-up reports.
+
+**Three findings worth keeping, all of them about honesty in a check:**
+
+- **A check that cannot see its input must say so, not return zero.** Almost every one of these sweeps has
+  a way to be silently vacuous: clearance against structure that lives in a LINK, ceiling coordination
+  where the architecture is linked, room completeness where the devices are linked, family standards on
+  types with no placed instance. Every one now prints its input counts BEFORE its result and says NOT
+  CHECKED with a reason instead of a reassuring 0. This is the same failure the Brain keeps writing down
+  in other forms — documentation getting ahead of reality — appearing in the model-checking layer.
+- **`FamilySymbol` does not expose connectors**, so `action-check-family-standards.cs` samples one placed
+  instance per type and reports UNPLACED / NOT CHECKED for types with none. There is no `symbol.Connectors`
+  and no way round it; the alternative was a guess dressed as an audit.
+- **Unit constants are printed next to Revit's own display string.** Both sizing fragments assume Revit's
+  internal flow unit is ft3/s and convert with plain arithmetic (the library is version-proof, so no
+  `UnitUtils`). Rather than assert the constant, each prints the raw internal value beside
+  `AsValueString()` for the first few elements — a wrong constant is then obvious on the first run instead
+  of never. Worth copying wherever a fragment hard-codes a unit conversion.
+
+**All 28 are marked NOT YET LIVE-VERIFIED and every write fragment dry-runs by default.** They were written
+in a Linux container with no Revit and no C# compiler — the same position `tools/verify-fragments-compile.ps1`
+was in on 2026-08-04, when it sat unproven for three days. `tools\check-scripts.cmd` on Windows is the
+next step and has not been run against them.
+
+Consistency: all 13 checks pass after `sync-counts` (22 count claims across 17 files).
