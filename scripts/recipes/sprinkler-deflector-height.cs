@@ -43,6 +43,15 @@
 //   = 11 correct hits, geometry cross-checked against root-2). What is new is the case decision and the
 //   window arithmetic. Run it read-only on ONE head first and check the reported "what is above" against
 //   what you can see in a section.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -86,7 +95,7 @@ else if (applyHeights && string.IsNullOrWhiteSpace(heightParameterName))
 }
 else
 {
-    double zProbe = room != null ? room.Level.Elevation + mm(1000) : 0;
+    double zProbe = room != null ? room.Level.ProjectElevation + mm(1000) : 0;
     Func<XYZ, bool> insideRoom = p =>
     {
         if (room == null) return true;
@@ -140,7 +149,7 @@ else
         }
         else
         {
-            double zStart = room != null ? room.Level.Elevation + mm(2500) : 0;
+            double zStart = room != null ? room.Level.ProjectElevation + mm(2500) : 0;
             int n = 0;
             foreach (var p in candidatePointsMm)
                 heads.Add(Tuple.Create($"#{++n}", new XYZ(mm(p.xMm), mm(p.yMm), zStart), (Element)null));

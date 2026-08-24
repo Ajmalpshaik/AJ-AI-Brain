@@ -5,6 +5,17 @@
 //          don't have an independent Name, like most instance-placed geometry).
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
+//
+// ✱✱ THE NAME IS VALIDATED BEFORE THE TRANSACTION OPENS (2026-08-24), AND THAT FIXES A WRONG DIAGNOSIS.
+//    Revit rejects a handful of characters in any object name. Before this, a `newName` containing one
+//    of them made EVERY element fail, and the summary then said "skipped N (name collision, or this
+//    element type doesn't support renaming)" — sending you to look for a collision that does not exist.
+//    `NamingUtils.IsValidName(name)` answers in advance, so the fragment says what is actually wrong and
+//    opens no transaction at all. Note what it does NOT check, in Autodesk's own words: "This routine
+//    checks only for prohibited characters... the same name cannot be used twice for different elements
+//    of the same type... This routine does not check those conditions." So uniqueness is still found the
+//    old way, per element, which is correct — a collision is a real per-element outcome, a bad character
+//    is not.
 // Verification status: see this fragment's row in scripts/README.md (the single source of truth for this).
 // Revit requires names to be unique within their own scope
 // (e.g. two Levels can't share a name) — renaming more than one element to the exact same `newName` will
@@ -15,6 +26,18 @@
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string newName = "New Name";
 // ---- END INPUTS ----
+
+// Prohibited characters are a property of the STRING, not of any element — so this is asked once, and
+// asked before anything is opened. A name Revit will not accept cannot rename anything.
+bool nameOk = true;
+try { nameOk = NamingUtils.IsValidName(newName); } catch { }
+if (!nameOk)
+{
+    sb.AppendLine($"NOT RENAMED — '{newName}' contains a character Revit does not allow in a name.");
+    sb.AppendLine("  Revit rejects these in any object name:  \\  :  {  }  [  ]  |  ;  <  >  ?  `  ~");
+    sb.AppendLine("  Nothing was changed and no transaction was opened. Fix the name and run it again.");
+    return sb.ToString();
+}
 
 int renamed = 0, skipped = 0;
 var failures = new List<string>();

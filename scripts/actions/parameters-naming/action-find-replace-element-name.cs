@@ -63,6 +63,20 @@ using (var t = new Transaction(Document, "AJ Tools - Find/Replace Element Name")
 
             if (candidate == oldName) { skipped++; continue; }
 
+            // ✱✱ ASKED PER ELEMENT HERE, unlike action-rename-element.cs which asks once — because this
+            //    fragment BUILDS a different name for every element, so one bad replacement string can
+            //    make some names illegal and leave others fine. `NamingUtils.IsValidName` reports the
+            //    prohibited-character case in plain words instead of letting Revit throw a message that
+            //    reads like a collision. Added 2026-08-24.
+            bool candidateOk = true;
+            try { candidateOk = NamingUtils.IsValidName(candidate); } catch { }
+            if (!candidateOk)
+            {
+                skipped++;
+                failures.Add($"Id {e.Id} ('{oldName}' -> '{candidate}'): that name contains a character Revit does not allow (\\ : {{ }} [ ] | ; < > ? ` ~)");
+                continue;
+            }
+
             try
             {
                 e.Name = candidate;

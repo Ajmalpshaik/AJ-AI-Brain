@@ -2,6 +2,114 @@
 
 Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
+## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE. COMMITTED, PUSHED, PR #39 OPEN AND MERGEABLE.
+
+**State: 394 fragments after merging the parallel session's work (main moved 360 → 388 → 391 while this
+branch was in flight; both merges resolved). This branch adds 6 new, 8 upgraded, 18 corrected.**
+Everything is committed and pushed to `claude/revitplugins-harvest-1nwqkx`;
+[**draft PR #39**](https://github.com/Ajmalpshaik/AJ-AI-Brain/pull/39) is open, conflict-free and
+mergeable. Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+
+**Nothing is merged to `main` yet — that is Ajmal's call**, and the PR is deliberately still a draft.
+The one thing left before merging is not a code question: **run the fragments in the table below against
+a real model**, starting with `action-report-level-elevations.cs`.
+
+### ⚠ TWO JOBS ONLY AJMAL CAN DO — 30 seconds each, in the browser
+
+**1. Delete the four merged branches.** Asked for directly on 2026-08-24, attempted, and **refused by
+GitHub with HTTP 403 for the third time.** The diagnosis was re-confirmed the same way as on 2026-08-22:
+`curl "$HTTPS_PROXY/__agentproxy/status"` reports `recentRelayFailures: []` immediately after the failed
+delete, so the proxy never saw a failure — the request reached GitHub and **GitHub refused it.** A
+session's git credentials can push refs but not delete them. That is a deliberate guardrail, and
+`/root/.ccr/README.md` says a 403 is to be reported, not routed around. The GitHub API tools available
+here have `create_branch` and **no delete counterpart**, so there is no second route either.
+
+All four are **0 commits ahead of `main`** — re-verified 2026-08-24, nothing would be lost:
+
+| Branch | Its PRs, all closed |
+|---|---|
+| `claude/add-fragments-hvhxpt` | #37, #38, #40 |
+| `claude/kv-cache-necessity-a5sjnx` | #30, #33, #34, #35 |
+| `claude/rag-setup-optimization-ayuui2` | #32 |
+| `claude/wonderful-bell-6j0som` | #31 |
+
+**2. And so this never comes back — turn on Settings → General → "Automatically delete head branches".**
+That is the actual fix. It removes the whole class of job instead of this instance of it, and it is why
+this has now been asked for three times: deleting today's four does nothing about next month's.
+
+**Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
+not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all
+day — the percentage fell because the library grew by 34. Nothing here has been run on a real model since
+the merge; the table further down says which to run first and what each one proves.
+
+**The thing to know before you touch anything height-related.** `Level.Elevation` and
+`Level.ProjectElevation` are two different numbers, and only the second is in the same coordinate space
+as an `XYZ`. **Twenty fragments here mixed them** — the entire fire-sprinkler chain, coverage, routing,
+ceiling heights, both dimensioning fragments, and the three oldest creators (`create-wall`,
+`create-floor`, `create-ceiling`), which have been placing walls, slabs and ceilings at the wrong height
+on survey-datum models since they were written. All fixed. On a test model the two agree and nothing
+shows; on a site model with a survey offset every affected answer was wrong by that offset.
+Read [`../knowledge/live-model/level-elevation-vs-project-elevation.md`](../knowledge/live-model/level-elevation-vs-project-elevation.md)
+before "fixing" any remaining `Elevation` use — two of them are deliberate and say so in their headers,
+and about two dozen more `.Elevation` hits in the library are correct code (sorting, report rows).
+
+**And read the method lesson with it.** The first sweep for this defect grepped `Level\.Elevation`, which
+cannot see `level.Elevation` where the variable is already a `Level` — the commoner shape. It returned
+nothing and got written up as "checked and clean". The peer session found two it missed; a corrected
+sweep found three more. **A grep that finds nothing is evidence about the pattern, not about the code —
+prove the pattern can see a defect you already fixed before calling a sweep clean.**
+
+**Run these first when a model is next open.** All read-only, all cost nothing:
+
+| Run this | What it proves |
+|---|---|
+| `action-report-level-elevations.cs` | **Do this one first.** One line says whether this model is affected by the defect above. Everything below is easier to read once you know |
+| `action-report-clashes.cs` with `linkInstanceIdInt` set | The linked-model path is brand new and is the reason this fragment matters. Needs a model with a structural link |
+| `action-report-nested-families.cs` over Mechanical Equipment | Ajmal will recognise the answer instantly — if it says an AHU is one unit with three parts, it works |
+| `action-report-fitting-area.cs` over duct fittings | Check ONE elbow by hand: net area ≈ duct perimeter × centreline arc. If it is roughly double, the connector subtraction did not happen |
+| `action-audit-mep-openings.cs` | The biggest new capability, and the one most worth proving. **Run it on BOTH kinds of opening**: one cut by `create-mep-openings.cs` (a Revit `Opening` — a VOID, whose solid this fragment has to BUILD) and one sleeve family instance. The built-solid path is the part that needs a real model most — if a row says SUSPECT GEOMETRY, the boundary-to-solid construction is landing in the wrong place and the header says what to check |
+
+**The compile gate now runs on Linux too.** `tools/check-scripts.cmd` on the Windows PC is still the
+authority — it tests the Revit versions actually installed. But a container session can now compile
+against the real shipped `RevitAPI.dll` for 2020/2024/2027 by pulling the API packages from the public
+feed and running Roslyn under Mono. The scratchpad copy is gone with the session; the method is written
+up in the ledger and takes about ten minutes to rebuild.
+
+**A method lesson worth more than the code**, now in [`harvest-prompt.md`](harvest-prompt.md): a
+correction is not finished until the `scripts/README.md` row moves with it. `action-compare-models.cs`
+was corrected in the morning and its row still stated the wrong rule this evening — in the document a
+session routes from. The consistency checker asks whether a row EXISTS, never whether it is TRUE.
+
+**THE WHOLE LIBRARY COMPILES: 394 pass, 0 fail on Revit 2020, 2024 AND 2027** — measured
+2026-08-24 at this branch's head, after every fix on both sides. That is the container gate (Roslyn under
+Mono against the real shipped `RevitAPI.dll`); `tools\check-scripts.cmd` on the PC is still the authority
+because it tests the Revit versions actually installed there, and is worth one run before the next job.
+
+**THREE FRAGMENTS FROM THE OTHER SESSION DID NOT COMPILE — measured 2026-08-24, now FIXED.**
+`action-check-flow-direction.cs` and `action-connect-open-connectors.cs` both use
+`BuiltInParameter.RBS_SYSTEM_TYPE_PARAM`, which **is not a real API name on any Revit version** — they
+could not run at all. `action-check-plumbing-fixture-connectivity.cs` used
+`BuiltInCategory.OST_PlumbingEquipment`, which arrived at 2024, so it failed on 2020 only. Fixed with
+`RBS_DUCT_SYSTEM_TYPE_PARAM` / `RBS_PIPING_SYSTEM_TYPE_PARAM` for the first two and `Enum.TryParse` for
+the third; all three now compile on 2020, 2024 and 2027. **The lesson outlives the fix: the other
+session's "all 388 compile" claim was asserted, not run — two of these failed on EVERY version. Run the
+gate before writing that sentence.**
+
+**Ajmal caught one defect himself and it is the model for how to check the rest.** He asked whether the
+new opening audit would fit the opening tools we already had. It would not have: a Revit `Opening` is a
+VOID with no solid, and the audit pulled solids, so `filter-by-openings.cs` → `action-audit-mep-openings.cs`
+would have reported nothing for every opening our own recipe ever cut — silently. Fixed, and
+`knowledge/live-model/mep-openings.md` now opens with a four-way routing table. **The lesson: the defect
+was in the SEAM between the new fragment and the old one**, which neither reading the source nor the
+compile gate can see. Ask the same question of the other five new fragments before trusting them.
+
+**Still genuinely open on this repo:** the architectural and structural documentation plugins (lintel
+placement, package documentation, rooms, coordination volumes, area boundaries, declarations) were
+inventoried token by token but not read. Nothing absent-and-useful surfaced and Ajmal is MEP, so it is a
+defensible skip — not a proven-empty one. The ledger names them with line counts.
+
+---
+
 ## 2026-08-24 (evening) — MCP SERVER FIXED FOR ALL REVIT VERSIONS, EVERYTHING MERGED AND PUSHED
 
 **State: 388 fragments. `check-scripts` green on Revit 2020, 2024 and 2027 — 421 scripts, which is the
@@ -98,6 +206,9 @@ The five repos themselves are done: align-tag read in full, HOK all 18 projects 
 explorers mined for their trap lists, the add-in manager skipped on a read rather than a survey.
 
 ### The thing that matters more than any repo
+
+> *Numbers below are as of that day and are kept as written. Today's are in the newest section at the
+> top of this file, and `node tools/brain-status.mjs` computes them live — trust that over any line here.*
 
 **247 of 360 fragments are proven (69%). That went DOWN from 74% this morning** — harvesting adds
 unproven code faster than anything proves it. 63 are flagged untested and 38 have no status either way;

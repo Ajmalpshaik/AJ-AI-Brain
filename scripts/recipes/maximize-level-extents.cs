@@ -26,6 +26,15 @@
 // NOTE: levels are lines only in elevation/section/3D views, so those are the only view types collected.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — harvested 2026-08-22 from the add-in's Maximize Levels by
 //   Section Box, which does exactly this on real jobs. Dry-run it and check the reported span first.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -137,7 +146,7 @@ using (var t = new Transaction(Document, "AJ Tools - Maximize Level Extents by S
 
                 // Unbound line along the level's own direction, then project the box's plan corners.
                 Line unbound = Line.CreateUnbound(line.GetEndPoint(0), line.Direction);
-                double z = level.Elevation;
+                double z = level.ProjectElevation;
                 var planCorners = new XYZ[] {
                     new XYZ(minX, minY, z), new XYZ(maxX, minY, z),
                     new XYZ(maxX, maxY, z), new XYZ(minX, maxY, z)

@@ -93,6 +93,15 @@
 //     Room 1 (6 elements, 31.3 m) -> jump 7,039 mm -> Room 3 (6, 28.9 m) -> jump 6,849 mm -> Room 2 (5, 34.8 m)
 //     TOTAL 109.0 m = 95.1 m inside rooms + 13.9 m across, versus 134.3 m for independent groups with
 //     centroid feeders. Both jumps were re-verified against every remaining element, as the user asked.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -149,7 +158,7 @@ else
             {
                 // probe at the CONTAINER's level, not the element's — a ceiling-mounted fitting sits
                 // above the room's upper limit and would test false at its own height
-                var probe = new XYZ(p.X, p.Y, c.Level.Elevation + mmToFt(1000));
+                var probe = new XYZ(p.X, p.Y, c.Level.ProjectElevation + mmToFt(1000));
                 bool inside = false;
                 var room = c as Autodesk.Revit.DB.Architecture.Room;
                 var space = c as Autodesk.Revit.DB.Mechanical.Space;
@@ -416,7 +425,7 @@ else
                 if (asDetail && drawView is ViewPlan)
                 {
                     var gl = (drawView as ViewPlan).GenLevel;
-                    flatZ = gl != null ? gl.Elevation : drawView.Origin.Z;
+                    flatZ = gl != null ? gl.ProjectElevation : drawView.Origin.Z;
                 }
                 foreach (var s in allSegments)
                 {

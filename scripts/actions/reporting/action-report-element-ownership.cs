@@ -27,7 +27,7 @@ else if (elements.Count == 0)
 }
 else
 {
-    int mine = 0, others = 0, free = 0;
+    int mine = 0, others = 0, free = 0, stale = 0, gone = 0;
     var rows = new List<string>();
 
     foreach (var el in elements)
@@ -40,8 +40,23 @@ else
             else if (status == CheckoutStatus.OwnedByOtherUser) others++;
             else free++;
 
+            // ✱✱ ADDED 2026-08-24 — THE SECOND HALF OF THE SAFETY QUESTION, AND IT WAS MISSING.
+            //    Checkout status answers "may I edit this". `GetModelUpdatesStatus` answers the other
+            //    one: "is what I am looking at still what is in the central". An element can be FREE
+            //    to edit and already changed — or DELETED — by somebody who synced after your last
+            //    reload, and editing it then means your change is built on a stale copy and will
+            //    conflict at sync. Nothing in this library asked that before.
+            string update = "";
+            try
+            {
+                var upd = WorksharingUtils.GetModelUpdatesStatus(Document, el.Id);
+                if (upd == ModelUpdatesStatus.UpdatedInCentral) { stale++; update = "; ** CHANGED IN CENTRAL SINCE YOUR LAST RELOAD **"; }
+                else if (upd == ModelUpdatesStatus.DeletedInCentral) { gone++; update = "; ** DELETED IN CENTRAL **"; }
+            }
+            catch { }
+
             if (rows.Count < maxRows)
-                rows.Add($"  - Id {el.Id} '{el.Name}' — {status}; created by {info.Creator}, owner: {(string.IsNullOrEmpty(info.Owner) ? "(none)" : info.Owner)}, last changed by {info.LastChangedBy}");
+                rows.Add($"  - Id {el.Id} '{el.Name}' — {status}; created by {info.Creator}, owner: {(string.IsNullOrEmpty(info.Owner) ? "(none)" : info.Owner)}, last changed by {info.LastChangedBy}{update}");
         }
         catch (Exception exOne)
         {
@@ -50,6 +65,11 @@ else
     }
 
     sb.AppendLine($"Ownership of {elements.Count} element(s): {free} free, {mine} owned by me, {others} owned by OTHERS (those will prompt for relinquish).");
+    if (stale > 0 || gone > 0)
+    {
+        sb.AppendLine($"*** RELOAD LATEST BEFORE EDITING: {stale} element(s) have CHANGED in the central and {gone} have been DELETED there since your last reload.");
+        sb.AppendLine("    A free-to-edit element can still be stale. Editing one now builds on an old copy and conflicts at sync.");
+    }
     foreach (var r in rows) sb.AppendLine(r);
     if (elements.Count > maxRows) sb.AppendLine($"  ... detail capped at {maxRows} rows; the summary line covers all {elements.Count}.");
 }

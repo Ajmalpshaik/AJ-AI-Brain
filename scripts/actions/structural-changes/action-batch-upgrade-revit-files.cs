@@ -144,7 +144,25 @@ foreach (var file in batch)
     Document opened = null;
     try
     {
-        opened = Document.Application.OpenDocumentFile(file);
+        // ✱✱ OPEN OPTIONS, ADDED 2026-08-24 — AND ON THIS FRAGMENT IT IS A SAFETY FIX, NOT A SPEED ONE.
+        //    `OpenDocumentFile(path)` with no options, pointed at a WORKSHARED CENTRAL file, opens it as
+        //    the central. Upgrading and saving from there is a genuinely damaging thing to do to a live
+        //    project. `DetachAndPreserveWorksets` is the only correct way to open somebody else's model
+        //    for a batch operation: the copy on disk is untouched until the explicit SaveAs below, and
+        //    the detached document cannot write back to the central at all.
+        //    `AllowOpeningLocalByWrongUser` matters because a folder of files to upgrade routinely
+        //    contains other people's locals, and without it Revit simply refuses those.
+        //    Worksets are left OPEN here on purpose — unlike a read-only comparison, an upgrade must
+        //    rewrite every element in the file, so closing them would leave content unconverted.
+        var openOpts = new OpenOptions
+        {
+            DetachFromCentralOption = DetachFromCentralOption.DetachAndPreserveWorksets,
+            AllowOpeningLocalByWrongUser = true,
+            Audit = false
+        };
+        try { openOpts.SetOpenWorksetsConfiguration(new WorksetConfiguration(WorksetConfigurationOption.OpenAllWorksets)); }
+        catch { }
+        opened = Document.Application.OpenDocumentFile(ModelPathUtils.ConvertUserVisiblePathToModelPath(file), openOpts);
         var opts = new SaveAsOptions { OverwriteExistingFile = true };
 
         // Compact on the way out. An upgrade is the one moment the whole file is being rewritten

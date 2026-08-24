@@ -46,6 +46,20 @@
 //          in Z only), action-check-equipment-clearance.cs (a directional access zone, not a gap).
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Run it on one duct against one category
 //   first and check a reported gap against a dimension in Revit before trusting a whole-floor sweep.
+//
+// ✱✱ THREE CLEARANCE FRAGMENTS NOW, AND THEY MEASURE DIFFERENTLY. Merged 2026-08-24 from two sessions
+//    working in parallel. Pick by what you need, not by which one you found first:
+//      action-check-minimum-clearance.cs     ANY element vs any target set, optional per-category rules
+//                                            table. Measures by SAMPLING POINTS on the solids, so it is
+//                                            approximate and its own header says to check a reported gap
+//                                            against a Revit dimension before trusting a whole-floor sweep.
+//      action-check-insulation-clearance.cs  the same sweep with the jacket thickness taken off.
+//      action-report-mep-clearance.cs        LINEAR RUNS ONLY, and EXACT — `Curve.ComputeClosestPoints`
+//                                            gives the true minimum between two centrelines with no
+//                                            sampling and no rotation error, then takes each run's own
+//                                            size and insulation off. Use it when the millimetres have
+//                                            to be defensible; it cannot measure a fitting or a pump.
+//    General-and-approximate versus narrow-and-exact. They are complements, not duplicates.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

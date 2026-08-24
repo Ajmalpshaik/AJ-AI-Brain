@@ -5115,6 +5115,321 @@ clean" is not proof, especially about files that session did not write.** Verify
 
 Running total for this batch: **15 defects.** Six on tags, four from the knowledge-note audit, three from
 a compiler, two from re-checking another session's all-clear.
+
+- 2026-08-24 — **the 183k-line suite, finished properly — and the biggest finding is a defect in fifteen
+  of our own fragments, not anything that came across.** The 72-plugin target the morning session
+  surveyed and deliberately recorded as unread. Full ledger:
+  [`../docs/revitplugins-harvest.md`](../docs/revitplugins-harvest.md). **6 new fragments, 7 upgraded,
+  15 corrected, 366 total**, all compiling on 2020/2024/2027, none run on a real model.
+
+  **THE DEFECT: A LEVEL HAS TWO HEIGHTS, AND WE USED THE WRONG ONE FIFTEEN TIMES.** `Level.Elevation` is
+  measured from whatever the level type's "Elevation Base" parameter says — Project **or Shared**.
+  `Level.ProjectElevation` is always from the project origin. Autodesk's own words, from the shipped
+  `RevitAPI.xml`: *"Retrieves the elevation relative to project origin, no matter what values of the
+  Elevation Base parameter is set."* **Every XYZ the API hands you is project-internal** — location
+  points, bounding boxes, ray origins, `Room.IsPointInRoom` — so the moment a level height meets a
+  coordinate, only `ProjectElevation` is in the same space. The typical line was
+  `double zProbe = room.Level.Elevation + mm(1000);` used directly as a world Z.
+
+  It hit **the entire fire-sprinkler chain** (obstruction check and survey, adjust-for-obstructions,
+  sidewall layout, layout options, place heads, deflector height, compliance audit, NFPA grid), the
+  coverage and routing tools, ceiling heights, `maximize-level-extents` and both dimensioning fragments.
+  **On a test model the two numbers are identical and nothing shows.** On a site model set out to a
+  survey datum — normal on Ajmal's work — every affected answer is wrong by exactly the survey offset,
+  silently, with a plausible number. All fifteen fixed, each with a note in its own header.
+  `action-reassign-level.cs` and `action-change-wall-constraints.cs` were **left on `Elevation`
+  deliberately and now say so**, because they take a level-to-level DIFFERENCE where the base cancels —
+  "fixing" those would introduce the error. New note:
+  [`live-model/level-elevation-vs-project-elevation.md`](live-model/level-elevation-vs-project-elevation.md);
+  new diagnostic `action-report-level-elevations.cs` gives a one-line verdict on any model.
+
+  **THE SECOND FINDING: the most-used clash fragment could not see a linked model.**
+  `action-report-clashes.cs` runs about twenty times a month and collected set B with
+  `new FilteredElementCollector(Document)` — the active document only. **On an MEP job the structure IS
+  the link**, so "check my ducts against the structure" returned **0 clashing pairs** for a check it had
+  never performed. Same shape as the hole already flagged in `action-create-from-room-boundaries.cs`.
+  Fixed: `linkInstanceIdInt` moves each linked solid into this model with `SolidUtils.CreateTransformed`
+  and uses `ElementIntersectsSolidFilter`, because `ElementIntersectsElementFilter` **cannot cross
+  documents**. A quick `BoundingBoxIntersectsFilter` now runs before the slow filter in both paths.
+
+  **THE THIRD: a README row still stated the rule its fragment had been corrected away from.**
+  `action-compare-models.cs` was corrected the same morning — a save-as preserves ElementIds, so the id
+  IS the identity — and its `scripts/README.md` row was not. The row still read *"Elements are NOT
+  matched on ElementId"*, the exact wrong rule, **in the document a session routes from.** Check 3 of
+  the consistency checker asks whether a fragment HAS a row, never whether the row is still TRUE. The
+  class matters more than the instance: **a correction is not finished until the README row moves with
+  it.**
+
+  **BUILT — 6.** `action-audit-mep-openings.cs` is the one that matters: audit the openings already in
+  the model against the MEP that is in it now, which is the revision question nothing here could answer
+  — the hole was right last month, the pipe moved 200 mm, and the clash report is *still clean because
+  the pipe now goes through the hole and past its edge into the concrete*. **The trick is to subtract
+  the opening from the service and test the remainder.** Also `action-report-mep-clearance.cs` (the
+  exact gap in mm, filling a hole `action-report-nearest-elements.cs` documented and pointed at a
+  fragment that returns a yes/no), `action-report-nested-families.cs` (Ajmal's *"four family names can
+  be one piece of kit"* — `SuperComponent` was in NO fragment, so we could walk down but never up),
+  `action-report-fitting-area.cs` (**the measurement `action-report-duct-weight.cs` already asks for**:
+  its header says fittings at 10% is "an allowance, not a measurement"), `action-report-level-elevations.cs`
+  and `action-report-filterable-parameters.cs`.
+
+  **UPGRADED — 8, plus the 15 corrections above.** `NamingUtils.IsValidName` went into the two renaming fragments, and it fixes a wrong
+  DIAGNOSIS rather than a message: a name with a prohibited character made every element fail, and the
+  summary then said *"skipped N (name collision, or this element type doesn't support renaming)"* —
+  sending Ajmal to hunt a collision that does not exist. Asked once before the transaction in
+  `action-rename-element.cs`, per element in `action-find-replace-element-name.cs` because that one
+  builds a different name for each.
+
+  **Also upgraded:** Both background-open fragments got proper `OpenOptions`: the bare
+  `OpenDocumentFile(path)` on a workshared CENTRAL touches the central, and for the batch UPGRADE
+  fragment that is a genuinely damaging thing to do to a live project. `action-report-element-ownership.cs`
+  gained `GetModelUpdatesStatus` — checkout status says whether you MAY edit, that says whether what you
+  are looking at is still what is in the central. `action-report-duct-weight.cs` now takes shape from
+  `MEPCurveType.Shape` instead of guessing (the oval trap its own header describes) and cross-checks its
+  area against Revit's own `RBS_CURVE_SURFACE_AREA` — two independent calculations, so a disagreement
+  means the shape detection is wrong and the kilos are out by the same proportion.
+
+  **The compile gate ran in a Linux container for the first time.** No Windows, no Revit, no .NET — so
+  the three shipped `RevitAPI.dll`s were fetched from the public feed, their **CLI metadata tables
+  parsed directly in Python** (26,114 / 36,105 / 38,388 public names for 2020 / 2024 / 2027,
+  type-qualified and with per-method arity), and Roslyn run under Mono against them with the same
+  harness shape as `check-scripts.ps1`. **Validated by putting the whole pre-existing library through it
+  first.** It does not replace `tools\check-scripts.cmd` on the PC — that tests the Revit versions
+  actually installed — but "a container cannot compile-check" is no longer true. It settled a live question and then
+  **caught me getting the next one wrong.** `ParameterFilterRuleFactory.CreateBeginsWithRule` has only
+  the 3-argument form on 2020, both on 2024, only the 2-argument form on 2027 — so no single call spans
+  the range, and our filter fragments' reflection dispatch is required, not cautious. From the arity
+  numbers alone I then wrote that `CreateEqualsRule` was the safe exception. **Compiling it says
+  otherwise**: the `/2` on 2020 is a NUMERIC overload, `CreateEqualsRule(id, "abc")` does not compile
+  there, and the 3-argument string form does not compile on 2027. **No string rule spans the range.**
+  Arity cannot separate overloads that differ by parameter TYPE — a plausible inference, confidently
+  written, and wrong, which is the exact failure the read-don't-survey rule exists for. Corrected in
+  both write-ups rather than quietly.
+
+  **AND THE GATE IMMEDIATELY EARNED ITS KEEP.** Running all 366 fragments through it turned up one
+  failure the Windows gate cannot see: `creators/create-levels.cs` used `.ToHashSet(...)`, which needs
+  **.NET Framework 4.7.2**, while **Revit 2020 add-ins target 4.7**. On a machine with only 4.7.x it is
+  a `MissingMethodException` at RUN time — not a compile error, because the bridge compiles against
+  whatever runtime is loaded. It has never bitten because .NET Framework upgrades in place and every
+  current Windows box has 4.8 — which is exactly what `verify-fragments-compile.ps1` resolves to, since
+  it deliberately leaves the framework references empty for a .NET Framework Revit and lets `csc` use
+  its defaults. **The Windows gate has always been checking a newer framework than Revit 2020 targets.**
+  Rewritten to `new HashSet<string>(sequence, comparer)`, unchanged in behaviour, and the only
+  occurrence in 366 fragments. Pointing the .ps1 at 4.7.x refs is the real fix and is **recorded, not
+  written** — a PowerShell file authored in a Linux container is the encoding trap `CLAUDE.md` says has
+  already bitten twice.
+
+  **What did NOT come across, briefly.** All 480 XAML and the ViewModels/Views folders (837 files,
+  69,466 lines) — the MVVM cost the brief predicted. 1,263 files with **zero** `Autodesk.Revit`
+  reference, grepped rather than assumed. Interactive selection and custom export, both needing a class
+  a fragment cannot declare — the fifth and sixth instances of that limit. Their duct gauge tables,
+  because Ajmal's own values are already here and a foreign standard would look authoritative while
+  being wrong. And **our element-aligned section creator and our filter-rule reflection were confirmed,
+  not improved** — worth recording so nobody re-derives them.
+
+- 2026-08-24 — **`docs/fragment-catalogue.md` is now generated, not written by hand** —
+  [`tools/catalogue-build.mjs`](../tools/catalogue-build.mjs). It was written by hand on 2026-08-23 and
+  said **359 fragments against 366 on disk** a day later: the same failure that made
+  `brain-status.mjs` and `fragment-index.mjs` compute from disk every run (README said 8 skills against
+  9; AGENT-SPEC said 206 fragments against 264). A catalogue is the one case where a stored file is
+  still wanted — it lives outside the search index and is meant to be read end to end, which a
+  command's output is not — so the fix is not to stop keeping it but to stop typing it. It reads
+  `fragment-index.mjs --json`, stamps its own date, and says "do not edit by hand" at the top. **The
+  consistency checker did not catch the stale figure**, because check 9 looks for count claims in the
+  indexed set and this file is in `docs/`.
+
+- 2026-08-24 — **Ajmal caught a defect in a fragment written an hour earlier, by asking whether it fitted
+  what we already had.** His words: *"for me mep opening we have before — am i right that will clash with
+  we make new fragment, it will collapse or it will get confused and it will not achieve what we need?"*
+  It would not have collapsed. It would have got confused and reported nothing, which is worse.
+
+  **A Revit `Opening` is a VOID and has NO SOLID.** The class exposes `BoundaryRect`, `BoundaryCurves`,
+  `Host` and two transparency flags — `get_Geometry()` yields nothing usable.
+  `recipes/create-mep-openings.cs` produces exactly that kind via `Document.Create.NewOpening`, and
+  `filters/by-relationship/filter-by-openings.cs` returns mostly that kind. The new
+  `action-audit-mep-openings.cs` pulled solids. **So the most natural composition in the library — find
+  the openings, then audit them — would have said "NO GEOMETRY" for every opening our own recipe ever
+  cut**, with no crash and no error, in a table that reads as clean.
+  `place-sleeves-at-wall-penetrations.cs` places a FamilyInstance, which DOES have solids, so half of it
+  worked — and half-working is what lets this kind of defect survive testing.
+
+  **Fixed**: an `Opening` now gets a solid BUILT from its boundary plus the host's thickness. Two rules
+  fell out and are now in [`live-model/mep-openings.md`](live-model/mep-openings.md), which also opens
+  with a four-way routing table (cut / place sleeve / find / check) because four fragments now say
+  "opening" or "sleeve":
+  **extrude generously along the host's NORMAL and never in-plane** — depth is free since the hole's size
+  lives in the perpendicular plane, while widening it in-plane would hide an UNDERSIZED opening, the one
+  answer that must never be optimistic — and **verify the built solid against the element's own bounding
+  box before trusting it**, because the API does not document what coordinate space `BoundaryRect` uses.
+
+  **Worth recording as a method lesson.** This survived a full read of the harvested source, compile
+  checks on three Revit versions, and an adversarial re-read of my own fragment. What found it was the
+  person who knows the model asking whether the new thing fits the old thing. **The defect was not in
+  the new code or the old code — it was in the seam between them**, which is the one place neither a
+  source read nor a compile gate looks.
+
+- 2026-08-24 — **two parallel sessions merged: 388 + 6 = 394 fragments, and the seam needed work the way
+  a conflict does.** The other session landed 28 MEP coordination fragments in `main` while this branch
+  was still based on 360, so the branch came back un-mergeable. Twenty files conflicted and **nineteen
+  were nothing but the fragment count** — `sync-counts.mjs` recomputes those, so they resolve by taking
+  either side. The two that mattered, `scripts/README.md` and this log, were both "each session appended
+  its own rows", and both were resolved by **keeping both sides**.
+
+  **The part that is not mechanical, and is the same lesson Ajmal taught earlier the same day.** Two
+  sessions adding to one library produce fragments that answer NEIGHBOURING questions, and a session
+  later will pick whichever it finds first. Two real overlaps here, neither a duplicate:
+  their `action-check-minimum-clearance.cs` measures ANY element pair by **sampling points** on solids
+  (general, approximate, and its own header says to check a gap against a Revit dimension) while this
+  branch's `action-report-mep-clearance.cs` is **linear runs only and exact**
+  (`Curve.ComputeClosestPoints`); their `action-check-sleeve-size.cs` is a **specification** check on a
+  sleeve while `action-audit-mep-openings.cs` is a **coordination** check against the structural link.
+  All five now carry a cross-reference block naming the others and the distinction.
+  **The seam between two sessions' fragments is nobody's file** — worth a deliberate pass at every
+  merge, not only when somebody asks.
+
+  ~~Also checked and clean: none of their 28 fragments carries the `Level.Elevation` defect.~~
+  **THAT CLAIM WAS WRONG — struck the same day, see the entry below.** The grep behind it was
+  `grep -rn "Level\.Elevation"`, which only matches where the word `Level` is literally in the
+  expression. It cannot see `l.Elevation` / `lvl.Elevation` / `level.Elevation`, where the variable is
+  already a `Level` — which is the far more common shape. The peer session found two in their own files
+  that this missed, and a corrected sweep then found **three more in this library's own oldest creators**
+  (`create-wall.cs`, `create-floor.cs`, `create-ceiling.cs`). Twenty fragments carried the defect, not
+  fifteen. The lesson is not about levels: **a clean grep is only evidence that the pattern matched
+  nothing, never that the defect is absent** — and writing it up as "checked and clean" turned an
+  untested pattern into a claim about the code.
+
+## 2026-08-24 — the corrected sweep found three more, in this library's own oldest creators
+
+The peer session's entry above found two `Level.Elevation` defects that this branch's sweep had reported
+clean. Running **their** grep pattern against **everything** — not just their 28 files — found three more,
+and all three are ours:
+
+| Fragment | Line | What it did |
+|---|---|---|
+| `scripts/creators/create-wall.cs` | 43 | `double z = level.Elevation;` → both ends of the wall's location line |
+| `scripts/creators/create-floor.cs` | 64 | same, → every point of the slab boundary |
+| `scripts/creators/create-ceiling.cs` | 84 | same, → every point of the ceiling boundary |
+
+All three are among the oldest fragments here, **live-verified since 2026-08-07**, and all three are now
+on `ProjectElevation` with the reason written into the header. Twenty fragments carried this defect in
+total, not fifteen.
+
+**Why they survived a verification AND a targeted audit.** They were live-verified on a model whose levels
+use Elevation Base = Project, where the two properties return the same number — so the test passed and
+proved nothing about the case that breaks. Then the audit grepped `Level\.Elevation`, which matches
+`room.Level.Elevation` but **not** `level.Elevation`, where the variable is already a `Level`. The pattern
+was blind to the commonest shape of the very thing it was looking for, returned nothing, and got written
+up as "checked and clean".
+
+**The transferable rule, and it is not about levels.** A grep that finds nothing is evidence about the
+*pattern*, never about the *code*. Before reporting a sweep clean, prove the pattern can see a known
+instance — grep for the defect you already fixed and check it comes back. One line, and it would have
+caught this. `knowledge/live-model/level-elevation-vs-project-elevation.md` now carries the working sweep
+plus the verdict table for reading its output, because roughly two dozen of its hits are correct code
+(`OrderBy`, report rows, `ProjectPosition.Elevation`, level-to-level differences) and a sweep that
+"fixes" all of them is as wrong as one that fixes none.
+
+Reported to Ajmal in the same turn rather than quietly amended: the wrong claim had already been written
+into the merge commit message, the ledger and the handover.
+
+## 2026-08-24 — eleven fragments said "not yet run" and the counter could not read it
+
+Rewriting `create-ceiling.cs`'s row in `scripts/README.md` (it still carried the old impossible verdict
+from the Revit-2020-only era, two versions out of date, while the fragment's own header had said so since
+2026-08-23) surfaced two bugs in `tools/fragment-lib.mjs`, the shared status parser behind
+`fragment-index.mjs`, `brain-status.mjs`, the catalogue and the SessionStart banner.
+
+**1. The status tests are plain substring matches, so a row that NARRATES a status becomes it.** The new
+row explained the correction with the sentence `This row said "CONFIRMED IMPOSSIBLE" until today` — and
+`/CONFIRMED IMPOSSIBLE/` put the fragment straight back in the impossible bucket it had just left. Fixed
+by paraphrasing the row ("the old impossible verdict"), with the trap written into the parser next to the
+test so the next person does not spend the same ten minutes.
+
+**2. Eleven fragments were reported as "no status either way" while their rows said plainly they had not
+been run.** The parser recognised exactly one phrase, `NOT yet live-verified`. Rows saying *"not yet run
+against a real model"*, *"unproven"*, *"untested"*, *"run it on ONE room first"* all fell through to
+no-status — the bucket the SessionStart banner calls **"unproven, and not flagged as such"**. Their
+authors had flagged them; the counter could not hear it. This is the same failure as the eight
+verified-but-reported-unproven fragments from 2026-08-22, and the file's own conclusion from that day
+applies again: **fix the regex, do not reword rows into an unnatural shape.**
+
+The new test is deliberately the **last** one, after verified/blocked/impossible, which makes it purely
+additive — it can only move a fragment from no-status to not-yet-run, never reclassify a proven one.
+Confirmed by measurement: PROVEN stayed at **247** across the change, while not-run went 97 → **108** and
+no-status 39 → **28**.
+
+Nothing about the library changed. What changed is that its own report of itself got 11 fragments less
+wrong — and the direction of the error is the one that matters, because no-status is the bucket a session
+is told nothing warns it about.
+
+## 2026-08-24 — two tools, one question, two answers: the status counter was duplicated
+
+`brain-status.mjs` carried its own copy of the four regexes that read a fragment's verification status
+out of its `scripts/README.md` row — the same job `fragment-lib.mjs` does for `fragment-index.mjs` and
+the catalogue. Teaching the shared one to recognise plain-English "not yet run" (entry above) moved 11
+fragments there and not here, so the same library reported **108 not-run / 28 no-status** from one tool
+and **97 / 39** from the other, in the same minute.
+
+**The second copy is deleted rather than resynced.** `brain-status.mjs` now imports `readmeRows`,
+`makeStatusOf` and `loadFragments` and counts the results. Both tools now say 247 / 108 / 11 / 28, which
+sums to exactly 394.
+
+That also fixed a quieter bug nobody had noticed. The old code filtered README *rows* by substring;
+`makeStatusOf` matches a row by its **markdown link target**. Eight fragments are named inside a
+*different* fragment's row as prose ("feeds `creators/create-dimension.cs`"), and the row-filter counted
+those rows once per mention — the exact miscount that the link-target rule had already been introduced to
+fix on the other side, in a comment explaining why.
+
+**The rule this is the third instance of:** when two files in this repo answer the same question, they
+will disagree, and the disagreement will be found by accident. The fix is never to resync them — it is
+to delete one. A count computed from disk in one place is the whole reason `brain-status.mjs` exists.
+
+## 2026-08-24 — the whole library compiles on all three Revits: 394 pass, 0 fail
+
+Final gate at the end of the harvest, run in the Linux container against the real shipped `RevitAPI.dll`
+for each version (Roslyn under Mono, same harness shape as `tools/check-scripts.ps1`):
+
+| Revit | Result |
+|---|---|
+| 2020 | **394 pass, 0 fail** |
+| 2024 | **394 pass, 0 fail** |
+| 2027 | **394 pass, 0 fail** |
+
+That is the first clean sweep of the merged library on all three versions — the previous run had three
+failures, all in the parallel session's fragments, all now fixed on their side and taken in by merge.
+
+**A practical note on running it.** A full sweep is ~20 minutes per version because every fragment is a
+separate `csc` invocation under Mono, and three at once contend. The useful habit is to **compile the
+changed files alone first** — 3 × 9 = 27 compiles finished in under a minute here and gave the real
+answer about the delta, while the full sweep ran in the background purely to prove nothing else
+regressed. Targeted first, full second, and the full one never blocks the work.
+
+## 2026-08-24 — branch deletion refused a third time; re-measured rather than recalled
+
+Ajmal asked directly for the four merged `claude/*` branches to be deleted. `git push origin --delete`
+returned **HTTP 403**, as it did on 2026-08-22 and the day before that.
+
+**The point of this entry is that the diagnosis was re-run, not recalled.** The log already said "GitHub
+refuses it, not the proxy" — but a recorded cause is a claim about a past run, and credentials, scopes
+and proxy config all change. So the same one-second test was repeated:
+`curl "$HTTPS_PROXY/__agentproxy/status"` immediately after the failure reports
+`recentRelayFailures: []`. The proxy never saw a failure, so the request reached GitHub and GitHub
+refused it. Same answer, freshly measured. That habit is the same one this day's other entries are
+about: a stored conclusion is not evidence about today.
+
+Safety re-verified too, and by the right test — `git rev-list --count origin/main..origin/<branch>`
+returns **0 for all four**, so `main` contains every commit and nothing is lost by deleting them. (`git
+diff --stat` is NOT that test: two of them show files differing from `main`, which is only them being
+*behind* it.) Their PRs — #30 through #35, #37, #38, #40 — are all closed.
+
+There is no second route: the GitHub API tools available in this session have `create_branch` and **no
+delete counterpart**, and `/root/.ccr/README.md` is explicit that a 403 is to be reported rather than
+worked around.
+
+**Escalated in `docs/HANDOVER.md` from a buried historical note to a numbered to-do in the current
+section**, because it has now been asked for three times and the answer keeps being rediscovered instead
+of read. With it, the fix that ends the class of job rather than this instance: **Settings → General →
+"Automatically delete head branches"**. Deleting today's four does nothing about next month's.
+
 - 2026-08-24 — **The MCP server was never compile-checked, and it had been broken on Revit 2024+ for
   months.** Ajmal asked whether the existing MCP was any good. It is well built — one file per tool, a
   shared filter engine, real tests, honest bridge errors — but it still generated

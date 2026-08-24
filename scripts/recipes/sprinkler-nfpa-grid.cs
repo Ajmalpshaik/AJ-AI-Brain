@@ -64,6 +64,15 @@
 //   floor as "the head count" would have under-counted every room in this model.**
 //   STILL UNPROVEN: gridMode "fixed", baySpacingMm, drawCircles, and the SHAPE WARNING branch — the test
 //   rooms were all exact rectangles (bbox area == room area) with no bay module and nothing drawn.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -147,7 +156,7 @@ else
 
     var bb = room.get_BoundingBox(null);
     double W = bb.Max.X - bb.Min.X, H = bb.Max.Y - bb.Min.Y;
-    double zProbe = room.Level.Elevation + mm(1000);      // probe at room height, not head height
+    double zProbe = room.Level.ProjectElevation + mm(1000);      // probe at room height, not head height
     Func<XYZ, bool> insideRoom = p =>
     { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
 
@@ -374,7 +383,7 @@ else
             else
             {
                 double flatZ = (dv is ViewPlan && (dv as ViewPlan).GenLevel != null)
-                    ? (dv as ViewPlan).GenLevel.Elevation : dv.Origin.Z;
+                    ? (dv as ViewPlan).GenLevel.ProjectElevation : dv.Origin.Z;
                 var made = new List<ElementId>();
                 using (var t = new Transaction(Document, "AJ Tools - Sprinkler Grid"))
                 {

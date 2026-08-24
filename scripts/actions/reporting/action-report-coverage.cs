@@ -43,6 +43,15 @@
 //     drawn as 17 circles — 17 elements, not 34 — grouped as 'MEP_Terminal_Coverage'
 //     flow method at an invented 2 L/s/m2 gave 117.5 m2 EACH — 262% of the floor, which is exactly why
 //     that figure must come from the user rather than from this file.
+//
+// ✱✱ FIXED 2026-08-24 — LEVEL HEIGHTS HERE NOW USE `ProjectElevation`, NOT `Elevation`.
+//    A level has two heights. `Elevation` is measured from whatever the level type's "Elevation Base"
+//    parameter says (Project OR Shared); `ProjectElevation` is always from the project origin, which is
+//    the space every XYZ in the model lives in. This fragment mixes a level height with real
+//    coordinates, so on a model with a survey offset the old code was wrong by exactly that offset —
+//    silently, with a plausible number and no error. See
+//    knowledge/live-model/level-elevation-vs-project-elevation.md, and run
+//    action-report-level-elevations.cs to see whether a given model is affected.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -129,7 +138,7 @@ else
         {
             var mine = pts.Where(e => {
                 var c = centreOf(e);
-                var probe = new XYZ(c.X, c.Y, rm.Level.Elevation + mmToFt(1000));
+                var probe = new XYZ(c.X, c.Y, rm.Level.ProjectElevation + mmToFt(1000));
                 bool inside=false; try { inside = rm.IsPointInRoom(probe); } catch {}
                 return inside; }).ToList();
             if (mine.Count == 0) continue;
@@ -173,7 +182,7 @@ else
         else
         {
             double flatZ = (dv is ViewPlan && (dv as ViewPlan).GenLevel != null)
-                ? (dv as ViewPlan).GenLevel.Elevation : dv.Origin.Z;
+                ? (dv as ViewPlan).GenLevel.ProjectElevation : dv.Origin.Z;
             var made = new List<ElementId>();
             using (var t = new Transaction(Document, "AJ Tools - Draw Coverage Circles"))
             {
