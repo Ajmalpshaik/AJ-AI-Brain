@@ -45,3 +45,85 @@ Used to move a room-center-placed FCU to sit near its door instead (2026-07-08).
   unchanged, replace only the component along `n`. Formula used: `finalXY = doorPt + inward*insetFt +
   t * Dot(originalPoint - doorPt, t)` — i.e. take the perpendicular offset from the door/wall, but the
   tangential (along-wall) position from wherever the equipment already was, not from the door.
+
+## `Default Elevation` is ignored by `NewFamilyInstance` (2026-08-25)
+
+A Mechanical Equipment family's type parameter **`Default Elevation`** only feeds Revit's **UI placement
+tool**. Placing the same family through the API puts it at the given point and **nothing lifts it** —
+18 FCUs with `Default Elevation = 2400` all landed at Z 0, on the floor, with no error.
+
+Set the height explicitly after placing:
+
+```csharp
+var p = inst.get_Parameter(BuiltInParameter.INSTANCE_ELEVATION_PARAM);        // "Elevation from Level"
+// fallback: BuiltInParameter.INSTANCE_FREE_HOST_OFFSET_PARAM                 // "Offset from Host"
+p.Set(2400.0 / 304.8);
+```
+
+Both parameters exist on a level-based equipment family and both are writable; `INSTANCE_ELEVATION_PARAM`
+is the one that reads "Elevation from Level".
+
+**Verify against the geometry, not the parameter.** Read `LocationPoint.Z` or the bounding box — a
+parameter can read 2400 while the instance has not moved.
+
+Expect the bounding box to extend **below** the unit when the family carries a clearance zone: an FCU at
+2400 with 450 mm bottom clearance reports a box starting at 1950.
+
+## Replicating a placement the user has already made by hand
+
+He places one, then asks for the rest — *"I PLACED SME LIKE THAT ADD ALL THE ROOM DOOR"*. **Measure his
+one before copying it.** A door that looked centred was actually **200.0 mm clear of the adjacent wall
+face** — a round number, so deliberate. Copying "centre of the wall" would have been wrong in all 17.
+
+Derive the rule as an offset from a *room edge*, not an absolute coordinate, so it survives rooms of
+different sizes. And match the swing: read `FacingOrientation` on his instance and `flipFacing()` the new
+ones so each opens the same way relative to its own room — rooms on the opposite side of a corridor need
+the opposite facing to achieve the same result.
+
+`FamilyInstance.HostId` does not exist in Revit 2020 — use **`inst.Host.Id`**, guarding for a null Host.
+
+## Matching an element to its room: use containment, never one coordinate
+
+A verification that found each FCU by **X alone** reported all 18 correct when 9 of them were the wrong
+unit. In a corridor layout the rooms on either side share the same X centres, so `Math.Abs(lp.X - cx) <
+tol` always returned the first match — the north row — and it was compared against the south corridor.
+It still printed "yes" for every row.
+
+**Match on the full bounding box:**
+
+```csharp
+var f = list.FirstOrDefault(x => { var lp = x.Location as LocationPoint;
+    return lp != null && lp.Point.X > bb.Min.X && lp.Point.X < bb.Max.X
+                      && lp.Point.Y > bb.Min.Y && lp.Point.Y < bb.Max.Y; });
+```
+
+or `Room.IsPointInRoom`. **A symmetric layout makes a single-axis match silently wrong**, and the failure
+looks like a pass.
+
+## "Move it to the door side, return facing the door"
+
+His standing arrangement for a room off a corridor: FCU pulled toward the corridor wall with the
+**return** connector facing it — return air is drawn back through the door/corridor side, supply blows
+into the room.
+
+- **Corridor side = where that room's door is**, which is the room's low-Y edge for rooms north of a
+  corridor and the high-Y edge for rooms south of it.
+- Position by an offset from the **room boundary** — 1000 mm to the FCU centre worked here — not by an
+  absolute coordinate.
+- The family's return sits on its **+Y** face, so rooms whose corridor is to the **south need a 180°
+  rotation**; rooms whose corridor is north need none.
+
+Rotate about a vertical axis through the instance's own location point:
+
+```csharp
+var p = (f.Location as LocationPoint).Point;
+ElementTransformUtils.RotateElement(doc, f.Id,
+    Line.CreateBound(p, new XYZ(p.X, p.Y, p.Z + 10)), Math.PI);
+```
+
+**Verify by reading the real connectors** — `f.MEPModel.ConnectorManager.Connectors`, checking
+`c.DuctSystemType` and comparing each origin's distance to the corridor wall. Trusting the rotation angle
+alone proves nothing.
+
+**Say the side-effect out loud:** rotating 180 degrees also swaps which side the pipe stubs and control
+box face, so the two rows end up mirrored.

@@ -175,3 +175,36 @@ and all of it is about what a viewport on a sheet will and will not let a script
   `sourceType.Duplicate("new name")`, edit only the duplicate, then `viewport.ChangeTypeId(newTypeId)` on
   just the intended viewports — leaves every other sheet's title style untouched.
 
+
+## Setting view scale: `VIEW_SCALE.IsReadOnly` is the WRONG gate (2026-08-24)
+
+Guarding a bulk scale change with
+
+```csharp
+var p = v.get_Parameter(BuiltInParameter.VIEW_SCALE);
+if (p == null || p.IsReadOnly) { skip; }     // <-- WRONG, skips almost everything
+```
+
+**reports `IsReadOnly == true` on ordinary plans, elevations and 3D views whose `View.Scale` property
+sets perfectly well.** Setting all 8 views of a family to 1:5 this way changed **1 of 8** and reported
+the other 7 as "no settable scale on this view type" — a clean-looking result that was simply false. The
+run says success, the views do not change, and nothing errors.
+
+**Use the `View.Scale` property and let it throw.** Wrap each view in its own `SubTransaction` so a view
+that genuinely refuses cannot poison the others, and read `v.Scale` back afterwards:
+
+```csharp
+using (var st = new SubTransaction(doc)) {
+    st.Start();
+    try { v.Scale = 5; if (v.Scale == 5) st.Commit(); else st.RollBack(); }
+    catch { st.RollBack(); }        // schedules, sheets, perspective 3D
+}
+```
+
+Redone that way: **6 changed, 2 already correct, 0 refused** — every view in the family, including the
+elevations and the 3D view the parameter check had written off.
+
+Generalises past view scale: **an `IsReadOnly` parameter does not mean the underlying property is
+read-only.** Revit exposes plenty of settings as a read-only *parameter* plus a writable *property*. When
+a bulk operation reports a suspiciously large "cannot do this one" count, suspect the gate before
+believing it — and prefer try/catch on the real API over a parameter's own opinion of itself.

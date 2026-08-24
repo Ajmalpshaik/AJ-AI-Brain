@@ -174,6 +174,43 @@ is exactly the one a fresh session cannot route.
   folder before naming a family** — the house convention beats the generic standard, and it is one
   directory listing away.
 
+  **There is also a WRITTEN standard on disk, and it disagrees with the folder** — found 2026-08-24 at
+  `D:\Ajmal\BIM Resources\BIM Resources\Revit_Family_Naming_Guide.docx`, an ISO 19650-inspired guide
+  specifying `[OrganizationCode]_[Category]_[Discipline]_[System]_[Subtype]_[Abbreviations]_[VERSION]`
+  with org code **`TRAGS`**, and it even carries a literal Fan Coil Unit row
+  (`TRAGS_MechanicalEquipment_AC_FanCoilUnit_V01`). **Nothing in `NEW` follows it** — the folder is
+  `TRG_`, not `TRAGS_`, with a different field order. So there are three candidate answers to "what do I
+  call this family", not one, and the earlier "just list the folder" advice was necessary but not
+  sufficient. **Offer him the guide's name AND the folder's name, and let him pick** — he did not pick
+  either.
+
+  **What he actually chose, asked directly on 2026-08-24: `TRG_MECH_EQP_Fan Coil Unit_FCU_R0`** (for a
+  new Mechanical Equipment FCU built from an empty family template). It is neither of the two options
+  offered — it is a reconciliation of both, and the shape is worth reading off:
+  `TRG_` (folder's short org code) + `MECH_EQP` (the guide's Category field) + `Fan Coil Unit` (plain
+  description, spaces kept) + `FCU` (the abbreviation, which the guide has a field for) + `R0`
+  (**revision**, his word, not the guide's `V01` version). Use this shape for the next equipment family
+  and confirm, rather than re-offering the same two rejected options: **`TRG_<CATEGORY>_<Description in
+  words>_<ABBREV>_R<n>`**. Note `R0` not `V01` — he tracks families by revision like a drawing.
+
+  **The library MOVED, and the old path above is the wrong place to save to.** Same day he saved that FCU
+  himself, to a **new root** — note it is `BIM Resources\NEW\`, NOT the old `BIM Resources\BIM
+  Resources\NEW\`, which is one directory level up and easy to misread:
+
+  ```
+  D:\Ajmal\BIM Resources\NEW\Modeling\02_Families\
+      Electrical\                                    (empty)
+      Mechanical\Mechanical Equipment\               <- TRG_MECH_EQP_Fan Coil Unit_FCU_R0.rfa
+      Plumbing\                                      (empty)
+  ```
+
+  Discipline-foldered and number-prefixed (`02_Families`), against the old flat dump of ~30 mixed `.rfa`
+  files. **That FCU is the only file in the whole tree** — so this is a fresh, deliberately structured
+  library being started, and the flat folder is the legacy one. Save a new family under the matching
+  discipline/category folder here; **create the folder if the category has none yet** rather than
+  dropping it at the root. Still list the destination before naming, per the rule above — but list
+  **this** root.
+
 - **"voice mode to Revit and from Revit" / "Claude will talk to Revit and Revit will talk to Claude"**
   → the user's words for the **whole two-way channel between the assistant and Revit**, not the spoken
   narration. Said 2026-08-11. **This reads like a microphone request and is not one** — a fresh session

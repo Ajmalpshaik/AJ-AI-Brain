@@ -5725,3 +5725,14 @@ duration fix reached the entry docs and not the knowledge note. **The new one: g
 before declaring it fixed, not just for the file you remember writing it in.** `grep -rn "about a minute"`
 takes a second and would have caught both. Nothing in the thirteen consistency checks covers a stated
 duration — check 9 verifies live *counts* only — so this class has no automatic guard and needs the grep.
+
+- 2026-08-25 — **Built `TRG_MECH_EQP_Fan Coil Unit_FCU_R0` end-to-end through the bridge** — 7 solids,
+  5 connectors, 32 reference planes in 7 coloured subcategories, 69 parameters (59 shared), 5 formulas,
+  parametric-verified 600x400x150 to 2000x1200x500. Added a `Mechanical_Equipment` group with 26 new
+  definitions to the office shared-parameter file (146 -> 172). `knowledge/live-model/families.md` grew
+  by ~20 sections covering the whole workflow: plane subcategories, spigots, pipe stubs, clearance zones
+  with a visibility switch, connector setup, and the silent-failure traps.
+- 2026-08-25 — **Two files were mistaken for standards in one session** and both had to be stripped from
+  the Brain afterwards: a blank `Project2` (Revit default template content read as the office library)
+  and `STI_ME_FCU_Fan Coil Unit.rfa` (an early self-built family, quoted as a pattern five times). Rule
+  now recorded in `families.md`: a file being open in Revit says nothing about its authority.

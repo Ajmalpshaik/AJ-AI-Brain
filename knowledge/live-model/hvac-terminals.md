@@ -170,3 +170,48 @@ false for every single room even though each FCU was clearly inside its room in 
 point using the element's X/Y but **the room's own `LocationPoint.Z`** instead of the element's real Z —
 `new XYZ(elementPt.X, elementPt.Y, room.Location.Point.Z)` — whenever matching an element to a room by
 horizontal position alone and the element sits well above or below the room's normal occupied height.
+
+## Supply and return must CHECKERBOARD, never sit in separate columns (2026-08-25)
+
+His correction, in his own words: *"WE NEED ZIZ ZAC MENAS ONE SEPALY AND ONE RETURN AND ONE SUPPLY LIKE
+THAT SO SUPPLY DISTAND WILL BE INCRESE NOW ONE SIDE ONLY COOLIG"*.
+
+Laying a 2 x 4 grid out as **one column supply, one column return** looks tidy and is wrong: every supply
+sits at the same X, so one side of the room gets all the cooling and the other side gets only return
+grilles. Ducting it is simpler; the air distribution is not acceptable.
+
+**The rule is a checkerboard:**
+
+```csharp
+bool isSupply = ((col + row) % 2 == 0);
+```
+
+| | col 1 | col 2 |
+|---|---|---|
+| row 1 | S | R |
+| row 2 | R | S |
+| row 3 | S | R |
+| row 4 | R | S |
+
+Supplies land on a diagonal, so the spacing between them roughly doubles and both sides of the room are
+served. Counts stay matched — 4 and 4 on a 2 x 4 grid.
+
+**Ask which pattern before placing** when the user says only "grid" and a supply/return split. Column-split
+and checkerboard both satisfy "4 supply, 4 return" and only one is right.
+
+### Swapping supply for return means replacing the instance
+
+`M_Supply Diffuser` and `M_Return Diffuser` are separate **families**, and `instance.Symbol` can only be
+reassigned within the same family. Changing half a grid from one to the other is a delete-and-recreate,
+not a type swap — so it is usually cleaner to wipe the whole layout and re-place it than to patch
+alternate positions.
+
+**Rule-based view filters survive this.** Filters keyed on `SYMBOL_FAMILY_NAME_PARAM` re-matched all 144
+new instances with no re-application needed.
+
+### When `place-terminals-checkerboard.cs` will not run
+
+The proven fragment derives its terminal count from the room's **Space** and its Specified Supply/Return
+Airflow. In a model with **no Spaces** it stops at *"No Space found for this room"*. It also chooses its
+own count from the airflow, so it cannot honour a count the user has specified ("make it 2 x 4"). In
+either case take its checkerboard logic and place directly.
