@@ -55,7 +55,18 @@ Editing the Revit add-in's own compiled source code (the thing that hosts the br
 Revit side) is a different codebase — out of scope here. This Brain is about using the bridge to work on
 Revit *models*, not building the add-in that provides the bridge.
 
-## Private repo
+## This repo is PUBLIC, and belongs to Ajmal
 
-This repo is private and belongs to Ajmal. It is a standalone package, separate from the AJ Tools plugin
-source repo.
+**Anything committed here is publicly readable.** It is a standalone package, separate from the AJ Tools
+plugin source repo, and being public is what makes the one-line plugin install in [`SETUP.md`](SETUP.md)
+work for anyone Ajmal shares the link with.
+
+This section said *"This repo is private"* from 2026-07-22 until 2026-08-24, while GitHub reported
+`visibility: PUBLIC` the whole time. Nothing was leaked — every tracked file was scanned for tokens,
+keys and passwords when the mismatch was found, and the only `API_KEY` hits were variable *names* in
+documentation. But the line was wrong for a month, and a wrong claim about privacy is worse than no
+claim, because it is the one people act on without re-checking.
+
+**So, before committing:** no credentials, no client-confidential drawings or documents, and no project
+data Ajmal would not put on a public page. Techniques, fragments and his own working vocabulary are the
+point of this repo and belong here.

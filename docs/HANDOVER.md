@@ -44,12 +44,31 @@ plainly where to go instead — the PC.
 Nothing was lost: every branch was measured at **0 commits ahead of `main`** before deletion, checked
 with `git log --oneline origin/main..<branch>` rather than assumed from the PR being merged.
 
+**"Automatically delete head branches" is now genuinely ON**, set from the API on 2026-08-24 and read
+back fresh to prove it saved:
+
+```bash
+gh api -X PATCH repos/Ajmalpshaik/AJ-AI-Brain -F delete_branch_on_merge=true
+gh api repos/Ajmalpshaik/AJ-AI-Brain --jq .delete_branch_on_merge   # must print true
+```
+
+So a merged PR now deletes its own branch and the pile-up above cannot happen again. **The read-back is
+not ceremony** — this exact setting had been reported as on twice before and was off both times.
+
 **Still true and still worth knowing:** across 2026-08-24 Ajmal reported three GitHub actions done that
 measurement showed had not happened — a PR merged (still open), the branches deleted (still present),
-and "Automatically delete head branches" turned on (proven off, because PR #39's head branch survived
-the merge). Twice the belief came from a GitHub UI control that needs a **second confirming click** and
-silently does nothing without it. **When he says a GitHub action is done, verify it before building on
-it** — not out of distrust, but because the UI fails quietly and he has no way to see that it did.
+and this setting turned on (proven off, because PR #39's head branch survived the merge). Twice the
+belief came from a GitHub UI control that needs a **second confirming click** and silently does nothing
+without it. **When he says a GitHub action is done, verify it before building on it** — not out of
+distrust, but because the UI fails quietly and he has no way to see that it did. The API route above
+avoids the whole problem: it writes and reads back in two commands.
+
+**And the repo is PUBLIC, which the README denied for a month.** Confirmed 2026-08-24 two ways
+(`gh api ... --jq .private` → `false`, `gh repo view --json isPrivate` → `false`) against a README that
+had said *"This repo is private"* since 2026-07-22. Ajmal's decision, asked directly: **keep it public**
+— it is what makes the one-line plugin install work — and fix the README, now done. Every tracked file
+was scanned for tokens, keys and passwords when the mismatch surfaced: **nothing exposed**, the only
+`API_KEY` hits being variable names in prose. Treat the repo as publicly readable from here on.
 
 **Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
 not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all
