@@ -102,7 +102,7 @@ All compile on Revit 2020, 2024 and 2027. **None has been run against a real mod
 - **Five solid-geometry traps**, all of which fail quietly, are now written up in
   [`knowledge/live-model/geometry-and-transforms.md`](../knowledge/live-model/geometry-and-transforms.md).
 
-## UPGRADE — 8 existing fragments improved, plus 15 corrected
+## UPGRADE — 8 existing fragments improved, plus 18 corrected
 
 | Fragment | What changed, and why it mattered |
 |---|---|
@@ -114,11 +114,11 @@ All compile on Revit 2020, 2024 and 2027. **None has been run against a real mod
 | [`action-report-length-by-size.cs`](../scripts/actions/reporting/action-report-length-by-size.cs) | Surface area (`RBS_CURVE_SURFACE_AREA`, unread anywhere here before) and optional grouping by system and type — a BOQ line is "Supply Air / Rectangular Duct / 300x150", not a size summed across the building |
 | [`action-rename-element.cs`](../scripts/actions/parameters-naming/action-rename-element.cs) and [`action-find-replace-element-name.cs`](../scripts/actions/parameters-naming/action-find-replace-element-name.cs) | `NamingUtils.IsValidName` — **and it fixes a wrong diagnosis, not just a message.** A name with a prohibited character made EVERY element fail, and the summary then blamed *"name collision, or this element type doesn't support renaming"*, sending you to look for a collision that does not exist. Asked ONCE before the transaction in the first (the name is a property of the string), and PER ELEMENT in the second (which builds a different name for each) |
 | [`create-levels.cs`](../scripts/creators/create-levels.cs) | `.ToHashSet(...)` → the `new HashSet<string>(sequence, comparer)` constructor. Identical behaviour, and it no longer depends on the machine having .NET Framework 4.7.2 when Revit 2020 targets 4.7 — see finding 4 |
-| **15 fragments** switched from `Level.Elevation` to `Level.ProjectElevation` | The defect below |
+| **18 fragments** switched from `Level.Elevation` to `Level.ProjectElevation` | The defect below. (20 in total across the repo — the other two were found and fixed by the parallel session in their own files) |
 
 ## What this harvest found in OUR code
 
-### 1. A level has two heights, and fifteen fragments used the wrong one
+### 1. A level has two heights, and twenty fragments used the wrong one
 
 **The largest finding, and it is silent and conditional — which is the worst combination.**
 
@@ -133,11 +133,15 @@ wording, from the shipped documentation:
 boxes, solid vertices, ray origins, `Room.IsPointInRoom`. So the moment a level height meets a
 coordinate, only `ProjectElevation` is in the same space.
 
-Fifteen fragments mixed them: the **whole fire-sprinkler chain** (obstruction check, obstruction survey,
-adjust-for-obstructions, sidewall layout, layout options, place heads, deflector height, compliance
-audit, NFPA grid), the coverage and routing tools (`action-report-coverage`,
-`action-plan-shortest-route`, `generate-room-coverage-layout`), `action-report-ceiling-heights`,
-`maximize-level-extents` and both dimensioning fragments. The typical line was
+Twenty fragments mixed them. Eighteen are on this branch: the **whole fire-sprinkler chain**
+(obstruction check, obstruction survey, adjust-for-obstructions, sidewall layout, layout options, place
+heads, deflector height, compliance audit, NFPA grid), the coverage and routing tools
+(`action-report-coverage`, `action-plan-shortest-route`, `generate-room-coverage-layout`),
+`action-report-ceiling-heights`, `maximize-level-extents`, both dimensioning fragments, and — found on a
+second pass, see below — the three oldest creators `create-wall.cs`, `create-floor.cs` and
+`create-ceiling.cs`. The parallel session fixed two more in their own files
+(`action-check-valve-accessibility.cs`, `action-auto-create-coordination-views.cs`). The typical line
+was
 
 ```csharp
 double zProbe = room.Level.Elevation + mm(1000);   // then used as a world Z for a ray or a point-in-room test
@@ -146,7 +150,7 @@ double zProbe = room.Level.Elevation + mm(1000);   // then used as a world Z for
 On a test model with Elevation Base = Project the two numbers are identical and nothing shows. On a real
 site model set out to a survey datum — normal on any project with real site levels, and normal for
 Ajmal's work — every affected answer is wrong by exactly the survey offset, with no exception and a
-plausible number. All fifteen are fixed, each with a note in its own header saying what changed and why.
+plausible number. All twenty are fixed, each with a note in its own header saying what changed and why.
 
 **Two fragments were deliberately left on `Elevation`** and now say so out loud, because a future
 session "fixing" them would introduce the error: `action-reassign-level.cs` and
@@ -157,6 +161,40 @@ base cancels.
 Written up as [`knowledge/live-model/level-elevation-vs-project-elevation.md`](../knowledge/live-model/level-elevation-vs-project-elevation.md),
 with [`action-report-level-elevations.cs`](../scripts/actions/reporting/action-report-level-elevations.cs)
 as the ten-second check on any model.
+
+### 1a. The sweep that found it reported clean — and was believed
+
+**This is the more useful finding, and it is not about Revit.**
+
+The audit above grepped for `Level\.Elevation`. That pattern matches `room.Level.Elevation`, and it is
+blind to `level.Elevation` / `lvl.Elevation` / `l.Elevation` — where the variable is *already* a `Level`,
+which is the commoner shape by a wide margin. It returned nothing outside the fifteen it had already
+found, and that nothing was written up as **"checked and clean: none of their 28 new fragments carries the
+defect"** — a claim about the code, resting on a pattern nobody had tested.
+
+The parallel session, sweeping their own files properly, found two the pattern had missed and said so:
+*"a finding from a peer session is evidence, but its 'and I checked X is clean' about files it did not
+write is not proof."* Running the corrected sweep across **everything** then found **three more, all
+ours** — `create-wall.cs:43`, `create-floor.cs:64`, `create-ceiling.cs:84`, each feeding
+`double z = level.Elevation` straight into the `XYZ` of the new element's boundary or location line.
+Three of the oldest fragments in the library, **live-verified since 2026-08-07**, quietly placing walls,
+slabs and ceilings at the wrong height on any survey-datum model.
+
+They survived verification for the same reason the defect is dangerous: the test model's levels use
+Elevation Base = Project, where both properties return the same number. The test passed and proved
+nothing about the case that breaks.
+
+**The rule, worth more than the twenty fixes.** A grep that finds nothing is evidence about the *pattern*,
+never about the *code*. Before reporting a sweep clean, **prove the pattern can see a known instance** —
+grep for the defect you have already fixed and check it comes back. One line, and this would not have
+happened.
+
+The working sweep, and the table for reading its output, are in the knowledge note. That table matters:
+about two dozen of its hits are **correct code** — `OrderBy(l => l.Elevation)` (sorting; both bases are
+monotonic the same way), report rows (the drawing shows `Elevation`, so printing it is right),
+`ProjectPosition.Elevation` and `ViewFamily.Elevation` (different types that share the word), and
+level-to-level differences where the base cancels. A sweep that "fixes" every hit is as wrong as one that
+fixes none.
 
 ### 2. The most-used clash fragment cannot see a linked model
 
@@ -357,9 +395,9 @@ were `scripts/README.md` (both sessions inserted rows in the same table) and `kn
 (both appended entries the same day) — **both resolved by keeping both sides**, with this branch's row
 winning for `action-report-clashes.cs` because this branch changed that fragment.
 
-**Checked, and it came back clean:** none of their 28 new fragments carries the `Level.Elevation`
-defect. The only remaining uses in the whole 394 are the three this harvest deliberately left — two
-level-to-level differences where the base cancels, and one display line.
+**~~Checked, and it came back clean: none of their 28 new fragments carries the `Level.Elevation`
+defect.~~ THAT CLAIM WAS WRONG, and correcting it found three more of our own.** See section 1a below.
+It is the most important thing in this ledger, because the error is in the *method*, not in Revit.
 
 **Two real overlaps, and neither is a duplicate — but a session would have picked whichever it found
 first, so all five now cross-reference each other:**
@@ -376,8 +414,9 @@ deliberately at every merge, not just when someone asks.
 
 ## State at the end
 
-- **366 fragments.** 6 new, 7 upgraded, 15 corrected for the elevation defect, 2 annotated to prevent a
-  wrong "fix".
+- **394 fragments** (366 on this branch, plus the parallel session's 28 merged in). This branch: 6 new,
+  8 upgraded, **18 corrected for the elevation defect**, 2 annotated to prevent a wrong "fix", and
+  3 README rows corrected to match the fragments they describe.
 - **The compile gate ran here, in a Linux container, against the real shipped `RevitAPI.dll` for Revit
   2020, 2024 and 2027** — Roslyn under Mono, with the same harness shape as `tools/check-scripts.ps1`
   (including its `prelude-smoke-test.cs` special case). It was validated by running the **whole

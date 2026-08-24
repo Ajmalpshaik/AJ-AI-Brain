@@ -3,7 +3,7 @@
 Back to [`README.md`](README.md) · sibling: [`datums.md`](datums.md) (extents and bubbles),
 [`geometry-and-transforms.md`](geometry-and-transforms.md) (link transforms).
 
-**Written 2026-08-24 after an audit found this mixed the wrong way in 15 fragments of this library.**
+**Written 2026-08-24 after an audit found this mixed the wrong way in 20 fragments of this library.**
 It is a silent, conditional error: on most demo models the two numbers are identical and everything
 works, and on a real site model with a survey offset every affected result is wrong by exactly that
 offset — with no exception, no warning, and a plausible-looking number in the report.
@@ -88,10 +88,52 @@ routing tools (`action-report-coverage`, `action-plan-shortest-route`,
 `generate-room-coverage-layout`), in `action-report-ceiling-heights` and in the two dimensioning
 fragments. All were switched to `ProjectElevation`.
 
+A second pass the same day found five more, and how they were missed is the part worth keeping:
+
+- `create-wall.cs`, `create-floor.cs`, `create-ceiling.cs` — each fed `double z = level.Elevation` straight
+  into the `XYZ` of the new element's boundary or location line. These are three of the oldest creators in
+  the library, live-verified since 2026-08-07, and every element they have ever made on a survey-datum model
+  was placed at the wrong height with no error.
+- `action-check-valve-accessibility.cs` and `action-auto-create-coordination-views.cs` — found by a peer
+  session working in this repo at the same time, not by this audit.
+
 `action-reassign-level.cs` and `action-change-wall-constraints.cs` were **left on `Elevation`
 deliberately**: they compute a level-to-level *difference* to re-derive an offset parameter, and the
 offset a wall stores is measured against the same base the level reports, so the two cancel. Changing
 those would have introduced the error rather than removed it.
+
+## How to sweep for it — and the grep that lies
+
+The first sweep used `grep -rn "Level\.Elevation"`. That only matches where the word `Level` is literally
+in the expression — `x.Level.Elevation`, `room.Level.Elevation`. It **cannot see the far more common
+shape**, where the variable is already a `Level`:
+
+```csharp
+double z = level.Elevation;    // invisible to the grep above
+lvl.Elevation                  // so is this
+l.Elevation                    // and this
+```
+
+It reported clean and it was wrong. The sweep that actually works:
+
+```bash
+grep -rn "\.Elevation\b" scripts --include=*.cs \
+  | grep -v "ProjectElevation" \
+  | grep -v "ViewType\.Elevation" \
+  | grep -vE "^[^:]+:[0-9]+: *//"
+```
+
+That returns roughly two dozen hits, and **most of them are correct code** — read every one:
+
+| Shape | Verdict |
+|---|---|
+| `.OrderBy(l => l.Elevation)` | **Safe.** Sorting only. Both bases are monotonic in the same direction, so the order is identical either way |
+| printed into `sb` / a report row | **Safe, and usually right** — this is the number the drawing shows |
+| `ProjectPosition.Elevation`, `ViewFamily.Elevation`, `ViewType.Elevation` | **Not this property at all.** Different types that happen to share the word |
+| `levelA.Elevation - levelB.Elevation` re-deriving an offset parameter | **Safe** — the base cancels. Do not "fix" these |
+| the value reaching an `XYZ`, a `.Z`, or a subtraction against a world coordinate | **DEFECT** |
+
+Only the last row is the bug. A sweep that fixes every hit is as wrong as one that fixes none.
 
 ## The related trap, same shape
 

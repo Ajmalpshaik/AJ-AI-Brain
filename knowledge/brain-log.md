@@ -5330,3 +5330,33 @@ plus the verdict table for reading its output, because roughly two dozen of its 
 
 Reported to Ajmal in the same turn rather than quietly amended: the wrong claim had already been written
 into the merge commit message, the ledger and the handover.
+
+## 2026-08-24 — eleven fragments said "not yet run" and the counter could not read it
+
+Rewriting `create-ceiling.cs`'s row in `scripts/README.md` (it still carried the old impossible verdict
+from the Revit-2020-only era, two versions out of date, while the fragment's own header had said so since
+2026-08-23) surfaced two bugs in `tools/fragment-lib.mjs`, the shared status parser behind
+`fragment-index.mjs`, `brain-status.mjs`, the catalogue and the SessionStart banner.
+
+**1. The status tests are plain substring matches, so a row that NARRATES a status becomes it.** The new
+row explained the correction with the sentence `This row said "CONFIRMED IMPOSSIBLE" until today` — and
+`/CONFIRMED IMPOSSIBLE/` put the fragment straight back in the impossible bucket it had just left. Fixed
+by paraphrasing the row ("the old impossible verdict"), with the trap written into the parser next to the
+test so the next person does not spend the same ten minutes.
+
+**2. Eleven fragments were reported as "no status either way" while their rows said plainly they had not
+been run.** The parser recognised exactly one phrase, `NOT yet live-verified`. Rows saying *"not yet run
+against a real model"*, *"unproven"*, *"untested"*, *"run it on ONE room first"* all fell through to
+no-status — the bucket the SessionStart banner calls **"unproven, and not flagged as such"**. Their
+authors had flagged them; the counter could not hear it. This is the same failure as the eight
+verified-but-reported-unproven fragments from 2026-08-22, and the file's own conclusion from that day
+applies again: **fix the regex, do not reword rows into an unnatural shape.**
+
+The new test is deliberately the **last** one, after verified/blocked/impossible, which makes it purely
+additive — it can only move a fragment from no-status to not-yet-run, never reclassify a proven one.
+Confirmed by measurement: PROVEN stayed at **247** across the change, while not-run went 97 → **108** and
+no-status 39 → **28**.
+
+Nothing about the library changed. What changed is that its own report of itself got 11 fragments less
+wrong — and the direction of the error is the one that matters, because no-status is the bucket a session
+is told nothing warns it about.

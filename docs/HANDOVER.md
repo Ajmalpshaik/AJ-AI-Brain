@@ -4,15 +4,29 @@ Last updated: **2026-08-24.** Read top-down. The newest session is first.
 
 ## 2026-08-24 (evening) — THE 183k-LINE SUITE IS DONE. STILL NOT COMMITTED.
 
-**State: 394 fragments after merging the parallel session's 28 (main moved from 360 to 388 mid-flight). This branch adds 6 new, 8 upgraded, 15 corrected. Pushed as draft PR #39.** Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+**State: 394 fragments after merging the parallel session's 28 (main moved from 360 to 388 mid-flight). This branch adds 6 new, 8 upgraded, 18 corrected. Pushed as draft PR #39.** Ledger: [`revitplugins-harvest.md`](revitplugins-harvest.md).
+
+**Proven split, computed 2026-08-24 after everything below landed: 247 proven (63%), 108 flagged
+not-yet-run, 28 with no status either way, 7 blocked, 4 impossible.** The proven COUNT did not move all
+day — the percentage fell because the library grew by 34. Nothing here has been run on a real model since
+the merge; the table further down says which to run first and what each one proves.
 
 **The thing to know before you touch anything height-related.** `Level.Elevation` and
 `Level.ProjectElevation` are two different numbers, and only the second is in the same coordinate space
-as an `XYZ`. **Fifteen fragments here mixed them** — the entire fire-sprinkler chain plus coverage,
-routing, ceiling heights and both dimensioning fragments. All fixed. On a test model the two agree and
-nothing shows; on a site model with a survey offset every affected answer was wrong by that offset.
+as an `XYZ`. **Twenty fragments here mixed them** — the entire fire-sprinkler chain, coverage, routing,
+ceiling heights, both dimensioning fragments, and the three oldest creators (`create-wall`,
+`create-floor`, `create-ceiling`), which have been placing walls, slabs and ceilings at the wrong height
+on survey-datum models since they were written. All fixed. On a test model the two agree and nothing
+shows; on a site model with a survey offset every affected answer was wrong by that offset.
 Read [`../knowledge/live-model/level-elevation-vs-project-elevation.md`](../knowledge/live-model/level-elevation-vs-project-elevation.md)
-before "fixing" any remaining `Elevation` use — two of them are deliberate and say so in their headers.
+before "fixing" any remaining `Elevation` use — two of them are deliberate and say so in their headers,
+and about two dozen more `.Elevation` hits in the library are correct code (sorting, report rows).
+
+**And read the method lesson with it.** The first sweep for this defect grepped `Level\.Elevation`, which
+cannot see `level.Elevation` where the variable is already a `Level` — the commoner shape. It returned
+nothing and got written up as "checked and clean". The peer session found two it missed; a corrected
+sweep found three more. **A grep that finds nothing is evidence about the pattern, not about the code —
+prove the pattern can see a defect you already fixed before calling a sweep clean.**
 
 **Run these first when a model is next open.** All read-only, all cost nothing:
 
@@ -99,6 +113,9 @@ The five repos themselves are done: align-tag read in full, HOK all 18 projects 
 explorers mined for their trap lists, the add-in manager skipped on a read rather than a survey.
 
 ### The thing that matters more than any repo
+
+> *Numbers below are as of that day and are kept as written. Today's are in the newest section at the
+> top of this file, and `node tools/brain-status.mjs` computes them live — trust that over any line here.*
 
 **247 of 360 fragments are proven (69%). That went DOWN from 74% this morning** — harvesting adds
 unproven code faster than anything proves it. 63 are flagged untested and 38 have no status either way;

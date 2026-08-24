@@ -9,10 +9,10 @@
 | Status | Count |
 |---|---|
 | ✅ PROVEN | 247 |
-| ⚠️ not run | 97 |
-| ❓ unproven | 38 |
+| ⚠️ not run | 108 |
+| ❓ unproven | 28 |
 | ⛔ blocked | 7 |
-| 🚫 impossible | 5 |
+| 🚫 impossible | 4 |
 
 ## actions/color-graphics  *(25)*
 
@@ -59,7 +59,7 @@
 | ✅ | `action-move-to-ray-hit.cs` | Fire ONE ray out of each element in `elements` and move that element to whatever the ray hits, plus an optional offset. The general "snap this to the thing above/below/beside it" job — air t... |
 | ✅ | `action-offset-elements.cs` | Offset each linear element in `elements` sideways by a perpendicular distance — the "AutoCAD Offset" operation. Works on anything with a Line/Arc LocationCurve (duct, pipe, cable tray, condu... |
 | ✅ | `action-rotate-elements.cs` | Rotate every element in `elements` around a vertical axis by one angle (degrees) — e.g. spin a mis-oriented piece of equipment 90 degrees, or rotate a cluster of terminals to match a new roo... |
-| ❓ | `action-snap-to-ceiling-grid.cs` | Move each point-based element in `elements` sideways onto the nearest CEILING TILE CENTRE — diffusers, sprinklers, light fittings, smoke detectors sitting neatly on the grid instead of "some... |
+| ⚠️ | `action-snap-to-ceiling-grid.cs` | Move each point-based element in `elements` sideways onto the nearest CEILING TILE CENTRE — diffusers, sprinklers, light fittings, smoke detectors sitting neatly on the grid instead of "some... |
 | ✅ | `action-trim-extend-elements.cs` | Trim or extend exactly TWO linear elements in `elements` so they meet cleanly at one corner — the "AutoCAD Trim/Extend to a corner" operation. Works on anything with a straight Line Location... |
 
 ## actions/parameters-naming  *(21)*
@@ -207,7 +207,7 @@
 | ✅ | `action-create-view-template-from-view.cs` | Save a fully-configured view's current settings (V/G overrides, Filters, Category overrides, Phase, Detail Level, Scale, Discipline, ...) as a brand new named View Template — Revit's own "Cr... |
 | ❓ | `action-dimension-mep-runs.cs` | Dimension between DUCTS, PIPES, CONDUIT and CABLE TRAYS in one view — the spacing string across a corridor of services. Gets its references by WALKING THE GEOMETRY, which is the only route t... |
 | ✅ | `action-dimension-rooms.cs` | Put real Revit dimensions on each ROOM in `elements` — its overall width and depth, measured wall face to wall face, drawn just outside the room. "Dimension all the rooms", "put the room siz... |
-| ❓ | `action-dimension-wall-openings.cs` | Dimension ALONG each wall in `elements`, picking up every DOOR and WINDOW opening in it — a running string (wall end -> jamb -> jamb -> wall end) plus a second OVERALL dimension outside it... |
+| ⚠️ | `action-dimension-wall-openings.cs` | Dimension ALONG each wall in `elements`, picking up every DOOR and WINDOW opening in it — a running string (wall end -> jamb -> jamb -> wall end) plus a second OVERALL dimension outside it... |
 | ✅ | `action-duplicate-sheet.cs` | Duplicate each ViewSheet in `elements` — new sheet with the same title block, plus (on request) duplicates of every placed view dropped at the SAME viewport positions, and schedules re-place... |
 | ✅ | `action-duplicate-view-template.cs` | Duplicate an existing View Template (by name) into a new, separately-named template with the same settings — a starting point for a variant without hand-rebuilding it. Different from action-... |
 | ✅ | `action-duplicate-views.cs` | Duplicate each view in `elements` — plain duplicate, duplicate-with-detailing (keeps annotations/details), or as a dependent view (stays linked to the parent's crop/changes). |
@@ -262,7 +262,7 @@
 | ⚠️ | `action-connect-open-connectors.cs` | Find pairs of OPEN connectors in `elements` that are close enough and compatible enough to belong together, and join them. The "these two pieces are touching but Revit doesn't think they're... |
 | ⚠️ | `action-convert-cad-to-directshape.cs` | Turn an imported CAD solid into REAL Revit elements — one DirectShape per solid, in a category you choose. The fix for "the contractor sent a 3D DWG and Revit treats it as one lump": afterwa... |
 | ⚠️ | `action-copy-from-link.cs` | Copy elements FROM a linked RVT model INTO this host model, placed at their true linked position (the link's full transform applied) — "bring those walls/fixtures from the arch link into our... |
-| ❓ | `action-create-from-room-boundaries.cs` | Build a Floor, a Ceiling, a Filled Region or detail lines ON each Room/Space in `elements`, taking the shape from the room's OWN boundary — "put a ceiling in every room", "give me a slab und... |
+| ⚠️ | `action-create-from-room-boundaries.cs` | Build a Floor, a Ceiling, a Filled Region or detail lines ON each Room/Space in `elements`, taking the shape from the room's OWN boundary — "put a ceiling in every room", "give me a slab und... |
 | ✅ | `action-delete-elements.cs` | Permanently delete every element in `elements`. This is the one action fragment with no safe undo built in beyond Revit's own native Undo — treat it as the highest-risk action in this folder... |
 | ⚠️ | `action-disallow-join.cs` | Turn OFF automatic end-joining on the walls and structural framing in `elements` — the fix for walls that clean up into each other where they should read as separate, and for beams whose end... |
 | ✅ | `action-duplicate-type.cs` | Duplicate the TYPE(s) behind `elements` into new, separately-named type(s) — e.g. make a new 250x250 duct accessory type from an existing 200x200 one. Resolves each element's own type, DEDUP... |
@@ -270,7 +270,7 @@
 | ✅ | `action-group-elements.cs` | Bundle every element in `elements` into a new Model Group — e.g. a repeated toilet-room block or an FCU-and-terminals cluster, so it can be copied/moved/mirrored as one unit. Model Groups ar... |
 | ✅ | `action-join-geometry.cs` | Join (or unjoin) the geometry of every element in `elements` with ONE specific target element — e.g. join a batch of structural framing into a column, or unjoin a batch from a wall. Many-to-... |
 | ✅ | `action-maximize-datum-extents.cs` | Make the GRIDS and LEVELS in `elements` span the WHOLE model — "the grids only go half way", "maximize the grids to the entire model", "some grids are short and they all end in a different p... |
-| ❓ | `action-place-accessory-on-run.cs` | Insert a duct/pipe ACCESSORY (VCD, fire damper, valve, strainer...) INTO each existing run in `elements` — the run is cut in two and both cut ends are connected to the accessory, so the syst... |
+| ⚠️ | `action-place-accessory-on-run.cs` | Insert a duct/pipe ACCESSORY (VCD, fire damper, valve, strainer...) INTO each existing run in `elements` — the run is cut in two and both cut ends are connected to the accessory, so the syst... |
 | ❓ | `action-purge-unplaced-views.cs` | Find (and on request DELETE) views that are not on any sheet — 3D views, sections, schedules, legends and drafting views. The "clean up the working views nobody put on a sheet" job, before i... |
 | ✅ | `action-purge-unused-families.cs` | Find (and on request delete) loadable FAMILY TYPES with zero placed instances, and whole families where every type is unused — the biggest file-size win in native Purge Unused, which action-... |
 | ✅ | `action-purge-unused.cs` | Delete unused View Templates, unused View/Selection Filters, or unused Materials — the subset of Revit's native "Purge Unused" that's actually provably correct from the PUBLIC API (each mode... |
@@ -335,7 +335,7 @@
 | ✅ | `context-shared-coordinates.cs` | Report the document's coordinate setup — Project Base Point, Survey Point, active Project Location name, and the True North rotation. The orientation step before any "does this model sit in... |
 | ✅ | `context-used-families.cs` | List every loadable family in the model (component families brought in from .rfa files) — NOT system families like Wall/Floor/Roof types, and not in-place families. Read-only, zero input, sa... |
 | ✅ | `context-workset-info.cs` | Report whether the document is workshared, and if so, list every user workset with its open/closed state and owner. Read-only, zero input, safe to call anytime. |
-| ❓ | `harvest-revit-api.cs` | Dump the ENTIRE Revit API of the running Revit to disk, as a corpus for the SEPARATE API index in `api-index/`. Read-only, changes nothing in the model. Run once per Revit version. WHY REFLE... |
+| ⚠️ | `harvest-revit-api.cs` | Dump the ENTIRE Revit API of the running Revit to disk, as a corpus for the SEPARATE API index in `api-index/`. Read-only, changes nothing in the model. Run once per Revit version. WHY REFLE... |
 
 ## creators  *(36)*
 
@@ -343,7 +343,7 @@
 |---|---|---|
 | ✅ | `create-cable-tray.cs` | Draw ONE straight cable tray between two mm points — electrical containment twin of create-duct.cs. |
 | ✅ | `create-callout-view.cs` | Create a Callout view inside a parent view over an mm rectangle — the last of the common view types create-view.cs excludes (elevations are create-room-elevations.cs). |
-| 🚫 | `create-ceiling.cs` | Create a Ceiling from a closed boundary of mm plan points on a given Level. |
+| ⚠️ | `create-ceiling.cs` | Create a Ceiling from a closed boundary of mm plan points on a given Level. |
 | ✅ | `create-conduit.cs` | Draw ONE straight conduit between two mm points — the round electrical containment twin of create-cable-tray.cs. |
 | ✅ | `create-dimension.cs` | Create one dimension string across 2+ Grids and/or Levels, in a given view. |
 | ✅ | `create-duct.cs` | Draw ONE straight duct between two mm points — the plain, general-purpose version of what the HVAC recipes do inside their multi-stage builds. For full FCU-to-terminal systems use the recipe... |
@@ -374,7 +374,7 @@
 | ✅ | `create-text-note.cs` | Place one or more Text Notes at given points in a view. |
 | ✅ | `create-view.cs` | Create a new View — Floor Plan (at a given Level), 3D (isometric), or Section (through a given mm box). The three genuinely simple, reliable ViewFamily cases; a Callout/Elevation/Drafting vi... |
 | ✅ | `create-wall.cs` | Create one straight Wall between two mm plan points on a Level with a given height — the basic line-based case (no profiles, no arcs, no openings). |
-| ❓ | `create-workset-3d-views.cs` | Create one isometric 3D view PER USER WORKSET, each showing only its own workset and hiding all the others — the coordination set-up job: "give me a 3D view for each workset so I can see wha... |
+| ⚠️ | `create-workset-3d-views.cs` | Create one isometric 3D view PER USER WORKSET, each showing only its own workset and hiding all the others — the coordination set-up job: "give me a 3D view for each workset so I can see wha... |
 | ⛔ | `create-workset.cs` | Create one or more new user Worksets — feeds action-set-workset.cs (assign elements onto a workset that didn't exist yet). |
 | ✅ | `load-family.cs` | Load one or more .rfa family files from disk into the project — File > Load Family, scripted. The missing first step before create-point-based-element.cs when the family isn't in the model y... |
 
@@ -401,7 +401,7 @@
 | ✅ | `filter-by-material.cs` | Elements that use a specific Revit Material — compound-layer/structural material by default; set includePaint = true to also catch paint overrides. Pairs naturally with action-report-materia... |
 | ✅ | `filter-by-multiple-categories.cs` | Collect instances from several categories into one reusable element set. Use this for system groups like "duct system", "pipe system", "cable tray system", or any request where the user name... |
 | ✅ | `filter-by-types.cs` | The TYPE elements themselves (FamilySymbol, or a system-family type like DuctType/PipeType/ WallType), matched by family name and/or type name — NOT the placed instances. Use this to target... |
-| ❓ | `filter-by-wrong-category.cs` | Find elements that ARE one thing but were MODELLED as another — the family name, type name or equipment-tag prefix says "louvre" / "damper" / "fan", but the element sits in the wrong Revit c... |
+| ⚠️ | `filter-by-wrong-category.cs` | Find elements that ARE one thing but were MODELLED as another — the family name, type name or equipment-tag prefix says "louvre" / "damper" / "fan", but the element sits in the wrong Revit c... |
 
 ## filters/by-location  *(7)*
 
@@ -477,11 +477,11 @@
 
 | | Fragment | What it does |
 |---|---|---|
-| ❓ | `audit-flex-curves.cs` | Audit every FLEX DUCT and FLEX PIPE in the model (or one view): size, how long each run really is, how much slack it is carrying, whether both ends are actually connected, and which runs exc... |
+| ⚠️ | `audit-flex-curves.cs` | Audit every FLEX DUCT and FLEX PIPE in the model (or one view): size, how long each run really is, how much slack it is carrying, whether both ends are actually connected, and which runs exc... |
 | ⚠️ | `build-test-fixtures.cs` | Create, in an empty scratch model, the fixtures that several fragments cannot be tested without. brain-log's open items list has a whole category reading "needs a live bridge AND a model tha... |
 | ✅ | `connect-equipment-to-air-terminals.cs` | Connect ONE mechanical equipment's supply-air connector to ALL free air terminals as a proper branched system: main trunk out of the equipment connector -> tap per terminal -> 300x300 (or te... |
 | ✅ | `connect-terminal-branch.cs` | Connect one air terminal to the main duct — vertical riser up to the main duct's height, a real elbow fitting at the turn, then a horizontal run tapped into the main duct via a takeoff tee... |
-| ❓ | `create-equipment-family-from-datasheet.cs` | Build a manufacturer equipment family (.rfa) from a product datasheet, in one pass: a parametric box cabinet, any number of round connector stubs carrying PIPE or ELECTRICAL connectors (top... |
+| ⚠️ | `create-equipment-family-from-datasheet.cs` | Build a manufacturer equipment family (.rfa) from a product datasheet, in one pass: a parametric box cabinet, any number of round connector stubs carrying PIPE or ELECTRICAL connectors (top... |
 | ❓ | `create-mep-line-standards.cs` | One-click setup of the full MEP drafting line standard in any project: 1) Line patterns (dash-dot section, hidden, centre, phantom, demo, match, existing) 2) Line styles (MEP_ prefix, max li... |
 | ❓ | `create-mep-openings.cs` | Cut real OPENINGS (sleeves) in walls, floors and beams wherever the MEP runs in `elements` pass through them — "put the sleeves in", "cut the holes for the ducts". Finds each crossing by REA... |
 | ❓ | `create-mep-text-standards.cs` | One-click setup of Ajmal's MEP text annotation standard in any project: 1) 120 text note types — the full matrix: 6 sizes x 10 colours x box/no-box, named MEP_Anno_Arial_[Size]mm[_Colour][_B... |
@@ -499,7 +499,7 @@
 | ✅ | `place-terminals-checkerboard.cs` | Place a room's brand-new supply/return air terminals in a near-square checkerboard grid with matched supply/return counts, and set each instance's own Flow parameter. |
 | ⚠️ | `ray-trace-to-ceiling.cs` | Snap each element in `elements` (e.g. a diffuser/air terminal) to the nearest ceiling directly above it — casts a ray straight up from the element's current point using Revit's real ray-cast... |
 | ✅ | `set-space-airflow.cs` | Create/find the MEP Space for each room on a level, set its Specified Supply/Return Airflow from a thumb-rule, and cascade the new total to any air terminals already placed in that room (ref... |
-| ❓ | `size-domestic-water-pipe.cs` | Size a COLD or HOT WATER SUPPLY run the standard way — water supply fixture units (WSFU) -> probable demand in GPM off Hunter's curve -> smallest pipe that holds the velocity limit -> Hazen-... |
+| ⚠️ | `size-domestic-water-pipe.cs` | Size a COLD or HOT WATER SUPPLY run the standard way — water supply fixture units (WSFU) -> probable demand in GPM off Hunter's curve -> smallest pipe that holds the velocity limit -> Hazen-... |
 | ✅ | `slice-trunk-for-sizing.cs` | Slice a main HVAC trunk duct into separate segments at each terminal-branch takeoff point, offset downstream past the takeoff's own body + a clearance margin, so each resulting segment can l... |
 | ✅ | `split-duct-near-equipment.cs` | Split a duct at a given gap distance from an equipment connector (e.g. leave a 200mm gap right at an FCU for a future flex-duct connection), and explicitly reconnect the resulting joint. Sim... |
 | ⚠️ | `sprinkler-adjust-for-obstructions.cs` | For each sprinkler head that fails an obstruction rule, find the SMALLEST move that clears it without breaking anything else — still inside the room, still off the walls, still far enough fr... |

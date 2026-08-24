@@ -164,3 +164,40 @@ any log written across an edit as void.
 actually installed on the PC, which is the question that matters before Ajmal runs anything. The
 container gate is a pre-flight — but it turns "compile-checked" from a promise into a fact while the
 work is being written, rather than a step that waits for a different machine.
+
+## Auditing OUR code for a defect the harvest surfaced (added after the seventh harvest)
+
+The most valuable output of a harvest is not a new fragment — it is a defect found in the library that
+was already here. Both of the biggest findings on 2026-08-24 were that shape. And **both times the audit
+itself went wrong in the same way**, so the method is worth writing down.
+
+**A grep that finds nothing is evidence about the PATTERN, never about the CODE.** The level-elevation
+audit searched for `Level\.Elevation`. That matches `room.Level.Elevation` and is blind to
+`level.Elevation` / `lvl.Elevation` / `l.Elevation` — where the variable is already a `Level`, which is
+the commoner shape by far. It returned nothing beyond what was already known, and the nothing was
+written up as *"checked and clean: none of the other session's 28 fragments carries the defect"*. That is
+a claim about the code resting on an untested pattern. A peer session found two it had missed; running
+the corrected sweep across everything found **three more, in our own oldest creators** — live-verified
+fragments that had been placing walls, floors and ceilings at the wrong height for weeks.
+
+So, before reporting any sweep clean:
+
+1. **Prove the pattern can see a known instance.** Grep for a case you have already fixed and check it
+   comes back. One line. It would have caught this immediately.
+2. **Search for the property, not for the expression you happen to remember.** `\.Elevation\b`, not
+   `Level\.Elevation`. Cast wide, then read.
+3. **Expect most hits to be correct code, and write down the verdict rule.** That sweep returns roughly
+   two dozen hits of which only five were defects; the rest were sorting, report rows, and different
+   types that share the word. A sweep that "fixes" every hit is as wrong as one that fixes none — so the
+   knowledge note has to carry the table that separates them, or the next session re-derives it or,
+   worse, mass-edits.
+4. **Never claim a clean result for files you did not write.** A peer session's summary of it: *"a
+   finding from a peer session is evidence, but its 'and I checked X is clean' about files it did not
+   write is not proof."*
+
+**And a live-verified fragment is not immune.** All three creators passed a real run on 2026-08-07. They
+passed because the test model's levels use Elevation Base = Project, where both properties return the
+same number — the test exercised the case that works and proved nothing about the case that breaks. When
+a defect is *conditional on model configuration*, "verified" in `scripts/README.md` carries no weight
+against it. Say so in the row when you fix it, rather than leaving a verification date that implies the
+question was asked.
