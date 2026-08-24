@@ -1,7 +1,8 @@
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "unhide_elements",
     "Reverse a PERMANENT per-element hide on matching elements. Not for temporary isolate/hide — use " +
       "reset_isolation for that.",

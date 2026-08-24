@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "list_elements",
     "List the actual matching elements (Element Id + Category + Family/Type) for a category/filter, " +
       "or for a given list of Element Ids. Use this instead of count_elements when the user wants the " +
@@ -13,7 +14,7 @@ export function register(server) {
       const cap = maxRows || 50;
       const script = [
         buildElementsClause(filter),
-        `foreach (var e in elements.Take(${cap})) sb.AppendLine("Id " + e.Id.IntegerValue + ": '" + e.Name + "' — " + (e.Category?.Name ?? "(no category)"));`,
+        `foreach (var e in elements.Take(${cap})) sb.AppendLine("Id " + __IdValue(e.Id) + ": '" + e.Name + "' — " + (e.Category?.Name ?? "(no category)"));`,
         `if (elements.Count > ${cap}) sb.AppendLine("... " + (elements.Count - ${cap}) + " more not shown.");`,
         `return sb.ToString();`,
       ].join("\n");

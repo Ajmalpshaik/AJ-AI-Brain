@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "delete_elements",
     "Permanently delete matching elements. HIGHEST RISK tool in this set — confirm the real count with " +
       "the user (e.g. via list_elements or count_elements) before calling this, every time.",

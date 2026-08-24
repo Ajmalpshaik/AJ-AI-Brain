@@ -5,6 +5,8 @@
 import { z } from "zod";
 import { callBridge } from "../bridge-connection.js";
 import { asToolResult } from "./tool-result.js";
+import { mmToFtExpr } from "./units.js";
+import { idValuePreamble, ID_VALUE_CALL, makeIdExpr } from "./element-id.js";
 
 export function cs(value) {
   return JSON.stringify(value ?? null);
@@ -17,8 +19,9 @@ export function buildElementsClause(input) {
   const { elementIds, category, familyName, parameterName, comparison, valueMm, valueMaxMm, toleranceMm } = input;
 
   if (elementIds && elementIds.length > 0) {
-    const idArray = elementIds.map((id) => `new ElementId(${Number(id)})`).join(", ");
+    const idArray = elementIds.map((id) => makeIdExpr(id)).join(", ");
     return [
+      idValuePreamble(),
       `var __ids = new List<ElementId> { ${idArray} };`,
       `List<Element> elements = __ids.Select(id => Document.GetElement(id)).Where(e => e != null).ToList();`,
       `var sb = new System.Text.StringBuilder();`,
@@ -27,6 +30,7 @@ export function buildElementsClause(input) {
   }
 
   const lines = [
+    idValuePreamble(),
     `Category __category = null;`,
     `foreach (Category __cat in Document.Settings.Categories) { if (__cat.Name.Equals(${cs(category)}, StringComparison.OrdinalIgnoreCase)) { __category = __cat; break; } }`,
     `List<Element> elements = new List<Element>();`,
@@ -62,9 +66,9 @@ export function buildElementsClause(input) {
         comparisonExpr = "Math.Abs(v - __valueFt) <= __toleranceFt";
     }
     lines.push(
-      `    double __valueFt = UnitUtils.ConvertToInternalUnits(${Number(valueMm) || 0}, DisplayUnitType.DUT_MILLIMETERS);`,
-      `    double __toleranceFt = UnitUtils.ConvertToInternalUnits(${Number(toleranceMm) || 1}, DisplayUnitType.DUT_MILLIMETERS);`,
-      `    double __valueMaxFt = UnitUtils.ConvertToInternalUnits(${Number(valueMaxMm) || 0}, DisplayUnitType.DUT_MILLIMETERS);`,
+      `    double __valueFt = ${mmToFtExpr(valueMm)};`,
+      `    double __toleranceFt = ${mmToFtExpr(Number(toleranceMm) || 1)};`,
+      `    double __valueMaxFt = ${mmToFtExpr(valueMaxMm)};`,
       `    elements = elements.Where(e => { var p = e.LookupParameter(${cs(parameterName)}); if (p == null || p.StorageType != StorageType.Double) return false; double v = p.AsDouble(); return ${comparisonExpr}; }).ToList();`
     );
   }
@@ -76,10 +80,15 @@ export function buildElementsClause(input) {
   return lines.join("\n");
 }
 
-export function buildViewClause(targetViewId) {
-  return targetViewId
-    ? `View view = Document.GetElement(new ElementId(${Number(targetViewId)})) as View;`
+// `standalone` matters because the id helpers can only be declared ONCE per script. Every tool that
+// takes a view also resolves elements first, so buildElementsClause has already emitted the preamble
+// and this must not repeat it. reset_isolation is the one tool that takes a view and nothing else —
+// it passes standalone:true and gets its own copy.
+export function buildViewClause(targetViewId, { standalone = false } = {}) {
+  const resolve = targetViewId
+    ? `View view = Document.GetElement(${makeIdExpr(targetViewId)}) as View;`
     : `View view = Document.ActiveView;`;
+  return standalone && targetViewId ? [idValuePreamble(), resolve].join("\n") : resolve;
 }
 
 // Shared zod fields for the element-resolution input every element-targeting tool accepts.

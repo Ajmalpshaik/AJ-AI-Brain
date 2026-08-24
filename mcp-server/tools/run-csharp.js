@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { callBridge } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "run_csharp",
     "Run a C# snippet against the currently open Revit document (via AJ Tools' AJ AI bridge). " +
       "Use Document/UIDocument/Application/UIApplication directly by name (same globals as the AJ AI shell). " +

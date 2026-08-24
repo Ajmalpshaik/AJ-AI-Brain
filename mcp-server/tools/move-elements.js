@@ -1,15 +1,17 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated } from "../shared/element-filter.js";
+import { mmToFtExpr } from "../shared/units.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "move_elements",
     "Translate matching elements by one offset vector (mm).",
     { ...filterFields, offsetXmm: z.number().default(0), offsetYmm: z.number().default(0), offsetZmm: z.number().default(0) },
     async ({ offsetXmm, offsetYmm, offsetZmm, ...filter }) => {
       const script = [
         buildElementsClause(filter),
-        `XYZ __t = new XYZ(UnitUtils.ConvertToInternalUnits(${Number(offsetXmm) || 0}, DisplayUnitType.DUT_MILLIMETERS), UnitUtils.ConvertToInternalUnits(${Number(offsetYmm) || 0}, DisplayUnitType.DUT_MILLIMETERS), UnitUtils.ConvertToInternalUnits(${Number(offsetZmm) || 0}, DisplayUnitType.DUT_MILLIMETERS));`,
+        `XYZ __t = new XYZ(${mmToFtExpr(offsetXmm)}, ${mmToFtExpr(offsetYmm)}, ${mmToFtExpr(offsetZmm)});`,
         `int __moved = 0, __skipped = 0;`,
         `using (var t = new Transaction(Document, "AJ AI - Move Elements")) {`,
         `  t.Start();`,

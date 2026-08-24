@@ -1,7 +1,8 @@
 import { filterFields, buildElementsClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "select_elements",
     "Set matching elements as the active Revit selection, visible to the user in the UI.",
     filterFields,

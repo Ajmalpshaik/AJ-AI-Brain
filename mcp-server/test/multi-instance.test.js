@@ -56,8 +56,8 @@ test("the two Revit-instance tools register well-formed, one per module", async 
     const registrations = [];
     return {
       registrations,
-      tool: (name, description, schema, handler) =>
-        registrations.push({ name, description, schema, handler }),
+      registerTool: (name, config, handler) =>
+        registrations.push({ name, description: config.description, schema: config.inputSchema, annotations: config.annotations, handler }),
     };
   };
 

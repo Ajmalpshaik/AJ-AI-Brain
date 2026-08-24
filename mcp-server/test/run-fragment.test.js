@@ -22,7 +22,7 @@ import { loadFragments, inputsBlockRange, parseDeclarationLine } from "../../too
 
 function makeRunner() {
   let handler;
-  registerRunFragment({ tool: (name, desc, schema, h) => { handler = h; } });
+  registerRunFragment({ registerTool: (name, config, h) => { handler = h; } });
   return async (args) => JSON.parse((await handler(args)).content[0].text);
 }
 const run = makeRunner();

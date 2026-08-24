@@ -12,9 +12,10 @@
 import { z } from "zod";
 import { selectBridgeInstance, describeInstance } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "use_revit_instance",
     "Pin this chat to one Revit session, by its pid from list_revit_instances. Every later command goes " +
       "to that Revit only. Ask Ajmal which session he means before calling this - never choose for him " +

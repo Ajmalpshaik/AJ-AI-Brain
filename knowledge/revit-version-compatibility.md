@@ -3,6 +3,28 @@
 Every fragment in `scripts/` was written against **Revit 2020**. This note records what actually breaks
 on a newer Revit — measured, never estimated.
 
+> **2026-08-24 — the migration had a hole, and it was the tool that measures it.** Everything below
+> was about `scripts/`. But roughly half the C# that reaches Revit in a normal session is never a
+> fragment: the MCP server BUILDS it, line by line, in `mcp-server/tools/*.js`. `check-scripts` only
+> ever read `scripts/*.cs`, so that half had **never been compiled against any Revit** — and it still
+> held eight `DisplayUnitType.DUT_MILLIMETERS` calls, months after the same call was swept out of 93
+> fragment files. `model_summary` and `move_elements` were dead on any Revit above 2020, and twelve
+> more tools died the moment a mm filter was used, while this tool reported all green.
+>
+> Proved rather than argued, with the same harness: the old line compiles on Revit 2020 and fails on
+> 2024 with `CS0122: 'DisplayUnitType' is inaccessible due to its protection level`.
+>
+> Fixed the same day, and the hole closed with it. `check-scripts` now runs
+> `mcp-server/emit-generated-csharp.mjs` first, which writes out every distinct script the server can
+> generate — **branches, not tools**, since three of those eight copies only appeared on a mm filter
+> and one only on the numeric branch of `set_parameter_value`. Both halves then go through the same
+> compiler. First full run after the fix: **393 scripts (360 fragments + 33 generated) compiled clean
+> on Revit 2020, 2024 and 2027.**
+>
+> **The lesson is about the checker, not the API.** A green check is only as wide as what the checker
+> reads. When code that reaches Revit lives somewhere new, the checker has to be told — nothing warns
+> you that it is measuring a shrinking share of the truth.
+
 **Short answer, re-measured 2026-08-22 against all 290 fragments: the migration worked.**
 `tools\check-scripts.cmd` compiled the library clean on **Revit 2020, 2024 and 2027** on 2026-08-20, and
 a fresh scan today finds **one** unmigrated call site left, in one file, described under "Keeping it

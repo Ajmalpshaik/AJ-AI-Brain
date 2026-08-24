@@ -1,7 +1,8 @@
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "isolate_elements",
     "Temporary-isolate matching elements in a view, resetting any prior isolation first.",
     { ...filterFields, ...viewField },

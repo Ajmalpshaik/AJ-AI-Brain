@@ -4876,3 +4876,42 @@ to separate "the fitting is stale" from "the family cannot do this".
   bridge's own add-in is) plus a built-in-parameter checker already covered by
   `action-report-parameter-inventory.cs`. Recorded because a survey-grade skip and a read-grade skip are
   not the same claim, and the method exists to stop the first masquerading as the second.
+
+- 2026-08-24 — **The MCP server was never compile-checked, and it had been broken on Revit 2024+ for
+  months.** Ajmal asked whether the existing MCP was any good. It is well built — one file per tool, a
+  shared filter engine, real tests, honest bridge errors — but it still generated
+  `DisplayUnitType.DUT_MILLIMETERS` in eight places, and that name is gone from the API after 2020
+  (measured in the DLLs: 4 hits in Revit 2020, 0 in 2024, 0 in 2027). Because the bridge compiles what
+  it is sent, that is a hard compile error on the first call, not a warning: `model_summary` and
+  `move_elements` were dead on any Revit above 2020, and twelve more tools died the moment a mm filter
+  was used.
+
+  **The interesting part is why nothing caught it.** The identical call was swept out of 93 fragment
+  files on 2026-08-20 and `check-scripts` has reported green ever since — but `check-scripts` only ever
+  read `scripts/*.cs`, and roughly half the C# that reaches Revit is built at run time in
+  `mcp-server/tools/*.js`. The checker was measuring a shrinking share of the truth and nothing said so.
+  Proved rather than argued, using the same harness: the old line passes on 2020 and fails on 2024 with
+  `CS0122: 'DisplayUnitType' is inaccessible due to its protection level`.
+
+  Fixed with arithmetic, not a version guard — `mm / 304.8`, since a foot is exactly 304.8 mm by
+  definition, the same reasoning `scripts/lib/prelude.cs` already used. New `shared/units.js`. Also took
+  the SILENT half while in there: `shared/element-id.js` resolves `ElementId.Value` or `.IntegerValue`
+  by reflection once per script, so ids above 32 bits stop being a bug that only appears on a real
+  project model.
+
+  **The hole is closed, not just the bug.** `mcp-server/emit-generated-csharp.mjs` writes out every
+  distinct script the server can generate and `check-scripts` now compiles both halves. It walks
+  BRANCHES, not tools — three of the eight bad copies only appeared on a mm filter, one only on the
+  numeric branch of `set_parameter_value`, so calling each tool once would have missed them. It also
+  fails if a tool has no case at all. First run after the fix: **393 scripts (360 fragments + 33
+  generated) compiled clean on 2020, 2024 and 2027.**
+
+  Four smaller things in the same pass. All 28 tools were registered with the deprecated `server.tool()`
+  and carried **no annotations at all**, so a client could not tell `count_elements` from
+  `delete_elements` — now `shared/register.js` holds one table of what each tool may do, `defineTool`
+  refuses an unlisted tool, and a test asserts the dangerous five stay flagged. The server reported
+  version 1.4.0 while package.json said 1.6.0; it now reads the one value. `session_start`'s test still
+  asserted the fragment was unproven two days after it was live-verified, so the suite had been red —
+  the test and the stale comment above it now match reality. And both Brain search tools used
+  `spawnSync`, freezing the whole server for the length of a search (measured 9.6 s), now async via
+  `brain-tools/spawn-capture.js`. Tests: 51 pass, 0 fail.

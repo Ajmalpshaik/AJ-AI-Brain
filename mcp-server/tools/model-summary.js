@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { callBridge } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { ftToMmExpr } from "../shared/units.js";
+import { defineTool } from "../shared/register.js";
 
 const MODEL_SUMMARY_TARGETS = {
   ducts: { builtInCategory: "OST_DuctCurves", label: "Duct Curves" },
@@ -33,8 +35,7 @@ foreach (Element element in new FilteredElementCollector(Document)
     {
         if (parameter.StorageType == StorageType.Double)
         {
-            double mm = UnitUtils.ConvertFromInternalUnits(
-                parameter.AsDouble(), DisplayUnitType.DUT_MILLIMETERS);
+            double mm = ${ftToMmExpr("parameter.AsDouble()")};
             value = Math.Round(mm) + " mm";
         }
         else if (parameter.StorageType == StorageType.String)
@@ -77,7 +78,7 @@ return sb.ToString();`;
 }
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "model_summary",
     "Fast, read-only live-model count for a common Revit category. Optionally group the result by one " +
       "parameter, such as duct Height. Use this instead of a separate ping plus generated C# for normal " +

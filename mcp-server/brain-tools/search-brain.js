@@ -17,10 +17,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawnCapture } from "./spawn-capture.js";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const semanticRoot = path.join(here, "..", "..", "semantic-index");
@@ -35,7 +36,7 @@ function venvPython() {
 }
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "search_brain",
     "Search the AJ AI Brain in plain English for the skill, knowledge note or C# fragment " +
       "that answers a question. Matches meaning as well as exact words, and marks fragments " +
@@ -76,8 +77,7 @@ export function register(server) {
         if (top) args.push("--top", String(top));
         if (area) args.push("--area", area);
 
-        const result = spawnSync(python, args, {
-          encoding: "utf8",
+        const result = await spawnCapture(python, args, {
           cwd: semanticRoot,
           maxBuffer: 10 * 1024 * 1024,
           timeout: 120000, // a cold model load is seconds, not minutes; never hang the server

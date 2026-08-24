@@ -11,9 +11,10 @@
 
 import { z } from "zod";
 import { runComposed, previewField, defined } from "../shared/fragment-tool.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "color_by_group",
     "Give each sub-group within a category its own colour, grouped by the value of any parameter — " +
       "'colour by System Type', 'colour by Level', 'colour by Comments'. Different from set_color, " +

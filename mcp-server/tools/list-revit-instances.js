@@ -9,9 +9,10 @@
 
 import { listBridgeInstances, describeInstance, getSelectedPid } from "../bridge-connection.js";
 import { asToolResult } from "../shared/tool-result.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "list_revit_instances",
     "List every Revit session currently connected to the AJ AI bridge, with the document each one has " +
       "open. Use this when more than one Revit is running, or when another call reports that several " +

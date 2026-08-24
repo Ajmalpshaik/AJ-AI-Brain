@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, viewField, buildElementsClause, buildViewClause, runGenerated } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "hide_elements",
     "Hide matching elements in a view — temporary by default (Reset Temporary Hide/Isolate clears it), " +
       "or permanent if requested.",

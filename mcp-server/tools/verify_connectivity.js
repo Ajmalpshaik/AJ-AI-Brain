@@ -8,9 +8,10 @@
 
 import { z } from "zod";
 import { runComposed, previewField, defined } from "../shared/fragment-tool.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "verify_connectivity",
     "Trace every air terminal's full connector chain out to its FCU (riser → elbow → branch → takeoff " +
       "→ main trunk → FCU) and report exactly where any silent break is. Read-only. Use this to check " +

@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { filterFields, buildElementsClause, runGenerated, cs } from "../shared/element-filter.js";
+import { defineTool } from "../shared/register.js";
 
 export function register(server) {
-  server.tool(
+  defineTool(server,
     "report_parameters",
     "Table of named parameter values for matching elements, including each Element ID.",
     { ...filterFields, parameterNames: z.array(z.string()).describe("Parameter display names to report, e.g. ['Family and Type','Level','Mark']."), maxRows: z.number().optional() },
@@ -14,7 +15,7 @@ export function register(server) {
         `string[] __names = new string[] { ${namesArray} };`,
         `sb.AppendLine("Id | " + string.Join(" | ", __names));`,
         `foreach (var e in elements.Take(${cap})) {`,
-        `  var __row = new List<string> { e.Id.IntegerValue.ToString() };`,
+        `  var __row = new List<string> { __IdValue(e.Id).ToString() };`,
         `  foreach (var __n in __names) { var p = e.LookupParameter(__n); __row.Add(p != null && p.HasValue ? (p.AsValueString() ?? p.AsString() ?? "") : ""); }`,
         `  sb.AppendLine(string.Join(" | ", __row));`,
         `}`,

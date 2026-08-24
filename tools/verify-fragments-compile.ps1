@@ -61,12 +61,19 @@ param(
     [string]$CscPath,
     [switch]$DryRun,
     [string]$Filter = "*",
-    [switch]$KeepWrappers
+    [switch]$KeepWrappers,
+    [string]$ScriptsDir
 )
 
 $ErrorActionPreference = "Stop"
 $brainRoot  = Split-Path -Parent $PSScriptRoot
-$scriptsDir = Join-Path $brainRoot "scripts"
+
+# -ScriptsDir points the same harness at a folder of .cs files other than scripts/. It exists for one
+# caller: mcp-server/emit-generated-csharp.mjs writes out the C# the MCP server BUILDS at run time,
+# and that half of what reaches Revit had never been compile-checked at all. See that file for the
+# bug it let through. Everything below is unchanged - a generated script and a fragment are the same
+# thing by the time they get here, a bare block the bridge compiles with Document in scope.
+$scriptsDir = if ($ScriptsDir) { (Resolve-Path $ScriptsDir).Path } else { Join-Path $brainRoot "scripts" }
 $workDir    = Join-Path ([System.IO.Path]::GetTempPath()) ("aj-fragment-compile-" + $PID)
 New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 
