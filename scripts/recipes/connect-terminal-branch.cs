@@ -43,6 +43,20 @@
 //    action-check-open-pipe-ends.cs and action-find-dead-end-system.cs. Measured 2026-08-24: the plain
 //    phrase "connect the air terminals to the duct" returned the WHOLE-SYSTEM recipe at #1 and the
 //    tap-into-existing-duct fragment at #3, which is why this table is in all four files.
+// ✘✘ MEASURED FAILURE 2026-08-25 — IT REPORTS SUCCESS ON GEOMETRY THAT IS BROKEN. Run against a
+//    terminal standing BESIDE the FCU (not clear of it along the main), it printed the normal
+//    "Riser + elbow + horizontal run, tapped into main duct via takeoff." and the terminal read back as
+//    connected — while the model actually held: the horizontal run split into TWO pieces that met at a
+//    point but were NOT joined (2 open ends), the second piece running DIAGONALLY (Y drifting 11332 ->
+//    11396) to reach a takeoff that was not on the main's centreline, straight THROUGH the FCU body.
+//    Ajmal caught it in a 3D view; every text check said it had worked.
+//    THE TAKEAWAY: this fragment's own report is not evidence. After running it, read back (a) open
+//    connectors on the new ducts, (b) whether any new duct's bounding box overlaps the equipment, and
+//    (c) that each leg is axis-aligned. If the terminal is level with or behind the equipment, DO NOT
+//    USE THIS — use actions/structural-changes/action-auto-route-mep-run.cs with routeOrder "ZYX" to
+//    rise, run FORWARD clear of the unit, then cross to the main, and close the two ends yourself
+//    (Connector.ConnectTo at the neck, Document.Create.NewTakeoffFitting into the main). That is
+//    Ajmal's own method and it built 3 of 3 clean on the same geometry.
 // ============================================================
 // Because supply/return terminals are checkerboard-alternated, "nearest terminal" is frequently the
 // WRONG system type — this script is meant to be called once per terminal already filtered by system.
@@ -58,7 +72,7 @@ if (terminalId == ElementId.InvalidElementId || mainDuctId == ElementId.InvalidE
 }
 
 var terminal = Document.GetElement(terminalId) as FamilyInstance;
-var mainDuct = Document.GetElement(mainDuctId) as Duct;
+var mainDuct = Document.GetElement(mainDuctId) as Autodesk.Revit.DB.Mechanical.Duct;
 if (terminal == null || mainDuct == null)
 {
     return "terminalId or mainDuctId does not point to the expected element type.";

@@ -25,6 +25,7 @@ feet↔mm conversion every script needs.
 | Placing an FCU (or similar equipment) relative to a door; rotating equipment to face a target direction | [`hvac-equipment-placement.md`](hvac-equipment-placement.md) |
 | **Grids and levels** — extents short in one view but not another, the 2D/3D toggle, resetting to the shared 3D extent, stretching levels to a section box, moving the bubble to the other end | [`datums.md`](datums.md) |
 | **A level has TWO heights** — `Elevation` vs `ProjectElevation`, and which one is in the same space as an `XYZ`. Silent, conditional, and it was wrong in fifteen fragments here until 2026-08-24 | [`level-elevation-vs-project-elevation.md`](level-elevation-vs-project-elevation.md) |
+| **Placing doors and windows by script** — why the obvious fragment does not host them, why half of them come out facing the wrong way in a corridor layout, and checking by room containment rather than coordinate | [`hosted-doors-and-windows.md`](hosted-doors-and-windows.md) |
 | **Cutting openings / sleeves** where MEP passes through a wall, floor or beam — finding the real crossing, and the three different `NewOpening` calls | [`mep-openings.md`](mep-openings.md) |
 | Moving/copying/rotating elements — and why a transform can silently do NOTHING while reporting success (pinned elements, group members) | [`geometry-and-transforms.md`](geometry-and-transforms.md) |
 | Pushing the MEP Color Data Standard (Excel) into System Types / Materials / View Filters | [`mep-color-standard.md`](mep-color-standard.md) |

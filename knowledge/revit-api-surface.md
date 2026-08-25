@@ -12,7 +12,7 @@ The instinct is right and the scale is the problem. Measured:
 |---|---|
 | Revit API | ~1,700 classes, 50 interfaces, 500 enumerations, **30,000+ documented members** |
 | This Brain's whole index | **3,786 chunks** from 341 files, measured 2026-08-20 |
-| Types the 394 fragments actually use | **245** |
+| Types the 398 fragments actually use | **245** |
 
 Indexing the API into the main search would make the Brain roughly **11% of its own index** — every
 question would land on reference pages instead of on the skill or fragment that answers it. That is the

@@ -67,6 +67,21 @@
 //    action-check-open-pipe-ends.cs and action-find-dead-end-system.cs. Measured 2026-08-24: the plain
 //    phrase "connect the air terminals to the duct" returned the WHOLE-SYSTEM recipe at #1 and the
 //    tap-into-existing-duct fragment at #3, which is why this table is in all four files.
+// ✘✘ MEASURED FAILURE 2026-08-25 — IT MOVES THE TERMINAL INSTEAD OF DROPPING DUCT TO IT.
+//    Run on a corridor diffuser sitting DIRECTLY UNDER an overhead trunk (neck Z 2202, trunk Z 2823),
+//    it reported "Connected 1 terminal(s). 0 refused" and Revit returned true — and what it actually did
+//    was LIFT THE DIFFUSER 625 mm, from ceiling level 2100 up into the void at 2725, to meet the duct.
+//    No drop duct and no tap fitting were created. The diffuser ends up above the ceiling, where it is
+//    of no use to anybody, and every text-level check still passes.
+//    THE RULE: this fragment is for a terminal whose connector ALREADY MEETS the duct, or is offset to
+//    the side so Revit can cut a real tap. When the terminal sits under the duct with a vertical gap,
+//    BUILD THE DROP YOURSELF and the terminal never moves:
+//        var drop = Duct.Create(doc, ductTypeId, levelId, terminalConnector, topPointAtTrunkZ);
+//        Document.Create.NewTakeoffFitting(freeTopConnectorOfDrop, trunk);
+//    (The connector overload inherits size and system and joins the terminal itself; the takeoff then
+//    shortens the drop to fit its own body — 422 mm came back from a 621 mm gap, which is correct.)
+//    ALWAYS READ BACK THE TERMINAL'S Z AFTER RUNNING THIS. Its own note about verify_connectivity is
+//    right but not enough: the air path can be perfect while the diffuser is in the wrong place.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

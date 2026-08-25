@@ -260,3 +260,55 @@ rotate so the cap's connector `BasisZ` faces OPPOSITE the duct connector's (`Ang
 axis; fall back to any perpendicular axis when antiparallel), set its `Duct Width`/`Duct Height` params
 to the duct size, `MoveElement` so the connector origins coincide, then `openEnd.ConnectTo(capConn)`.
 Clears the "open connector" warning on the duct. Live-proven 2026-07-26 (id 921372 in the session model).
+
+## Terminals directly under the trunk — and the fragment that moves them instead
+
+A corridor puts the diffusers on the trunk's own centreline: trunk overhead, necks directly below, no
+sideways offset for a branch to use. That is a THIRD geometry, and it needs its own answer:
+
+| Where the terminal sits | What to use |
+|---|---|
+| Offset to the SIDE of the trunk | `recipes/hvac-room-supply-ducting.cs` (branch + elbow + drop) |
+| Directly UNDER the trunk | `recipes/connect-terminals-under-trunk.cs` (vertical drop + takeoff) |
+| Already TOUCHING the duct | `actions/structural-changes/action-connect-air-terminals.cs` |
+
+The room recipe **refuses** the middle case rather than fudging it — *"sits on the trunk centreline -
+needs an inline tee, skipped"* — and that refusal is the signal to switch tools.
+
+**`action-connect-air-terminals.cs` will move your diffuser.** Measured 2026-08-25: it reported
+*"Connected 1 terminal(s). 0 refused"*, Revit returned true, and what it had actually done was **lift the
+diffuser 625 mm** out of the ceiling (Z 2100) into the void (Z 2725) to meet the duct. No drop duct, no
+tap fitting. When there is a vertical gap and nothing else to move, Revit satisfies the connection by
+relocating the terminal. **So always re-read the terminal's Z after connecting it.** The air path can be
+perfect while the diffuser is in the wrong place, and every text-level check passes.
+
+The build that works, and never moves the terminal:
+
+```csharp
+var drop = Duct.Create(doc, ductTypeId, levelId, terminalConnector, pointAtTrunkZ);  // connector overload
+Document.Create.NewTakeoffFitting(freeTopConnectorOfDrop, trunk);
+```
+
+**The drop comes back SHORTER than the gap and that is correct** — the takeoff shortens it to fit its own
+body. 422 mm came back from a 621 mm gap. Never verify a drop by comparing its length to the gap asked
+for; that check reports a false failure.
+
+## Setting airflow on terminals — the unit trap
+
+`Flow` on an air terminal is a writable instance parameter (`BuiltInParameter.RBS_DUCT_FLOW_PARAM`), but
+it is **not a length**, so the library's usual bulk setter is wrong for it.
+`actions/parameters-naming/action-set-parameter-value.cs` divides every number by 304.8 because it assumes
+millimetres: asked for 200 L/s it would set **18 L/s**, wrong by 10.8x, and report success. Convert
+properly instead:
+
+```csharp
+double v = UnitUtils.ConvertToInternalUnits(200.0, DisplayUnitType.DUT_LITERS_PER_SECOND);  // 7.06293 ft3/s
+```
+
+(On Revit 2021+ the same call takes `UnitTypeId.LitersPerSecond`.)
+
+**Setting the terminals proves the system is really joined.** After 200 L/s went onto 122 diffusers, each
+room FCU's supply connector read exactly **800 L/s** — 4 x 200 — computed by Revit from the network. A
+connector that reports the sum of its terminals is stronger evidence of a correct system than any
+geometry check, because Revit only sums what it can actually trace.
+

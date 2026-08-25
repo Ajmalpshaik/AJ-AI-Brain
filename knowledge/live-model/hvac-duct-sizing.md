@@ -110,3 +110,36 @@ clear of the fitting body, matching the slicing section's offset rule; no split 
   connectors at the cut point → `c1.DisconnectFrom(c2)` if touching → `doc.Create.NewUnionFitting(c1,
   c2)`. (The older ConnectTo advice in the splitting sections above predates this discovery — it held in
   the one-off split case, but for sizing-prep splits that must persist, always place the union.)
+
+## Where the reducer goes after a takeoff — Ajmal's rule, 2026-08-25
+
+Sizing decides the reducer's SIZE. It does not decide where the reducer SITS, and Revit drops it wherever
+the size change happened to fall. Measured on a 14-room floor straight after sizing: the reducers sat
+**268 to 1796 mm** downstream of their takeoff, averaging 587. No two rooms matched.
+
+His rule, in his own words: *"if you take one reducer from the FCU, if you come you find the reducer,
+before the reducer there is chance we have one duct connecting branch takeoff. So from that branch
+takeoff, 200 mm there reducer need. No need extra length."*
+
+So: **200 mm of straight duct after the branch takeoff, then the reducer.** The datum is **takeoff
+CENTRELINE to the reducer's UPSTREAM FACE**, which he chose over edge-to-face and centre-to-centre
+because it is the one a fitter sets out from. `recipes/set-reducer-offset-from-takeoff.cs` does it.
+
+**Move the FITTING, never the ducts.** `ElementTransformUtils.MoveElement` on the transition is what
+dragging does in the UI: Revit shortens the duct on one side and lengthens the other and keeps both
+joined. Proven on a real move — an 826 mm upstream duct became 732 and the 1252 mm downstream duct became
+1347, both still at zero open connectors. Rewriting the ducts' `LocationCurve` to achieve the same thing
+is how the joints get broken.
+
+**Two reducers must be left alone, and both look like candidates.**
+- **The one on the equipment.** Every FCU carries a transition on its supply connector (850x195 -> 400x400
+  here) with no duct and no takeoff upstream of it at all. Skip anything whose connector joins straight to
+  Mechanical Equipment. Without that guard the nearest-takeoff search matched one on a *branch* 2225 mm
+  away and would have dragged the transition off the unit — 15 of them on that floor.
+- **The one at the diffuser neck.** 200x200 -> 225x225 at each drop, 61 of them. Not on a trunk, nothing
+  to measure from. Silence about these is the correct outcome, not a miss.
+
+**A takeoff does not sit on the trunk centreline.** Its insertion point is offset to the side — 150 to 250
+mm was typical here. Measure the distance ALONG the reducer's own axis (dot product) and ignore the
+sideways component, or a centreline-tight filter finds no takeoffs at all and reports "nothing to do".
+
