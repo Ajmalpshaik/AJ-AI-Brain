@@ -5827,3 +5827,21 @@ Two side-findings while getting there:
   `string.IsNullOrEmpty(c.Description)`, so the moment a connector carries ANY description — including
   the `"Supply Air,Out"` the FCU family sets on purpose — it was skipped as a decoy. Relaxed to skip only
   descriptions that actually contain "fresh".
+
+## 2026-08-25 — the daily four-tool check runs where three of the four tools do not exist
+
+A scheduled routine checks AJ Tools, the vector search, Graphify and the Obsidian vault daily. Ran today
+from a container session, and **four of its five steps are structurally unanswerable there** — not
+failing, unanswerable. Every derived layer is gitignored on purpose, so a checkout carries their code and
+none of their state, and the bridge is an MCP relay to an open Revit session that a Linux container has
+no way to register. `brain-status.mjs` already prints this under *Derived layers*; nothing was broken and
+nothing needed fixing.
+
+What the same run **could** prove, and did: all thirteen consistency checks clean, `main` level with
+`origin/main` in both repos, the three rebuild hooks still registered in their three Stop phases, plugin
+version intact. Those are the checks that catch drift travelling in git, and they are worth keeping daily.
+
+Written up as [`daily-tool-check.md`](daily-tool-check.md) — which half is answerable from a checkout,
+which half needs the PC, and the order to run the PC half in. It is the 2026-08-24 handover's own rule
+landing a second time: an environment-specific limit has to name the environment and say where to go
+instead, or the next session reads "cannot verify the index" as "the index is broken" and goes looking.
