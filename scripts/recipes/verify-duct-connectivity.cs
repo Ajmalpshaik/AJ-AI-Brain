@@ -31,14 +31,22 @@ IEnumerable<FamilyInstance> terminalQuery = new FilteredElementCollector(Documen
 if (roomId != ElementId.InvalidElementId)
 {
     var room = Document.GetElement(roomId) as Autodesk.Revit.DB.Architecture.Room;
-    if (room == null) return "roomId does not point to a valid Room.";
+    if (room == null) return "roomId does not point to a valid Room in THIS document. (Host document only — "
+        + "on a coordination model the rooms usually live in the architectural LINK, and a linked room's id "
+        + "cannot be used here; run the whole-model sweep instead.)";
+    if (room.Area <= 0) return "roomId points to an UNPLACED or unenclosed Room (zero area) — nothing to check.";
 
+    // Probe at level + 1000 mm, the same convention every sprinkler recipe here uses. The old form
+    // probed at the room's own base plane (a boundary case for IsPointInRoom) and, for a room with no
+    // LocationPoint, at the TERMINAL's ceiling-height Z — above many rooms' upper limit (2026-08-25).
+    double zProbe = room.Level.ProjectElevation + 1000 / 304.8;
     terminalQuery = terminalQuery.Where(fi =>
     {
         var loc = (fi.Location as LocationPoint)?.Point;
         if (loc == null) return false;
-        var testPt = new XYZ(loc.X, loc.Y, (room.Location as LocationPoint)?.Point.Z ?? loc.Z);
-        return room.IsPointInRoom(testPt);
+        bool inRoom = false;
+        try { inRoom = room.IsPointInRoom(new XYZ(loc.X, loc.Y, zProbe)); } catch { }
+        return inRoom;
     });
 }
 
@@ -72,6 +80,7 @@ foreach (var term in terminals)
     }
 
     bool reachedFcu = false;
+    bool hitHopLimit = false;
     Element breakElem = term;
     int hops = 0;
 
@@ -91,6 +100,7 @@ foreach (var term in terminals)
         if (depth >= maxHops)
         {
             breakElem = currentElem;
+            hitHopLimit = true;
             continue;
         }
 
@@ -141,6 +151,15 @@ foreach (var term in terminals)
     if (reachedFcu)
     {
         okCount++;
+    }
+    else if (hitHopLimit)
+    {
+        // A long healthy branch (riser + elbows + trunk + takeoffs) can pass maxHops without being
+        // broken — reporting it BROKEN was a false alarm indistinguishable from a real break (2026-08-25).
+        brokenCount++;
+        string label = term.get_Parameter(BuiltInParameter.ALL_MODEL_MARK)?.AsString() ?? term.Id.ToString();
+        sb.AppendLine($"  HOP LIMIT - terminal {label}: the walk was cut off at maxHops ({maxHops}) before reaching"
+            + $" Mechanical Equipment. NOT proven broken - raise maxHops and re-run to get a real verdict.");
     }
     else
     {

@@ -75,11 +75,17 @@ double deflectorZmm = 0;              // known deflector level, project coordina
 double ignoreBelowDeflectorMm = 457;  // NFPA 18 in — an obstruction this far BELOW the deflector, and no
                                       // wider than ignoreWiderThanMm, may be ignored. Confirm against your edition.
 double ignoreWiderThanMm = 1219;      // NFPA 4 ft — wider than this and it needs heads underneath instead
-double narrowObstructionMm = 610;     // NFPA 24 in — under this counts as an isolated obstruction (three-times rule)
+double narrowObstructionMm = 610;     // NFPA 24 in — under this counts as an isolated obstruction (three-times rule).
+                                      // PRINTED ONLY: nothing is classified by this yet — the survey quotes it in the
+                                      // three-times-rule reminder line and leaves the judgement to the reader.
 bool surveyStructure = true;          // beams / joists / trusses  + columns
 bool surveyServices = true;           // ducts, flex ducts, cable tray, conduit, pipes, lighting
 bool surveyCeilingAndDeck = true;     // is there a ceiling, and what is the slab above
-double searchAboveRoomMm = 6000;      // how far above the room's own top to look for the deck and framing
+double searchAboveRoomMm = 6000;      // how far above the room's own top to look for the deck and framing.
+                                      // At 6000 on a 3-4 m floor-to-floor this reaches INTO THE STOREY ABOVE,
+                                      // so framing/services listed as obstructions can belong to the next floor
+                                      // — each row prints its soffit height, read it before acting. Drop to
+                                      // ~3000 on a normal multi-storey building.
 double voidDepthThresholdMm = 800;    // ceiling void depth that triggers a flag. 800 mm is the BS 5306-2 /
                                       // BS EN 12845 trigger for sprinklers IN the void. NFPA has no depth
                                       // trigger at all — it tests combustibility. Set 0 to skip the flag.
@@ -162,15 +168,23 @@ else
         }
         else
         {
-            foreach (var c in ceilings.Take(maxListedPerCategory))
+            // Accumulate the minima over EVERY ceiling; the display cap trims only the listing. Until
+            // 2026-08-25 both ran inside one capped loop, so on a tile-by-tile ceiling model (more
+            // than maxListedPerCategory pieces) "lowest underside" — and the VOID figure derived from
+            // it — was computed from the first 30 pieces only.
+            int ceilingListed = 0;
+            foreach (var c in ceilings)
             {
                 var b = c.get_BoundingBox(null);
                 if (b == null) continue;
                 if (double.IsNaN(ceilingZ) || b.Min.Z < ceilingZ) ceilingZ = b.Min.Z;
                 if (double.IsNaN(ceilingTopZ) || b.Max.Z < ceilingTopZ) ceilingTopZ = b.Max.Z;
-                sb.AppendLine($"   CEILING '{c.Name}' (Id {c.Id}) underside about {toMm(b.Min.Z):N0} mm"
-                    + $" — {toMm(b.Min.Z - zRoomBase):N0} mm above this level");
+                if (ceilingListed++ < maxListedPerCategory)
+                    sb.AppendLine($"   CEILING '{c.Name}' (Id {c.Id}) underside about {toMm(b.Min.Z):N0} mm"
+                        + $" — {toMm(b.Min.Z - zRoomBase):N0} mm above this level");
             }
+            if (ceilings.Count > maxListedPerCategory)
+                sb.AppendLine($"   … {ceilings.Count - maxListedPerCategory} more ceiling piece(s) not listed; the minima above cover all of them.");
             sb.AppendLine($"   -> {ceilings.Count} ceiling(s). Lowest underside {toMm(ceilingZ):N0} mm.");
             sb.AppendLine("      Pendent/concealed heads: deflector 25-305 mm below this (unobstructed construction).");
             if (ceilings.Count > 1)

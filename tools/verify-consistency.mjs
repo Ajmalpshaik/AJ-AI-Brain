@@ -477,14 +477,19 @@ for (const line of fs.readFileSync(path.join(scriptsDir, "README.md"), "utf8").s
 // A status DECLARATION opens a comment line. Text quoted inside a later correction note, and prose in a
 // GOTCHA continuation, must not count - that is why this anchors to the start of the line and skips the
 // correction wording explicitly.
-const neverRan = /^\/\/\s*(?:STATUS:\s*)?(?:BLOCKED[^—-]*[—-]\s*)?NOT ?(?:YET )?LIVE-VERIFIED\b/i;
+const neverRan = /^\/\/\s*(?:STATUS:\s*)?(?:BLOCKED[^—-]*[—-]\s*)?(?:NOT ?(?:YET )?LIVE-VERIFIED\b|\*{1,3}\s*NOT CHECKED\b)/i;
 let statusChecked = 0;
 for (const f of walk(scriptsDir, (n) => n.endsWith(".cs"))) {
   const rel = path.relative(brainRoot, f);
   const row = readmeRows.get(path.normalize(rel));
   if (!row) continue;
+  // (?<!reflection-) refuses "reflection-verified" (a static check, not a live run) while still
+  // accepting "live-verified"; the NOT live-executed clause marks a row untested even though it
+  // carries a date — both halves of the 2026-08-25 parser fix in fragment-lib.mjs, mirrored here so
+  // the two parsers cannot disagree about what "README-verified" means.
   const readmeVerified =
-    /verified(?:\s+\w+)? 2026-\d\d-\d\d/.test(row) && !/NOT yet live-verified/.test(row);
+    /(?<!reflection-)\bverified(?:\s+\w+)? 2026-\d\d-\d\d/.test(row) &&
+    !/NOT yet live-verified/.test(row) && !/NOT live-(?:executed|run)/i.test(row);
   if (!readmeVerified) continue;
   statusChecked++;
   const head = fs.readFileSync(f, "utf8").split(/\r?\n/).slice(0, 45);

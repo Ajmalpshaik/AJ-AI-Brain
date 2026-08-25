@@ -1,7 +1,10 @@
 // ============================================================
 // SCRIPT: split-duct-near-equipment.cs
-// PURPOSE: Split a duct at a given gap distance from an equipment connector (e.g. leave a 200mm gap right
-//          at an FCU for a future flex-duct connection), and explicitly reconnect the resulting joint.
+// PURPOSE: Split a duct at a given gap distance from THE DUCT'S OWN END NEAREST the equipment connector
+//          (e.g. leave a ~200mm stub at an FCU for a future flex-duct connection), and explicitly
+//          reconnect the resulting joint. If a transition or elbow sits between the equipment and the
+//          duct, the gap AT THE EQUIPMENT is gapMm PLUS that fitting's length — the report prints the
+//          real measured distance so the difference is visible.
 //          Simpler cousin of slice-trunk-for-sizing.cs - one fixed-offset cut from one known reference
 //          connector, no grouping/clustering, no "skip the last one" logic.
 // SOURCE:  ../../knowledge/live-model/hvac-ducts.md § Splitting an existing duct into two segments at a given point
@@ -40,7 +43,8 @@
 // ---- INPUTS (edit every time - never treat these as fixed defaults) ----
 ElementId equipmentId = ElementId.InvalidElementId; // the Mechanical Equipment (or any element) whose connector is the reference point
 ElementId ductId = ElementId.InvalidElementId;      // the duct connected to that equipment, to be split
-double gapMm = 200;                                  // distance from the equipment's connector to the break point, per-request
+double gapMm = 200;                                  // distance from the DUCT'S OWN nearest end to the break point, per-request
+                                                     // (equals the gap at the equipment only when nothing sits in between)
 // ---- END INPUTS ----
 
 if (equipmentId == ElementId.InvalidElementId || ductId == ElementId.InvalidElementId)
@@ -84,6 +88,11 @@ var farEnd = ductEndConns.OrderBy(c => c.Origin.DistanceTo(equipConn.Origin)).La
 XYZ dir = (farEnd.Origin - nearEquipEnd.Origin).Normalize();
 double gapFt = gapMm / 304.8;
 XYZ breakPt = nearEquipEnd.Origin + dir * gapFt;
+// Capture the equipment connector's position BEFORE BreakCurve changes the document — relying on a
+// Connector object across a topology change is the exact class of assumption this file's own header
+// was burned by (hardened 2026-08-25).
+XYZ equipOrigin = equipConn.Origin;
+double gapAtEquipMm = equipOrigin.DistanceTo(breakPt) * 304.8;
 sb.AppendLine($"Reference (near-equipment) duct end: ({nearEquipEnd.Origin.X:F3},{nearEquipEnd.Origin.Y:F3},{nearEquipEnd.Origin.Z:F3})");
 sb.AppendLine($"Break point: {gapMm}mm downstream -> ({breakPt.X:F3},{breakPt.Y:F3},{breakPt.Z:F3})");
 
@@ -106,7 +115,7 @@ using (var t = new Transaction(Document, "AJ Tools - Split Duct Near Equipment")
         Func<Autodesk.Revit.DB.Mechanical.Duct, double> distToEquip = d =>
         {
             var lc = (d.Location as LocationCurve).Curve as Line;
-            return Math.Min(lc.GetEndPoint(0).DistanceTo(equipConn.Origin), lc.GetEndPoint(1).DistanceTo(equipConn.Origin));
+            return Math.Min(lc.GetEndPoint(0).DistanceTo(equipOrigin), lc.GetEndPoint(1).DistanceTo(equipOrigin));
         };
         var nearFresh = distToEquip(pieceA) <= distToEquip(pieceB) ? pieceA : pieceB;
         var newFresh = nearFresh.Id == pieceA.Id ? pieceB : pieceA;
@@ -120,7 +129,9 @@ using (var t = new Transaction(Document, "AJ Tools - Split Duct Near Equipment")
         var union = Document.Create.NewUnionFitting(nearConn, newConn);
         if (union == null) throw new InvalidOperationException("NewUnionFitting returned null - no union family available for this duct type.");
         t.Commit();
-        sb.AppendLine($"Split: equipment-side piece Id={nearFresh.Id} ({gapMm}mm long) / rest-of-run piece Id={newFresh.Id}.");
+        sb.AppendLine($"Split: equipment-side piece Id={nearFresh.Id} ({gapMm}mm from the duct's own end) / rest-of-run piece Id={newFresh.Id}.");
+        sb.AppendLine($"Measured break-point-to-equipment-connector distance: {gapAtEquipMm:F0}mm"
+            + (Math.Abs(gapAtEquipMm - gapMm) > 1 ? " — differs from gapMm because a fitting sits between the equipment and this duct." : "."));
         sb.AppendLine($"Joint held by union {union.Id} - IsConnected: near-side={nearConn.IsConnected}, new-side={newConn.IsConnected}.");
     }
     catch (Exception ex)

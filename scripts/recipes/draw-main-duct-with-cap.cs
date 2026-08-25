@@ -88,6 +88,14 @@ var systemType = new FilteredElementCollector(Document)
     .Cast<MechanicalSystemType>()
     .FirstOrDefault(st => st.SystemClassification == MEPSystemClassification.SupplyAir);
 
+// Named refusals instead of a null-reference: on a project with no matching duct type or no SupplyAir
+// system type, the old code reached ductType.Id / systemType.Id and the user saw
+// "FAILED — rolled back ... Object reference not set to an instance of an object" (2026-08-25).
+if (ductType == null) return $"No duct type matching '{ductTypeNameContains}' in this project — set"
+    + " ductTypeNameContains to a type that exists (check Manage > MEP Settings > Duct Settings, or a"
+    + " duct type name from the browser).";
+if (systemType == null) return "No SupplyAir mechanical system type in this project — nothing to assign the duct to.";
+
 using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
 {
     group.Start();
@@ -117,7 +125,13 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
 
         // --- Cap the open far end: get type from Routing Preferences, duplicate a sized type, place,
         // --- size, move, rotate, re-move, connect. See ../../knowledge/live-model/hvac-ducts.md for why every step is needed.
-        var capRule = ductType.RoutingPreferenceManager.GetRule(RoutingPreferenceRuleGroupType.Caps, 0);
+        // GetRule(..., 0) takes the FIRST Caps rule regardless of the size being drawn — fine for a cap
+        // (caps rarely differ by size band), wrong as a habit; GetMEPPartId with the real size is the
+        // proper form. It also throws a bare index error on a duct type with ZERO Caps rules — the
+        // guard below turns that into a named message instead (2026-08-25).
+        RoutingPreferenceRule capRule = null;
+        try { capRule = ductType.RoutingPreferenceManager.GetRule(RoutingPreferenceRuleGroupType.Caps, 0); }
+        catch { }
         var capSymbolId = capRule?.MEPPartId;
         var capBaseSymbol = capSymbolId != null ? Document.GetElement(capSymbolId) as FamilySymbol : null;
 

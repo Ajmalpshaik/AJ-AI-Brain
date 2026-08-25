@@ -41,17 +41,26 @@ var space = new FilteredElementCollector(Document)
 
 if (space == null) return "No Space found for this room — run set-space-airflow.cs first.";
 
-double supplyLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM).AsDouble()) * 28.316846592;
-double returnLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM).AsDouble()) * 28.316846592;
+double supplyLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM)?.AsDouble() ?? 0) * 28.316846592;
+double returnLs = (space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM)?.AsDouble() ?? 0) * 28.316846592;
+
+// The header ASSUMES the Space carries a real Specified Supply Airflow — check it instead of trusting
+// it (2026-08-25). An unset parameter reads 0, which used to fall through to minCount terminals each
+// carrying 0 L/s — and the live 27-Space verification model had 27 of 27 with no Design figure.
+if (supplyLs <= 0) return $"Space '{space.Name}' (Id {space.Id}) has NO Specified Supply Airflow — "
+    + "run set-space-airflow.cs (or fill it in Revit) first; placing terminals now would write 0 flow to all of them.";
 
 int count = Math.Max(minCount, (int)Math.Ceiling(supplyLs / maxLsPerTerminal)); // supply's count used for BOTH
 
 // Room bbox, shrunk by clearance.
 var bbox = room.get_BoundingBox(null);
+if (bbox == null) return "This room has no bounding box (unplaced?) — nothing to lay out in.";
 double clearanceFt = wallClearanceMm / 304.8;
 double xMin = bbox.Min.X + clearanceFt, xMax = bbox.Max.X - clearanceFt;
 double yMin = bbox.Min.Y + clearanceFt, yMax = bbox.Max.Y - clearanceFt;
 double xExtent = xMax - xMin, yExtent = yMax - yMin;
+if (xExtent <= 0 || yExtent <= 0) return $"wallClearanceMm = {wallClearanceMm} leaves no usable area in this room "
+    + $"({(bbox.Max.X - bbox.Min.X) * 304.8:F0} x {(bbox.Max.Y - bbox.Min.Y) * 304.8:F0} mm) — reduce it.";
 
 // Auto-detect long axis — 2-row axis along the shorter extent, N-column axis along the longer.
 bool xIsLong = xExtent >= yExtent;
@@ -73,15 +82,23 @@ Func<Element, bool> elementCenterIsInRoom = e =>
     return room.IsPointInRoom(new XYZ(center.X, center.Y, roomCenter.Z));
 };
 
+// Same LEVEL as the room only, and the Z is built on the CEILING'S OWN level: the height parameter is
+// "above the ceiling's level", so adding it to the room's bbox base double-counted a room Base Offset
+// and missed entirely when the ceiling was drawn on another level (2026-08-25). Largest ceiling wins
+// over collector order when a bulkhead and the main ceiling both qualify.
 var ceiling = new FilteredElementCollector(Document)
     .OfCategory(BuiltInCategory.OST_Ceilings)
     .WhereElementIsNotElementType()
     .Cast<Ceiling>()
-    .FirstOrDefault(c => elementCenterIsInRoom(c));
+    .Where(c => c.LevelId == room.LevelId && elementCenterIsInRoom(c))
+    .OrderByDescending(c => { try { return c.get_Parameter(BuiltInParameter.HOST_AREA_COMPUTED)?.AsDouble() ?? 0; } catch { return 0; } })
+    .FirstOrDefault();
 double heightMm = ceiling?.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM)?.AsDouble() != null
     ? (ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble()) * 304.8
     : placementHeightMm;
-double z = bbox.Min.Z + heightMm / 304.8;
+double z = (ceiling != null && Document.GetElement(ceiling.LevelId) is Level ceilLevel)
+    ? ceilLevel.ProjectElevation + heightMm / 304.8
+    : bbox.Min.Z + heightMm / 304.8;
 
 var sb = new System.Text.StringBuilder();
 sb.AppendLine($"Room {room.Name}: {count} supply + {count} return, {rows} row(s), near-square grid.");

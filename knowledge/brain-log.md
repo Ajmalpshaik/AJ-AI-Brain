@@ -5748,6 +5748,33 @@ duration — check 9 verifies live *counts* only — so this class has no automa
   `sprinkler-layout-options.cs`) with nothing saying a fix must be mirrored — both now state it.
   The build's "100% alike" chunk report lists exactly the 20 shared routing-table blocks: that is the
   cross-reference pattern working, not duplication to clean up.
+- 2026-08-25 — **Ajmal asked for the PROVEN files to be re-checked too, and he was right.** Every
+  verified recipe read line by line plus defect-class sweeps over the library. The headline: **the
+  proven count itself was inflated — 247 was really 244.** The status parser read "reflection-verified
+  2026-07-23, NOT live-executed" as verified (the word-boundary matches inside "reflection-verified"),
+  so place-fcu, draw-main-duct-with-cap and connect-terminal-branch counted as proven while their own
+  headers said "*** NOT CHECKED". Fixed in `fragment-lib.mjs` AND `verify-consistency.mjs` check 10
+  (same blind spot both sides, which is why the cross-check stayed green), catalogue regenerated; the
+  widened header check then caught two more stale headers (flip-elements said blocked 18 days after
+  its positive path was proven; assign-scope-box now uses the PARTLY VERIFIED wording).
+  **Real latent defects found and fixed in verified files:** filter-by-phase's documented STATUS mode
+  had no code at all (inputs declared, never read); drone-shot-flythrough flew at an ABSOLUTE eye
+  height (buried in the slab on any level not at Z=0); connect-equipment-to-air-terminals wired
+  RETURN terminals into the SUPPLY trunk (no system-type test on the terminal side);
+  sprinkler-compliance-audit counted heads from every storey into one room (probe Z discarded) and
+  passed a single-head room on max spacing; sprinkler-place-heads' read-back never checked HEIGHT —
+  the one trap its own header records; place-terminals-checkerboard placed minCount terminals all
+  carrying 0 L/s when the Space had no design figure, and both it and place-fcu built the ceiling Z
+  on the wrong level's datum; set-space-airflow could write airflow to an UNPLACED Space via the
+  XYZ.Zero fallback; slice-trunk-for-sizing collapsed its takeoff clearance to the margin alone on a
+  ROUND trunk; verify-duct-connectivity reported a hop-limited walk as BROKEN; trace-mep-circuits
+  printed "distance ∞mm" with no equipment and its system-type fallback was dead code; mep-grayout
+  gated overrides on the wrong predicate (AllowsVisibilityControl vs IsCategoryOverridable — one
+  refusing category rolled back the whole grayout). Plus guards/wording in model-health-audit,
+  split-duct-near-equipment, draw-main-duct-with-cap, connect-terminal-branch (3 mm centreline guard
+  vs a real half-width; round connectors threw), align-viewports (alignLegends had no code),
+  report-coverage and trace (dead/ignored inputs). **None of this is re-proven live** — every touched
+  row/header says so; the PC's `check-scripts.cmd` is the compile gate before the next job.
 - 2026-08-25 — **The 3/28-at-#1 score line explained (scorer flagged REGRESSION vs 5/28):** nothing was
   reverted because nothing broke — the corpus grew 3,888 → 7,225 chunks since the 5/28 runs (394
   fragments + the FCU families notes), and runs on different corpus sizes are not comparable, per

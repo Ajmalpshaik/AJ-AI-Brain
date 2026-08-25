@@ -8,11 +8,15 @@
 //         (CanFlipHand/CanFlipFacing checked first, so an unsupported flip is reported as skipped, not a
 //         crash).
 // ============================================================
-// *** NOT CHECKED — BLOCKED: the actual flip (flipHand/flipFacing on a real element) has never run. Only
-// the skip-gracefully paths are confirmed. This project has no flip-capable family loaded — see below. ***
-// LIVE-VERIFIED 2026-07-23 (graceful paths only) — tested against real Mechanical Equipment (AHU, Boiler,
+// LIVE-VERIFIED 2026-08-07 — the positive path is finally proven: a door fixture (921817, CanFlipHand
+// and CanFlipFacing both true) ran hand+facing and reported "Hand flipped on 1, facing flipped on 1,
+// skipped 0", with HandFlipped/FacingFlipped genuinely going False -> True and back on rollback. The
+// header said "NOT CHECKED — BLOCKED" for eighteen days after that run (the 2026-08-07 campaign updated
+// the scripts/README.md row and never this file); corrected 2026-08-25 by the audit that widened the
+// header/README status cross-check to see "NOT CHECKED" wording.
+// Earlier graceful-path evidence, 2026-07-23 — tested against real Mechanical Equipment (AHU, Boiler,
 // Radiator, VAV, Inline Pump) and real Duct Terminal families (Supply/Return Diffuser, Exhaust Grill,
-// Supply Grille variants) — 13 loaded families checked, NONE support flip on this project
+// Supply Grille variants) — 13 loaded families checked, NONE supported flip on that project
 // (CanFlipHand/CanFlipFacing both False on every one). Confirmed the skip-not-crash paths work correctly:
 // ran against a non-flip-capable FamilyInstance + a plain Duct (not a FamilyInstance at all) together —
 // correctly skipped both (3 skips: 2 for the unsupported flips, 1 for not-a-FamilyInstance), clean commit,

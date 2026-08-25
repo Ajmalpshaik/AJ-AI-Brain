@@ -64,7 +64,8 @@ int drawInViewIdInt = 0;            // the PLAN view to draw into (detail arcs);
 bool groupDrawn = true;             // bundle the drawn circles into one selectable Group
 string drawnGroupName = "";         // e.g. "MEP_Terminal_Coverage"
 string writeRadiusToParameter = ""; // optional — write the radius (mm) into this text/number parameter
-int maxRowsListed = 30;             // per-element detail cap; the statistics always cover everything
+int maxRowsListed = 30;             // caps the per-room comparison table; the statistics always cover everything
+                                    // (declared-but-ignored until 2026-08-25 — the room table was unbounded)
 // ---- END INPUTS ----
 
 Func<double,double> toMm = v => v * 304.8;
@@ -134,8 +135,14 @@ else
     if (rooms.Count > 0)
     {
         sb.AppendLine("  Against actual room floor area (see the ~45%-is-normal gotcha in the header):");
+        int roomRows = 0;
         foreach (var rm in rooms)
         {
+            if (roomRows >= maxRowsListed)
+            {
+                sb.AppendLine($"    … more room(s) not listed — maxRowsListed is {maxRowsListed}; raise it for the full table.");
+                break;
+            }
             var mine = pts.Where(e => {
                 var c = centreOf(e);
                 var probe = new XYZ(c.X, c.Y, rm.Level.ProjectElevation + mmToFt(1000));
@@ -144,6 +151,7 @@ else
             if (mine.Count == 0) continue;
             double a = mine.Sum(e => { double r = radius[e.Id]; return Math.PI*r*r; });
             sb.AppendLine($"    {rm.Name}: floor {toM2(rm.Area):F0} m2, {mine.Count} element(s), coverage {toM2(a):F0} m2 ({toM2(a)/toM2(rm.Area)*100:F0}%)");
+            roomRows++;
         }
     }
 

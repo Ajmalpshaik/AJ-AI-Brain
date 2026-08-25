@@ -40,11 +40,18 @@ Func<Element, bool> elementCenterIsInRoom = e =>
     return room.IsPointInRoom(new XYZ(center.X, center.Y, roomCenter.Z));
 };
 
+// Same LEVEL as the room only: CEILING_HEIGHTABOVELEVEL_PARAM is measured above the CEILING'S OWN
+// level, and the Z below is built on the ROOM's — a ceiling drawn on another level (mezzanine, the
+// level-above plan) would land the FCU off by the whole inter-level distance (2026-08-25). Where
+// several qualify (a bulkhead plus the main ceiling), the LARGEST wins instead of collector order,
+// and the report says which was used.
 var ceiling = new FilteredElementCollector(Document)
     .OfCategory(BuiltInCategory.OST_Ceilings)
     .WhereElementIsNotElementType()
     .Cast<Ceiling>()
-    .FirstOrDefault(c => elementCenterIsInRoom(c));
+    .Where(c => c.LevelId == room.LevelId && elementCenterIsInRoom(c))
+    .OrderByDescending(c => { try { return c.get_Parameter(BuiltInParameter.HOST_AREA_COMPUTED)?.AsDouble() ?? 0; } catch { return 0; } })
+    .FirstOrDefault();
 double ceilingHeightMm = ceiling?.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM)?.AsDouble() != null
     ? (ceiling.get_Parameter(BuiltInParameter.CEILING_HEIGHTABOVELEVEL_PARAM).AsDouble()) * 304.8
     : 2400;
@@ -70,12 +77,19 @@ using (var t = new Transaction(Document, "AJ Tools - Place FCU"))
         return "FAILED placing FCU: " + ex.Message;
     }
 }
-sb.AppendLine($"Placed FCU at room center, {heightAboveCeilingMm}mm above {ceilingHeightMm}mm ceiling.");
+sb.AppendLine($"Placed FCU at room center, {heightAboveCeilingMm}mm above {ceilingHeightMm}mm ceiling"
+    + (ceiling != null ? $" (ceiling Id {ceiling.Id}, largest on this room's level)." : " (NO ceiling found on this room's level — 2400mm assumed)."));
 
 // Door-side shift — perpendicular-to-wall axis only, tangential position stays wherever it already is.
 if (doorInsetMm > 0)
 {
-    var phase = Document.Phases.get_Item(Document.Phases.Size - 1);
+    // The ROOM's own phase, not the document's last one: on a renovation job a room that is not in
+    // the final phase returns null from get_ToRoom(lastPhase) for every door, and the "No door found"
+    // message then hides a phase mismatch (2026-08-25). Fall back to the last phase only if the
+    // room's phase parameter cannot be read.
+    Phase phase = null;
+    try { phase = Document.GetElement(room.get_Parameter(BuiltInParameter.ROOM_PHASE)?.AsElementId() ?? ElementId.InvalidElementId) as Phase; } catch { }
+    if (phase == null) phase = Document.Phases.get_Item(Document.Phases.Size - 1);
     var doors = new FilteredElementCollector(Document)
         .OfCategory(BuiltInCategory.OST_Doors)
         .WhereElementIsNotElementType()

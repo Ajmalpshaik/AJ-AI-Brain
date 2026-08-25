@@ -28,7 +28,9 @@
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 int topWarnings = 10;       // how many most-frequent warning descriptions to list
 int maxIdsPerList = 15;     // Element-Id cap per detail list (rest summarized as "+N more")
-bool runPerformanceAdviser = true; // Revit's own rule engine — the slowest section; false skips it
+bool runPerformanceAdviser = false; // Revit's own rule engine — the slowest section; true runs it.
+                                    // Default OFF since 2026-08-25: §9 has never run against a real
+                                    // model, and the one never-run path should not be the default one.
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
@@ -74,6 +76,16 @@ foreach (var ii in importInstances.Where(i => !i.IsLinked).Take(maxIdsPerList))
 // --- 5. Unenclosed / unplaced Rooms & Spaces ---
 var spatial = new FilteredElementCollector(Document).OfClass(typeof(SpatialElement)).Cast<SpatialElement>()
     .Where(s => (s is Autodesk.Revit.DB.Architecture.Room || s is Autodesk.Revit.DB.Mechanical.Space) && s.Area <= 0).ToList();
+int allSpatial = new FilteredElementCollector(Document).OfClass(typeof(SpatialElement))
+    .Cast<SpatialElement>().Count(s => s is Autodesk.Revit.DB.Architecture.Room || s is Autodesk.Revit.DB.Mechanical.Space);
+bool hasLinks = new FilteredElementCollector(Document).OfClass(typeof(RevitLinkInstance)).Any();
+if (allSpatial == 0 && hasLinks)
+    // A clean zero caused by the architecture living in a link is worse than no report — same rule
+    // action-create-coordination-report.cs already follows.
+    sb.AppendLine("\n--- Unenclosed/unplaced Rooms+Spaces: NOT CHECKED — this document has NO Rooms or Spaces"
+        + " and carries linked model(s); on a coordination model the rooms live in the LINK, which this"
+        + " section cannot read. ---");
+else
 sb.AppendLine($"\n--- Unenclosed/unplaced Rooms+Spaces (zero area): {spatial.Count} ---");
 foreach (var s in spatial.Take(maxIdsPerList)) sb.AppendLine($"  - '{s.Name}' (Id {s.Id})");
 if (spatial.Count > maxIdsPerList) sb.AppendLine($"  ... +{spatial.Count - maxIdsPerList} more");
@@ -99,8 +111,10 @@ foreach (var v in allViews.Where(v => !v.IsTemplate))
 {
     try { foreach (var fid in v.GetFilters()) usedFilterIds.Add(fid); } catch { } // view kind without filters
 }
-int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(FilterElement)).Count(f => !usedFilterIds.Contains(f.Id));
-sb.AppendLine($"\n--- Unused, removable later: {unusedTemplates} view template(s), {unusedFilters} filter(s) ---");
+// ParameterFilterElement only: FilterElement would also count saved SELECTION sets, which are never
+// "applied to a view" and so always read as unused — they are not removable clutter (2026-08-25).
+int unusedFilters = new FilteredElementCollector(Document).OfClass(typeof(ParameterFilterElement)).Count(f => !usedFilterIds.Contains(f.Id));
+sb.AppendLine($"\n--- Unused, removable later: {unusedTemplates} view template(s), {unusedFilters} view filter(s) ---");
 sb.AppendLine("  -> see actions/structural-changes/action-purge-unused.cs (dry-run first, per its own rule)");
 
 // --- 9. Revit's OWN performance rules (added 2026-08-23) ---------------------------------------------

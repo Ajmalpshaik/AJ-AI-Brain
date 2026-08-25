@@ -29,7 +29,14 @@
 //         several turns apart the middle leg can still cut a corner through a wall — pass explicit
 //         `waypointsMm` for those, which is what that input is for.
 // GOTCHA: eye height is measured from the LEVEL, not from the floor finish. 1600 mm reads as a person;
-//         2200-2500 mm reads as a drone. It is a per-request number — ask.
+//         2200-2500 mm reads as a drone. It is a per-request number — ask. In ROOM mode each point
+//         takes its own room's/door's real Z, so upper floors and survey datums are handled (fixed
+//         2026-08-25 — it used to be an absolute Z above project zero, right only on a level at 0).
+//         In explicit-`waypointsMm` mode there is no room to read a level from, so the height IS
+//         absolute above project internal zero — add the level height into eyeHeightMm yourself.
+// GOTCHA: rooms are read from THIS document only. On a coordination model where the rooms live in the
+//         architectural LINK, the room lookup returns nothing and the reply lists an empty room set —
+//         that is the link seam, not an empty building. Use explicit waypointsMm there.
 // GOTCHA: `Document.ExportImage` takes no transaction (document I/O), but `SetOrientation` needs one.
 //         So each frame is: transaction -> orient -> commit -> export. Exporting inside an open
 //         transaction fails.
@@ -93,12 +100,16 @@ else
         return "Room not found (" + (a == null ? fromRoom : toRoom) + "). Rooms here: " + string.Join(" | ", names);
     }
 
+    // The room's own point already carries the LEVEL's internal Z, so adding z on top makes the
+    // eye height level-relative — fixed 2026-08-25: this used to be a bare `z`, an ABSOLUTE height
+    // above project internal zero, which buried the camera in the slab on any level not at Z=0.
+    // It passed live only because the proof model's rooms sat on a level at exactly 0.
     Func<SpatialElement, XYZ> centreOf = r =>
     {
         var lp = r.Location as LocationPoint;
-        if (lp != null) return new XYZ(lp.Point.X, lp.Point.Y, z);
+        if (lp != null) return new XYZ(lp.Point.X, lp.Point.Y, lp.Point.Z + z);
         var bb = r.get_BoundingBox(null);
-        return bb != null ? new XYZ((bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2, z) : XYZ.Zero;
+        return bb != null ? new XYZ((bb.Min.X + bb.Max.X) / 2, (bb.Min.Y + bb.Max.Y) / 2, bb.Min.Z + z) : XYZ.Zero;
     };
 
     XYZ pa = centreOf(a), pb = centreOf(b);
@@ -120,11 +131,11 @@ else
                 try {
                     if (fi != null && ((fi.ToRoom != null && fi.ToRoom.Id == room.Id) ||
                                        (fi.FromRoom != null && fi.FromRoom.Id == room.Id)))
-                        return new XYZ(d.P.Point.X, d.P.Point.Y, z);
+                        return new XYZ(d.P.Point.X, d.P.Point.Y, d.P.Point.Z + z);
                 } catch { }
             }
-            var near = doors.OrderBy(d => new XYZ(d.P.Point.X, d.P.Point.Y, z).DistanceTo(centre)).FirstOrDefault();
-            return near == null ? null : new XYZ(near.P.Point.X, near.P.Point.Y, z);
+            var near = doors.OrderBy(d => new XYZ(d.P.Point.X, d.P.Point.Y, d.P.Point.Z + z).DistanceTo(centre)).FirstOrDefault();
+            return near == null ? null : new XYZ(near.P.Point.X, near.P.Point.Y, near.P.Point.Z + z);
         };
 
         var da = doorFor(a, pa); var db = doorFor(b, pb);

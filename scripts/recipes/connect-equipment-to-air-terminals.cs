@@ -1,10 +1,14 @@
 // ============================================================
 // SCRIPT: connect-equipment-to-air-terminals.cs
-// PURPOSE: Connect ONE mechanical equipment's supply-air connector to ALL free air terminals as a
-//          proper branched system: main trunk out of the equipment connector -> tap per terminal ->
-//          300x300 (or terminal-size) branch -> elbow -> vertical drop into each terminal's up-facing
-//          connector -> extend main past the LAST branch -> end cap. Ajmal's connection method,
-//          proven live 2026-07-26 (8-FCU exercise, then full 6-terminal system, 0 failures).
+// PURPOSE: Connect ONE mechanical equipment's supply-air connector to ALL free air terminals OF THE
+//          SAME SYSTEM TYPE as a proper branched system: main trunk out of the equipment connector ->
+//          tap per terminal -> branch at the terminal connector's own size -> elbow -> vertical drop
+//          into each terminal's up-facing connector -> extend main past the LAST branch -> end cap.
+//          Ajmal's connection method, proven live 2026-07-26 (8-FCU exercise, then full 6-terminal
+//          system, 0 failures).
+// GOTCHA: the terminal sweep is WHOLE-MODEL — on a multi-storey model a free same-system terminal on
+//         another floor still qualifies and gets a branch drawn at THIS equipment's height. Check the
+//         terminal count it reports against what you can see before trusting a run on a tower.
 // SOURCE:  ../../knowledge/live-model/hvac-ducts.md ("Connecting equipment to terminals" section)
 // STATUS:  living document - refine in place, don't fork a v2 file.
 //
@@ -96,17 +100,25 @@ if (sup == null)                                            // fallback: any fre
             && c.DuctSystemType == Autodesk.Revit.DB.Mechanical.DuctSystemType.SupplyAir) sup = c;
 if (sup == null) return "No free SupplyAir connector on the equipment - stopped.";
 
-// ---- STEP 2 (terminals): every free air-terminal duct connector ----
+// ---- STEP 2 (terminals): every free air-terminal duct connector OF THE SAME SYSTEM TYPE ----
+// The system-type test was missing until 2026-08-25: with supply/return terminals checkerboarded on a
+// real ceiling, an unfiltered sweep wired RETURN terminals into the SUPPLY trunk. The equipment side
+// was always filtered (SupplyAir, above); the terminal side has to match it, not just be free.
 var terms = new List<Tuple<ElementId, Connector>>();
+int skippedWrongSystem = 0;
 foreach (var at in new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctTerminal)
          .WhereElementIsNotElementType().Cast<FamilyInstance>())
 {
     if (at.MEPModel == null || at.MEPModel.ConnectorManager == null) continue;
     foreach (Connector c in at.MEPModel.ConnectorManager.Connectors)
-        if (c.Domain == Domain.DomainHvac && !c.IsConnected)
-            terms.Add(Tuple.Create(at.Id, c));
+    {
+        if (c.Domain != Domain.DomainHvac || c.IsConnected) continue;
+        if (c.DuctSystemType != sup.DuctSystemType) { skippedWrongSystem++; continue; }
+        terms.Add(Tuple.Create(at.Id, c));
+    }
 }
-if (terms.Count == 0) return "No free air-terminal connectors found - nothing to connect.";
+if (terms.Count == 0) return "No free air-terminal connectors of the equipment's system type found - nothing to connect."
+    + (skippedWrongSystem > 0 ? $" ({skippedWrongSystem} free connector(s) skipped as a different system type.)" : "");
 
 // ---- resolve types / level ----
 ElementId ductTypeId;
@@ -246,5 +258,6 @@ foreach (var id in created)
     foreach (Connector c in mgr.Connectors)
         if (c.ConnectorType == ConnectorType.End && !c.IsConnected) open++;
 }
-sb.AppendLine($"VERIFY: equipment supply connected={sup.IsConnected}, routed terminals={routes.Count}/{terms.Count}, open ends in new system={open} (expect 0 with cap, 1 without).");
+sb.AppendLine($"VERIFY: equipment supply connected={sup.IsConnected}, routed terminals={routes.Count}/{terms.Count}, open ends in new system={open} (expect 0 with cap, 1 without)."
+    + (skippedWrongSystem > 0 ? $" {skippedWrongSystem} free terminal connector(s) skipped as a different system type." : ""));
 return sb.ToString();

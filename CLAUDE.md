@@ -48,7 +48,7 @@ warning only matters once you ask for more results than usual. Setup and limits:
 **Read the top 3–5, never just #1.** The one place this is measured is
 [`semantic-index/score-history.md`](semantic-index/score-history.md) — every line stamped since
 2026-08-20 with the model and settings that produced it. **Last run, on the 28-row set (2026-08-25):
-3/28 at #1, 8/28 in top 3, 11/28 in top 5, 20 of 28 answers retrievable at all, MRR 0.233.** The #1
+3/28 at #1, 8/28 in top 3, 11/28 in top 5, 20 of 28 answers retrievable at all, MRR 0.228.** The #1
 figure fell from 5 as the corpus nearly doubled (3,888 → 7,225 chunks since 2026-08-21) — runs on
 different corpus sizes are not comparable, which is the same reason no line here compares to the
 retired 14-row set. Quote that file, never a remembered figure:

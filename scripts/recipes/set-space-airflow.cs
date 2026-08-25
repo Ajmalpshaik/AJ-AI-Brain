@@ -10,7 +10,9 @@
 // what you're using before running, never assume last session's rule still applies.
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
-ElementId levelId = Document.ActiveView.GenLevel?.Id ?? ElementId.InvalidElementId; // or set explicitly
+ElementId levelId = (Document.ActiveView as ViewPlan)?.GenLevel?.Id ?? ElementId.InvalidElementId; // or set explicitly
+// (cast first — GenLevel is a ViewPlan member; and note the trap: if the active view is a plan of the
+//  WRONG level, every write lands on that level's rooms. The first report line names the level — read it.)
 double cfmPerTon = 400;          // e.g. "14 sqm = 1 ton = 400 cfm"
 double sqmPerTon = 14.0;
 double returnAirflowFraction = 0.90; // e.g. "return 10% lower" -> 0.90
@@ -22,7 +24,6 @@ if (levelId == ElementId.InvalidElementId)
 }
 
 var sb = new System.Text.StringBuilder();
-var phase = Document.Phases.get_Item(Document.Phases.Size - 1);
 
 var rooms = new FilteredElementCollector(Document)
     .OfCategory(BuiltInCategory.OST_Rooms)
@@ -61,7 +62,12 @@ Func<FamilyInstance, string> terminalAirflowKind = fi =>
     return "unknown";
 };
 
-sb.AppendLine($"{rooms.Count} room(s) on this level.");
+string levelName = (Document.GetElement(levelId) as Level)?.Name ?? "?";
+sb.AppendLine($"{rooms.Count} room(s) on level '{levelName}'.");
+if (rooms.Count == 0 && new FilteredElementCollector(Document).OfClass(typeof(RevitLinkInstance)).Any())
+    sb.AppendLine("  NOTE: this document has linked model(s) and no rooms of its own on this level — on a"
+        + " coordination model the rooms live in the architectural LINK, which this recipe cannot read."
+        + " A zero here is NOT evidence the level has no rooms.");
 
 using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
 {
@@ -79,11 +85,14 @@ using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
         double returnLsInternal = returnCfm / 60.0;
 
         // Find or create the Space at this room's location.
+        // A Space with no LocationPoint is UNPLACED — it must never match. The old fallback tested
+        // XYZ.Zero against the room, so an orphaned Space got the airflow of whichever room happened
+        // to contain the project origin, while the room's real Space stayed untouched (2026-08-25).
         var existingSpace = new FilteredElementCollector(Document)
             .OfCategory(BuiltInCategory.OST_MEPSpaces)
             .WhereElementIsNotElementType()
             .Cast<Autodesk.Revit.DB.Mechanical.Space>()
-            .FirstOrDefault(s => room.IsPointInRoom(s.Location is LocationPoint lp ? lp.Point : XYZ.Zero));
+            .FirstOrDefault(s => s.Location is LocationPoint lp && room.IsPointInRoom(lp.Point));
 
         Autodesk.Revit.DB.Mechanical.Space space = existingSpace;
         if (space == null)
@@ -93,9 +102,14 @@ using (var t = new Transaction(Document, "AJ Tools - Update Space Airflow"))
             space = Document.Create.NewSpace(Document.GetElement(levelId) as Level, uv);
         }
 
-        space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM)?.Set(supplyLs);
+        // Capture the write results — a missing parameter or a refused Set must show in the report,
+        // not vanish behind `?.` while the summary line still quotes the numbers as written (2026-08-25).
+        bool wroteSupply = space.get_Parameter(BuiltInParameter.ROOM_DESIGN_SUPPLY_AIRFLOW_PARAM)?.Set(supplyLs) ?? false;
         space.ReturnAirflow = Autodesk.Revit.DB.Mechanical.ReturnAirflowType.Specified;
-        space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM)?.Set(returnLsInternal);
+        bool wroteReturn = space.get_Parameter(BuiltInParameter.ROOM_DESIGN_RETURN_AIRFLOW_PARAM)?.Set(returnLsInternal) ?? false;
+        if (!wroteSupply || !wroteReturn)
+            sb.AppendLine($"  WARNING {room.Name}: airflow write refused or parameter missing on Space Id {space.Id}"
+                + $" (supply written: {wroteSupply}, return written: {wroteReturn}).");
 
         // Cascade to already-placed terminals in this room.
         var terminals = new FilteredElementCollector(Document)

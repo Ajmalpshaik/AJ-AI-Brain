@@ -107,6 +107,25 @@ var tapPointOnMain = projectedToMain.XYZPoint;
 double distToTermXY = new XYZ(termConn.Origin.X, termConn.Origin.Y, 0)
     .DistanceTo(new XYZ(tapPointOnMain.X, tapPointOnMain.Y, 0));
 
+// distToTermXY measures to the main's CENTRELINE, so a horizontal leg shorter than the main's own
+// half-width lies entirely INSIDE the main's body — the takeoff then fails and rolls everything back
+// (found 2026-08-25; the old guard was 3 mm, two orders of magnitude under a real duct). Refuse
+// up front with the number, instead of failing mid-transaction.
+double mainHalfWidthFt = (mainDuct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble()
+    ?? mainDuct.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.AsDouble() ?? 0) / 2.0;
+double nearGuardFt = 3 / 304.8; // ~zero: terminal directly under the main — the direct-tap path below
+if (distToTermXY >= nearGuardFt && distToTermXY < mainHalfWidthFt + 50 / 304.8)
+    return $"Terminal sits {distToTermXY * 304.8:F0}mm off the main's centreline, inside the main's own"
+        + $" half-width ({mainHalfWidthFt * 304.8:F0}mm) — a horizontal branch cannot fit. Either it is close"
+        + " enough to tap straight down (move it onto the centreline) or the main needs rerouting.";
+
+// A ROUND terminal connector has no Width/Height — reading them throws. Read the size by shape once,
+// and set the matching parameter on each created duct (2026-08-25; the sibling recipe already did this).
+bool termRound = termConn.Shape == ConnectorProfileType.Round;
+double termW = termRound ? 0 : termConn.Width;
+double termH = termRound ? 0 : termConn.Height;
+double termDia = termRound ? termConn.Radius * 2 : 0;
+
 using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
 {
     t.Start();
@@ -115,8 +134,12 @@ using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
 
     // Vertical riser.
     var riser = Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, termConn.Origin, riserTop);
-    riser.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.Set(termConn.Width);
-    riser.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.Set(termConn.Height);
+    if (termRound) riser.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.Set(termDia);
+    else
+    {
+        riser.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.Set(termW);
+        riser.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.Set(termH);
+    }
     Document.Regenerate();
 
     var riserConns = riser.ConnectorManager.Connectors.Cast<Connector>().ToList();
@@ -136,8 +159,12 @@ using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
     {
         var tapPoint = tapPointOnMain;
         var horiz = Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, riserTop, tapPoint);
-        horiz.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.Set(termConn.Width);
-        horiz.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.Set(termConn.Height);
+        if (termRound) horiz.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.Set(termDia);
+        else
+        {
+            horiz.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.Set(termW);
+            horiz.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.Set(termH);
+        }
         Document.Regenerate();
 
         var horizConns = horiz.ConnectorManager.Connectors.Cast<Connector>().ToList();
