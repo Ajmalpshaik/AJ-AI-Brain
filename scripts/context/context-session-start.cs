@@ -1,9 +1,9 @@
 // ============================================================
 // SCRIPT (context) — context-session-start.cs
-// PURPOSE: THE opening call. One bridge round-trip that answers everything a session needs to know
-//          before it touches the model: which Revit, which API generation, which document, what units
-//          the project is really in, how big it is, what is linked, what is broken. Read-only, zero
-//          input, safe to call anytime.
+// PURPOSE: Report the session's starting state — which Revit version, which API generation, which
+//          document is open, what units the project displays, how big the model is, what is linked,
+//          what is broken. THE opening call: one read-only bridge round-trip, zero input, safe to
+//          call anytime, run before touching the model.
 //
 // ✓ LIVE-VERIFIED 2026-08-22 on `school.rvt` in Revit 2020.2.9 via the `session_start` native tool.
 //   All eleven sections returned, none hit its guard: version + build, the API-generation line (correctly

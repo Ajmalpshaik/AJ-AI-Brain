@@ -2,7 +2,10 @@
 // FRAGMENT (filter) — filter-by-region.cs
 // PURPOSE: Every instance of a category whose bounding box intersects a given 3D region — for
 //          "elements in this area" when there's no Room to filter by (or the area spans multiple
-//          rooms/outdoors). Coordinates in mm, converted to Revit's internal feet.
+//          rooms/outdoors). Coordinates in mm, converted to Revit's internal feet. This tests
+//          BOUNDING-BOX overlap only, so it can false-positive near a box's empty corner — when the
+//          region is not axis-aligned or the answer must be geometric, use
+//          filter-by-solid-intersection.cs (real solid test, slower).
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.

@@ -2,7 +2,9 @@
 // FRAGMENT (action) — action-reset-graphic-overrides.cs
 // PURPOSE: Clear graphic overrides (color, fill pattern) on every element in `elements` — the paired
 //          "undo" for action-set-color-uniform.cs / action-color-by-group.cs when the user wants the
-//          coloring removed without a full Revit Undo (e.g. it's from several turns back).
+//          coloring removed without a full Revit Undo (e.g. it's from several turns back). This clears
+//          PER-ELEMENT overrides only; a CATEGORY-wide override (set by the category fragments) sits on
+//          a different layer and needs action-reset-category-graphics.cs — a full cleanup runs both.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

@@ -3,6 +3,9 @@
 // PURPOSE: One category, narrowed to instances where a numeric parameter matches a comparison against
 //          an mm value. This is the "500mm height duct" filter — the general case, not duct-specific;
 //          point it at any category + parameter (duct Height, pipe Diameter, wall Width, etc).
+//          For LENGTH specifically, prefer filter-by-length.cs — it binds to
+//          BuiltInParameter.CURVE_ELEM_LENGTH directly instead of a display-name lookup, so it cannot
+//          miss on a renamed or localised parameter.
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.

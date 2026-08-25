@@ -2,6 +2,8 @@
 // FRAGMENT (action) — action-set-transparency.cs
 // PURPOSE: Set surface transparency (0-100%) on every element in `elements` in the active view — for
 //          "make these see-through" requests, e.g. to see ductwork behind a wall without hiding it.
+//          To set a whole CATEGORY's transparency at once (no filter), use
+//          action-set-category-transparency.cs.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

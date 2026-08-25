@@ -4,6 +4,8 @@
 //          Design vs Actual Supply/Return/Exhaust airflows, in metric. Answers "list the spaces
 //          and their airflow" and, more usefully, "which spaces have no design figure to check
 //          the actual against". Read-only. The WRITE counterpart is recipes/set-space-airflow.cs.
+//          For a plain Room/Space size table with NO airflow columns (works on Rooms too, not just
+//          MEP Spaces), use action-report-room-space-data.cs.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment
 //          above. Non-Space elements in `elements` are skipped, not an error, so this is safe
 //          after a broad filter.

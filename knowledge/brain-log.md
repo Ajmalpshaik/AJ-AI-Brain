@@ -5736,3 +5736,22 @@ duration — check 9 verifies live *counts* only — so this class has no automa
   the Brain afterwards: a blank `Project2` (Revit default template content read as the office library)
   and `STI_ME_FCU_Fan Coil Unit.rfa` (an early self-built family, quoted as a pattern five times). Rule
   now recorded in `families.md`: a file being open in Revit says nothing about its authority.
+- 2026-08-25 — **Duplication re-checked independently across all 394: still zero true duplicates.**
+  Ajmal asked again after the 2026-08-24 pass, so it was measured a second way (pairwise code-shingle +
+  header-text similarity over every pair, plus the index build's own chunk check): every high-similarity
+  pair is either a deliberate parallel-domain twin (create-duct/pipe/conduit/cable-tray) or a cluster
+  sharing an identical routing table. Two REAL faults found and fixed instead: ~14 same-sentence pairs
+  had one-way or missing cross-references (tag-remove vs delete, the category/element graphics twins,
+  filter-by-category vs -name, region vs solid-intersection, space-data vs space-airflow, the open-ends
+  four, room vs space) — all now carry two-way notes; and two files each embed a deliberate copy of
+  shared logic (date-parsing in `create-revisions-from-sheet-dates.cs`, grid maths in
+  `sprinkler-layout-options.cs`) with nothing saying a fix must be mirrored — both now state it.
+  The build's "100% alike" chunk report lists exactly the 20 shared routing-table blocks: that is the
+  cross-reference pattern working, not duplication to clean up.
+- 2026-08-25 — **The 3/28-at-#1 score line explained (scorer flagged REGRESSION vs 5/28):** nothing was
+  reverted because nothing broke — the corpus grew 3,888 → 7,225 chunks since the 5/28 runs (394
+  fragments + the FCU families notes), and runs on different corpus sizes are not comparable, per
+  `score-history.md`'s own note. Same-corpus before/after of this session's header edits: top-5 10 → 11,
+  MRR 0.227 → 0.233, unreachable fragments (routing audit) 2 → 1. The survivor is
+  `filter-by-space.cs`: for its own PURPOSE the #1 hit is its scripts/README.md row (which names the
+  file, so a reader still lands), but the fragment itself stays below top 5 — reworded once, not fixed.

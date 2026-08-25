@@ -3,7 +3,9 @@
 // PURPOSE: Area/Volume/Level table for every Room or Space in `elements` — read-only, no transaction.
 //          Works on either category since both derive from the same SpatialElement base (Area, Volume,
 //          Level, Name, Number are shared); Occupancy is read via LookupParameter since it isn't
-//          guaranteed present on every project template.
+//          guaranteed present on every project template. When the question is about AIRFLOW as well
+//          ("list the spaces and their airflow"), use action-report-space-airflow.cs — same table shape
+//          plus the Design vs Actual Supply/Return/Exhaust columns.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // GOTCHA: Room Volume only has a real value if "Areas and Volumes" computation is turned on (Room & Area >

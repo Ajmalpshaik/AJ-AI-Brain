@@ -4,6 +4,15 @@
 //          connected — MEP QA sweep ("find loose pipe/duct ends"). Different job from
 //          recipes/verify-duct-connectivity.cs, which traces a full chain out to equipment; this is a
 //          cheap, local, single-element check with no chain-walking.
+// ✱✱ FOUR FRAGMENTS ANSWER "OPEN ENDS". Pick by the sentence — only the last two can change the model:
+//      filters/by-relationship/filter-by-connection-status.cs        FILTER: narrow any category to the
+//                                                                    elements with an open connector.
+//      actions/qa-checks/action-find-dead-end-system.cs              REPORT: sorts DELIBERATE ends from
+//                                                                    accidents, lists only the accidents.
+//      actions/qa-checks/action-check-open-pipe-ends.cs              PIPES: report open ends, and cap
+//                                                                    them only if you say so.
+//      actions/structural-changes/action-connect-open-connectors.cs  JOIN: connects open pairs that
+//                                                                    already touch — WRITES, dry-run first.
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.

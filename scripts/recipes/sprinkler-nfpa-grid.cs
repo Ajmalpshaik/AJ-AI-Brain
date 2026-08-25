@@ -9,6 +9,9 @@
 // SOURCE: ../../knowledge/fire-sprinkler/layout-method.md  (the method, step by step)
 // SOURCE: ../../knowledge/nfpa13-sprinkler-spacing.md      (where the numbers come from)
 // SOURCE: ../../knowledge/fire-sprinkler/nfpa-vs-en12845.md (feeding it EN 12845 numbers instead — same fragment)
+// NOTE: recipes/sprinkler-layout-options.cs carries its own copy of this grid-search maths on purpose
+//       (its header says why it is not this file with a loop) — a fix to the search logic here must be
+//       mirrored there, and its option tables are the answer when Ajmal wants CHOICES rather than one grid.
 //
 // WHY THIS EXISTS ALONGSIDE recipes/generate-room-coverage-layout.cs:
 //   That one answers "no gaps at radius r" — the smoke-detector / CCTV / WiFi question. It is the right

@@ -8,6 +8,12 @@
 // CONSUMES: elements (List<Element>, each really a ViewSheet — from filter-by-sheets.cs)
 // PRODUCES: sb (StringBuilder) — appends the report; add `return sb.ToString();` after this fragment.
 // READ-ONLY — no Transaction, nothing in the model is changed.
+//
+// ✱✱ TWO FILES CARRY THIS SAME DATE-PARSING (regex, month map, 2-digit-year fix, validity check):
+//    this one REPORTS the dates; recipes/create-revisions-from-sheet-dates.cs uses its own copy of the
+//    same rules to CREATE one Revision per date. The copy is deliberate (the recipe must be standalone)
+//    but it means A FIX TO THE PARSING HERE MUST BE MIRRORED THERE, or the report and the created
+//    revisions will disagree about what counts as a date.
 // ============================================================
 
 var dateRegex = new System.Text.RegularExpressions.Regex(

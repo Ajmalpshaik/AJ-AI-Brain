@@ -2,6 +2,8 @@
 // FRAGMENT (filter) — filter-by-category-and-family.cs
 // PURPOSE: One category, narrowed to instances whose family name contains a string. The VCD-style
 //          filter (VCD is a family inside Duct Accessories, not its own category — see glossary.md).
+//          filter-by-family.cs is the same match WITHOUT the category scope (whole-model scan) — use
+//          this one when the category is known, that one when only the family name is.
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.

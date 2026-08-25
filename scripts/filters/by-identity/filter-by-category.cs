@@ -1,7 +1,10 @@
 // ============================================================
 // FRAGMENT (filter) — filter-by-category.cs
 // PURPOSE: Every instance of one category, optionally scoped to a level. The simplest filter — use
-//          this when there's no family/size/room condition at all.
+//          this when there's no family/size/room condition at all. Same job as
+//          filter-by-category-name.cs — the only difference is the input: this one takes the
+//          BuiltInCategory enum member, that one takes the plain display name ("Ducts"). Prefer this
+//          when the enum is known; the name one when working straight from the user's wording.
 // PRODUCES: elements (List<Element>), sb (StringBuilder, one summary line appended)
 // NOT STANDALONE — see scripts/README.md for how to compose with an action fragment.
 //          To test this filter alone, add `return sb.ToString();` as your own last line.

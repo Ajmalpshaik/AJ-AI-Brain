@@ -8,6 +8,13 @@
 // ORDER-DEPENDENT: dates must be created oldest-to-newest in one pass so SequenceNumber stays
 //          chronological — this is why it's a recipe, not a plain filter+action composition.
 // READ + WRITE — wraps element creation in a Transaction with explicit RollBack on failure.
+//
+// ✱✱ TWO FILES CARRY THIS SAME DATE-PARSING (regex, month map, 2-digit-year fix, validity check):
+//    actions/sheet-dates-revisions/action-extract-dates-from-textnotes.cs REPORTS the dates (read-only,
+//    per sheet); this one CREATES a Revision per date. The copy is deliberate (a recipe is standalone)
+//    but it means A FIX TO THE PARSING IN EITHER FILE MUST BE MIRRORED IN THE OTHER, or the report and
+//    the created revisions will disagree about what counts as a date. To just SEE the dates first, run
+//    the read-only action — this recipe writes.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----

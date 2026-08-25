@@ -6,6 +6,12 @@
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above
 //          (e.g. a category filter scoped to a Tag category, or filter-by-current-selection.cs).
 // NOT STANDALONE — see scripts/README.md for how to compose.
+//
+// ✱✱ TWO FRAGMENTS DELETE, AND THE GUARD IS THE DIFFERENCE. action-remove-tags.cs deletes ONLY
+//    IndependentTag annotations (a type check skips everything else) — "remove the tags", "clean the
+//    tags off the view". actions/structural-changes/action-delete-elements.cs deletes WHATEVER the
+//    filter handed it, model elements included, behind the allowDestructive gate — "delete these".
+//    When the sentence is about tags, use this one: it cannot touch a model element even by mistake.
 // ============================================================
 
 int deleted = 0, skipped = 0;
