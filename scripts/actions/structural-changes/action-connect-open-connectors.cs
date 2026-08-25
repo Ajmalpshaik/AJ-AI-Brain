@@ -54,6 +54,16 @@
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Read the dry-run table, connect ONE pair, and
 //   check it in a section before letting it join a whole floor.
 //
+// ✱✱ FOUR FRAGMENTS ANSWER "OPEN ENDS". Pick by the sentence — only the last two can change the model:
+//      filters/by-relationship/filter-by-connection-status.cs        FILTER: narrow any category to the
+//                                                                    elements with an open connector.
+//      actions/qa-checks/action-find-dead-end-system.cs              REPORT: sorts DELIBERATE ends from
+//                                                                    accidents, lists only the accidents.
+//      actions/qa-checks/action-check-open-pipe-ends.cs              PIPES: report open ends, and cap
+//                                                                    them only if you say so.
+//      actions/structural-changes/action-connect-open-connectors.cs  JOIN: connects open pairs that
+//                                                                    already touch — WRITES, dry-run first.
+//
 // ✱✱ FOUR FRAGMENTS JOIN MEP TOGETHER AND THEY BUILD DIFFERENT AMOUNTS OF DUCTWORK. Pick by how
 //    much already exists, because the wrong one either builds a system you did not ask for or fails
 //    for want of one:

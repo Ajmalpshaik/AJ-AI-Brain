@@ -5,6 +5,15 @@
 //          run that was drawn but never terminated.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist, e.g. from filter-by-category.cs
 //          with OST_PipeCurves.
+// ✱✱ FOUR FRAGMENTS ANSWER "OPEN ENDS". Pick by the sentence — only the last two can change the model:
+//      filters/by-relationship/filter-by-connection-status.cs        FILTER: narrow any category to the
+//                                                                    elements with an open connector.
+//      actions/qa-checks/action-find-dead-end-system.cs              REPORT: sorts DELIBERATE ends from
+//                                                                    accidents, lists only the accidents.
+//      actions/qa-checks/action-check-open-pipe-ends.cs              PIPES: report open ends, and cap
+//                                                                    them only if you say so.
+//      actions/structural-changes/action-connect-open-connectors.cs  JOIN: connects open pairs that
+//                                                                    already touch — WRITES, dry-run first.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 //
 // ✱✱ REVIT ANSWERS THIS DIRECTLY AND WE WERE WALKING CONNECTORS BY HAND:

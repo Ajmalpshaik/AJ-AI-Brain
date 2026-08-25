@@ -4,7 +4,8 @@
 //          `elements` — every other action in this group only ever touches line/fill COLOR, never weight
 //          or pattern. Read-modify-write: reads each element's EXISTING overrides first, so a prior
 //          color/transparency/halftone override on the same element isn't wiped out. Either input can be
-//          left at its "don't change" value to touch only the other.
+//          left at its "don't change" value to touch only the other. To set a whole CATEGORY's line
+//          style at once (no filter), use action-set-category-line-style.cs.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

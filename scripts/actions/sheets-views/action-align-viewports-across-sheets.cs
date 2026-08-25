@@ -23,6 +23,9 @@
 // RELATED: action-place-viewport-on-sheet.cs puts a view on a sheet in the first place.
 // ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. GetBoxCenter/SetBoxCenter are the same calls
 //   already proven in action-duplicate-sheet.cs. Run it on two sheets first and look at the paper.
+// ⚠ The alignLegends CODE was only added 2026-08-25 — an audit found the input declared and described
+//   while the body never read it (setting it true did nothing). Legends move by matching view NAME
+//   against the master sheet's legends, no scale gate. Untested like the rest of the file.
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
@@ -35,7 +38,7 @@ bool dryRun = true;                   // true = report only, move nothing
 // ---- END INPUTS ----
 
 var sheets = elements.OfType<ViewSheet>().ToList();
-int moved = 0, skippedScale = 0, skippedAmbiguous = 0, skippedNoPlan = 0, titleBlocksMoved = 0;
+int moved = 0, movedLegends = 0, skippedScale = 0, skippedAmbiguous = 0, skippedNoPlan = 0, titleBlocksMoved = 0;
 var notes = new List<string>();
 
 // Find the master among ALL sheets, not just the incoming set — it is a reference, not a target.
@@ -51,6 +54,13 @@ Func<ViewSheet, List<Viewport>> planViewports = (sheet) =>
                                           || v.ViewType == ViewType.CeilingPlan
                                           || v.ViewType == ViewType.EngineeringPlan
                                           || v.ViewType == ViewType.AreaPlan); })
+         .ToList();
+
+Func<ViewSheet, List<Viewport>> legendViewports = (sheet) =>
+    sheet.GetAllViewports().Select(id => Document.GetElement(id) as Viewport)
+         .Where(vp => vp != null)
+         .Where(vp => { var v = Document.GetElement(vp.ViewId) as View;
+                        return v != null && v.ViewType == ViewType.Legend; })
          .ToList();
 
 Func<ViewSheet, FamilyInstance> titleBlockOf = (sheet) =>
@@ -101,6 +111,21 @@ else
         sb.AppendLine($"{sheets.Count} sheet(s) in.");
         sb.AppendLine();
 
+        // Legend targets: view name -> the master sheet's box centre for that legend (note: the SAME
+        // legend view can legally sit on many sheets, which is what makes name-matching meaningful).
+        var masterLegendCentres = new Dictionary<string, XYZ>();
+        if (alignLegends)
+        {
+            foreach (var lvp in legendViewports(master))
+            {
+                var lv = Document.GetElement(lvp.ViewId) as View;
+                if (lv != null && !masterLegendCentres.ContainsKey(lv.Name))
+                    masterLegendCentres[lv.Name] = lvp.GetBoxCenter();
+            }
+            if (masterLegendCentres.Count == 0)
+                notes.Add("  alignLegends is on, but the master sheet carries no legend viewport — no legend targets.");
+        }
+
         using (var t = new Transaction(Document, "AJ Tools - Align viewports across sheets"))
         {
             if (!dryRun) t.Start();
@@ -129,6 +154,31 @@ else
                                         + "Alignment will be correct in sheet coordinates but wrong on the paper. "
                                         + "Set moveTitleBlocksToMatch = true to fix it.");
                             }
+                        }
+                    }
+                }
+
+                // --- legends (alignLegends) — by matching view NAME against the master's legends ---
+                if (alignLegends && masterLegendCentres.Count > 0)
+                {
+                    foreach (var lvp in legendViewports(sheet))
+                    {
+                        var lv = Document.GetElement(lvp.ViewId) as View;
+                        XYZ target;
+                        if (lv == null || !masterLegendCentres.TryGetValue(lv.Name, out target)) continue;
+                        var cur = lvp.GetBoxCenter();
+                        if (cur.IsAlmostEqualTo(target)) continue;
+                        if (dryRun)
+                        {
+                            sb.AppendLine($"  would move legend '{sheet.SheetNumber}' / '{lv.Name}': "
+                                        + $"({cur.X:F4}, {cur.Y:F4}) -> ({target.X:F4}, {target.Y:F4})");
+                            movedLegends++;
+                        }
+                        else
+                        {
+                            try { lvp.SetBoxCenter(target); movedLegends++;
+                                  sb.AppendLine($"  moved legend '{sheet.SheetNumber}' / '{lv.Name}'"); }
+                            catch (Exception ex) { notes.Add($"  '{sheet.SheetNumber}': legend '{lv.Name}' would not move — {ex.Message}"); }
                         }
                     }
                 }
@@ -178,8 +228,8 @@ else
 
         sb.AppendLine();
         sb.AppendLine(dryRun
-            ? $"DRY RUN — nothing moved. {moved} viewport(s) would move. Set dryRun = false to apply."
-            : $"Moved {moved} viewport(s). Title blocks re-origined: {titleBlocksMoved}.");
+            ? $"DRY RUN — nothing moved. {moved} plan viewport(s) and {movedLegends} legend viewport(s) would move. Set dryRun = false to apply."
+            : $"Moved {moved} plan viewport(s) and {movedLegends} legend viewport(s). Title blocks re-origined: {titleBlocksMoved}.");
         if (skippedScale > 0)     sb.AppendLine($"Skipped for scale mismatch: {skippedScale}.");
         if (skippedAmbiguous > 0) sb.AppendLine($"Skipped as ambiguous (more than one plan): {skippedAmbiguous}.");
         if (skippedNoPlan > 0)    sb.AppendLine($"Skipped with no plan viewport: {skippedNoPlan}.");

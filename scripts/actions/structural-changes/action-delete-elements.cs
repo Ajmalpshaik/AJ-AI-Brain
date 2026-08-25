@@ -11,6 +11,12 @@
 // unconfirmed, no matter how small the set looks. This action also requires the bridge call itself to be
 // made with allowDestructive: true (the bridge refuses Delete otherwise) — that is a second, independent
 // confirmation gate, not a substitute for asking the user first.
+//
+// ✱✱ TWO FRAGMENTS DELETE, AND THE GUARD IS THE DIFFERENCE. actions/sheets-views/action-remove-tags.cs
+//    deletes ONLY IndependentTag annotations (a type check skips everything else) — "remove the tags",
+//    "clean the tags off the view". This one deletes WHATEVER the filter handed it, model elements
+//    included, behind the allowDestructive gate — "delete these". When the sentence is about tags, use
+//    the tag remover: it cannot touch a model element even by mistake.
 
 int deleted = 0, skipped = 0;
 var failures = new List<string>();

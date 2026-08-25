@@ -84,8 +84,18 @@ else
 
     var rbb = room.get_BoundingBox(null);
     double zProbe = room.Level.ProjectElevation + mm(1000);
+    // The probe substitutes zProbe for the point's own Z (heads sit at the ceiling, above the room's
+    // computation plane) — so the point's REAL Z must be range-checked separately, or a head at the
+    // same plan position on ANY OTHER STOREY passes as "in this room". Fixed 2026-08-25: the audit
+    // was counting stacked layouts storey-by-storey into one room and failing min head-to-head on
+    // the phantom near-duplicates. The proof model was single-storey, which is why it never showed.
+    // 1500 mm slack: a room whose Upper Limit sits below the real ceiling still keeps its own heads,
+    // while the next storey up (a full floor-to-floor away) stays out.
     Func<XYZ, bool> insideRoom = p =>
-    { bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i; };
+    {
+        if (rbb != null && (p.Z < rbb.Min.Z - mm(1500) || p.Z > rbb.Max.Z + mm(1500))) return false;
+        bool i = false; try { i = room.IsPointInRoom(new XYZ(p.X, p.Y, zProbe)); } catch { } return i;
+    };
 
     double roomM2 = toM2(room.Area);
 
@@ -168,7 +178,8 @@ else
         for (double x = rbb.Min.X; x <= rbb.Max.X; x += cell)
             for (double y = rbb.Min.Y; y <= rbb.Max.Y; y += cell)
             {
-                var p = new XYZ(x, y, 0);
+                var p = new XYZ(x, y, zProbe); // zProbe, not 0 — the Z-range guard in insideRoom would
+                                               // reject a Z=0 sample on any level away from project zero
                 if (!insideRoom(p)) continue;
                 samples++;
                 int best = -1; double bestD = double.MaxValue;
@@ -207,9 +218,11 @@ else
         }
         else sb.AppendLine("  max area per head        NOT CHECKED — maxAreaPerHeadM2 is 0");
 
-        if (maxSpacingMm > 0)
+        if (maxSpacingMm > 0 && heads.Count > 1)
             sb.AppendLine($"  max head-to-head    {maxSpacingMm,8:N0} mm | {worstNearest,8:N0} mm | {verdict(worstNearest <= maxSpacingMm)}"
                 + $"   (most isolated: {worstIsolated})");
+        else if (maxSpacingMm > 0)
+            sb.AppendLine("  max head-to-head         NOT CHECKED — only one head, no neighbour to measure to");
         else sb.AppendLine("  max head-to-head         NOT CHECKED — maxSpacingMm is 0");
 
         if (minSpacingMm > 0 && heads.Count > 1)

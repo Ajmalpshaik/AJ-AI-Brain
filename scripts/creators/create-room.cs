@@ -1,7 +1,9 @@
 // ============================================================
 // FRAGMENT (creator) — create-room.cs
 // PURPOSE: Place a Room at one or more points on a level — YOU say where each one goes. "put a room
-//          here", "add a room at this point", "create a room in that area".
+//          here", "add a room at this point", "create a room in that area". A Room is the
+//          architectural element; for an MEP SPACE (what airflow/load work needs) use create-space.cs —
+//          same placement idea, different element type.
 //
 // ✱✱ TWO FRAGMENTS CREATE ROOMS AND "CREATE THE ROOMS" MEANS EITHER ONE. Pick by who chooses the spot:
 //      THIS FILE — create-room.cs                     YOU give the points. One room per point, exactly

@@ -9,6 +9,9 @@
 // SOURCE: ../../knowledge/fire-sprinkler/layout-method.md  (the method, step by step)
 // SOURCE: ../../knowledge/nfpa13-sprinkler-spacing.md      (where the numbers come from)
 // SOURCE: ../../knowledge/fire-sprinkler/nfpa-vs-en12845.md (feeding it EN 12845 numbers instead — same fragment)
+// NOTE: recipes/sprinkler-layout-options.cs carries its own copy of this grid-search maths on purpose
+//       (its header says why it is not this file with a loop) — a fix to the search logic here must be
+//       mirrored there, and its option tables are the answer when Ajmal wants CHOICES rather than one grid.
 //
 // WHY THIS EXISTS ALONGSIDE recipes/generate-room-coverage-layout.cs:
 //   That one answers "no gaps at radius r" — the smoke-detector / CCTV / WiFi question. It is the right
@@ -173,8 +176,11 @@ else
         sb.AppendLine($"  *** SMALL ROOM RULE DOES NOT APPLY: this room is {roomM2:F1} m2, over the 800 ft2 (74.3 m2) threshold. Remove smallRoomWallDistanceMm.");
     if (bboxM2 > 0 && (bboxM2 - roomM2) / bboxM2 > 0.05)
         sb.AppendLine($"  *** SHAPE WARNING: the bounding box is {bboxM2:F1} m2 against a room of {roomM2:F1} m2 "
-            + $"({(bboxM2 - roomM2) / bboxM2 * 100:F0}% larger). This room is not rectangular enough for one equal-division grid — "
-            + "split it into rectangles and lay out each, or read every 'centres inside' number below very carefully.");
+            + $"({(bboxM2 - roomM2) / bboxM2 * 100:F0}% larger). Either this room is not rectangular enough for one "
+            + "equal-division grid — split it into rectangles and lay out each — OR it is a plain rectangle merely "
+            + "ROTATED from project north, which inflates the project-aligned bounding box exactly the same way. "
+            + "Run actions/reporting/action-report-room-dimensions.cs first: it measures on the room's OWN axes and "
+            + "tells the two cases apart. Only a genuinely irregular room needs splitting.");
 
     // --- the head-count FLOOR from the area rule alone. No layout may go under it. ---
     int minHeadsByArea = (int)Math.Ceiling(roomM2 / maxAreaPerHeadM2);
@@ -403,9 +409,14 @@ else
                         }
                         if (groupDrawn && made.Count > 1)
                         {
-                            var g = Document.Create.NewGroup(made);
-                            if (!string.IsNullOrWhiteSpace(drawnGroupName))
-                            { try { g.GroupType.Name = drawnGroupName; } catch (Exception exN) { sb.AppendLine($"  (group name not applied: {exN.Message})"); } }
+                            // Its own try: a grouping refusal must not roll back circles already drawn.
+                            try
+                            {
+                                var g = Document.Create.NewGroup(made);
+                                if (!string.IsNullOrWhiteSpace(drawnGroupName))
+                                { try { g.GroupType.Name = drawnGroupName; } catch (Exception exN) { sb.AppendLine($"  (group name not applied: {exN.Message})"); } }
+                            }
+                            catch (Exception exG) { sb.AppendLine($"  (circles drawn but NOT grouped: {exG.Message})"); }
                         }
                         t.Commit();
                         sb.AppendLine($"  DREW {made.Count:N0} circle(s) at r = {rDraw:N0} mm in '{dv.Name}'.");

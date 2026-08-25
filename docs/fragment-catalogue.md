@@ -1,6 +1,6 @@
 # AJ AI Brain — every fragment, and what it does
 
-**394 fragments**, generated from the files on 2026-08-24. Status comes from each fragment's row in `scripts/README.md`, which is this repo's single source of truth for it.
+**394 fragments**, generated from the files on 2026-08-25. Status comes from each fragment's row in `scripts/README.md`, which is this repo's single source of truth for it.
 
 **Generated — do not edit by hand.** Run `node tools/catalogue-build.mjs` after adding or retiring a fragment. The hand-written version of this file was stale within a day of being written.
 
@@ -8,9 +8,9 @@
 
 | Status | Count |
 |---|---|
-| ✅ PROVEN | 247 |
-| ⚠️ not run | 108 |
-| ❓ unproven | 28 |
+| ✅ PROVEN | 244 |
+| ⚠️ not run | 113 |
+| ❓ unproven | 26 |
 | ⛔ blocked | 7 |
 | 🚫 impossible | 4 |
 
@@ -41,7 +41,7 @@
 | ✅ | `action-set-halftone.cs` | Turn halftone ON or OFF for every element in `elements` — a distinct override from color (OverrideGraphicSettings.SetHalftone), covered nowhere else in this group. Read-modify-write: reads e... |
 | ✅ | `action-set-line-style.cs` | Override line WEIGHT and/or line PATTERN (dashed, dotted, ...) for every element in `elements` — every other action in this group only ever touches line/fill COLOR, never weight or pattern... |
 | ⚠️ | `action-set-link-overrides.cs` | Grey / halftone / fade a whole LINKED MODEL in one view — what the "Revit Links" tab of Visibility-Graphics does, reached from code. This is the piece the grayout was missing: on a real coor... |
-| ✅ | `action-set-transparency.cs` | Set surface transparency (0-100%) on every element in `elements` in the active view — for "make these see-through" requests, e.g. to see ductwork behind a wall without hiding it. |
+| ✅ | `action-set-transparency.cs` | Set surface transparency (0-100%) on every element in `elements` in the active view — for "make these see-through" requests, e.g. to see ductwork behind a wall without hiding it. To set a wh... |
 | ⚠️ | `action-show-analysis-heatmap.cs` | Paint a GRADIENT HEATMAP over the model from a number per element — pipes by pressure drop, spaces by airflow, ducts by velocity, rooms by occupancy. Revit's own Analysis Visualization Frame... |
 
 ## actions/move-copy-rotate  *(13)*
@@ -217,7 +217,7 @@
 | ⚠️ | `action-export-nwc.cs` | Export the model to a Navisworks NWC file — the coordination handoff format. Whole model or scoped to one 3D view (the usual "NWC export view" pattern). |
 | ⚠️ | `action-export-parameters-to-csv.cs` | Write chosen parameter values of `elements` to a CSV file — ElementId first column always, one row per element. The Revit-side half of the Excel round-trip: the agent converts this CSV to .x... |
 | ✅ | `action-export-schedule-to-csv.cs` | Export every ViewSchedule in `elements` to a CSV file via Revit's own native ViewSchedule.Export/ScheduleExportOptions — the same mechanism as File > Export > Reports > Schedule, scripted. O... |
-| ❓ | `action-export-sheets-to-pdf.cs` | Batch-export every ViewSheet in `elements` to PDF — combined into one PDF (default) or one PDF per sheet. |
+| ⚠️ | `action-export-sheets-to-pdf.cs` | Batch-export every ViewSheet in `elements` to PDF — combined into one PDF (default) or one PDF per sheet. |
 | ⚠️ | `action-export-view-image.cs` | Export each View/ViewSheet in `elements` as a PNG image — the "screenshot this view properly" job, at a chosen pixel width instead of whatever the screen shows. Feed from filter-by-views.cs... |
 | ⚠️ | `action-export-views-to-dwg.cs` | Export each View/ViewSheet in `elements` to its own DWG file — Revit's File > Export > CAD Formats > DWG, scripted. Feed from filter-by-views.cs or filter-by-sheets.cs. |
 | ❓ | `action-force-tag-leader-lshape.cs` | Force every TAG in `elements` to draw its leader as an L-SHAPE (a bent leader with a horizontal last leg into the tag) instead of a straight diagonal — the drafting standard on most issued d... |
@@ -331,7 +331,7 @@
 | ✅ | `context-linked-models.cs` | List every RVT link in the document — name, loaded/unloaded/not-found status, pinned, and workset (if workshared). Read-only, zero input, safe to call anytime. Orientation step before filter... |
 | ✅ | `context-model-categories.cs` | List model categories (the OST_ ones elements actually belong to), optionally narrowed by a keyword. Read-only, safe to call anytime. LESSON (2026-07-14): an unfiltered dump of every model c... |
 | ✅ | `context-project-units.cs` | Report every unit spec that's actually valid for this document's discipline (Length, Area, HVAC Airflow, Piping Flow, etc.) and what display unit each is currently set to — e.g. is this proj... |
-| ✅ | `context-session-start.cs` | THE opening call. One bridge round-trip that answers everything a session needs to know before it touches the model: which Revit, which API generation, which document, what units the project... |
+| ✅ | `context-session-start.cs` | Report the session's starting state — which Revit version, which API generation, which document is open, what units the project displays, how big the model is, what is linked, what is broken... |
 | ✅ | `context-shared-coordinates.cs` | Report the document's coordinate setup — Project Base Point, Survey Point, active Project Location name, and the True North rotation. The orientation step before any "does this model sit in... |
 | ✅ | `context-used-families.cs` | List every loadable family in the model (component families brought in from .rfa files) — NOT system families like Wall/Floor/Roof types, and not in-place families. Read-only, zero input, sa... |
 | ✅ | `context-workset-info.cs` | Report whether the document is workshared, and if so, list every user workset with its open/closed state and owner. Read-only, zero input, safe to call anytime. |
@@ -363,7 +363,7 @@
 | ✅ | `create-revision-cloud.cs` | Draw a rectangular Revision Cloud in a view (or on a sheet) tied to an existing project Revision — the annotation half the Revision lifecycle (create/edit/delete/assign) was missing. |
 | ✅ | `create-revision.cs` | Create one or more project-level Revisions (Manage > Revisions) directly, in the order given — the plain, non-date-scanning version of recipes/create-revisions-from-sheet-dates.cs, for when... |
 | ✅ | `create-room-elevations.cs` | Place an ElevationMarker at a room's center (or an explicit mm point) in a plan view and create 1–4 interior elevation views around it — the "room elevations" job create-view.cs deliberately... |
-| ✅ | `create-room.cs` | Place a Room at one or more points on a level. |
+| ✅ | `create-room.cs` | Place a Room at one or more points on a level — YOU say where each one goes. "put a room here", "add a room at this point", "create a room in that area". A Room is the architectural element... |
 | ✅ | `create-rooms-in-enclosed-regions.cs` | Fill every enclosed region on a level with a Room, in one pass — and REUSE the project's existing UNPLACED rooms before creating new ones, so you don't end up with orphaned "Room 1" elements... |
 | ✅ | `create-schedule.cs` | Create one new schedule (ViewSchedule) for a category, with a chosen set of fields/columns. ***A NEW SCHEDULE IS NOT FINISHED WHEN ITS COLUMNS ARE RIGHT (Ajmal, 2026-08-19).*** A project tha... |
 | 🚫 | `create-scope-box.cs` | Create one or more Scope Boxes from mm box corners. |
@@ -390,9 +390,9 @@
 
 | | Fragment | What it does |
 |---|---|---|
-| ✅ | `filter-by-category-and-family.cs` | One category, narrowed to instances whose family name contains a string. The VCD-style filter (VCD is a family inside Duct Accessories, not its own category — see glossary.md). |
+| ✅ | `filter-by-category-and-family.cs` | One category, narrowed to instances whose family name contains a string. The VCD-style filter (VCD is a family inside Duct Accessories, not its own category — see glossary.md). filter-by-fam... |
 | ✅ | `filter-by-category-name.cs` | Every instance of a category, resolved by its plain display NAME ("Ducts", "Duct Accessories", "Mechanical Equipment") instead of requiring the exact BuiltInCategory enum member — more dicta... |
-| ✅ | `filter-by-category.cs` | Every instance of one category, optionally scoped to a level. The simplest filter — use this when there's no family/size/room condition at all. |
+| ✅ | `filter-by-category.cs` | Every instance of one category, optionally scoped to a level. The simplest filter — use this when there's no family/size/room condition at all. Same job as filter-by-category-name.cs — the o... |
 | ✅ | `filter-by-family-type.cs` | A specific Type (FamilySymbol) inside a Family, matched by name — e.g. one particular pipe fitting size/type, not every type the family offers. Narrower than filter-by-category-and-family.cs... |
 | ✅ | `filter-by-family.cs` | Every instance belonging to a specific Family name, scanned across the WHOLE model — no category picked first. Use this when the family name is known but which category it lives in isn't (or... |
 | ✅ | `filter-by-grid.cs` | Every Grid in the model, optionally narrowed by a name substring — feeds creators/create-dimension.cs (a dimension string across named Grids) or any report/rename action that needs the Grid... |
@@ -412,7 +412,7 @@
 | ✅ | `filter-by-region.cs` | Every instance of a category whose bounding box intersects a given 3D region — for "elements in this area" when there's no Room to filter by (or the area spans multiple rooms/outdoors). Coor... |
 | ✅ | `filter-by-room.cs` | One category, narrowed to instances physically inside a given room. Handles the Room.IsPointInRoom Z-mismatch gotcha (fails for elements above/below the room's own vertical range, e.g. an FC... |
 | ✅ | `filter-by-solid-intersection.cs` | Elements whose real geometry (not just its bounding box) intersects a custom 3D solid — a clearance zone, an equipment-access envelope, a maintenance zone. More accurate than filter-by-regio... |
-| ✅ | `filter-by-space.cs` | One category, narrowed to instances physically inside a given MEP Space. Same job as filter-by-room.cs but for Spaces (mechanical/electrical zoning) instead of architectural Rooms — the two... |
+| ✅ | `filter-by-space.cs` | One category, narrowed to instances physically inside a given MEP Space — "what is in the space", "how many air terminals in that space", "the ducts in the biggest space". Same job as filter... |
 | ✅ | `filter-by-unenclosed-spatial-elements.cs` | QA sweep — every Room and/or Space in the model that came out unbounded (zero Area, "Not Enclosed") — the systematic version of the single-creation-time warning creators/create-room.cs and c... |
 
 ## filters/by-property  *(5)*
@@ -479,22 +479,22 @@
 |---|---|---|
 | ⚠️ | `audit-flex-curves.cs` | Audit every FLEX DUCT and FLEX PIPE in the model (or one view): size, how long each run really is, how much slack it is carrying, whether both ends are actually connected, and which runs exc... |
 | ⚠️ | `build-test-fixtures.cs` | Create, in an empty scratch model, the fixtures that several fragments cannot be tested without. brain-log's open items list has a whole category reading "needs a live bridge AND a model tha... |
-| ✅ | `connect-equipment-to-air-terminals.cs` | Connect ONE mechanical equipment's supply-air connector to ALL free air terminals as a proper branched system: main trunk out of the equipment connector -> tap per terminal -> 300x300 (or te... |
-| ✅ | `connect-terminal-branch.cs` | Connect one air terminal to the main duct — vertical riser up to the main duct's height, a real elbow fitting at the turn, then a horizontal run tapped into the main duct via a takeoff tee... |
+| ✅ | `connect-equipment-to-air-terminals.cs` | Connect ONE mechanical equipment's supply-air connector to ALL free air terminals OF THE SAME SYSTEM TYPE as a proper branched system: main trunk out of the equipment connector -> tap per te... |
+| ⚠️ | `connect-terminal-branch.cs` | Connect one air terminal to the main duct — vertical riser up to the main duct's height, a real elbow fitting at the turn, then a horizontal run tapped into the main duct via a takeoff tee... |
 | ⚠️ | `create-equipment-family-from-datasheet.cs` | Build a manufacturer equipment family (.rfa) from a product datasheet, in one pass: a parametric box cabinet, any number of round connector stubs carrying PIPE or ELECTRICAL connectors (top... |
 | ❓ | `create-mep-line-standards.cs` | One-click setup of the full MEP drafting line standard in any project: 1) Line patterns (dash-dot section, hidden, centre, phantom, demo, match, existing) 2) Line styles (MEP_ prefix, max li... |
 | ❓ | `create-mep-openings.cs` | Cut real OPENINGS (sleeves) in walls, floors and beams wherever the MEP runs in `elements` pass through them — "put the sleeves in", "cut the holes for the ducts". Finds each crossing by REA... |
 | ❓ | `create-mep-text-standards.cs` | One-click setup of Ajmal's MEP text annotation standard in any project: 1) 120 text note types — the full matrix: 6 sizes x 10 colours x box/no-box, named MEP_Anno_Arial_[Size]mm[_Colour][_B... |
-| ❓ | `create-parametric-box-family-with-duct-connector.cs` | Build a fully parametric box-shaped family (e.g. an air terminal, a simple equipment box) from an already-open, empty Generic Model family document: set its category, add a parametric rectan... |
+| ⚠️ | `create-parametric-box-family-with-duct-connector.cs` | Build a fully parametric box-shaped family (e.g. an air terminal, a simple equipment box) from an already-open, empty Generic Model family document: set its category, add a parametric rectan... |
 | ❓ | `create-revisions-from-sheet-dates.cs` | Scan every sheet's TextNotes for date-like text (e.g. "22-JUL-2025"), then create one project-level Revision (Manage > Revisions) per DISTINCT date found, in chronological order (oldest firs... |
-| ✅ | `draw-main-duct-with-cap.cs` | Draw a single main duct piece from the FCU's supply connector along the room's long axis, sized to the FCU connector, connected at the FCU end, and cap the open far end with the full sized+p... |
+| ⚠️ | `draw-main-duct-with-cap.cs` | Draw a single main duct piece from the FCU's supply connector along the room's long axis, sized to the FCU connector, connected at the FCU end, and cap the open far end with the full sized+p... |
 | ✅ | `drone-shot-flythrough.cs` | A walkthrough / "drone shot" through the model, exported as numbered PNG frames on disk — "fly from Room 1 to Room 2", "follow this path". Finds the rooms, routes THROUGH THEIR DOORS rather... |
 | ✅ | `fill-mm-document-register.cs` | Fill the MM_ document/handover register on one category in one pass — the fixed-value columns (CWA, MM_NP System Type, MM_Discipline Code, MM_Main Document Definition, MM_Main Drawing Statem... |
 | ✅ | `generate-room-coverage-layout.cs` | Lay out the devices needed so a fixed coverage radius leaves no gap in a room, and draw the circles. The sprinkler question ("how many heads at 3 m coverage, and where"), and equally the smo... |
 | ❓ | `maximize-level-extents.cs` | Stretch every LEVEL's 3D extent so it spans the active 3D view's SECTION BOX, written into every elevation, section and 3D view that shows each level — "my level lines are short in the secti... |
 | ✅ | `mep-grayout.cs` | The whole "grayout for MEP" job in one pass — Ajmal's own drawing standard for making a coordination view read: the architectural/structural background drops back to flat grey, the services... |
 | ✅ | `model-health-audit.cs` | One read-only health report for the whole model — the "audit model health" job. Covers: file + worksharing basics, warnings (by severity, top repeat offenders), in-place families, CAD import... |
-| ✅ | `place-fcu.cs` | Place an FCU (Mechanical Equipment) in a room at the given ceiling-void height, optionally shift it toward the room's door (perpendicular-to-wall axis only), and rotate its real supply-air c... |
+| ⚠️ | `place-fcu.cs` | Place an FCU (Mechanical Equipment) in a room at the given ceiling-void height, optionally shift it toward the room's door (perpendicular-to-wall axis only), and rotate its real supply-air c... |
 | ⚠️ | `place-sleeves-at-wall-penetrations.cs` | Find every point where a duct or pipe crosses a straight wall, and (on request) place a sleeve family instance at each crossing, rotated to the run's direction, sized to the service + cleara... |
 | ✅ | `place-terminals-checkerboard.cs` | Place a room's brand-new supply/return air terminals in a near-square checkerboard grid with matched supply/return counts, and set each instance's own Flow parameter. |
 | ⚠️ | `ray-trace-to-ceiling.cs` | Snap each element in `elements` (e.g. a diffuser/air terminal) to the nearest ceiling directly above it — casts a ray straight up from the element's current point using Revit's real ray-cast... |

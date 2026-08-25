@@ -1,7 +1,8 @@
 // ============================================================
 // FRAGMENT (filter) — filter-by-space.cs
-// PURPOSE: One category, narrowed to instances physically inside a given MEP Space. Same job as
-//          filter-by-room.cs but for Spaces (mechanical/electrical zoning) instead of architectural
+// PURPOSE: One category, narrowed to instances physically inside a given MEP Space — "what is in the
+//          space", "how many air terminals in that space", "the ducts in the biggest space". Same job
+//          as filter-by-room.cs but for Spaces (mechanical/electrical zoning) instead of architectural
 //          Rooms — the two are separate element types in Revit even when they cover the same area. The
 //          space can be given by Id, Name, and/or Number — same lookup convention as
 //          filter-by-assembly.cs/filter-by-group.cs, so you don't need the space's Id already in hand.

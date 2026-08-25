@@ -19,29 +19,34 @@
 //        Demolished  demolished in THIS phase
 //        Temporary   created AND demolished within this one phase
 //        Future      not yet created as at this phase
+//        Past        demolished before this phase was reached
 //        None        the element does not participate in phasing at all
 //    Set statusPhaseName plus wantedStatuses below to filter that way. The two modes combine: leaving
 //    the created/demolished names null and giving only a status phase is the usual phase-plan query.
 // GOTCHA: an element that does not take part in phasing returns None (or throws on some types) — those
 //         are skipped, and the count of skipped ones is reported rather than hidden.
-// ⚠ THE STATUS MODE HAS NOT BEEN RUN AGAINST A REAL MODEL — added 2026-08-23. Check one wall you already
-//   know the phase of before trusting a whole-model sweep.
+// ⚠ THE STATUS MODE HAS NOT BEEN RUN AGAINST A REAL MODEL — documented 2026-08-23, but the CODE for it
+//   was only added 2026-08-25: an audit found statusPhaseName and wantedStatuses declared and described
+//   above while the body never read either — the mode answered "No phase specified". Check one wall you
+//   already know the phase of before trusting a whole-model sweep. (The Created/Demolished mode is the
+//   part that was live-verified.)
 // ============================================================
 
 // ---- INPUTS (edit every time — never treat these as fixed defaults) ----
 string createdPhaseName = null;    // e.g. "Phase 2" — leave null to not filter on Phase Created
 string demolishedPhaseName = null; // e.g. "Phase 1" — leave null to not filter on Phase Demolished
 string statusPhaseName = null;     // e.g. "Phase 3" — the phase to ASK ABOUT; null = no status filtering
-string[] wantedStatuses = new[] { "Existing" }; // any of: New, Existing, Demolished, Temporary, Future
+string[] wantedStatuses = new[] { "Existing" }; // any of: New, Existing, Demolished, Temporary, Future, Past
 BuiltInCategory[] categoryScope = new BuiltInCategory[0]; // empty = every model category
 // ---- END INPUTS ----
 
 var sb = new System.Text.StringBuilder();
 List<Element> elements = new List<Element>();
 
-if (string.IsNullOrEmpty(createdPhaseName) && string.IsNullOrEmpty(demolishedPhaseName))
+if (string.IsNullOrEmpty(createdPhaseName) && string.IsNullOrEmpty(demolishedPhaseName)
+    && string.IsNullOrEmpty(statusPhaseName))
 {
-    sb.AppendLine("No phase specified — set createdPhaseName and/or demolishedPhaseName.");
+    sb.AppendLine("No phase specified — set createdPhaseName, demolishedPhaseName and/or statusPhaseName.");
 }
 else
 {
@@ -50,11 +55,15 @@ else
         allPhases.FirstOrDefault(ph => ph.Name.Equals(createdPhaseName, StringComparison.OrdinalIgnoreCase));
     Phase demolishedPhase = string.IsNullOrEmpty(demolishedPhaseName) ? null :
         allPhases.FirstOrDefault(ph => ph.Name.Equals(demolishedPhaseName, StringComparison.OrdinalIgnoreCase));
+    Phase statusPhase = string.IsNullOrEmpty(statusPhaseName) ? null :
+        allPhases.FirstOrDefault(ph => ph.Name.Equals(statusPhaseName, StringComparison.OrdinalIgnoreCase));
 
     if (!string.IsNullOrEmpty(createdPhaseName) && createdPhase == null)
         sb.AppendLine($"Phase '{createdPhaseName}' not found. Available: {string.Join(", ", allPhases.Select(p => p.Name))}");
     else if (!string.IsNullOrEmpty(demolishedPhaseName) && demolishedPhase == null)
         sb.AppendLine($"Phase '{demolishedPhaseName}' not found. Available: {string.Join(", ", allPhases.Select(p => p.Name))}");
+    else if (!string.IsNullOrEmpty(statusPhaseName) && statusPhase == null)
+        sb.AppendLine($"Phase '{statusPhaseName}' not found. Available: {string.Join(", ", allPhases.Select(p => p.Name))}");
     else
     {
         IEnumerable<Element> query;
@@ -70,20 +79,32 @@ else
             query = new FilteredElementCollector(Document).WhereElementIsNotElementType();
         }
 
-        elements = query.Where(e =>
+        var wanted = new HashSet<string>(wantedStatuses ?? new string[0], StringComparer.OrdinalIgnoreCase);
+        int skippedNoPhasing = 0;
+        foreach (var e in query)
         {
-            if (e == null) return false;
+            if (e == null) continue;
             try
             {
                 bool createdOk = createdPhase == null || e.CreatedPhaseId == createdPhase.Id;
                 bool demolishedOk = demolishedPhase == null || e.DemolishedPhaseId == demolishedPhase.Id;
-                return createdOk && demolishedOk;
+                if (!createdOk || !demolishedOk) continue;
+                if (statusPhase != null)
+                {
+                    var st = e.GetPhaseStatus(statusPhase.Id);
+                    if (st == ElementOnPhaseStatus.None) { skippedNoPhasing++; continue; }
+                    if (!wanted.Contains(st.ToString())) continue;
+                }
+                elements.Add(e);
             }
-            catch { return false; } // some element types don't support phasing — skip, don't error
-        }).ToList();
+            catch { skippedNoPhasing++; } // some element types don't support phasing — skip, don't error
+        }
 
         string categoryLabel = categoryScope.Length == 0 ? "all categories" : string.Join(", ", categoryScope.Select(c => c.ToString()));
-        sb.AppendLine($"Filtered {elements.Count} element(s), categories: {categoryLabel}, Created={createdPhaseName ?? "(any)"}, Demolished={demolishedPhaseName ?? "(any)"}.");
+        string statusLabel = statusPhase == null ? "(off)" : $"{string.Join("/", wanted)} as at '{statusPhase.Name}'";
+        sb.AppendLine($"Filtered {elements.Count} element(s), categories: {categoryLabel}, Created={createdPhaseName ?? "(any)"}, Demolished={demolishedPhaseName ?? "(any)"}, Status={statusLabel}.");
+        if (skippedNoPhasing > 0)
+            sb.AppendLine($"  {skippedNoPhasing} element(s) skipped — no part in phasing (status None, or the type rejects the phase query).");
     }
 }
 // ---- continue with one or more action fragments below, or add return sb.ToString(); to stop here ----

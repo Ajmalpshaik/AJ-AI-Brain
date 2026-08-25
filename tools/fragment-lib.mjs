@@ -146,6 +146,13 @@ export function makeStatusOf(rows = readmeRows()) {
     const row = rows.find((l) => l.includes(`](${rel})`));
     if (!row) return "not-in-readme";
     if (/NOT yet live-verified/.test(row)) return "untested";
+    // "reflection-verified 2026-07-23, NOT live-executed" is an UNTESTED row, and until 2026-08-25 it
+    // counted as verified: \bverified\b matches inside "reflection-verified" (the word boundary sits
+    // after the hyphen), and nothing tested for the NOT-live-executed clause. Three recipes rode that
+    // into the proven count - place-fcu, draw-main-duct-with-cap, connect-terminal-branch - each with
+    // "*** NOT CHECKED" in its own header. This test runs BEFORE the verified one on purpose, and the
+    // verified regex below now refuses a hyphen-prefixed match too, so neither half can regress alone.
+    if (/NOT live-(?:executed|run)\b/i.test(row)) return "untested";
     // "verified" and the year are allowed a few words between them. The old test was the literal
     // `verified 2026`, so a row reading "✓ verified LIVE 2026-08-14" did not match and the fragment
     // reported as UNPROVEN even though it had been run against a real model. Found 2026-08-22: EIGHT
@@ -155,7 +162,7 @@ export function makeStatusOf(rows = readmeRows()) {
     // phrasing was right and the regex was wrong, so this is fixed here rather than by rewording eight
     // rows into an unnatural shape that would break again the next time someone wrote plainly.
     // The `NOT yet live-verified` test above still runs FIRST, so an explicit not-yet row is unaffected.
-    if (/\bverified\b[^|]{0,24}?20\d\d/.test(row)) return "verified";
+    if (/(?<!reflection-)\bverified\b[^|]{0,24}?20\d\d/.test(row)) return "verified";
     // These two are plain substring tests, so a row that NARRATES an old status flips to it. Hit for
     // real 2026-08-24: create-ceiling.cs was corrected months earlier, its row was rewritten to say so,
     // and the sentence `This row said "CONFIRMED IMPOSSIBLE" until today` put the fragment straight back

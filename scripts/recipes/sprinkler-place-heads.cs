@@ -197,8 +197,8 @@ else
                 return i;
             };
 
-            int seen = 0, inRoom = 0, offTarget = 0;
-            double worstOffMm = 0;
+            int seen = 0, inRoom = 0, offTarget = 0, offHeight = 0;
+            double worstOffMm = 0, worstOffZmm = 0;
             foreach (var id in placedIds)
             {
                 var el = Document.GetElement(id);
@@ -216,6 +216,16 @@ else
                     if (d < best) best = d;
                 }
                 if (best > 1.0) { offTarget++; if (best > worstOffMm) worstOffMm = best; }
+                // and did it land at the HEIGHT asked for? This is the check the header's own GOTCHA
+                // exists for (the family default Z winning silently) and until 2026-08-25 the read-back
+                // compared X and Y only — the one proven failure mode was the one it could not see.
+                // When heightParameterName is set, that parameter legitimately overrides the placement
+                // Z, so the expected height is the level plus the written value, not placementZmm.
+                double expectZmm = string.IsNullOrWhiteSpace(heightParameterName)
+                    ? placementZmm
+                    : toMm(level.ProjectElevation) + heightParameterValueMm;
+                double dz = Math.Abs(toMm(lp.Point.Z) - expectZmm);
+                if (dz > 1.0) { offHeight++; if (dz > worstOffZmm) worstOffZmm = dz; }
             }
 
             sb.AppendLine($"  READ BACK from the document: {seen:N0} of those Ids still exist"
@@ -226,8 +236,15 @@ else
             if (offTarget > 0)
                 sb.AppendLine($"  *** {offTarget:N0} head(s) are not at the position asked for (worst {worstOffMm:N0} mm out)."
                     + " Something moved them — a host, a snap, or a workplane. Look before continuing.");
-            if (seen == placedIds.Count && offTarget == 0 && failed == 0)
-                sb.AppendLine("  Placed count, surviving Ids and positions all agree.");
+            if (offHeight > 0)
+                sb.AppendLine($"  *** {offHeight:N0} head(s) are not at the HEIGHT asked for (worst {worstOffZmm:N0} mm out)."
+                    + " This is the family-default-elevation trap from the header — set heightParameterName"
+                    + " to the family's own height parameter and re-run.");
+            if (string.IsNullOrWhiteSpace(heightParameterName))
+                sb.AppendLine("  *** heightParameterName is blank, so the placement height is NOT being enforced through the"
+                    + " family's own parameter — only the Z read-back above stands between you and the family default.");
+            if (seen == placedIds.Count && offTarget == 0 && offHeight == 0 && failed == 0)
+                sb.AppendLine("  Placed count, surviving Ids, positions and heights all agree.");
 
             sb.AppendLine();
             sb.AppendLine("  NEXT, from a SEPARATE bridge call: recipes/sprinkler-compliance-audit.cs on this room.");

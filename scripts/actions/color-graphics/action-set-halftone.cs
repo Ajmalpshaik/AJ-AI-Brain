@@ -3,7 +3,8 @@
 // PURPOSE: Turn halftone ON or OFF for every element in `elements` — a distinct override from color
 //          (OverrideGraphicSettings.SetHalftone), covered nowhere else in this group. Read-modify-write:
 //          reads each element's EXISTING overrides first and only changes the halftone flag, so a prior
-//          color/transparency override on the same element isn't wiped out.
+//          color/transparency override on the same element isn't wiped out. To halftone a whole
+//          CATEGORY at once (no filter, "grey out all the walls"), use action-set-category-halftone.cs.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter fragment above.
 // NOT STANDALONE — see scripts/README.md for how to compose.
 // ============================================================

@@ -17,6 +17,9 @@
 //   insulation   line 80,80,80     (fill discarded)        weight 1   transparency 100% MEP_Hidden_Short_Dash
 //   mech equip   line 0,0,0        fill 128,128,128 solid  weight 3   transparency 0%
 //   OFF          Structural Rebar, Structural Rebar Couplers
+//   AND EVERY OTHER MODEL CATEGORY IS TURNED **ON** — deliberate ("everything on, the named few off"),
+//   but know it before running: a category someone hid by hand in this view (furniture, topography,
+//   casework) comes back visible. If the view carries manual hides worth keeping, note them first.
 //
 // WHY WINDOWS ARE 150 AND DOORS ARE 200 — the one value that looks like a typo and is not.
 //   A window sits INSIDE a wall whose fill is already 200, so a 200 window line vanishes into it.
@@ -150,6 +153,12 @@ using (var t = new Transaction(doc, "AJ Tools - MEP grayout"))
             bool wantHidden = offIds.Contains(id);
             if (view.GetCategoryHidden(c.Id) != wantHidden) view.SetCategoryHidden(c.Id, wantHidden);
             if (wantHidden) hidden++; else shown++;
+
+            // AllowsVisibilityControl (gated above) and IsCategoryOverridable are DIFFERENT predicates —
+            // a category can allow the visibility toggle and still refuse overrides, and SetCategoryOverrides
+            // then THROWS, rolling back the whole grayout (2026-08-25; the paired reset fragment already
+            // used the correct test, per its own README row).
+            if (!view.IsCategoryOverridable(c.Id)) { notControllable++; continue; }
 
             // --- 2. the override, background rule first then the exceptions ---
             var o = view.GetCategoryOverrides(c.Id);

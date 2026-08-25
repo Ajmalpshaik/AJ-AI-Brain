@@ -126,3 +126,7 @@ after the list gets buried one run at a time, and this is the file `CLAUDE.md` t
 - 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3890 fp=dc35e3a2759240e4
 - 5/28 at #1, 7/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.267  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=3890 fp=dc35e3a2759240e4
 - 5/28 at #1, 8/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.262  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=4769 fp=b0ebc92d8d470e34
+- 3/28 at #1, 8/28 in top 3, 10/28 in top 5, 20/28 retrievable, MRR 0.227  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=7225 fp=b0ebc92d8d470e34
+- 3/28 at #1, 8/28 in top 3, 11/28 in top 5, 20/28 retrievable, MRR 0.233  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=7234 fp=b0ebc92d8d470e34
+- 3/28 at #1, 8/28 in top 3, 11/28 in top 5, 20/28 retrievable, MRR 0.233  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=7237 fp=b0ebc92d8d470e34
+- 3/28 at #1, 8/28 in top 3, 11/28 in top 5, 20/28 retrievable, MRR 0.228  |  model=all-MiniLM-L6-v2 chunk=900/1100/150 chunks=7281 fp=b0ebc92d8d470e34

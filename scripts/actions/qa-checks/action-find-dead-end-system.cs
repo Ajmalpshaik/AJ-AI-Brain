@@ -6,6 +6,15 @@
 //          from the accidental ones and only reports the accidents.
 // ASSUMES: elements (List<Element>) and sb (StringBuilder) already exist from a filter above — the system
 //          INCLUDING its fittings and accessories. Read-only. The model never changes.
+// ✱✱ FOUR FRAGMENTS ANSWER "OPEN ENDS". Pick by the sentence — only the last two can change the model:
+//      filters/by-relationship/filter-by-connection-status.cs        FILTER: narrow any category to the
+//                                                                    elements with an open connector.
+//      actions/qa-checks/action-find-dead-end-system.cs              REPORT: sorts DELIBERATE ends from
+//                                                                    accidents, lists only the accidents.
+//      actions/qa-checks/action-check-open-pipe-ends.cs              PIPES: report open ends, and cap
+//                                                                    them only if you say so.
+//      actions/structural-changes/action-connect-open-connectors.cs  JOIN: connects open pairs that
+//                                                                    already touch — WRITES, dry-run first.
 //
 // ✱✱ MOST OPEN ENDS ARE MEANT TO BE THERE, WHICH IS WHY A RAW OPEN-END LIST IS IGNORED. A run that ends
 //    at an air terminal, a plumbing fixture, a piece of equipment or a cap is finished, not broken.

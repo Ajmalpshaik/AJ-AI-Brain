@@ -42,10 +42,17 @@
 // across cuts), but the trunkDir sign issue above is a separate, still-open risk. Before trusting
 // skipLastTakeoff on a new trunk: confirm which end is actually the cap (e.g. compare the reported cut
 // distances against the known FCU location) rather than assuming.
+// AND THE SAME SIGN RISK REACHES EVERY CUT, not just skipLastTakeoff (recorded 2026-08-25): the cut
+// offset is applied on the +trunkDir side of each takeoff group unconditionally, so with trunkDir
+// pointing cap->FCU every cut lands UPSTREAM of its takeoff and each segment is bounded on the wrong
+// side - the later per-segment sizing then sizes each length against its neighbour's flow, silently.
+// Until a direction reference input exists, the same manual check covers both: confirm the reported
+// first cut sits on the CAP side of the first takeoff before letting a sizing run trust the segments.
 
 // ---- INPUTS (edit every time - never treat these as fixed defaults) ----
 ElementId trunkPieceId = ElementId.InvalidElementId; // any one Duct element that is part of the trunk
-double marginMm = 500;              // clearance downstream of each takeoff's own half-width, per-request
+double marginMm = 500;              // clearance beyond the TRUNK's half-width (read once from the piece
+                                    // you name — not each takeoff's own size), per-request
 double groupToleranceMm = 50;       // takeoffs within this distance along the trunk are one cut point
                                      // (checkerboard rooms put two takeoffs at ~the same position from
                                      // opposite sides - group them so you don't try to cut the same point twice)
@@ -67,8 +74,15 @@ if (startCurve == null) return "Trunk piece does not have a straight LocationCur
 
 XYZ trunkDir = (startCurve.GetEndPoint(1) - startCurve.GetEndPoint(0)).Normalize();
 XYZ refPoint = startCurve.GetEndPoint(0);
+// Width, height, or DIAMETER — a round trunk has neither Width nor Height, and the old `?? 0`
+// fallback silently shrank the takeoff-clearance offset to the margin alone, cutting close enough
+// to delete the takeoff (the exact failure this file's HIGH RISK note describes). Found 2026-08-25;
+// the 2026-08-14 fixture was rectangular, so the round path had never run. No usable size = refuse.
 double widthFt = startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.AsDouble()
-    ?? startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble() ?? 0;
+    ?? startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.AsDouble()
+    ?? startPiece.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.AsDouble() ?? 0;
+if (widthFt <= 0) return "Could not read the trunk's Width/Height/Diameter — refusing to cut: the "
+    + "takeoff-clearance offset would collapse to the margin alone and risk slicing through a takeoff.";
 double halfWidthFt = widthFt / 2.0;
 double marginFt = marginMm / 304.8;
 double groupToleranceFt = groupToleranceMm / 304.8;

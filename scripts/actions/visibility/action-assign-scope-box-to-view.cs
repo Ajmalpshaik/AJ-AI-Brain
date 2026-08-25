@@ -1,7 +1,7 @@
 // ============================================================
-// *** NOT CHECKED — BLOCKED: only the "clear the assignment" path has run against a real view. Assigning
-// an actual named Scope Box has never been tested — this model has none, and there is no API to create
-// one. See the LIVE-VERIFIED note below for detail. ***
+// STATUS: PARTLY VERIFIED — the clear path ran live 2026-07-22 and the not-found path 2026-08-07 (see
+//         scripts/README.md). Assigning an actual named Scope Box has never been tested and is genuinely
+//         BLOCKED: this model has none, and there is no API to create one (see create-scope-box.cs).
 // FRAGMENT (action) — action-assign-scope-box-to-view.cs
 // PURPOSE: Assign a named Scope Box to every View in `elements` (the view's own "Scope Box" property) —
 //          leave scopeBoxName empty to clear the assignment instead.
