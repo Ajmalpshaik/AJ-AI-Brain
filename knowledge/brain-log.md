@@ -5782,3 +5782,48 @@ duration — check 9 verifies live *counts* only — so this class has no automa
   MRR 0.227 → 0.233, unreachable fragments (routing audit) 2 → 1. The survivor is
   `filter-by-space.cs`: for its own PURPOSE the #1 hit is its scripts/README.md row (which names the
   file, so a reader still lands), but the fragment itself stays below top 5 — reworded once, not fixed.
+
+## 2026-08-25 — the auto-router is proven, and Ajmal's build order turned out to be the design
+
+`action-auto-route-mep-run.cs` had carried "NOT YET RUN AGAINST A REAL MODEL" since it was written on
+2026-08-23. It ran three times today against a real project — three supply branches from an FCU to
+ceiling diffusers — and every run reported **"BUILT: 2 segment(s), 1 of 1 elbow(s)"**. Header and
+`scripts/README.md` row both updated; it is no longer an unproven fragment.
+
+**What the read-back actually confirmed**, because "1 of 1 elbow" is a claim, not evidence: the fitting
+is category **Duct Fittings**, family `M_Rectangular Elbow - Radius : 1.5 W`, with both connectors
+`IsConnected`. Not a bare `ConnectTo`, which makes a logical link and no geometry.
+
+**The trap worth keeping: it SHORTENS the legs it builds.** A 621 mm riser came back 321 mm, ending at
+Z 2523 instead of the 2823 that was asked for — because the elbow body needs the room. This is correct
+behaviour and it means **the built legs must never be measured against the input points**. A verification
+that checks "did the duct reach B" will report failure on a perfectly good run. Match on the elbow's
+connectors instead.
+
+**Ajmal corrected the method mid-job, and he was right.** The fragment first reached for was
+`connect-terminal-branch.cs`, which interleaves — riser, connect, horizontal, elbow, takeoff, all in one
+transaction. His words: *"ITS NOT LIKE THIS AS I REMEBER ITS MAKE FIRST PIPE THE IF ITS OKKEY THERN HE
+MAIKE FITTINGS LIKE THAT I THING CAN YOU CHEK THAT"*. Checked, and his memory was exact:
+`action-auto-route-mep-run.cs` builds **every segment first**, then makes fittings in a **separate pass**,
+counting elbows made against elbows attempted and listing failures per joint. So a fitting that fails
+leaves the pipe standing and names the joint, instead of taking the run down with it. That is the better
+method for the same reason a dry run is better than a rollback — **the failure is visible and local**.
+Worth stating plainly because the interleaved fragment is the one that keeps surfacing first in search.
+
+Two side-findings while getting there:
+
+- **The sprinkler library does not draw pipe at all.** All twelve `sprinkler-*.cs` are layout, spacing,
+  hazard and obstruction work — nothing in them creates a pipe. Ajmal remembered the piping behaviour
+  from `action-auto-route-mep-run.cs`, which is the only fragment besides `creators/create-pipe.cs` that
+  calls `Pipe.Create`. Recorded so the next session does not go looking in `sprinkler-*` for it.
+- **Three "proven" recipes could not compile.** `connect-terminal-branch.cs`, `draw-main-duct-with-cap.cs`
+  and `place-fcu.cs` all used bare `Duct`, `DuctType`, `MechanicalSystemType` and `DuctSystemType`, which
+  the MCP server's compile context does not resolve — `CS0246: type or namespace not found`, before a
+  single line ran. Fully qualified to `Autodesk.Revit.DB.Mechanical.*`. A peer session had fixed exactly
+  this in `connect-equipment-to-air-terminals.cs` the same day and missed the other three, which is the
+  concurrent-session pattern CLAUDE.md already warns about, showing up as a half-done sweep rather than a
+  conflict.
+- **`draw-main-duct-with-cap.cs` rejected a correctly-described connector.** Its Fresh Air decoy test was
+  `string.IsNullOrEmpty(c.Description)`, so the moment a connector carries ANY description — including
+  the `"Supply Air,Out"` the FCU family sets on purpose — it was skipped as a decoy. Relaxed to skip only
+  descriptions that actually contain "fresh".

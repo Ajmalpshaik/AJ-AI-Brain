@@ -158,7 +158,7 @@ if (rotateToFaceTerminals)
                                 terminals.Average(t2 => (t2.Location as LocationPoint).Point.Y), placePt.Z);
 
         var hvacConnectors = fcu.MEPModel?.ConnectorManager?.Connectors?.Cast<Connector>()
-            .Where(c => c.Domain == Domain.DomainHvac && c.DuctSystemType == DuctSystemType.SupplyAir)
+            .Where(c => c.Domain == Domain.DomainHvac && c.DuctSystemType == Autodesk.Revit.DB.Mechanical.DuctSystemType.SupplyAir)
             .ToList();
         // Prefer the connector with an empty Description — the "Fresh Air" one is a decoy intake connector.
         var supplyConn = hvacConnectors?.FirstOrDefault(c => string.IsNullOrEmpty(c.Description))

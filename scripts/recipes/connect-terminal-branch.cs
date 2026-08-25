@@ -91,8 +91,8 @@ if (systemTypeId == ElementId.InvalidElementId && mainDuct.MEPSystem != null)
 if (systemTypeId == ElementId.InvalidElementId)
 {
     var fallbackSystemType = new FilteredElementCollector(Document)
-        .OfClass(typeof(MechanicalSystemType))
-        .Cast<MechanicalSystemType>()
+        .OfClass(typeof(Autodesk.Revit.DB.Mechanical.MechanicalSystemType))
+        .Cast<Autodesk.Revit.DB.Mechanical.MechanicalSystemType>()
         .FirstOrDefault(st => st.SystemClassification == MEPSystemClassification.SupplyAir);
     if (fallbackSystemType == null) return "Could not resolve a duct system type for the branch.";
     systemTypeId = fallbackSystemType.Id;
@@ -133,7 +133,7 @@ using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
     {
 
     // Vertical riser.
-    var riser = Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, termConn.Origin, riserTop);
+    var riser = Autodesk.Revit.DB.Mechanical.Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, termConn.Origin, riserTop);
     if (termRound) riser.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.Set(termDia);
     else
     {
@@ -158,7 +158,7 @@ using (var t = new Transaction(Document, "AJ Tools - Connect Terminal Branch"))
     else
     {
         var tapPoint = tapPointOnMain;
-        var horiz = Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, riserTop, tapPoint);
+        var horiz = Autodesk.Revit.DB.Mechanical.Duct.Create(Document, systemTypeId, ductTypeId, branchLevelId, riserTop, tapPoint);
         if (termRound) horiz.get_Parameter(BuiltInParameter.RBS_CURVE_DIAMETER_PARAM)?.Set(termDia);
         else
         {

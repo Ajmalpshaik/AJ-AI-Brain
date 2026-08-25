@@ -39,9 +39,21 @@
 // RELATED: creators/create-duct.cs and creators/create-pipe.cs (one straight segment, no fittings);
 //          recipes/connect-terminal-branch.cs (the specific terminal-to-trunk case, already proven);
 //          actions/reporting/action-plan-shortest-route.cs (which ORDER to connect many elements in).
-// ⚠ NOT YET RUN AGAINST A REAL MODEL — written 2026-08-23. Route ONE run first, look at it in a section,
-//   and confirm the elbows are real fittings (select one, it should be a Duct/Pipe Fitting) before
-//   routing a floor's worth.
+// ✓ LIVE-VERIFIED 2026-08-25 — three supply branches routed in one room, FCU to ceiling diffusers.
+//   Each run: A = the diffuser neck (Z 2202), B = a tap point on the main (Z 2823), routeOrder "ZXY".
+//   Every run reported "BUILT: 2 segment(s), 1 of 1 elbow(s)" and the elbow was confirmed a REAL fitting
+//   by read-back — category Duct Fittings, family "M_Rectangular Elbow - Radius : 1.5 W", both sides
+//   IsConnected. It also SHORTENS both legs to make room for the elbow body (a 621 mm riser came back
+//   321 mm, ending at 2523 not 2823), which is correct and is why the legs must never be measured
+//   against the input points afterwards.
+//   THE TWO OPEN ENDS ARE STILL YOURS TO CLOSE, exactly as documented above — in that session the neck
+//   end took a plain Connector.ConnectTo (coincident point, opposite directions) and the main end took
+//   Document.Create.NewTakeoffFitting(connector, mainDuct). After both, a model-wide read-back found
+//   ZERO open duct ends.
+//   BUILD ORDER IS THE POINT: it makes every segment FIRST, then fittings in a separate pass, counting
+//   elbows made vs attempted and listing failures per joint — so a fitting that fails leaves the pipe
+//   standing and tells you which joint. That is Ajmal's own method, in his words: make the pipe first,
+//   check it is okay, then make the fittings.
 // ============================================================
 
 var sb = new System.Text.StringBuilder();

@@ -39,7 +39,8 @@ if (fcu == null) return "fcuId does not point to a valid FamilyInstance.";
 var room = Document.GetElement(roomId) as Autodesk.Revit.DB.Architecture.Room;
 if (room == null) return "roomId does not point to a valid Room.";
 var supplyConn = fcu.MEPModel?.ConnectorManager?.Connectors?.Cast<Connector>()
-    .FirstOrDefault(c => c.Domain == Domain.DomainHvac && c.DuctSystemType == DuctSystemType.SupplyAir && string.IsNullOrEmpty(c.Description));
+    .FirstOrDefault(c => c.Domain == Domain.DomainHvac && c.DuctSystemType == Autodesk.Revit.DB.Mechanical.DuctSystemType.SupplyAir && (string.IsNullOrEmpty(c.Description)
+        || c.Description.IndexOf("fresh", StringComparison.OrdinalIgnoreCase) < 0));
 
 if (supplyConn == null) return "No real supply-air connector found on the FCU (excluding the Fresh Air decoy).";
 
@@ -84,8 +85,8 @@ var ductType = new FilteredElementCollector(Document)
     .FirstOrDefault(dt => dt.FamilyName.IndexOf(ductTypeNameContains, StringComparison.OrdinalIgnoreCase) >= 0
         || dt.Name.IndexOf(ductTypeNameContains, StringComparison.OrdinalIgnoreCase) >= 0);
 var systemType = new FilteredElementCollector(Document)
-    .OfClass(typeof(MechanicalSystemType))
-    .Cast<MechanicalSystemType>()
+    .OfClass(typeof(Autodesk.Revit.DB.Mechanical.MechanicalSystemType))
+    .Cast<Autodesk.Revit.DB.Mechanical.MechanicalSystemType>()
     .FirstOrDefault(st => st.SystemClassification == MEPSystemClassification.SupplyAir);
 
 // Named refusals instead of a null-reference: on a project with no matching duct type or no SupplyAir
@@ -101,11 +102,11 @@ using (var group = new TransactionGroup(Document, "AJ Tools - Main Duct + Cap"))
     group.Start();
     try
     {
-        Duct mainDuct;
+        Autodesk.Revit.DB.Mechanical.Duct mainDuct;
         using (var t = new Transaction(Document, "AJ Tools - Draw Main Duct"))
         {
             t.Start();
-            mainDuct = Duct.Create(Document, systemType.Id, ductType.Id, fcu.LevelId, startPt, endPt);
+            mainDuct = Autodesk.Revit.DB.Mechanical.Duct.Create(Document, systemType.Id, ductType.Id, fcu.LevelId, startPt, endPt);
             mainDuct.get_Parameter(BuiltInParameter.RBS_CURVE_WIDTH_PARAM)?.Set(supplyConn.Width);
             mainDuct.get_Parameter(BuiltInParameter.RBS_CURVE_HEIGHT_PARAM)?.Set(supplyConn.Height);
             t.Commit();

@@ -46,7 +46,7 @@
 //   3. Check the REAL direction - Connector.CoordinateSystem.BasisZ + Origin. Never assume an axis:
 //      mirrored/rotated equipment WILL face a different way (20 of 40 curves would have missed in
 //      the 2026-07-23 exercise if an axis had been assumed).
-//   4. Then draw. The CONNECTOR overload Duct.Create(doc, ductTypeId, levelId, connector, endXYZ)
+//   4. Then draw. The CONNECTOR overload Autodesk.Revit.DB.Mechanical.Duct.Create(doc, ductTypeId, levelId, connector, endXYZ)
 //      inherits size AND system from the connector and auto-connects (the XYZ+XYZ overload does NOT
 //      - that one needs explicit sizing, see hvac-ducts.md).
 //   5. Extend the main ~500mm PAST the last branch centerline (a tap landing on the cut end of the
