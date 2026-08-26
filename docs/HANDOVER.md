@@ -1,6 +1,79 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-24.** Read top-down. The newest session is first.
+Last updated: **2026-08-26.** Read top-down. The newest session is first.
+
+## 2026-08-26 — THE DAILY TOOL CHECK IS POINTED AT THE WRONG MACHINE, AND HAS BEEN SINCE IT WAS CREATED
+
+**Nothing is broken. The routine that is supposed to notice if something breaks is the problem.**
+
+A scheduled routine — *"Daily tool status check"*, `trig_01MjHqahHCrpcfn3xnPkFU2z`, created **2026-08-17**,
+fires **15:00 UTC daily**, push notifications on — asks for four things to be checked every day:
+
+1. AJ Tool running and accessible
+2. the vector index current
+3. Graphify configuration and data integrity
+4. Obsidian sync and vault status
+
+**It runs in a cloud container, and three of those four cannot be answered from a cloud container at
+all.** This is not a fault that appeared today — it is the shape of the routine, and it has fired that
+way roughly nine times.
+
+| Asked for | What a container run can actually say |
+|---|---|
+| AJ Tool running | **No.** `.mcp.json` hard-codes `D:\Ajmal\AJ AI Brain\mcp-server\index.js` and the bridge needs Revit open. No `aj-tools-aj-ai` server exists here to ping |
+| Vector index current | **No.** `semantic-index/chroma-db` is gitignored — absent from every checkout |
+| Graphify integrity | **No.** `graphify-out/` is gitignored. `python tools/graph-rebuild.py --check` says *"No graph yet"* — that is the container, not the PC |
+| Obsidian vault | **No.** The vault is gitignored and absent |
+
+`brain-status.mjs` already prints this honestly rather than passing silently — *"vector index · knowledge
+graph · Obsidian vault — NONE PRESENT IN THIS CHECKOUT"* — and the 2026-08-21 daily-check section further
+down this file recorded the same limitation. **What nobody did was fix the routine**, so it has kept
+reporting into a session with nobody reading it, and the daily push has been carrying assurance about
+three layers that were never examined.
+
+### What the run CAN check, and it was all green today (2026-08-26)
+
+Everything that travels in git, which is the repo's own configuration and integrity:
+
+| Checked | Result |
+|---|---|
+| `node tools/verify-consistency.mjs` | **All 13 checks pass, no drift** |
+| `node tools/brain-status.mjs` | 12 skills · 398 fragments · 26 native tools · consistency clean; 247 proven (62%) |
+| Branch vs `origin/main` | in sync, 0 ahead / 0 behind |
+| MCP server code (`mcp-server`, v1.7.0) | **43 of 45 tests pass** — both failures are container artifacts, see below |
+| AEB-Tools repo | in sync with `origin/main`, v1.1.3, all 14 extension `.py` files compile |
+
+**The two MCP-server test failures are the environment, not the code, and both were read rather than
+assumed:**
+
+- `document-targeting.test.js` — `listen EACCES \\.\pipe/AJTools.AjAi.TEST.2292`. A **Windows named
+  pipe**; Linux has no such thing. It cannot pass here and says nothing about the PC.
+- `smoke.test.js` → *"search_graph rejects mode 'path' without both endpoints"* — the tool short-circuits
+  on *"No knowledge graph at graphify-out/graph.json"* before it ever reaches argument validation, so the
+  assertion never sees the message it is looking for. It is the missing gitignored graph again. Worth
+  knowing but not worth changing: validating arguments before checking for the graph would make the test
+  environment-independent, and that is a two-line reorder whenever someone is in that file anyway.
+
+**Also worth knowing for any container session:** `mcp-server/node_modules` is absent on a fresh
+checkout, so `npm test` first fails **5 of 20** with `Cannot find package 'zod'`. That is not a
+regression — run `npm install` in `mcp-server/` first, then the real numbers above appear. A session that
+reports the zod failures as defects has misread an empty `node_modules`.
+
+### What to do about it — the decision is Ajmal's, the options are not technical
+
+The daily check is worth having. It just has to run **where the four things live**, which is the Windows
+PC with Revit open. Either:
+
+- **Move it to the PC** — a Windows Scheduled Task running the checks locally, where `ask-brain-hybrid`,
+  `graph-rebuild.py --check` and the vault are all reachable and `ping` can hit a live bridge. This is
+  the one that actually answers the question as asked.
+- **Or narrow the cloud routine to what it can honestly do** — repo integrity, consistency, counts,
+  compile-adjacent checks, both repos in sync — and stop it claiming the other three. Then add a
+  separate PC-side check for the live layers.
+
+Doing neither leaves a daily notification that reads as four-tools-healthy while examining one.
+
+---
 
 ## 2026-08-24 (evening) — SUITE MERGED, MCP SERVER VERSION-PROOFED, BRANCHES DELETED. NOTHING IS WAITING.
 
