@@ -6050,3 +6050,23 @@ setter divides by 304.8, so 200 L/s becomes 18) into `hvac-ducts.md`; and six of
 `knowledge/glossary.md` — "reducer", the 200 mm rule verbatim, "one supply one return like that", "the FCU
 any of the side", the branch-around-the-FCU sentence, and what he means by worrying about a newer Revit.
 
+
+## 2026-08-27 — the daily check found the rule about the checker wrong about the checker
+
+`CLAUDE.md` said `verify-consistency.ps1` "trails the Node checker" because **check 9 has not been ported
+to PowerShell**. Check 9 *was* ported — 2026-08-22, PR #31 — and the `.ps1` has printed nine section
+headers ever since. The sentence was already wrong that day, then sat still while the Node checker grew
+checks 10, 11, 12 and 13, so by today it named the one gap that had closed and none of the four that had
+opened: it understated the real gap by a factor of four. Corrected to "thirteen against nine, checks 10–13
+never ported", with the wrong version quoted in place so nobody re-derives it.
+
+**Nothing in the thirteen checks could catch this.** Check 9 verifies *live counts* — fragments, skills,
+native tools — and a claim about how many checks a sibling script has is not one of those. Every check
+here reads content for one specific claim; the count of the checks themselves is the blind spot. The cheap
+habit that does catch it: **both files print their own numbered section headers, so `grep` them and
+compare rather than trusting any prose count**, this line included.
+
+Also from the same run, and unchanged since 2026-08-17: three of the routine's four targets — the vector
+index, the Graphify graph and the Obsidian vault — are gitignored, so a container clone holds their code
+and none of their state, and `.mcp.json` points at `D:\Ajmal\...`, so there is no bridge either. That is
+still by design, still reported out loud by `brain-status.mjs`, and still answerable only on the PC.
