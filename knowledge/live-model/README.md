@@ -16,6 +16,7 @@ feet↔mm conversion every script needs.
 | Isolating/hiding elements in a view; creating a section view | [`views.md`](views.md) |
 | "What actually connects to what" — tracing pipe/duct/equipment when names, tags or `IsConnected` can't be trusted | [`mep-trace.md`](mep-trace.md) |
 | "Mistake", "undo", "go back" — reversing something | [`undo.md`](undo.md) |
+| **"It's not deleting", "I can't move it", "it's already synced and it's still there"** — an element that survives every sync, with *Can't edit the element. It was deleted in the Central Model.* Telling a stale local from a corrupt central, and why no client-side fix can ever win | [`worksharing-central-corruption.md`](worksharing-central-corruption.md) |
 | Space airflow params; how many air terminals; terminal grid layout; a terminal's Flow value | [`hvac-terminals.md`](hvac-terminals.md) |
 | Changing a family's CATEGORY (e.g. Duct Accessory → Air Terminal) — what survives, what is silently dropped, what to check first | [`family-category-change.md`](family-category-change.md) |
 | Drawing duct between points; branch duct (riser + elbow + takeoff); connecting to an existing open end; drawing FROM a connector | [`hvac-ducts.md`](hvac-ducts.md) |

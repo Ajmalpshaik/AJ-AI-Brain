@@ -6050,3 +6050,46 @@ setter divides by 304.8, so 200 L/s becomes 18) into `hvac-ducts.md`; and six of
 `knowledge/glossary.md` — "reducer", the 200 mm rule verbatim, "one supply one return like that", "the FCU
 any of the side", the branch-around-the-FCU sentence, and what he means by worrying about a newer Revit.
 
+
+## 2026-08-27 — how many Revits can be open at once, answered from the code rather than from memory
+
+Ajmal asked whether he can run one chat against one Revit and a second chat against another Revit he
+opens, and how many Revits the bridge allows. The mechanism was already recorded in three separate
+places — `McpBridgeService.cs`'s v1.11.0 changelog, `mcp-server/bridge-connection.js`, and this file's
+one-connection-at-a-time note — but the *working method* was in none of them, so answering it meant
+reading source. Filed the answer as a bullet block under "Bridge basics" in
+`knowledge/live-model/core.md`: no bridge-side limit on how many Revits (each hosts its own pipe named
+by process id), the real limit is **one chat per Revit** because a second chat aimed at the same Revit
+preempts the first instantly, each Revit needs its own Connect click, and the ask-don't-guess rules for
+picking one. Nothing new was discovered — this is an existing behaviour written down in the form the
+question actually takes.
+
+## 2026-08-27 — an element that could not be deleted, and two confident wrong answers before the right one
+
+A cable tray tee showed *Can't edit the element. It was deleted in the Central Model.* and had resisted
+deletion for days on a BIM 360 cloud-workshared model. Diagnosed live:
+`WorksharingUtils.GetModelUpdatesStatus` returned `DeletedInCentral` with `CheckoutStatus.NotOwned`,
+1 element of 10,439 affected, 0 model warnings. **Two theories were given confidently and both were
+wrong** — first that a borrowed neighbouring tray was holding it (he deleted all three trays; it
+stayed), then that his local cache was stale (the cache's *birth* time proved it had been downloaded
+27 minutes earlier, ghost included). The settling fact came from Ajmal, not from the model: a second
+user saw the same ghost on his own machine, so the fault is central-side and no client-side fix can
+win. New note `knowledge/live-model/worksharing-central-corruption.md` with the three checks that
+separate the two causes, the cloud cache layout (four copies per model, GUID-named, the folder may be a
+symlink), the measured cost of a whole-model drift scan (10,443 elements in 0.1 s, so never sample),
+and a warning that `Document.Delete` on such an element hangs the bridge behind a modal dialog. The
+repair itself is recorded as **unverified** — Ajmal fixed it another way and did not say how.
+
+## 2026-08-27 — a plain-English note for Ajmal on Revit sessions vs chat sessions
+
+He asked the same thing three ways over one conversation — how many Revits he can open, whether mixed
+versions work, and whether he can keep modelling while the AI runs — then asked for it as a note. New
+file `knowledge/revit-sessions-and-chats.md`, written for HIM rather than for an agent: one chat per
+Revit, connect each Revit separately, mixed versions fine, two chats on one Revit fight, and no — Revit
+freezes while a script runs, so the answer to "work in the background" is a second Revit, not a second
+thread. Routed from `knowledge/INDEX.md`.
+
+The same facts had gone into `live-model/core.md` earlier in the conversation, so that block was
+**trimmed back to the agent rules only** (ask-don't-guess, the sticky choice, the dropped document pin,
+the stale-read hazard) and now points at the note for the explanation. Two audiences, one copy of each
+fact — the no-duplication rule is why this is a trim and not a second copy.

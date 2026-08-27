@@ -66,6 +66,26 @@ reading alongside whichever topic file the job needs.
   an earlier read rather than fresh. Related: the same limit is what makes parallel bridge calls
   unreliable — six at once on 2026-08-14 produced `the AJ AI bridge closed the pipe connection` on one
   of them; go sequential.
+- **Several Revits can be connected at once — but the rule is ONE CHAT PER REVIT, and the choice is
+  ALWAYS his to make.** How it works and how Ajmal should set it up is
+  [`../revit-sessions-and-chats.md`](../revit-sessions-and-chats.md); what an agent must DO is here:
+  - **One Revit connected → taken automatically, never asked.** Ordinary work feels exactly as before.
+  - **Two or more → nothing is sent to Revit at all** until he names one: `list_revit_instances`, show
+    him the choice, then `use_revit_instance` with that pid. Never choose for him.
+  - His choice is **sticky and one-way**: opening a third Revit later does not re-ask, but if the
+    session he named CLOSES the bridge stops and says so rather than sliding onto another project. An
+    auto-picked session is different — a second Revit appearing mid-chat forces the question, because
+    he never actually chose the first one.
+  - Switching Revit **drops any document pin**, since a title from one Revit means nothing in another.
+- **A bridge call FREEZES Revit while it runs — he cannot model at the same time in the same Revit.**
+  `RevitExecutionService` is an `IExternalEventHandler`, so every script runs on Revit's single API/UI
+  thread; the service's own changelog records that before v1.3.0 a runaway script "could hang the Revit
+  UI thread indefinitely", and that true isolation "would need a separate process/AppDomain" — out of
+  scope by decision. Two consequences for how to work:
+  - **Never assume a call is free because it is read-only.** If he says he is working, wait; if he is
+    mid-command the ExternalEvent cannot fire anyway and the call simply hangs on him.
+  - **The hazard is the stale read, not the freeze** — he edits between two of our calls and a later
+    step acts on the earlier picture. Same failure `START-HERE.md` rule 2 exists for.
 - For a common category count with one optional parameter breakdown, prefer the native
   `model_summary` MCP tool when it is exposed. It performs one read-only bridge call and returns the
   Revit version and model title, so a separate ping is unnecessary. Keep `run_csharp` for complex,
