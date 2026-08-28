@@ -6113,3 +6113,41 @@ Also from the same run, and unchanged since 2026-08-17: three of the routine's f
 index, the Graphify graph and the Obsidian vault — are gitignored, so a container clone holds their code
 and none of their state, and `.mcp.json` points at `D:\Ajmal\...`, so there is no bridge either. That is
 still by design, still reported out loud by `brain-status.mjs`, and still answerable only on the PC.
+
+## 2026-08-28 — a length needs no units API, and a rollback must not bury the error that caused it
+
+Two traps and one reversal, from a long session building a write path on a machine with **no Revit and no
+compiler**. Neither finding needed one, which is why they are worth having.
+
+**The reversal — [`live-model/core.md`](live-model/core.md) told every session to branch, for something
+that needs no branch.** It said to check the Revit version and pick `UnitTypeId.Millimeters` (2021+) or
+`DisplayUnitType.DUT_MILLIMETERS` (2020). For a **length that is unnecessary**: `mm / 304.8` is feet,
+exactly, in every Revit from 2020 to 2027. The international foot has been exactly 304.8 mm by definition
+since 1959 and Revit's internal length unit is decimal feet in every release, so there is no version, no
+locale and no project setting in it — and **nothing for Autodesk to move**.
+
+That is not a style preference. [`revit-version-compatibility.md`](revit-version-compatibility.md)
+already records eight fragments carrying the 2020 call for months and failing on 2024 with *"inaccessible
+due to its protection level"*, and `CLAUDE.md` records the MCP server carrying the same mistake while
+`check-scripts` reported green. **Arithmetic cannot rot that way.** The rule now states the boundary
+rather than the answer: a **fixed ratio** (length, angle) is arithmetic; a conversion that depends on what
+the project *displays* still needs `UnitUtils` and still needs the version split.
+
+Reasoned, not run — one line proves it on the PC: convert 304.8 and expect exactly `1.0`.
+
+**Trap 1 — a rollback is always the SECOND thing going wrong, and it must never become the first thing
+reported.** `group.RollBack()` sitting unguarded in a `catch` can throw as well, when the `Commit()` or
+`Assimilate()` that just failed left the group in a terminal state. Its exception escapes *before* the
+original is reported, so the user is told the group could not be rolled back — which tells them
+nothing — instead of what actually happened to their model. Written up with the fix, and with the
+sneakier sibling: a `RefreshActiveView()` after a **successful** commit, which if it throws reports a
+committed change as a failure and sends the user looking for something that already happened.
+→ [`live-model/failure-handling-without-a-class.md`](live-model/failure-handling-without-a-class.md),
+now routable from the index by the words *"it said it failed but the model changed anyway"*.
+
+**Trap 2 — a check that runs but can never fail.** Not written to a knowledge file because it is not
+Revit, but it belongs in this Brain's own maintenance instincts: a new check was appended to a `problems`
+list **after** that list had already been evaluated. It printed its own progress line, looked healthy,
+and could not fail. Caught only by deliberately planting the thing it was supposed to catch and watching
+it pass. **Every check in `tools/verify-consistency.mjs` deserves that treatment once** — plant the fault,
+watch it fail, remove it. A check nobody has seen fail is a claim, not a check.

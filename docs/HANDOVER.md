@@ -1,6 +1,25 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-24.** Read top-down. The newest session is first.
+Last updated: **2026-08-28.** Read top-down. The newest session is first.
+
+## 2026-08-28 — two knowledge corrections from a no-Revit session. ONE LINE TO VERIFY ON THE PC.
+
+Nothing structural. Two findings from building a write path on a machine with no Revit and no compiler,
+both filed where they belong and logged in [`knowledge/brain-log.md`](../knowledge/brain-log.md).
+
+**The one thing to actually check, and it takes a second:** `live-model/core.md` used to tell every
+session to branch on the Revit version for a mm-to-feet conversion. It no longer does — for a **length**
+that is plain arithmetic, `mm / 304.8`, exact in every release from 2020 to 2027, with no units API in
+it at all. That kills the whole `DisplayUnitType`-fails-on-2024 failure class this Brain has already been
+bitten by twice. **It is reasoned, not run.** Convert `304.8` and expect exactly `1.0`. If it does, the
+rule is right and there is nothing else to do.
+
+The other is a trap, not a claim: an unguarded `RollBack()` in a `catch` can throw a second time and bury
+the error that caused it — and a `RefreshActiveView()` after a *successful* commit can report a committed
+change as a failure. Both in
+[`knowledge/live-model/failure-handling-without-a-class.md`](../knowledge/live-model/failure-handling-without-a-class.md).
+
+Plugin bumped to **1.1.44** so installed copies receive both.
 
 ## 2026-08-24 (evening) — SUITE MERGED, MCP SERVER VERSION-PROOFED, BRANCHES DELETED. NOTHING IS WAITING.
 
