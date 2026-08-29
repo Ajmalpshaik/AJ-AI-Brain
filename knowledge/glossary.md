@@ -472,6 +472,29 @@ is exactly the one a fresh session cannot route.
   asks how anything works, draw it: a box-and-arrow flow for a process, a bar chart for a comparison.
   His **"artifact"** stays the separate, opposite thing — a published page with a link, only when he
   asks for one by name.
+- **"reducer" (his word) → a rectangular TRANSITION fitting**, the size step in a trunk. In Revit the family
+  is `M_Rectangular Transition`; he never calls it a transition. When he says *"work on the reducer"* after
+  sizing he means WHERE IT SITS, not what size it is — see the next entry.
+- **"from that branch takeoff, 200 mm there reducer need. No need extra length." (2026-08-25)** → his
+  setting-out rule for a sized trunk: **200 mm of straight duct after the branch takeoff, then the
+  reducer.** "No need extra length" means do not leave a longer straight run — Revit's sizing had left
+  268–1796 mm and he wants every one at 200. Datum is takeoff CENTRELINE to reducer UPSTREAM FACE, which
+  he picked himself over the alternatives because it is what a fitter sets out from.
+  Tool: `scripts/recipes/set-reducer-offset-from-takeoff.cs`.
+- **"one supply one return like that" (air terminals)** → strictly ALTERNATING along the run: supply,
+  return, supply, return. Same intent as the **"zig zag"** he asked for inside rooms — never all the supply
+  on one side, *"now one side only cooling okkey"*. In a room that is a checkerboard over the 2 x N grid;
+  down a corridor it is simply alternating along the centreline.
+- **"the FCU any of the side"** → put the unit at EITHER END of the space, his choice not specified — he is
+  telling you it does not matter which end, not asking you to ask. Pick one and say which.
+- **"take a branch to the side and move to the front side, that time you can connect to the main duct"**
+  (2026-08-24) → the terminal standing BEHIND or level with the FCU's supply connector: do not move the
+  unit and do not skip the diffuser — rise, run FORWARD clear of the casing, then cross to the trunk.
+  *"Am normally am doing this."* Built into `hvac-room-supply-ducting.cs` as the routed-around case.
+- **"it errors on a newer Revit" / version worry** → he means run `tools\check-scripts.cmd`, which compiles
+  every fragment against every Revit on the PC without opening Revit. Offer it the moment a version change
+  is mentioned; budget ~13 minutes for three versions.
+
 - 2026-08-22 — six datum/room-tag terms added above ("maximize", "X axis grid", "flip", "keep that to
   above", "center of the room"). All recorded on first use, none had caused a misunderstanding yet. The
   entry worth re-reading is **"keep that to above"**: it records not a word but a *working pattern* —

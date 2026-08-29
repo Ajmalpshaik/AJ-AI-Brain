@@ -5845,3 +5845,326 @@ Written up as [`daily-tool-check.md`](daily-tool-check.md) — which half is ans
 which half needs the PC, and the order to run the PC half in. It is the 2026-08-24 handover's own rule
 landing a second time: an environment-specific limit has to name the environment and say where to go
 instead, or the next session reads "cannot verify the index" as "the index is broken" and goes looking.
+## 2026-08-25 — a three-way bake-off Ajmal asked for, and the fragment that lies about succeeding
+
+He asked for the same job done three ways in three identical rooms so he could pick a workflow: Room 1
+with `connect-equipment-to-air-terminals.cs`, Room 2 with `action-auto-route-mep-run.cs`, Room 3 with
+`draw-main-duct-with-cap.cs` + `connect-terminal-branch.cs`. Rooms were 7100 x 9600 mm, one FCU each,
+four 300x300 supply diffusers each in a 2x4 zigzag. Result:
+
+| | calls | diffusers | open ends | clash |
+|---|---|---|---|---|
+| A `connect-equipment-to-air-terminals` | 1 | **3 of 4** | 0 | 0 |
+| B `action-auto-route-mep-run` | 8 | 4 of 4 | 0 | 0 |
+| C `draw-main-duct` + `connect-terminal-branch` | 6 | "4 of 4" | **2** | **1** |
+
+**A is honest about what it cannot do.** It prints `AT <id>: behind the supply connector - skipped.` and
+leaves that terminal alone. One call, correct cap, nothing broken — just incomplete.
+
+**C is the dangerous one, and this is the entry's point.** It printed its normal success line for all
+four and the terminal read back `IsConnected == true`, while the model held a horizontal run split into
+two unjoined pieces, the second running diagonally through the FCU body to a takeoff off the main's
+centreline. Every text-level check passed. **Ajmal found it by looking at a 3D view.** A warning block
+is now at the top of `connect-terminal-branch.cs`. The general lesson is the one already learned on
+doors the same day, in a second domain: *a script can satisfy every check you thought to write and still
+be wrong to the eye.* For MEP the cheap extra checks are open connectors on the new ducts, bounding-box
+overlap against the equipment, and whether each leg is axis-aligned — that last one is what exposed the
+diagonal.
+
+**The chosen workflow: A for the room, B for the leftover.** ~3 calls per room instead of 8, complete
+and clean. A does the bulk in one call; the terminal it skips gets `action-auto-route-mep-run.cs` with
+`routeOrder "ZYX"` — rise, run forward clear of the unit, cross to the main — then `ConnectTo` at the
+neck and `NewTakeoffFitting` into the main. Rebuilt Room 1's and Room 3's back diffusers that way: both
+clean.
+
+**`roomIdScope` added to `connect-equipment-to-air-terminals.cs`.** Its terminal sweep was whole-model,
+so on this 14-room floor a single FCU would have taken all 56 free supply diffusers. `0` keeps the old
+behaviour; set a Room's Id to confine it. Without this the per-room comparison was not possible at all.
+
+**A CAP IS NOT CAPPED BY `ConnectTo`.** Placing the endcap by hand at the open connector and calling
+`ConnectTo` left it **90 degrees out** — body 127 mm across the duct and 850 mm along it, a plate lying
+sideways across the opening. Revit reported the end as connected and the model as having zero open ends.
+Ajmal spotted it in plan as a thin cross on the duct end. `draw-main-duct-with-cap.cs` already had the
+right recipe and its own header says so: *sized, positioned, **and rotated** (not just ConnectTo)*. The
+sequence that works — place at the open end, set the connector's Width/Height, move so the cap connector
+sits on the duct end, rotate by `capConn.BasisZ.AngleTo(openEnd.BasisZ.Negate())` about their cross
+product, move again, then `ConnectTo` — and **re-fetch the cap connector after every single step**,
+because it goes stale on each change. Also: pick the cap family from the duct type's Routing Preferences
+(`GetRule(RoutingPreferenceRuleGroupType.Caps, 0)`), never `.First()` on a name search — that grabbed
+`M_Oval Endcap` for a rectangular duct on the first attempt.
+
+**The compile bug was four times bigger than first reported.** Fixing `connect-terminal-branch.cs` earlier
+that day, a sweep for bare `Duct` / `DuctType` / `MechanicalSystemType` / `DuctSystemType` fixed 3 files.
+It only matched `Duct.Create(` and `Duct x;`. A proper scan — comments stripped, word-boundary regex, all
+five type names — found the same fault in **15 files**, in forms the first pass never looked for: `as
+Duct`, `(Duct)`, `<Duct>`. Several fragments the README calls proven could not compile at all. Zero bare
+occurrences remain in code. **A regex sweep that matches syntactic forms will always miss the form you
+did not think of; scan for the identifier and let the boundaries do the work.**
+
+## 2026-08-25 — `hvac-room-supply-ducting.cs` built and run across a whole floor, 14 for 14
+
+Written after the bake-off entry above, to be the one HVAC ducting tool. Ajmal's question was whether to
+fold everything into `action-auto-route-mep-run.cs`; the answer was **two fragments split by what each
+one knows** — the router stays a generic point-A-to-point-B engine usable for chilled water and drainage,
+and this new file carries the trade knowledge (which connector is supply, that a diffuser neck points up,
+that branches tap a trunk, that the trunk is extended and capped). Teaching the router HVAC would have
+dragged air-terminal concepts through every pipe run.
+
+**Result on the 14-room floor: 14 of 14 rooms fully correct, one call each.** 140 ducts, 140 fittings,
+174.2 m of duct, **56 of 56 supply diffusers connected, 0 open duct ends model-wide**. Verified by a
+read-back written separately from the fragment, per room: terminals connected, open connectors, duct
+bounding-box overlap with the FCU, every leg axis-aligned, and cap orientation by connector dot product.
+
+**The bottom row was the real test and it passed.** Rooms 8-14 have their FCU rotated 180 degrees, so the
+supply connector faces `(0,-1,0)` instead of `(0,1,0)`. The fragment reported `trunk ... along
+(0.00,-1.00,0.00)` and built correctly without being told — because every distance is a dot product
+against `Connector.CoordinateSystem.BasisZ`, never an assumed axis. This is the 2026-07-23 lesson holding
+up: 20 of 40 curves would have missed that day if an axis had been assumed.
+
+**It measures the equipment rather than being told its size.** For the terminal standing behind the
+supply connector, it projects the FCU's bounding-box corners onto the trunk direction to find how far the
+casing reaches (275 mm on this family), adds `equipmentClearanceMm`, and crosses there — so a different
+FCU needs no new numbers.
+
+**Three faults from the earlier rooms are designed out**, each one having cost real time that morning:
+- the terminal behind the equipment is routed around, not skipped (the older recipe's behaviour)
+- the cap is sized, positioned **and rotated**, family taken from the duct type's Routing Preferences
+- it self-checks and **rolls back** rather than reporting success it has not verified
+
+`recipes/connect-terminal-branch.cs` is superseded and its header says so.
+
+**Compile-checked green afterwards: all 428 scripts in Revit 2020, 2024 and 2027.** That run also covers
+the 14 files whose string literals had to be repaired — see the entry above for how they broke.
+
+## 2026-08-25 — the whole floor in one call, and the version checker catching a bug I wrote
+
+Ajmal asked for the floor stripped and rebuilt in a single call so he could compare it against the
+room-by-room run, with one condition in his own words: *"do not change the code because maybe I need to
+do room by room, maybe one time, that's depending on the work."* So `hvac-room-supply-ducting.cs` was left
+byte-for-byte untouched and `recipes/hvac-floor-supply-ducting.cs` was written beside it.
+
+**Result: 140 ducts and 140 fittings deleted, then 14 of 14 rooms rebuilt in ONE call** — 56 of 56
+terminals connected, 14 routed around their unit, 0 open duct ends. Verified independently of the
+fragment's own report: 140 ducts, 140 fittings, **174.3 m against the room-by-room run's 174.2 m**. The
+100 mm is the one-call run being the MORE consistent of the two — two rooms had been hand-repaired that
+morning at a slightly different crossing point.
+
+**Design note worth keeping: each room is its own TransactionGroup.** A room whose geometry defeats the
+fragment rolls back alone and is reported while the other thirteen stand. One group for the whole floor
+would throw away good work for one bad diffuser. It also skips rooms that already hold ductwork, so a
+re-run after a partial failure builds only what is missing.
+
+**The per-room build logic is duplicated between the two files and that is written into both headers**,
+because a fragment cannot call another fragment. Fix a bug in one and you must fix it in the other; the
+per-room file is the reference.
+
+### `tools/check-scripts.cmd` earned its keep, against code written the same hour
+
+The new fragment compiled on Revit 2020 and 2024 and **FAILED on 2027**, for two uses of
+`ElementId.IntegerValue` — gone in 2027, renamed to `.Value` (a long) in 2024. Nothing else would have
+caught it: it runs correctly today on the 2020 session, so the model was never at risk; the fault was
+purely portability, and it would have surfaced months later as "it worked before".
+
+**The library had already solved this and I did not look.** About twenty QA fragments carry
+`typeof(ElementId).GetProperty("Value") ?? typeof(ElementId).GetProperty("IntegerValue")`, and
+`action-show-analysis-heatmap.cs` states outright that IntegerValue is *"gone in 2027"*. Writing a
+known-bad pattern the Brain has documented is exactly what the search-first rule exists to prevent.
+
+Two takeaways now in the fragment's header:
+- **Best is not to convert at all** — compare ElementIds to each other (`id == new ElementId(n)`) and
+  print the ElementId itself; `$"{el.Id}"` formats on every version and needs no reflection. That is the
+  fix applied.
+- When the number is genuinely needed, **copy the existing reflection helper** rather than inventing a
+  third way.
+
+A first diagnosis blamed IntegerValue, then a grep found 42 other uses passing 2027 and the diagnosis
+looked wrong — it was not; those 42 are the reflection helper, not direct property access. **Counting
+occurrences of an identifier says nothing about how it is used**; the single-file compile
+(`verify-fragments-compile.ps1 -RevitPath ... -Filter "*name*"`, note the wildcards) settled it in
+seconds and is the right tool for one suspect file.
+
+Final: **all 429 scripts compile on Revit 2020, 2024 and 2027.**
+
+## 2026-08-25 — the corridor: a third geometry, and a fragment that moved the model to make itself right
+
+Ajmal asked for one FCU and alternating supply/return diffusers down the 50.7 m corridor centreline. Three
+findings, all from read-back rather than from what the tools reported.
+
+**The FCU "did not fit" and that was a misreading of the family.** The corridor is 1400 mm wide and the
+FCU's bounding box is 1600 x 1300, so rotating it to face along the corridor looked impossible. But the
+bounding box is the casing PLUS the clearance zone: `Unit_Length` is 1000 and `Unit_Width` 700 — the unit
+was never too big, the maintenance zone was. A `FCU-01-CORRIDOR` type with `Clearance_Side` cut 300 -> 100
+gives 1200 across a 1400 corridor with unit size, capacity and the 850x195 connectors all untouched.
+**And the clearance axes are not the obvious ones:** `Clearance_Side` governs the `Unit_Length` axis and
+`Clearance_Front`/`Rear` govern `Unit_Width`. Setting front/rear first changed nothing about the fit.
+
+**A corridor is a THIRD terminal geometry and the room recipe correctly refuses it.** In the rooms the
+diffusers are offset sideways from the trunk, so a takeoff reaches them. In a corridor they sit ON the
+trunk centreline, and `hvac-room-supply-ducting.cs` reported *"sits on the trunk centreline - needs an
+inline tee, skipped"* for all five. That is the fragment being honest about a case it does not cover, and
+it is worth more than a fudged answer.
+
+**`action-connect-air-terminals.cs` MOVED THE DIFFUSER.** Reaching for it next — its purpose line is
+exactly "the duct already runs past the terminals, Revit cuts the tap itself" — it printed *"Connected 1
+terminal(s). 0 refused"* and Revit returned true. The read-back: the diffuser had been **lifted 625 mm**,
+from ceiling level 2100 into the void at 2725, to meet the trunk. No drop duct, no tap fitting. Revit
+satisfied the connection by relocating the terminal. A warning block is now at the top of that file.
+**This is the third time in one day a fragment reported success over a wrong model** (the others:
+`connect-terminal-branch.cs` building unjoined diagonal legs, and a hand-placed endcap sitting 90 degrees
+out). The common defence is the same and it is cheap: **read back the geometry you did not ask about.**
+Here the connection was genuinely made — the check that caught it was "is the diffuser still at 2100".
+
+The fix that works, and never moves the terminal:
+
+```csharp
+var drop = Duct.Create(doc, ductTypeId, levelId, terminalConnector, pointAtTrunkZ);  // connector overload
+Document.Create.NewTakeoffFitting(freeTopConnectorOfDrop, trunk);
+```
+
+Five drops built that way: 5 of 5 connected, all diffusers still at 2100, 0 open ends, 0 clashes, all duct
+inside the corridor walls. The drops came back 422 mm from a 621 mm gap because the takeoff shortens them
+to fit its body — the same behaviour the elbows show, and not a fault.
+
+Model now: **148 ducts, 148 fittings, 218.8 m, 61 of 61 supply terminals connected, 0 open ends.**
+Still open: the return side, 61 terminals untouched.
+
+## 2026-08-25 — two fragments saved from the day's real work, and the same 2027 bug made twice
+
+Ajmal asked at the end of the session whether anything needed saving. Two genuine gaps, both from work
+that had only existed as throwaway inline C#:
+
+**`recipes/set-reducer-offset-from-takeoff.cs`** — his setting-out rule for a sized trunk: 200 mm of
+straight duct from the branch takeoff to the reducer. Revit's sizing had left them at 268–1796 mm
+(average 587) across the floor. The technique moved 45 fittings with zero open ends afterwards.
+
+**`recipes/connect-terminals-under-trunk.cs`** — the third terminal geometry. Side-offset is the room
+recipe's job, already-touching is the action fragment's, and directly-underneath had no owner at all. It
+builds a vertical drop plus a takeoff, and **re-reads each terminal's Z afterwards, rolling that terminal
+back if it moved** — which is the specific failure `action-connect-air-terminals.cs` produced.
+
+### The same Revit 2027 bug, written twice in one session, hours apart
+
+`hvac-floor-supply-ducting.cs` failed the 2027 compile earlier that day for two uses of
+`ElementId.IntegerValue`. It was fixed, a knowledge note was written, a memory file was written — and then
+**the very next fragment authored used `IntegerValue` twice again**, in a category comparison and in a
+tuple carried purely so a number could be printed. Caught by the same tool, before either file was pushed.
+
+Writing the rule down did not stop the hand from typing it. What actually works is narrower and worth
+stating as a habit rather than a principle:
+
+- **Compare categories as `Category.Id == new ElementId(BuiltInCategory.X)`.** That is already the
+  library's own pattern; grepping for how the library does a thing takes seconds and would have prevented
+  both instances.
+- **Never put an ElementId's number in a tuple or a string.** `$"{el.Id}"` formats on every version. Both
+  bugs were in code that only wanted to PRINT the id.
+- **Compile a new fragment against the OLDEST and NEWEST Revit before saving it**, not at the end of the
+  session: `verify-fragments-compile.ps1 -RevitPath "...\Revit 2027" -Filter "*name*"` takes seconds for
+  one file and catches this whole class.
+
+Also filed this session: the reducer rule and the terminals-under-trunk case into
+`knowledge/live-model/hvac-duct-sizing.md` and `hvac-ducts.md`; the airflow unit trap (the library's bulk
+setter divides by 304.8, so 200 L/s becomes 18) into `hvac-ducts.md`; and six of Ajmal's own phrases into
+`knowledge/glossary.md` — "reducer", the 200 mm rule verbatim, "one supply one return like that", "the FCU
+any of the side", the branch-around-the-FCU sentence, and what he means by worrying about a newer Revit.
+
+
+## 2026-08-27 — how many Revits can be open at once, answered from the code rather than from memory
+
+Ajmal asked whether he can run one chat against one Revit and a second chat against another Revit he
+opens, and how many Revits the bridge allows. The mechanism was already recorded in three separate
+places — `McpBridgeService.cs`'s v1.11.0 changelog, `mcp-server/bridge-connection.js`, and this file's
+one-connection-at-a-time note — but the *working method* was in none of them, so answering it meant
+reading source. Filed the answer as a bullet block under "Bridge basics" in
+`knowledge/live-model/core.md`: no bridge-side limit on how many Revits (each hosts its own pipe named
+by process id), the real limit is **one chat per Revit** because a second chat aimed at the same Revit
+preempts the first instantly, each Revit needs its own Connect click, and the ask-don't-guess rules for
+picking one. Nothing new was discovered — this is an existing behaviour written down in the form the
+question actually takes.
+
+## 2026-08-27 — an element that could not be deleted, and two confident wrong answers before the right one
+
+A cable tray tee showed *Can't edit the element. It was deleted in the Central Model.* and had resisted
+deletion for days on a BIM 360 cloud-workshared model. Diagnosed live:
+`WorksharingUtils.GetModelUpdatesStatus` returned `DeletedInCentral` with `CheckoutStatus.NotOwned`,
+1 element of 10,439 affected, 0 model warnings. **Two theories were given confidently and both were
+wrong** — first that a borrowed neighbouring tray was holding it (he deleted all three trays; it
+stayed), then that his local cache was stale (the cache's *birth* time proved it had been downloaded
+27 minutes earlier, ghost included). The settling fact came from Ajmal, not from the model: a second
+user saw the same ghost on his own machine, so the fault is central-side and no client-side fix can
+win. New note `knowledge/live-model/worksharing-central-corruption.md` with the three checks that
+separate the two causes, the cloud cache layout (four copies per model, GUID-named, the folder may be a
+symlink), the measured cost of a whole-model drift scan (10,443 elements in 0.1 s, so never sample),
+and a warning that `Document.Delete` on such an element hangs the bridge behind a modal dialog. The
+repair itself is recorded as **unverified** — Ajmal fixed it another way and did not say how.
+
+## 2026-08-27 — a plain-English note for Ajmal on Revit sessions vs chat sessions
+
+He asked the same thing three ways over one conversation — how many Revits he can open, whether mixed
+versions work, and whether he can keep modelling while the AI runs — then asked for it as a note. New
+file `knowledge/revit-sessions-and-chats.md`, written for HIM rather than for an agent: one chat per
+Revit, connect each Revit separately, mixed versions fine, two chats on one Revit fight, and no — Revit
+freezes while a script runs, so the answer to "work in the background" is a second Revit, not a second
+thread. Routed from `knowledge/INDEX.md`.
+
+The same facts had gone into `live-model/core.md` earlier in the conversation, so that block was
+**trimmed back to the agent rules only** (ask-don't-guess, the sticky choice, the dropped document pin,
+the stale-read hazard) and now points at the note for the explanation. Two audiences, one copy of each
+fact — the no-duplication rule is why this is a trim and not a second copy.
+
+## 2026-08-27 — the daily check found the rule about the checker wrong about the checker
+
+`CLAUDE.md` said `verify-consistency.ps1` "trails the Node checker" because **check 9 has not been ported
+to PowerShell**. Check 9 *was* ported — 2026-08-22, PR #31 — and the `.ps1` has printed nine section
+headers ever since. The sentence was already wrong that day, then sat still while the Node checker grew
+checks 10, 11, 12 and 13, so by today it named the one gap that had closed and none of the four that had
+opened: it understated the real gap by a factor of four. Corrected to "thirteen against nine, checks 10–13
+never ported", with the wrong version quoted in place so nobody re-derives it.
+
+**Nothing in the thirteen checks could catch this.** Check 9 verifies *live counts* — fragments, skills,
+native tools — and a claim about how many checks a sibling script has is not one of those. Every check
+here reads content for one specific claim; the count of the checks themselves is the blind spot. The cheap
+habit that does catch it: **both files print their own numbered section headers, so `grep` them and
+compare rather than trusting any prose count**, this line included.
+
+Also from the same run, and unchanged since 2026-08-17: three of the routine's four targets — the vector
+index, the Graphify graph and the Obsidian vault — are gitignored, so a container clone holds their code
+and none of their state, and `.mcp.json` points at `D:\Ajmal\...`, so there is no bridge either. That is
+still by design, still reported out loud by `brain-status.mjs`, and still answerable only on the PC.
+
+## 2026-08-28 — a length needs no units API, and a rollback must not bury the error that caused it
+
+Two traps and one reversal, from a long session building a write path on a machine with **no Revit and no
+compiler**. Neither finding needed one, which is why they are worth having.
+
+**The reversal — [`live-model/core.md`](live-model/core.md) told every session to branch, for something
+that needs no branch.** It said to check the Revit version and pick `UnitTypeId.Millimeters` (2021+) or
+`DisplayUnitType.DUT_MILLIMETERS` (2020). For a **length that is unnecessary**: `mm / 304.8` is feet,
+exactly, in every Revit from 2020 to 2027. The international foot has been exactly 304.8 mm by definition
+since 1959 and Revit's internal length unit is decimal feet in every release, so there is no version, no
+locale and no project setting in it — and **nothing for Autodesk to move**.
+
+That is not a style preference. [`revit-version-compatibility.md`](revit-version-compatibility.md)
+already records eight fragments carrying the 2020 call for months and failing on 2024 with *"inaccessible
+due to its protection level"*, and `CLAUDE.md` records the MCP server carrying the same mistake while
+`check-scripts` reported green. **Arithmetic cannot rot that way.** The rule now states the boundary
+rather than the answer: a **fixed ratio** (length, angle) is arithmetic; a conversion that depends on what
+the project *displays* still needs `UnitUtils` and still needs the version split.
+
+Reasoned, not run — one line proves it on the PC: convert 304.8 and expect exactly `1.0`.
+
+**Trap 1 — a rollback is always the SECOND thing going wrong, and it must never become the first thing
+reported.** `group.RollBack()` sitting unguarded in a `catch` can throw as well, when the `Commit()` or
+`Assimilate()` that just failed left the group in a terminal state. Its exception escapes *before* the
+original is reported, so the user is told the group could not be rolled back — which tells them
+nothing — instead of what actually happened to their model. Written up with the fix, and with the
+sneakier sibling: a `RefreshActiveView()` after a **successful** commit, which if it throws reports a
+committed change as a failure and sends the user looking for something that already happened.
+→ [`live-model/failure-handling-without-a-class.md`](live-model/failure-handling-without-a-class.md),
+now routable from the index by the words *"it said it failed but the model changed anyway"*.
+
+**Trap 2 — a check that runs but can never fail.** Not written to a knowledge file because it is not
+Revit, but it belongs in this Brain's own maintenance instincts: a new check was appended to a `problems`
+list **after** that list had already been evaluated. It printed its own progress line, looked healthy,
+and could not fail. Caught only by deliberately planting the thing it was supposed to catch and watching
+it pass. **Every check in `tools/verify-consistency.mjs` deserves that treatment once** — plant the fault,
+watch it fail, remove it. A check nobody has seen fail is a claim, not a check.

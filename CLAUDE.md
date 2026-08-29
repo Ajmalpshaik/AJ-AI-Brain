@@ -33,7 +33,7 @@ instead of reading `scripts/README.md` end to end, which is the read that gets s
 expensive — and skipping it is how fresh C# gets written for a job a proven fragment already covered.
 
 **When you don't know the word to search for, ask in plain English instead** —
-`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 472 files
+`semantic-index\ask-brain-hybrid.cmd "how do I stop ducts overlapping the ceiling"` searches all 478 files
 (`skills/`, `knowledge/`, `scripts/`, the root docs, and the native-tools reference) by *meaning* as well as by exact words, and
 returns real file paths. It exists because `fragment-index.mjs` only reads `scripts/*.cs` — it structurally
 cannot surface the skill or knowledge note that answers a question, and a keyword tool needs you to already
@@ -78,7 +78,7 @@ questions; make the code decisions yourself and tell him what you did.
 
 He named two problems. Both have an answer that already exists:
 
-- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 394 fragments — **and,
+- **"It errors on a newer Revit."** `tools\check-scripts.cmd` compile-checks all 398 fragments — **and,
   since 2026-08-24, the C# the MCP server builds at run time** — against every Revit installed on the
   PC **without opening Revit**. Offer it the moment a version change is mentioned. **Budget ~13 minutes,
   not "about a minute"** — measured 767 s on 2026-08-24 across Revit 2020 + 2024 + 2027, which is six
@@ -125,8 +125,12 @@ He named two problems. Both have an answer that already exists:
   Claude Code for web got no checking at all (2026-08-04). If Node isn't on PATH on some machine, run
   [`tools/verify-consistency.ps1`](tools/verify-consistency.ps1) by hand instead — but know that it
   **trails the Node checker and is not its equal**: the Node version is what the hook runs and is the
-  authority, and check 9 has not been ported to PowerShell. Porting it from a Linux container is exactly
-  the `.ps1` encoding trap described below, so it waits for a session on Windows that can run the result.
+  authority at **thirteen** checks while the PowerShell copy stops at **nine** — checks 10–13 have never
+  been ported. This line said "check 9 has not been ported" until 2026-08-27, which had been wrong since
+  2026-08-22: check 9 *was* ported, and the sentence then sat still while the Node checker grew four more,
+  so it understated the gap by a factor of four. Read the two files' own section headers before trusting
+  any count here. Porting 10–13 from a Linux container is exactly the `.ps1` encoding trap described
+  below, so it waits for a session on Windows that can run the result.
 - **Never name an outside source in anything written here — no other people's repos, tools, products,
   websites or personal names.** Ajmal's instruction, 2026-08-20: *"do not mention any thing that we took
   from this web site or repo... the words also remove... remove his name and do not use like that."*

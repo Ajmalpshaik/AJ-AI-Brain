@@ -6,9 +6,12 @@
 //          into each terminal's up-facing connector -> extend main past the LAST branch -> end cap.
 //          Ajmal's connection method, proven live 2026-07-26 (8-FCU exercise, then full 6-terminal
 //          system, 0 failures).
-// GOTCHA: the terminal sweep is WHOLE-MODEL — on a multi-storey model a free same-system terminal on
-//         another floor still qualifies and gets a branch drawn at THIS equipment's height. Check the
-//         terminal count it reports against what you can see before trusting a run on a tower.
+// GOTCHA: the terminal sweep is WHOLE-MODEL BY DEFAULT. On a multi-storey model, or a floor of rooms
+//         each with its own FCU, every free same-system terminal qualifies and gets a branch drawn at
+//         THIS equipment's height. Measured 2026-08-25 on a 14-room floor: one FCU would have taken
+//         all 56 free supply diffusers. SET `roomIdScope` to the Room's Id to limit it to one room,
+//         which is what you want whenever the building has more than one FCU. Either way, check the
+//         terminal count it reports against what you can see before trusting the run.
 // SOURCE:  ../../knowledge/live-model/hvac-ducts.md ("Connecting equipment to terminals" section)
 // STATUS:  living document - refine in place, don't fork a v2 file.
 //
@@ -69,6 +72,8 @@ int levelIdInput = 0;                // 0 = auto: the equipment's own LevelId
 double branchOffsetMm = 600;         // branch start distance from main centerline (must clear main half-width)
 double extendPastLastBranchMm = 500; // extra main length past the last branch centerline
 bool placeEndCap = true;             // close the main's open end with a PartType=Cap fitting
+int roomIdScope = 0;                 // 0 = whole model (original behaviour). Set a Room's Id to
+                                     // consider ONLY terminals standing inside that room.
 // ---- END INPUTS ----
 
 Func<double, double> toFt = v => v / 304.8;
@@ -106,10 +111,30 @@ if (sup == null) return "No free SupplyAir connector on the equipment - stopped.
 // was always filtered (SupplyAir, above); the terminal side has to match it, not just be free.
 var terms = new List<Tuple<ElementId, Connector>>();
 int skippedWrongSystem = 0;
+BoundingBoxXYZ scopeBox = null;
+int skippedOutOfRoom = 0;
+if (roomIdScope != 0)
+{
+    var scopeRoom = Document.GetElement(new ElementId(roomIdScope));
+    if (scopeRoom == null) return $"roomIdScope {roomIdScope} is not an element in this model.";
+    scopeBox = scopeRoom.get_BoundingBox(null);
+    if (scopeBox == null) return $"roomIdScope {roomIdScope} has no bounding box - is it a placed Room?";
+}
+
 foreach (var at in new FilteredElementCollector(Document).OfCategory(BuiltInCategory.OST_DuctTerminal)
          .WhereElementIsNotElementType().Cast<FamilyInstance>())
 {
     if (at.MEPModel == null || at.MEPModel.ConnectorManager == null) continue;
+    if (scopeBox != null)
+    {
+        // the terminal's own insertion point, NOT its bounding box: a diffuser's box is several times
+        // the face size and overlaps neighbouring rooms, which would pull in terminals next door.
+        var atLp = at.Location as LocationPoint;
+        if (atLp == null) { skippedOutOfRoom++; continue; }
+        var q = atLp.Point;
+        if (q.X <= scopeBox.Min.X || q.X >= scopeBox.Max.X ||
+            q.Y <= scopeBox.Min.Y || q.Y >= scopeBox.Max.Y) { skippedOutOfRoom++; continue; }
+    }
     foreach (Connector c in at.MEPModel.ConnectorManager.Connectors)
     {
         if (c.Domain != Domain.DomainHvac || c.IsConnected) continue;
@@ -118,7 +143,8 @@ foreach (var at in new FilteredElementCollector(Document).OfCategory(BuiltInCate
     }
 }
 if (terms.Count == 0) return "No free air-terminal connectors of the equipment's system type found - nothing to connect."
-    + (skippedWrongSystem > 0 ? $" ({skippedWrongSystem} free connector(s) skipped as a different system type.)" : "");
+    + (skippedWrongSystem > 0 ? $" ({skippedWrongSystem} free connector(s) skipped as a different system type.)" : "")
+    + (skippedOutOfRoom > 0 ? $" ({skippedOutOfRoom} terminal(s) skipped as outside roomIdScope {roomIdScope}.)" : "");
 
 // ---- resolve types / level ----
 ElementId ductTypeId;

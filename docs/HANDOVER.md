@@ -1,6 +1,71 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-24.** Read top-down. The newest session is first.
+Last updated: **2026-08-29.** Read top-down. The newest session is first.
+
+## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
+
+A scheduled daily task now fires in the **cloud container** and asks for the status of four things: AJ
+Tool, the vector-based search, Graphify, and Obsidian. **It can answer one of the four, and that is
+structural, not a bad day.** Writing it down here so the next run — and the next reader — does not
+re-derive it.
+
+**Why three are unanswerable from a container.** The vector index, the knowledge graph and the Obsidian
+vault are all **gitignored derived state** (`.gitignore` says so in its own words, and
+[`skills/brain-update-layers/SKILL.md`](../skills/brain-update-layers/SKILL.md) opens by saying they
+"live on this machine and never travel in git"). A cloud session is a fresh clone: it gets their *code*
+and none of their *state*. `node tools/brain-status.mjs` says it out loud —
+
+```
+vector index · knowledge graph · Obsidian vault — NONE PRESENT IN THIS CHECKOUT
+```
+
+and `node tools/brain-setup.mjs --check` agrees: *"NOT SET UP on this machine yet — missing: relay
+dependencies, search environment, search index."* `graphify` is not on PATH, `graphify-out/` does not
+exist, and the vault is a pure function of `graphify-out/graph.json`, so no graph means no vault to
+check. **AJ Tool is the same story from the other side**: the bridge needs Revit open on the Windows PC,
+and no `mcp__aj-tools-aj-ai__*` tool is connected in a cloud session at all.
+
+Building any of them here would not help — the container is thrown away when the session ends, and the
+result is gitignored, so nothing would reach the PC.
+
+**Two of the four were also deliberately retired from routine maintenance**, which a daily check should
+not quietly reverse. Ajmal's decision, 2026-08-23, on measured evidence recorded in that same skill:
+the vector index answered **247 of 247** questions and runs on every message, while the graph's
+`search_graph` had been called **zero** times ever and the Obsidian vault **had never been opened** —
+the app on the PC has no vault registered. So the graph and the vault became FULL mode, asked for by
+name ("update the **all** brain"), at ~1 hour and ~800k tokens a run. A daily check that reports them
+as "stale" is reporting a design decision, not a fault.
+
+**What a cloud run can genuinely check, and did, on 2026-08-29 — all green:** both repos clean and level
+with `origin/main`; **all 13** consistency checks pass with no drift; **12 skills · 398 fragments · 26
+native tools**; 248 fragments (62%) proven against a real model, 25 with no status either way; the
+retrieval-score claims in the docs match the last recorded run (2026-08-25). AEB-Tools sits at v1.1.3,
+working tree clean.
+
+**So the check is worth keeping — it just needs its scope named.** Either move it to a session on the
+Windows PC, where all four are real and `brain-update-layers` FAST mode answers it in about 30 seconds,
+or leave it in the cloud and narrow it to the half that lives in git: repo sync, consistency, counts,
+proven percentage. What it must not do is keep reporting three layers as "cannot verify" every morning
+as though that were news.
+
+## 2026-08-28 — two knowledge corrections from a no-Revit session. ONE LINE TO VERIFY ON THE PC.
+
+Nothing structural. Two findings from building a write path on a machine with no Revit and no compiler,
+both filed where they belong and logged in [`knowledge/brain-log.md`](../knowledge/brain-log.md).
+
+**The one thing to actually check, and it takes a second:** `live-model/core.md` used to tell every
+session to branch on the Revit version for a mm-to-feet conversion. It no longer does — for a **length**
+that is plain arithmetic, `mm / 304.8`, exact in every release from 2020 to 2027, with no units API in
+it at all. That kills the whole `DisplayUnitType`-fails-on-2024 failure class this Brain has already been
+bitten by twice. **It is reasoned, not run.** Convert `304.8` and expect exactly `1.0`. If it does, the
+rule is right and there is nothing else to do.
+
+The other is a trap, not a claim: an unguarded `RollBack()` in a `catch` can throw a second time and bury
+the error that caused it — and a `RefreshActiveView()` after a *successful* commit can report a committed
+change as a failure. Both in
+[`knowledge/live-model/failure-handling-without-a-class.md`](../knowledge/live-model/failure-handling-without-a-class.md).
+
+Plugin bumped to **1.1.44** so installed copies receive both.
 
 ## 2026-08-24 (evening) — SUITE MERGED, MCP SERVER VERSION-PROOFED, BRANCHES DELETED. NOTHING IS WAITING.
 

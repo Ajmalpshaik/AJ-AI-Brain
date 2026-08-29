@@ -119,6 +119,67 @@ implementation, and per the section above a blanket one is dangerous anyway) and
 `IDuplicateTypeNamesHandler`. `ISelectionFilter` belongs in the same family — but it is moot here,
 because a bridge fragment never picks interactively.
 
+## When the CLEANUP throws: a rollback must never bury the error that caused it
+
+Different problem, same file because it is the same moment — something has gone wrong inside a
+transaction and the code is deciding what to do about it.
+
+**The bug, in the shape it actually takes:**
+
+```csharp
+catch (Exception ex)
+{
+    group.RollBack();                 // <- this can throw TOO
+    return "failed: " + ex.Message;   // <- and then this line never runs
+}
+```
+
+A rollback is always the **second** thing going wrong. If the group is already in a terminal state —
+because the `Commit()` or `Assimilate()` that just failed left it that way — then `RollBack()` throws as
+well, and its exception escapes *before* the original is ever reported. The caller is told the group
+could not be rolled back, which tells them nothing, instead of what actually happened to their model.
+Worse, in an async caller the result is never set at all and it waits forever.
+
+**The fix is both guards, not either:**
+
+```csharp
+private static void SafeRollBack(TransactionGroup group)
+{
+    try
+    {
+        if (group.GetStatus() == TransactionStatus.Started) group.RollBack();
+    }
+    catch { /* nothing more can be done to it, and saying so helps nobody */ }
+}
+```
+
+The status check avoids provoking an exception in the ordinary case. The `catch` handles what the status
+check cannot see — a group left un-rollback-able by an `Assimilate()` that failed part way, or a
+`GetStatus()` that throws on its own. Cheap first, then total.
+
+**The same rule catches a second, sneakier version:** anything cosmetic done *after* a successful commit.
+
+```csharp
+group.Assimilate();
+uidoc.RefreshActiveView();     // if THIS throws, the catch above reports a
+                               // COMMITTED change as a failure, and then tries
+                               // to roll back a group it can no longer roll back
+```
+
+The user is told nothing happened while their elements have in fact moved — which is the worst wrong
+answer available, because it sends them looking for a change that is already there. Put the refresh in
+its own `try`/`catch`, outside the group.
+
+> **The general rule worth carrying:** cleanup and cosmetics must never be able to change what gets
+> reported about the real work. Neither of them is the work.
+
+**Found in the field, not reasoned out** — this shipped in a working Revit add-in and was fixed there in
+July 2026 after the pane hung on a result that never arrived. Written here as this Brain's own rule
+because the shape repeats anywhere a `TransactionGroup` has a `catch` under it.
+
+**Not yet run against a real model from this Brain.** The reasoning is a compiler-and-API argument, not a
+measurement; it costs nothing to adopt and the failure it prevents is silent.
+
 ## How to recognise this class of problem
 
 If a fragment appears to run, reports success, and the model is unchanged — and the operation is one

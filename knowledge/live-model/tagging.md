@@ -318,6 +318,41 @@ instead of view space, and no leader-end restore. `fragment-index.mjs` reads onl
   measured under, and either re-measure or explicitly scale before reusing it in a different context.
   Don't assume a constant tuned once stays correct — verify the context it's being reused in matches.
 
+## The baseline tag box belongs to ONE tag family — measure it when the family changes
+Measured live 2026-08-26 on `4355-BHVD-3D-60A10-BL003A`, plan `PLAN AT EL. +100.950_HVAC Ground Floor
+Layout ajmal` at 1:50, when Ajmal swapped tag families mid-job: *"i have deelte all the tags already and
+use the tag family this one."*
+
+| Tag family | Measured box (model mm at 1:50) |
+|---|---|
+| `TCM_TG_Duct_System+Dimension+BOD+Flow` — the old project default | 790.0 × 486.0 |
+| `Duct Size Tag test` — the one he switched to | 595.5 × **932.5** |
+
+**Nearly twice the height, and `recipes/tag-elements-in-active-view.cs` seeds its scoring from
+`baselineTagWidthMm`/`baselineTagHeightMm`.** Carrying the old 486 into the new run tells the scorer every
+tag is half as tall as it really is, so its first candidate positions are stacked on each other; the
+running-average refinement pulls it back, but only after the early tags are already placed wrong. The
+recipe's own header says "re-measure if using a different family" — this is what that costs when skipped.
+
+**How to measure it without guessing:** place ONE tag on one qualifying element inside a transaction,
+`doc.Regenerate()`, read `tag.get_BoundingBox(view)`, then delete it in the same transaction. Nothing
+survives the measurement. Scale `baseOffsetMm`/`noLeaderOffsetMm` by the same height ratio or the taller
+tag eats the gap the offset was meant to leave (800/420 for this family against 600/220 for the old one).
+
+**Related, same run:** a tag family swap also changes the TEXT, and that is worth reading back rather
+than assuming. The old family emitted `900.0x650.0Ø11969.9000 m³/h` — a stray `Ø` from an empty diameter
+label jammed against the airflow, on all 94 tags. `Duct Size Tag test` emits `900x650 / 11969.9000 m³/h /
+2925.0` cleanly. See [[a fragment's success line is not evidence]] — both runs reported success.
+
+## `IndependentTag.GetTaggedLocalElementIds()` does not exist in Revit 2020
+It arrived in Revit 2022. On 2020 the property is **`tag.TaggedLocalElementId`** (singular, returns one
+`ElementId`), and calling the plural method fails at compile time with CS1061 — caught 2026-08-26 writing
+a tag read-back on this project's Revit 2020.2.9. Same shape as the `ElementId.IntegerValue` removal in
+2027: a tag API member that is correct on one version and absent on another, invisible until it runs.
+`tools\check-scripts.cmd` is what catches this class across every Revit on the PC — but only for files it
+reads, so hand-written read-back C# sent through `run_csharp` is never covered by it. Grep `RevitAPI.dll`
+for the member name when unsure which versions have it.
+
 ## Prefer moving the straight-leader tag, leave an L-shaped one in place
 - **the user's feedback, with a reference screenshot**: "you find the clash and you are moving both tags —
   try to make clash free with moving straight leader tag, L shaped one keep same place, no need to
