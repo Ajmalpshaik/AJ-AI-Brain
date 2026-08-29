@@ -66,6 +66,26 @@ reading alongside whichever topic file the job needs.
   an earlier read rather than fresh. Related: the same limit is what makes parallel bridge calls
   unreliable — six at once on 2026-08-14 produced `the AJ AI bridge closed the pipe connection` on one
   of them; go sequential.
+- **Several Revits can be connected at once — but the rule is ONE CHAT PER REVIT, and the choice is
+  ALWAYS his to make.** How it works and how Ajmal should set it up is
+  [`../revit-sessions-and-chats.md`](../revit-sessions-and-chats.md); what an agent must DO is here:
+  - **One Revit connected → taken automatically, never asked.** Ordinary work feels exactly as before.
+  - **Two or more → nothing is sent to Revit at all** until he names one: `list_revit_instances`, show
+    him the choice, then `use_revit_instance` with that pid. Never choose for him.
+  - His choice is **sticky and one-way**: opening a third Revit later does not re-ask, but if the
+    session he named CLOSES the bridge stops and says so rather than sliding onto another project. An
+    auto-picked session is different — a second Revit appearing mid-chat forces the question, because
+    he never actually chose the first one.
+  - Switching Revit **drops any document pin**, since a title from one Revit means nothing in another.
+- **A bridge call FREEZES Revit while it runs — he cannot model at the same time in the same Revit.**
+  `RevitExecutionService` is an `IExternalEventHandler`, so every script runs on Revit's single API/UI
+  thread; the service's own changelog records that before v1.3.0 a runaway script "could hang the Revit
+  UI thread indefinitely", and that true isolation "would need a separate process/AppDomain" — out of
+  scope by decision. Two consequences for how to work:
+  - **Never assume a call is free because it is read-only.** If he says he is working, wait; if he is
+    mid-command the ExternalEvent cannot fire anyway and the call simply hangs on him.
+  - **The hazard is the stale read, not the freeze** — he edits between two of our calls and a later
+    step acts on the earlier picture. Same failure `START-HERE.md` rule 2 exists for.
 - For a common category count with one optional parameter breakdown, prefer the native
   `model_summary` MCP tool when it is exposed. It performs one read-only bridge call and returns the
   Revit version and model title, so a separate ping is unnecessary. Keep `run_csharp` for complex,
@@ -285,13 +305,36 @@ at runtime, so they cost a full round trip through Revit for nothing.
   no prefix. Hit on Revit 2020, 2026-08-20.
 
 ## Revit version + unit conversion
-- **Check which Revit version is actually open before assuming a unit API** — `UnitTypeId.Millimeters`
-  only exists from 2021 onward; on 2020 or earlier use
-  `UnitUtils.ConvertToInternalUnits(mm, DisplayUnitType.DUT_MILLIMETERS)` instead. Don't assume the
-  version from a past session; a different project, or a future session on the same project, may be
-  running a different Revit year.
+- **For a LENGTH, don't call the units API at all — divide.** `mm / 304.8` is feet, exactly, in every
+  Revit from 2020 to 2027. The international foot has been exactly 304.8 mm by definition since 1959, and
+  Revit's internal length unit is decimal feet in every release, so the conversion has no version, no
+  locale and no project setting in it.
+
+  That removes the entire failure class this Brain has already been bitten by:
+  [`revit-version-compatibility.md`](../revit-version-compatibility.md) records eight fragments carrying
+  `DisplayUnitType.DUT_MILLIMETERS` for months and failing on 2024 with *"inaccessible due to its
+  protection level"*. **There is nothing there for Autodesk to move.** No version check, no branch, no
+  compile symbol.
+
+  **Reasoned, not run here** (written on a machine with no Revit). One line proves it on the PC: convert
+  304.8 and expect exactly `1.0`.
+
+- **Where the API IS still needed**, and the boundary is the useful part: a conversion with a **fixed
+  ratio** — length, and angles — is arithmetic. A conversion that depends on **what the project is set to
+  display**, or on a unit family you are not defining yourself, genuinely needs `UnitUtils`, and then it
+  needs the version split: `UnitTypeId.Millimeters` from 2021, `DisplayUnitType.DUT_MILLIMETERS` on 2020
+  and earlier. Don't assume the version from a past session — a different project, or a later session on
+  the same one, may be a different Revit year.
+
 - The user always speaks in **mm**, Revit's internal API is always **feet** — convert both ways explicitly,
   don't leave raw feet in a reply.
+
+- **Refuse a distance rather than guessing at it.** `NaN` and infinity are what arithmetic on a missing or
+  malformed number produces, and they propagate silently into a geometry call that has no defined result —
+  inside a transaction, on a real model. A ceiling helps too: a number far past any real building is a
+  transcription error, not a request, and *"move it 200000000 mm"* is not something anyone meant. And
+  never silently read feet or inches as mm: that mistake is a factor of 304.8 applied to a building, and
+  it looks fine until somebody measures it.
 - `Autodesk.Revit.DB.Structure.StructuralType` must be **fully qualified** when calling
   `Document.Create.NewFamilyInstance(...)` — a bare `StructuralType` fails to compile in this script
   context ("inaccessible due to its protection level").

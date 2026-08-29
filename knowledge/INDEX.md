@@ -15,6 +15,7 @@ that one file — don't read the whole folder.**
 | **How many kilos of ductwork is this** — sheet-metal gauge by size band and pressure class, developed sheet area, weight, and the fabrication allowances that add about a quarter (NOT duct sizing from airflow) | [`duct-sheet-metal-takeoff.md`](duct-sheet-metal-takeoff.md) |
 | **Sizing a cold or hot WATER SUPPLY pipe** — fixture units, Hunter's curve, velocity sizing, Hazen-Williams friction loss, real bore vs nominal (NOT drainage or vent sizing) | [`plumbing-pipe-sizing.md`](plumbing-pipe-sizing.md) |
 | Building a family from a supplier's PDF submittal — which page to trust for sizes vs positions, how many families the product range needs, and how to get text/images out of the PDF on this machine | [`reading-manufacturer-datasheets.md`](reading-manufacturer-datasheets.md) |
+| **How many Revits can be open, how chats pair to them, and whether Ajmal can keep modelling while the AI works** — the plain-English note for him, not agent rules | [`revit-sessions-and-chats.md`](revit-sessions-and-chats.md) |
 | An ambiguous or misheard term in a request | [`glossary.md`](glossary.md) |
 | A search missed because the site word isn't the Revit word ("floor levels", "light fitting", "out to excel") — **add a row, it works immediately, no rebuild** | [`site-vocabulary.md`](site-vocabulary.md) (data, read live by `semantic-index\ask-brain-hybrid.cmd`) |
 | **Will these scripts run on Revit 2024/2025/2026+** — what breaks when the Revit version moves, which .NET goes with which release, how many of the 398 fragments are affected | [`revit-version-compatibility.md`](revit-version-compatibility.md) |
@@ -24,6 +25,7 @@ that one file — don't read the whole folder.**
 | **Should we rebuild the search / "do RAG properly"** — what the retrieval layer already has, the six standard upgrades that measured worse here, and the two conditions that would justify a rewrite | [`../semantic-index/rag-architecture-decisions.md`](../semantic-index/rag-architecture-decisions.md) |
 | **Can a clickable page reach the bridge** — what MCP Apps actually allows, which half is already built, and the wrong claim not to repeat | [`mcp-ui-surface.md`](mcp-ui-surface.md) |
 | **A black terminal window keeps opening over Revit** — why the venv Python does that, and the rule every background Python or hook spawn here must follow | [`windows-console-window-trap.md`](windows-console-window-trap.md) |
+| **"Are the four tools up to date"** — the daily check of the bridge, the search, the graph and the vault: which parts a checkout can prove, which parts are answerable only where the Brain folder lives, and the order to run them in on the PC | [`daily-tool-check.md`](daily-tool-check.md) |
 
 ## Adding new knowledge
 
