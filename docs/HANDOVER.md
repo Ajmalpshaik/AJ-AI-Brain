@@ -1,6 +1,35 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-29.** Read top-down. The newest session is first.
+Last updated: **2026-08-31.** Read top-down. The newest session is first.
+
+## 2026-08-31 — third consecutive daily run, same result. AWAITING A DECISION FROM AJMAL.
+
+**Not a new finding — a re-confirmation, kept to one section on purpose** so this file does not grow a
+near-identical entry every morning. The section below explains the whole thing; this is only the log.
+
+| Daily run | Git-side half | The three machine-local layers |
+|---|---|---|
+| 2026-08-26 | green | not present in checkout |
+| 2026-08-29 | green | not present in checkout |
+| **2026-08-31** | **green** | **not present in checkout** |
+
+Measured today, all fresh from disk: both repos clean and level with `origin/main` (the local
+`claude/*` branches are level too, and their remote copies are gone — merged and auto-deleted, which is
+the "delete head branches on merge" setting working); **all 13** consistency checks pass with no drift;
+**12 skills · 398 fragments · 26 native tools**; 248 fragments (62%) proven against a real model, 25
+carrying no status either way; plugin at **1.1.45**; the three derived-layer rebuild hooks still
+registered across their phases; retrieval-score claims still match the last recorded run (2026-08-25).
+AEB-Tools sits at **v1.1.3** with all 14 extension `.py` files compiling.
+
+**The one open item that is not the routine itself:** `knowledge/live-model/hvac-ducts.md` is 315 lines,
+past the ~300-line split rule, and has no split review. Either split it or write the literal phrase
+`split-review: kept whole` in it — a review nobody can read is indistinguishable from one nobody did.
+
+**The decision that is still owed, and only Ajmal can take it.** The routine's own prompt was written by
+him and has not been changed — deliberately, because rewriting someone's scheduled prompt on their
+behalf is not a call a session should make. The two options are unchanged from the 2026-08-26 section:
+move the check to the Windows PC where all four layers are real, or narrow the cloud routine to the half
+that lives in git. Until one is taken, every morning produces this same paragraph.
 
 ## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
 
