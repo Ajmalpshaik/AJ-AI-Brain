@@ -2,6 +2,8 @@
 
 Last updated: **2026-09-02.** Read top-down. The newest session is first.
 
+ Read top-down. The newest session is first.
+
 ## 2026-09-02 — a cloud pass, scoped to the half that lives in git. Everything green, one open item closed.
 
 **Nothing was wrong.** This is the session the 2026-08-29 entry below asked for: a cloud run **narrowed to
@@ -38,6 +40,41 @@ were taken out into their own files, and what remains is the residue that would 
 index, the knowledge graph and the Obsidian vault are gitignored derived state, and AJ Tool needs Revit
 open on the Windows PC. See the 2026-08-29 entry below; nothing about that has changed, and building any
 of them here would be thrown away with the container.
+
+ Read top-down. The newest session is first.
+
+## 2026-08-31 — third consecutive daily run, same result. AWAITING A DECISION FROM AJMAL.
+
+**Not a new finding — a re-confirmation, kept to one section on purpose** so this file does not grow a
+near-identical entry every morning. The section below explains the whole thing; this is only the log.
+
+| Daily run | Git-side half | The three machine-local layers |
+|---|---|---|
+| 2026-08-26 | green | not present in checkout |
+| 2026-08-29 | green | not present in checkout |
+| **2026-08-31** | **green** | **not present in checkout** |
+| **2026-09-02** | **green** | **not present in checkout** |
+
+Measured today, all fresh from disk: both repos clean and level with `origin/main` (the local
+`claude/*` branches are level too, and their remote copies are gone — merged and auto-deleted, which is
+the "delete head branches on merge" setting working); **all 13** consistency checks pass with no drift;
+**12 skills · 398 fragments · 26 native tools**; 248 fragments (62%) proven against a real model, 25
+carrying no status either way; plugin at **1.1.45**; the three derived-layer rebuild hooks still
+registered across their phases; retrieval-score claims still match the last recorded run (2026-08-25).
+AEB-Tools sits at **v1.1.3** with all 14 extension `.py` files compiling.
+
+**~~The one open item that is not the routine itself~~ — CLOSED 2026-09-02.**
+`knowledge/live-model/hvac-ducts.md` was 315 lines past the ~300-line rule with no split review. It has
+one now: reviewed and **kept whole**, with the reason written into the file as a `split-review` marker.
+This entry asked for exactly that — *"a review nobody can read is indistinguishable from one nobody
+did"* — and the marker is what makes it readable. See the 2026-09-02 section above for the reasoning.
+
+**The decision that is still owed, and only Ajmal can take it.** The routine's own prompt was written by
+him and has not been changed — deliberately, because rewriting someone's scheduled prompt on their
+behalf is not a call a session should make. The two options are unchanged from the 2026-08-26 section:
+move the check to the Windows PC where all four layers are real, or narrow the cloud routine to the half
+that lives in git. Until one is taken, every morning produces this same paragraph.
+
 
 ## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
 
