@@ -6168,3 +6168,20 @@ list **after** that list had already been evaluated. It printed its own progress
 and could not fail. Caught only by deliberately planting the thing it was supposed to catch and watching
 it pass. **Every check in `tools/verify-consistency.mjs` deserves that treatment once** — plant the fault,
 watch it fail, remove it. A check nobody has seen fail is a claim, not a check.
+
+## 2026-09-02 — the last unreviewed over-length file, and the rule that lets a review end in "leave it"
+
+`knowledge/live-model/hvac-ducts.md` (314 lines) had been flagged *"past the ~300-line split rule — not
+yet reviewed"* on every status run. Reviewed and **kept whole**, with the reason recorded in the file's
+own `split-review` marker.
+
+The case: what remains in that file is one job read in order — draw the duct, branch it, connect the FCU,
+put it on a system, set the terminals — and the traps in each section bite in the others. `Duct.LevelId`
+going invalid after a `BreakCurve` is documented under *connecting to an existing open end* and is
+precisely what breaks a `Duct.Create` under *branching*. **Sizing and equipment placement had already
+been split out**, so what was left was the residue that would not divide.
+
+The board now shows **no unreviewed over-length files**. That is only a meaningful number because
+`brain-self-maintain` allows a review to end in *"say so and leave it"* — a rule phrased as a mandate
+would have cut this file in half months ago and sent the reader hopping between the halves for every duct
+job. **A guideline that cannot be answered "no" is not a guideline, it is a ratchet.**

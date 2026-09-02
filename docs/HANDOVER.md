@@ -1,6 +1,43 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-29.** Read top-down. The newest session is first.
+Last updated: **2026-09-02.** Read top-down. The newest session is first.
+
+## 2026-09-02 — a cloud pass, scoped to the half that lives in git. Everything green, one open item closed.
+
+**Nothing was wrong.** This is the session the 2026-08-29 entry below asked for: a cloud run **narrowed to
+what a container can genuinely answer**, instead of one that reports three layers as "cannot verify" every
+morning as though that were news.
+
+**What was checked, and all of it passed:**
+
+| | |
+|---|---|
+| Repo | clean, level with `origin/main` |
+| Consistency | **all 13 checks**, no drift — 590 text files, 115 script cross-references, 23 live-count claims, 3 retrieval-score claims |
+| Counts | **12 skills · 398 fragments · 26 native tools** |
+| Proven | 248 fragments (62%) against a real model; 25 with no status either way |
+
+**The one open item that could be closed here, was.** `knowledge/live-model/hvac-ducts.md` had been
+sitting past the ~300-line rule and flagged *"not yet reviewed"* on every status run. It was reviewed and
+**deliberately kept whole**, with the reason written into the file as a `split-review` marker — so the
+flag is answered rather than silenced.
+
+**Why it stays whole**, since the point of the marker is that the reasoning survives: what is left in
+that file is one job read in order — draw the duct, branch it, connect the FCU, put it on a system, set
+the terminals — and the traps in each section bite in the others. `Duct.LevelId` going invalid after a
+`BreakCurve` is written up under *connecting to an existing open end* and is exactly what breaks a
+`Duct.Create` under *branching*. **The split has already been done once**: sizing and equipment placement
+were taken out into their own files, and what remains is the residue that would not divide.
+
+> The status board now shows **no unreviewed over-length files** for the first time. That number is only
+> meaningful because reviewing one is allowed to end in *"leave it"* — a rule that can only be satisfied
+> by splitting would have had this file cut in half months ago, and the reader sent hopping between the
+> two halves for every duct job.
+
+**Still not answerable from a container, and this is structural rather than a bad day** — the vector
+index, the knowledge graph and the Obsidian vault are gitignored derived state, and AJ Tool needs Revit
+open on the Windows PC. See the 2026-08-29 entry below; nothing about that has changed, and building any
+of them here would be thrown away with the container.
 
 ## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
 
