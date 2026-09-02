@@ -4,6 +4,24 @@
 > Sizing/slicing a trunk lives in [`hvac-duct-sizing.md`](hvac-duct-sizing.md); placing and orienting
 > the equipment itself lives in [`hvac-equipment-placement.md`](hvac-equipment-placement.md).
 
+> **split-review: kept whole** (reviewed 2026-09-02, at 314 lines). Past the ~300-line rule and staying
+> that way. What is left here is ONE job read in order — draw the duct, branch it, connect the FCU, put
+> it on a system, set the terminals — and the sections are not independent topics that happen to share a
+> heading: the traps in each one bite in the others. `Duct.LevelId` going invalid after a `BreakCurve`
+> is written up under *connecting to an existing open end* and is exactly what breaks a `Duct.Create`
+> under *branching*; the BFS-not-first-connector rule under the same heading is what makes the
+> verification in every other section trustworthy; and the last section closes the loop by proving the
+> whole chain — a connector reading 800 L/s because Revit summed four 200 L/s terminals it could
+> actually trace. Split those apart and each half sends the reader to the other.
+>
+> **The split has already been done once**, which is the strongest argument for stopping: sizing and
+> equipment placement were taken out into their own files, and the two lines above route to them. What
+> remains is the residue that would not divide. Per
+> [`skills/brain-self-maintain/SKILL.md`](../../skills/brain-self-maintain/SKILL.md), the 300-line rule
+> is *"a split candidate, not a mandate — if it's one coherent job read as a unit, splitting adds hops
+> and makes things worse; say so and leave it."* This is that case, said out loud so the next status run
+> stops re-raising it.
+
 ## Drawing a duct between two points, with or without connecting it
 Used to draw a main duct from each room's FCU across the room (2026-07-08).
 

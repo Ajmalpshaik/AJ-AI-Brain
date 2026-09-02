@@ -1,6 +1,47 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-08-31.** Read top-down. The newest session is first.
+Last updated: **2026-09-02.** Read top-down. The newest session is first.
+
+ Read top-down. The newest session is first.
+
+## 2026-09-02 — a cloud pass, scoped to the half that lives in git. Everything green, one open item closed.
+
+**Nothing was wrong.** This is the session the 2026-08-29 entry below asked for: a cloud run **narrowed to
+what a container can genuinely answer**, instead of one that reports three layers as "cannot verify" every
+morning as though that were news.
+
+**What was checked, and all of it passed:**
+
+| | |
+|---|---|
+| Repo | clean, level with `origin/main` |
+| Consistency | **all 13 checks**, no drift — 590 text files, 115 script cross-references, 23 live-count claims, 3 retrieval-score claims |
+| Counts | **12 skills · 398 fragments · 26 native tools** |
+| Proven | 248 fragments (62%) against a real model; 25 with no status either way |
+
+**The one open item that could be closed here, was.** `knowledge/live-model/hvac-ducts.md` had been
+sitting past the ~300-line rule and flagged *"not yet reviewed"* on every status run. It was reviewed and
+**deliberately kept whole**, with the reason written into the file as a `split-review` marker — so the
+flag is answered rather than silenced.
+
+**Why it stays whole**, since the point of the marker is that the reasoning survives: what is left in
+that file is one job read in order — draw the duct, branch it, connect the FCU, put it on a system, set
+the terminals — and the traps in each section bite in the others. `Duct.LevelId` going invalid after a
+`BreakCurve` is written up under *connecting to an existing open end* and is exactly what breaks a
+`Duct.Create` under *branching*. **The split has already been done once**: sizing and equipment placement
+were taken out into their own files, and what remains is the residue that would not divide.
+
+> The status board now shows **no unreviewed over-length files** for the first time. That number is only
+> meaningful because reviewing one is allowed to end in *"leave it"* — a rule that can only be satisfied
+> by splitting would have had this file cut in half months ago, and the reader sent hopping between the
+> two halves for every duct job.
+
+**Still not answerable from a container, and this is structural rather than a bad day** — the vector
+index, the knowledge graph and the Obsidian vault are gitignored derived state, and AJ Tool needs Revit
+open on the Windows PC. See the 2026-08-29 entry below; nothing about that has changed, and building any
+of them here would be thrown away with the container.
+
+ Read top-down. The newest session is first.
 
 ## 2026-08-31 — third consecutive daily run, same result. AWAITING A DECISION FROM AJMAL.
 
@@ -12,6 +53,7 @@ near-identical entry every morning. The section below explains the whole thing; 
 | 2026-08-26 | green | not present in checkout |
 | 2026-08-29 | green | not present in checkout |
 | **2026-08-31** | **green** | **not present in checkout** |
+| **2026-09-02** | **green** | **not present in checkout** |
 
 Measured today, all fresh from disk: both repos clean and level with `origin/main` (the local
 `claude/*` branches are level too, and their remote copies are gone — merged and auto-deleted, which is
@@ -21,15 +63,18 @@ carrying no status either way; plugin at **1.1.45**; the three derived-layer reb
 registered across their phases; retrieval-score claims still match the last recorded run (2026-08-25).
 AEB-Tools sits at **v1.1.3** with all 14 extension `.py` files compiling.
 
-**The one open item that is not the routine itself:** `knowledge/live-model/hvac-ducts.md` is 315 lines,
-past the ~300-line split rule, and has no split review. Either split it or write the literal phrase
-`split-review: kept whole` in it — a review nobody can read is indistinguishable from one nobody did.
+**~~The one open item that is not the routine itself~~ — CLOSED 2026-09-02.**
+`knowledge/live-model/hvac-ducts.md` was 315 lines past the ~300-line rule with no split review. It has
+one now: reviewed and **kept whole**, with the reason written into the file as a `split-review` marker.
+This entry asked for exactly that — *"a review nobody can read is indistinguishable from one nobody
+did"* — and the marker is what makes it readable. See the 2026-09-02 section above for the reasoning.
 
 **The decision that is still owed, and only Ajmal can take it.** The routine's own prompt was written by
 him and has not been changed — deliberately, because rewriting someone's scheduled prompt on their
 behalf is not a call a session should make. The two options are unchanged from the 2026-08-26 section:
 move the check to the Windows PC where all four layers are real, or narrow the cloud routine to the half
 that lives in git. Until one is taken, every morning produces this same paragraph.
+
 
 ## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
 
