@@ -2,8 +2,6 @@
 
 Last updated: **2026-09-03.** Read top-down. The newest session is first.
 
- Read top-down. The newest session is first.
-
 ## 2026-09-03 — daily cloud check, git-side green, three layers absent as designed. Logged as a table row.
 
 Re-confirmation, not a finding — appended to the running table in the 2026-08-31 section below rather than
@@ -62,7 +60,7 @@ near-identical entry every morning. The section below explains the whole thing; 
 | 2026-08-26 | green | not present in checkout |
 | 2026-08-29 | green | not present in checkout |
 | 2026-08-31 | green | not present in checkout |
-| 2026-09-02 | green | not present in checkout |
+| 2026-09-02 (two firings) | green, both | not present in checkout |
 | **2026-09-03** | **green** | **not present in checkout** |
 
 2026-09-03, measured fresh from disk in a cloud container: repo clean, branch level with `origin/main`
@@ -93,6 +91,16 @@ him and has not been changed — deliberately, because rewriting someone's sched
 behalf is not a call a session should make. The two options are unchanged from the 2026-08-26 section:
 move the check to the Windows PC where all four layers are real, or narrow the cloud routine to the half
 that lives in git. Until one is taken, every morning produces this same paragraph.
+
+> **Escalated to Ajmal directly on 2026-09-02, by push notification** — not another line in this file.
+> Four runs had recorded it here and nothing had changed, which is the tell: **this file is read on the
+> PC, and the decision is about why the routine never gets to the PC.** An escalation that lives only in
+> the place the reader isn't is not an escalation.
+>
+> **So the next runs stay quiet about it.** Re-sending a decision request he has already received, every
+> morning, teaches him to ignore the channel — and the routine still needs that channel free for the day
+> something is genuinely wrong. Log the run in the table above, say nothing, and leave this note as the
+> record that it was asked. If he answers, act on the answer; the request itself does not need repeating.
 
 
 ## 2026-08-29 — the daily four-layer health check is pointed at a machine that cannot see three of them
