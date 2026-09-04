@@ -1,14 +1,19 @@
 # Handover — pick this up on the Windows PC
 
-Last updated: **2026-09-03.** Read top-down. The newest session is first.
+Last updated: **2026-09-04.** Read top-down. The newest session is first.
 
-## 2026-09-03 — daily cloud check, git-side green, three layers absent as designed. Logged as a table row.
+## Daily cloud check — rolling section, latest run 2026-09-04. Git-side green, three layers absent as designed.
 
-Re-confirmation, not a finding — appended to the running table in the 2026-08-31 section below rather than
-grown into a new section, per the 2026-09-02 decision. The git-side half is green (repo level with
-`origin/main`, all 13 consistency checks clean, counts unchanged, plugin 1.1.46, rebuild hooks wired); the
-vector index, Graphify graph, Obsidian vault and AJ Tool bridge remain structurally unanswerable from a
-container. Nothing to fix. The decision below (move the routine to the PC, or narrow it to the git-side
+**One section, not one per morning.** Each run is a re-confirmation rather than a finding, so it goes into
+the running table in the 2026-08-31 section below and this heading's date moves — per the 2026-09-02
+decision, and now applied to the section itself so the file stops gaining a near-identical entry daily.
+The 2026-09-03 section said exactly what this one says and was folded in here; its row is still in the table.
+
+Latest run (**2026-09-04**): the git-side half is green — repo clean and level with `origin/main`, all 13
+consistency checks pass, counts unchanged at 12 skills · 398 fragments · 26 native tools, 248 proven (62%),
+plugin 1.1.46, the three rebuild hooks still wired. The vector index, Graphify graph, Obsidian vault and
+AJ Tool bridge remain structurally unanswerable from a container, each exiting cleanly with "not set up on
+this machine". Nothing to fix. The decision below (move the routine to the PC, or narrow it to the git-side
 half) is still owed and unchanged — only Ajmal can take it, so this session did not touch the routine's prompt.
 
 ## 2026-09-02 — a cloud pass, scoped to the half that lives in git. Everything green, one open item closed.
@@ -61,9 +66,10 @@ near-identical entry every morning. The section below explains the whole thing; 
 | 2026-08-29 | green | not present in checkout |
 | 2026-08-31 | green | not present in checkout |
 | 2026-09-02 (two firings) | green, both | not present in checkout |
-| **2026-09-03** | **green** | **not present in checkout** |
+| 2026-09-03 | green | not present in checkout |
+| **2026-09-04** | **green** | **not present in checkout** |
 
-2026-09-03, measured fresh from disk in a cloud container: repo clean, branch level with `origin/main`
+2026-09-03 and again 2026-09-04, measured fresh from disk in a cloud container: repo clean, branch level with `origin/main`
 (0 ahead / 0 behind); **all 13** consistency checks pass, no drift; **12 skills · 398 fragments · 26
 native tools**; 248 fragments (62%) proven, 25 with no status; plugin now at **1.1.46** (a peer bump
 already on `main`); the three derived-layer rebuild hooks still wired across their phases. The four tools'
