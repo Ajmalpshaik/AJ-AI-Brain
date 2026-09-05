@@ -2,14 +2,14 @@
 
 Last updated: **2026-09-04.** Read top-down. The newest session is first.
 
-## Daily cloud check — rolling section, latest run 2026-09-04. Git-side green, three layers absent as designed.
+## Daily cloud check — rolling section, latest run 2026-09-05. Git-side green, three layers absent as designed.
 
 **One section, not one per morning.** Each run is a re-confirmation rather than a finding, so it goes into
 the running table in the 2026-08-31 section below and this heading's date moves — per the 2026-09-02
 decision, and now applied to the section itself so the file stops gaining a near-identical entry daily.
 The 2026-09-03 section said exactly what this one says and was folded in here; its row is still in the table.
 
-Latest run (**2026-09-04**): the git-side half is green — repo clean and level with `origin/main`, all 13
+Latest run (**2026-09-05**): the git-side half is green — repo clean and level with `origin/main`, all 13
 consistency checks pass, counts unchanged at 12 skills · 398 fragments · 26 native tools, 248 proven (62%),
 plugin 1.1.46, the three rebuild hooks still wired. The vector index, Graphify graph, Obsidian vault and
 AJ Tool bridge remain structurally unanswerable from a container, each exiting cleanly with "not set up on
@@ -67,9 +67,10 @@ near-identical entry every morning. The section below explains the whole thing; 
 | 2026-08-31 | green | not present in checkout |
 | 2026-09-02 (two firings) | green, both | not present in checkout |
 | 2026-09-03 | green | not present in checkout |
-| **2026-09-04** | **green** | **not present in checkout** |
+| 2026-09-04 | green | not present in checkout |
+| **2026-09-05** | **green** | **not present in checkout** |
 
-2026-09-03 and again 2026-09-04, measured fresh from disk in a cloud container: repo clean, branch level with `origin/main`
+2026-09-03, 2026-09-04 and again 2026-09-05, measured fresh from disk in a cloud container: repo clean, branch level with `origin/main`
 (0 ahead / 0 behind); **all 13** consistency checks pass, no drift; **12 skills · 398 fragments · 26
 native tools**; 248 fragments (62%) proven, 25 with no status; plugin now at **1.1.46** (a peer bump
 already on `main`); the three derived-layer rebuild hooks still wired across their phases. The four tools'
